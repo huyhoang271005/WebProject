@@ -37,7 +37,8 @@ loginBtn.addEventListener('click', async () => {
         }
     }
     if(!result.success) {
-        showDialog(status, result.message, async () => await verify(result.data, username), status == 'error' || status == 'success' ? 'Đồng ý': 'Gửi email xác thực');
+        showDialog(status, result.message, async () => await verify(result.data, username), 
+        status == 'error' || status == 'success' || !result.data? 'Đồng ý': 'Gửi email xác thực');
     }
     else {
         if(rememberUser.checked){
