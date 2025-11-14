@@ -11,11 +11,11 @@ async function loadDialog() {
   const dialog = document.getElementById("myDialog");
 
   document.getElementById("dialogOk").addEventListener("click", async () => {
+    dialog.close();
     if(currentCallback && typeof currentCallback === 'function'){
       await currentCallback();
       currentCallback = null;
     }
-    dialog.close();
   });
   dialog.addEventListener('click', async() => {
     if(dismissDialog){
