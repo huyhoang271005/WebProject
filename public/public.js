@@ -48,6 +48,6 @@ export async function getEye() {
         if(document.getElementById('icon-eye')) continue;
         const response = await fetch("https://huyhoang271005.github.io/WebProject/public/icon-eye.html");
         const html = await response.text();
-        layout.insertAdjacentHTML('beforeend', html);
+        l.insertAdjacentHTML('beforeend', html);
     }
 }
