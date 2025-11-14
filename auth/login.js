@@ -38,11 +38,11 @@ loginBtn.addEventListener('click', async () => {
                 statusDiv.textContent += err.error + '\n';
             });
         }
-        else if (typeof result.data === 'object'){
-            status = 'question';
+        else if (!result.data){
+            status = 'error';
         }
         else {
-            status = 'error';
+            status = 'question';
         }
         showDialog(status, result.message, async () => await verify(result.data, username), 
         status == 'error' || status == 'success' || !result.data? 'Đồng ý': 'Gửi email xác thực');
