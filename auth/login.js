@@ -1,5 +1,6 @@
 import {callAPI} from "../public/api.js";
 import {showDialog} from "../dialog/dialog.js";
+import { showLoader } from "../public/public.js";
 
 const usernameInput = document.getElementById('username');
 const passwordInput = document.getElementById('password');
@@ -9,6 +10,7 @@ const forgotPassword = document.getElementById('forgotPassword');
 const rememberUser = document.getElementById('rememberUser');
 
 loginBtn.addEventListener('click', async () => {
+    showLoader(true);
     const username = usernameInput.value.trim();
     const password = passwordInput.value.trim();
 
@@ -21,14 +23,17 @@ loginBtn.addEventListener('click', async () => {
         statusDiv.style.display = 'block';
         statusDiv.textContent = 'Vui lòng nhập đầy đủ thông tin.';
         statusDiv.classList.add('error');
+        showLoader(false);
         return;
     }
     const data = {
         email: username,
         password: password
     }
-    loginBtn.disabled = true;
+    loginBtn.classList.add('loading');
     const result = await callAPI(`/auth/login`, 'POST', data, false);
+    loginBtn.classList.remove('loading');
+    showLoader(false);
     loginBtn.disabled = false;
     let status = result.success ? 'success' : 'error';
     if(!result.success){

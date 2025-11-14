@@ -20,3 +20,15 @@ for(let i of iconEye){
         input.value = val;
     })
 }
+
+export function showLoader(showLoading) {
+    const loader = document.getElementsByClassName('icon-loader');
+    for (let load of loader){
+        if(showLoading){
+            load.style.display = 'inline-block';
+        }
+        else {
+            load.style.display = 'none';
+        }
+    }
+}
