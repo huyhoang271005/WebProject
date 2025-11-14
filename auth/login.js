@@ -18,6 +18,7 @@ loginBtn.addEventListener('click', async () => {
     statusDiv.classList.remove('error');
 
     if (!username || !password) {
+        statusDiv.style.display = 'block';
         statusDiv.textContent = 'Vui lòng nhập đầy đủ thông tin.';
         statusDiv.classList.add('error');
         return;
