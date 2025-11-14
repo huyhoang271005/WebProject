@@ -92,7 +92,7 @@ button.loading::after {
     display: flex;
     align-items: center;
 }
-.icon-eye {
+#icon-eye {
     position: absolute;
     cursor: pointer;
     user-select: none;
@@ -100,4 +100,7 @@ button.loading::after {
 }
 .password-layout input {
     padding-right: 35px;
+}
+#icon-loader {
+    display: none;
 }

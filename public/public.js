@@ -21,6 +21,15 @@ for(let i of iconEye){
     })
 }
 
+export async function getLoader(idLayout) {
+    if (document.getElementById('icon-loader')) return;
+    const layout = document.getElementById(idLayout);
+    const response = await fetch("https://huyhoang271005.github.io/WebProject/public/icon-loader.html");
+    const html = await response.text();
+
+    layout.insertAdjacentHTML("beforeend", html);
+}
+
 export function showLoader(showLoading) {
     const loader = document.getElementsByClassName('icon-loader');
     for (let load of loader){
@@ -30,5 +39,15 @@ export function showLoader(showLoading) {
         else {
             load.style.display = 'none';
         }
+    }
+}
+
+export async function getEye() {
+    const layoutPassword = document.getElementsByClassName('password-layout');
+    for (const l of layoutPassword){
+        if(document.getElementById('icon-eye')) continue;
+        const response = await fetch("https://huyhoang271005.github.io/WebProject/public/icon-eye.html");
+        const html = await response.text();
+        layout.insertAdjacentHTML('beforeend', html);
     }
 }
