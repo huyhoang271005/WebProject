@@ -1,17 +1,17 @@
 let currentCallback = null;
 let dismissDialog = true;
 async function loadDialog() {
-  if (document.getElementById("dialogOverlay")) return;
+  if (document.getElementById("myDialog")) return;
 
   const response = await fetch("https://huyhoang271005.github.io/WebProject/dialog/dialog.html");
   const html = await response.text();
 
   document.body.insertAdjacentHTML("beforeend", html);
 
-  const dialog = document.getElementById("dialogOverlay");
+  const dialog = document.getElementById("myDialog");
 
   document.getElementById("dialogOk").addEventListener("click", async () => {
-    dialog.classList.remove("active");
+    dialog.close()
     if(currentCallback && typeof currentCallback === 'function'){
       await currentCallback();
       currentCallback = null;
@@ -19,7 +19,7 @@ async function loadDialog() {
   });
   dialog.addEventListener('click', async() => {
     if(dismissDialog){
-      dialog.classList.remove("active");
+      dialog.close();
     }
     dismissDialog = true
   });
@@ -44,5 +44,5 @@ export async function showDialog(status, message, callback = null, contentButton
   document.getElementById("dialogTitle").textContent = "Thông báo";
   document.getElementById("dialogMessage").textContent = message;
   document.getElementById("dialogOk").textContent = contentButton;
-  document.getElementById("dialogOverlay").classList.add("active");
+  document.getElementById("myDialog").showModal();
 }
