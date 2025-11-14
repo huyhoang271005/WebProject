@@ -101,6 +101,3 @@ button.loading::after {
 .password-layout input {
     padding-right: 35px;
 }
-.icon-loader {
-    display: none;
-}

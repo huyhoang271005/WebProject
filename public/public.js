@@ -31,6 +31,7 @@ export async function getLoader(idLayout) {
     const response = await fetch("https://huyhoang271005.github.io/WebProject/public/icon-loader.html");
     const html = await response.text();
     loader.insertAdjacentHTML("beforeend", html);
+    loader.querySelector('.icon-loader').style.display = 'none';
 }
 
 
