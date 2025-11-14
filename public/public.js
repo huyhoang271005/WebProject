@@ -1,3 +1,4 @@
+export const BASE_URL = "https://huyhoang271005.github.io/WebProject";
 export async function domIconEye() {
     const iconEye = document.getElementsByClassName('icon-eye');
     for(let i of iconEye){
@@ -28,7 +29,7 @@ export async function getLoader(idLayout) {
 
     if (loader.querySelector('.icon-loader')) return;
 
-    const response = await fetch("https://huyhoang271005.github.io/WebProject/public/icon-loader.html");
+    const response = await fetch(BASE_URL + "/public/icon-loader.html");
     const html = await response.text();
     loader.insertAdjacentHTML("beforeend", html);
     loader.querySelector('.icon-loader').style.display = 'none';
@@ -49,7 +50,7 @@ export function showLoader(showLoading) {
 
 export async function getEye() {
     const layoutPassword = document.getElementsByClassName('password-layout');
-    const response = await fetch("https://huyhoang271005.github.io/WebProject/public/icon-eye.html");
+    const response = await fetch(BASE_URL + "/public/icon-eye.html");
     const html = await response.text();
     for (let l of layoutPassword){
         if(l.querySelector('.icon-eye')) continue;
