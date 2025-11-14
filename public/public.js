@@ -1,5 +1,4 @@
 const iconEye = document.getElementsByClassName('icon-eye');
-const password = document.getElementsByClassName('password');
 for(let i of iconEye){
     i.addEventListener('click', ()=>{
         const input = i.closest('.password-layout').querySelector('.password');
@@ -22,13 +21,16 @@ for(let i of iconEye){
 }
 
 export async function getLoader(idLayout) {
-    if (document.getElementById('icon-loader')) return;
-    const layout = document.getElementById(idLayout);
+    const loader = document.getElementById(idLayout);
+    if (!loader) return;
+
+    if (loader.querySelector('.icon-loader')) return;
+
     const response = await fetch("https://huyhoang271005.github.io/WebProject/public/icon-loader.html");
     const html = await response.text();
-
-    layout.insertAdjacentHTML("beforeend", html);
+    loader.insertAdjacentHTML("beforeend", html);
 }
+
 
 export function showLoader(showLoading) {
     const loader = document.getElementsByClassName('icon-loader');
@@ -44,10 +46,10 @@ export function showLoader(showLoading) {
 
 export async function getEye() {
     const layoutPassword = document.getElementsByClassName('password-layout');
-    for (const l of layoutPassword){
-        if(document.getElementById('icon-eye')) continue;
-        const response = await fetch("https://huyhoang271005.github.io/WebProject/public/icon-eye.html");
-        const html = await response.text();
+    const response = await fetch("https://huyhoang271005.github.io/WebProject/public/icon-eye.html");
+    const html = await response.text();
+    for (let l of layoutPassword){
+        if(l.querySelector('.icon-eye')) continue;
         l.insertAdjacentHTML('beforeend', html);
     }
 }
