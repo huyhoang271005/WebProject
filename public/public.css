@@ -56,3 +56,16 @@ button:hover {
 .success {
   color: #10B981;
 }
+.password-layout {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+.icon-eye {
+    position: absolute;
+    cursor: pointer;
+    right: 10px;
+}
+.password-layout input {
+    padding-right: 35px;
+}

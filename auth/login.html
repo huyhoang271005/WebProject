@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="../dialog/dialog.css"/>
     <link rel="stylesheet" href="../public/card.css"/>
     <link rel="stylesheet" href="../public/public.css"/>
+    <script src="https://kit.fontawesome.com/e9c281dd3f.js" crossorigin="anonymous"></script>
     <style>
         .checkbox-row {
             display: flex;
@@ -28,7 +29,10 @@
          style="display: block; margin: auto; padding-bottom: 10px" />
     <h1>Đăng nhập</h1>
     <input type="text" id="username" placeholder="Tên đăng nhập" />
-    <input type="password" id="password" placeholder="Mật khẩu" />
+    <div class = "password-layout">
+        <input type="password" id="password" class = 'password' placeholder="Mật khẩu" />
+        <i class="fa-solid fa-eye fa-bounce icon-eye"></i>
+    </div>
 
     <div class="checkbox-row">
         <input type="checkbox" id="rememberUser">
@@ -42,7 +46,7 @@
         <a href="register.html" target="_blank" id="register" style="color: #3B82F6; text-decoration: none;">Đăng ký</a>
     </div>
 </div>
-
+<script type="module" src="../public/public.js"></script>
 <script type="module" src="login.js"></script>
 </body>
 </html>
