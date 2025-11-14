@@ -1,4 +1,4 @@
-import { BASE_URL } from "../public/public";
+import { BASE_URL } from "../public/public.js";
 let currentCallback = null;
 let dismissDialog = true;
 async function loadDialog() {
