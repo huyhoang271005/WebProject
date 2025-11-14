@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đăng ký</title>
+    <style>
+        body {
+            background: linear-gradient(135deg, #6EE7B7, #3B82F6);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .card {
+            background: white;
+            padding: 40px 60px;
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            text-align: center;
+            width: 360px;
+        }
+
+        h1 {
+            color: #1E3A8A;
+            margin-bottom: 20px;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 10px;
+            margin: 8px 0;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            font-size: 1rem;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: #3B82F6;
+            box-shadow: 0 0 5px rgba(59,130,246,0.5);
+        }
+
+        button {
+            margin-top: 20px;
+            background-color: #3B82F6;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            width: 100%;
+        }
+
+        button:hover {
+            background-color: #2563EB;
+        }
+
+        .status {
+            margin-top: 15px;
+            font-weight: 500;
+            color: #D97706;
+            min-height: 24px;
+        }
+
+        .success {
+            color: #10B981;
+        }
+
+        .error {
+            color: #EF4444;
+        }
+    </style>
+</head>
+<body>
+<div class="card">
+    <img src="https://cdn-icons-png.flaticon.com/512/3064/3064197.png" width="80" alt="User Icon"
+         style="display: block; margin: auto; padding-bottom: 10px" />
+    <h1>Đăng ký</h1>
+
+    <input type="text" id="username" placeholder="Tên đăng nhập" />
+    <input type="text" id="fullName" placeholder="Họ và tên" />
+    <input type="date" id="birthday" placeholder="Ngày sinh" />
+    
+    <select id="gender">
+        <option value="">-- Chọn giới tính --</option>
+        <option value="MALE">Nam</option>
+        <option value="FEMALE">Nữ</option>
+        <option value="OTHER">Khác</option>
+    </select>
+
+    <input type="email" id="email" placeholder="Email" />
+    <input type="password" id="password" placeholder="Mật khẩu" />
+    <input type="file" id="avatar" accept="image/*" />
+
+    <button id="registerBtn">Đăng ký</button>
+    <div class="status" id="status"></div>
+</div>
+
+<script type="module" src="register.js"></script>
+</body>
+</html>
