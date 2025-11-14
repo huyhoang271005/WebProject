@@ -30,7 +30,7 @@ export async function showDialog(status, message, callback = null, contentButton
   currentCallback = callback;
   dismissDialog = dismiss;
   await loadDialog();
-  const image = document.getElementById("image");
+  const image = document.getElementById("dialogImage");
   switch(status){
     case 'error':
       image.src = "https://cdn-icons-png.flaticon.com/512/190/190406.png";

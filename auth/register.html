@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="../dialog/dialog.css"/>
     <link rel="stylesheet" href="../public/card.css"/>
     <link rel="stylesheet" href="../public/public.css"/>
+    <script src="https://kit.fontawesome.com/e9c281dd3f.js" crossorigin="anonymous"></script>
     <style>
         .avatar-wrapper {
             display: flex;
@@ -48,7 +49,10 @@
     </select>
 
     <input type="email" id="email" placeholder="Email" />
-    <input type="password" id="password" placeholder="Mật khẩu" />
+    <div class="password-layout">
+        <input type="password" id="password" class="password" placeholder="Mật khẩu" />
+        <i class="fa-solid fa-eye fa-bounce icon-eye"></i>
+    </div>
 
 
     <button id="registerBtn">Đăng ký</button>

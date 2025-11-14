@@ -64,6 +64,7 @@ button:hover {
 .icon-eye {
     position: absolute;
     cursor: pointer;
+    user-select: none;
     right: 10px;
 }
 .password-layout input {

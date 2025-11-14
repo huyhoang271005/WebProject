@@ -13,5 +13,10 @@ for(let i of iconEye){
             i.classList.remove('fa-eye-slash');
             i.classList.add('fa-eye');
         }
+        //Focus input
+        input.focus();
+        const val = input.value;
+        input.value = '';
+        input.value = val;
     })
 }
