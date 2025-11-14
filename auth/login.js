@@ -1,4 +1,4 @@
-import {callAPI} from "../api-public/api.js";
+import {callAPI} from "../public/api.js";
 import {showDialog} from "../dialog/dialog.js";
 
 const usernameInput = document.getElementById('username');
@@ -13,6 +13,7 @@ loginBtn.addEventListener('click', async () => {
     const password = passwordInput.value.trim();
 
     // reset trạng thái
+    statusDiv.style.display = 'none';
     statusDiv.textContent = '';
     statusDiv.classList.remove('error');
 
@@ -25,15 +26,16 @@ loginBtn.addEventListener('click', async () => {
         email: username,
         password: password
     }
-    loginBtn.disable = true;
+    loginBtn.disabled = true;
     const result = await callAPI(`/auth/login`, 'POST', data, false);
-    loginBtn.disable = false;
+    loginBtn.disabled = false;
     let status = result.success ? 'success' : 'error';
     if(!result.success){
         if(Array.isArray(result.data) && result.data){
+            statusDiv.style.display = 'block';
             statusDiv.classList.add("error");
             result.data.forEach(err => {
-                statusDiv.textContent += err.error;
+                statusDiv.textContent += err.error + '\n';
             });
         }
         else if (typeof result.data === 'object'){
@@ -48,6 +50,9 @@ loginBtn.addEventListener('click', async () => {
     else {
         if(rememberUser.checked){
             localStorage.setItem('rememberUser', 'true');
+        }
+        else {
+            localStorage.setItem('rememberUser', 'false');
         }
         showDialog('success', result.message);
     }

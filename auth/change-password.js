@@ -1,4 +1,4 @@
-import { callAPI } from "../api-public/api.js";
+import { callAPI } from "../public/api.js";
 import {showDialog} from "../dialog/dialog.js";
 
 const token = new URLSearchParams(window.location.search).get("token");
