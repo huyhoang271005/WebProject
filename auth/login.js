@@ -25,15 +25,19 @@ loginBtn.addEventListener('click', async () => {
         email: username,
         password: password
     }
+    loginBtn.disable = true;
     const result = await callAPI(`/auth/login`, 'POST', data, false);
-    let status = result.success ? 'success' : 'question';
+    loginBtn.disable = false;
+    let status = result.success ? 'success' : 'error';
     if(!result.success && result.data){
         if(Array.isArray(result.data)){
-            status = 'error';
             statusDiv.classList.add("error");
             result.data.forEach(err => {
                 statusDiv.textContent += err.error;
             });
+        }
+        else {
+            status = 'question';
         }
     }
     if(!result.success) {
