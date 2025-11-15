@@ -15,7 +15,7 @@ export function showLoader(showLoading) {
     const loader = document.getElementsByClassName('icon-loader');
     for (let load of loader){
         if(showLoading){
-            load.style.display = 'inline-block';
+            load.style.display = '';
         }
         else {
             load.style.display = 'none';
