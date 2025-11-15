@@ -53,5 +53,5 @@ registerBtn.addEventListener('click', async() => {
             });
         }
     }
-    showDialog(result.success ? 1 : 0, result.message);
+    showDialog(result.success ? 'success' : 'error', result.message);
 });
