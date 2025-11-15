@@ -34,7 +34,6 @@ loginBtn.addEventListener('click', async () => {
     const result = await callAPI(`/auth/login`, 'POST', data, false);
     loginBtn.classList.remove('loading');
     showLoader(false)
-    loginBtn.disabled = false;
     let status = result.success ? 'success' : 'error';
     if(!result.success){
         if(Array.isArray(result.data) && result.data){
