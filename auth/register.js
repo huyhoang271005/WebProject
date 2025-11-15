@@ -11,9 +11,16 @@ const passwordInput = document.getElementById('password');
 const avatarInput = document.getElementById('avatar');
 const registerBtn = document.getElementById('registerBtn');
 const statusDiv = document.getElementById('status');
+const avatarPreview = document.getElementById('avatarPreview');
 
 getEye();
-getLoader('registerBtn')
+getLoader('registerBtn');
+avatarInput.addEventListener('change', (event)=>{
+    const file = event.target.files[0];
+    if(file){
+        avatarPreview.src = URL.createObjectURL(file);
+    }
+});
 registerBtn.addEventListener('click', async() => {
     const username = usernameInput.value.trim();
     const fullName = fullNameInput.value.trim();
