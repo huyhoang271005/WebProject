@@ -23,12 +23,12 @@ async function loadProfile() {
     userId = profile.userId;
     avatarPreview.src = profile.imageUrl
     avatarId = profile.imageId;
-    usernameInput.textContent = profile.username;
-    fullNameInput.textContent = profile.fullName;
-    birthdayInput.textContent = profile.birthday;
-    genderInput.textContent = profile.gender;
-    emailInput.textContent = profile.emails[0].email;
-    role.textContent = profile.role;
+    usernameInput.value = profile.username;
+    fullNameInput.value = profile.fullName;
+    birthdayInput.value = profile.birthday;
+    genderInput.value = profile.gender;
+    emailInput.value = profile.emails[0].email;
+    role.value = profile.role;
     createdAt = profile.createdAt;
     updatedAt = profile.updatedAt;
 }

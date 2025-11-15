@@ -43,7 +43,7 @@ async function callAPIWithRetry(endpoint, method, data, isMultipart, alreadyRefr
             }
         }
         // refresh token nếu 401
-        if (res.status === 401 && !alreadyRefreshed && refreshToken) {
+        if (res.status == 401 && !alreadyRefreshed && refreshToken) {
             const result = await refreshAccessToken();
             if(!result.success){
                 return result;
