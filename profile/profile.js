@@ -1,6 +1,6 @@
-import { callAPI } from "../../public/api.js";
-import { showDialog } from "../../dialog/dialog.js";
-import { convertToVNTime } from "../../public/public.js";
+import { callAPI } from "../public/api.js";
+import { showDialog } from "../dialog/dialog.js";
+import { convertToVNTime } from "../public/public.js";
 const usernameInput = document.getElementById('username');
 const fullNameInput = document.getElementById('fullName');
 const birthdayInput = document.getElementById('birthday');

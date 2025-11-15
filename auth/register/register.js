@@ -1,7 +1,7 @@
 // register.js
-import { showDialog } from "../dialog/dialog.js";
-import { callAPI } from "../public/api.js";
-import { getEye, getLoader, showLoader } from "../public/public.js";
+import { showDialog } from "../../dialog/dialog.js";
+import { callAPI } from "../../public/api.js";
+import { getEye, getLoader, showLoader } from "../../public/public.js";
 const usernameInput = document.getElementById('username');
 const fullNameInput = document.getElementById('fullName');
 const birthdayInput = document.getElementById('birthday');

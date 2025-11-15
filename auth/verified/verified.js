@@ -1,4 +1,4 @@
-import { callAPI } from "../public/api.js";
+import { callAPI } from "../../public/api.js";
 
 (async () => {
   const params = new URLSearchParams(window.location.search);

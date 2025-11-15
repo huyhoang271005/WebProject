@@ -1,64 +1,65 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Hồ sơ cá nhân</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đăng ký</title>
     <link rel="stylesheet" href="../dialog/dialog.css"/>
     <link rel="stylesheet" href="../public/card.css"/>
     <link rel="stylesheet" href="../public/public.css"/>
     <script src="https://kit.fontawesome.com/e9c281dd3f.js" crossorigin="anonymous"></script>
     <style>
-
         .avatar-wrapper {
             display: flex;
             flex-direction: column;
             align-items: center;
-            margin-bottom: 15px;
+            margin-top: 10px;
         }
 
         .avatar-img {
-            width: 120px;
-            height: 120px;
+            width: 100px;
+            height: 100px;
             border-radius: 50%;
             object-fit: cover;
             border: 3px solid #3B82F6;
-        }
-        .date-info {
-            font-size: 0.75rem;
-            color: #9CA3AF; /* xám nhạt hơn */
-            margin-top: 5px;
-            text-align: left;
+            margin-bottom: 10px;
         }
     </style>
 </head>
 <body>
 <div class="card">
-    <h1>Hồ sơ cá nhân</h1>
+    <h1>Đăng ký</h1>
 
     <div class="avatar-wrapper">
-        <img id="avatarPreview" src="https://cdn-icons-png.flaticon.com/512/847/847969.png" alt="Avatar Preview" class="avatar-img">
-        <label for="avatar" style="margin-top: 10px; cursor: pointer; color: #3B82F6;">Đổi ảnh</label>
+        <label for="avatar" class="avatar-label">
+            <img id="avatarPreview" src="https://cdn-icons-png.flaticon.com/512/847/847969.png"
+            alt="Avatar Preview" class="avatar-img">
+        </label>
         <input type="file" id="avatar" accept="image/*" style="display: none;">
     </div>
 
     <input type="text" id="username" placeholder="Biệt danh" />
     <input type="text" id="fullName" placeholder="Họ và tên" />
     <input type="date" id="birthday" placeholder="Ngày sinh" />
+    
     <select id="gender">
         <option value="MALE">Nam</option>
         <option value="FEMALE">Nữ</option>
         <option value="OTHER">Khác</option>
     </select>
+
     <input type="email" id="email" placeholder="Email" />
-    <input type="text" id="role" placeholder="Chức vụ" />
-    <div class="date-info">
-        <div>Ngày tạo: <span id="createdAt">01/01/2024</span></div>
-        <div>Cập nhật lần cuối: <span id="updatedAt">15/11/2025</span></div>
+    <div class="password-layout">
+        <input type="password" id="password" class="password" placeholder="Mật khẩu" />
     </div>
-    <button id="saveBtn">Lưu thay đổi</button>
+
+
+    <button id="registerBtn">Đăng ký</button>
     <div class="status" id="status"></div>
+    <div style="margin-top: 15px; font-size: 0.9rem; text-align: center;">
+        <a href="../login" id="register" style="color: #3B82F6; text-decoration: none;">Đăng nhập</a>
+    </div>
 </div>
+<script type="module" src="register.js"></script>
 </body>
-<script type="module" src="./js/profile.js"></script>
 </html>
