@@ -17,8 +17,10 @@ async function callAPIWithRetry(endpoint, method, data, isMultipart, alreadyRefr
         options.headers["Device-id"] = localStorage.getItem("deviceId");
     }
     options.headers["ngrok-skip-browser-warning"] = `26763`;
+    // if (!endpoint.startsWith("/auth") && accessToken) {
+        
+    // }
     options.headers["Authorization"] = `Bearer ${accessToken}`;
-
     if (data) {
         if (isMultipart) options.body = data;
         else {
@@ -30,8 +32,16 @@ async function callAPIWithRetry(endpoint, method, data, isMultipart, alreadyRefr
     try {
         const res = await fetch(`${API_BASE}${endpoint}`, options);
         const body = await res.json();
-        if(body.data?.deviceId){
-            localStorage.setItem("deviceId", body.data.deviceId);
+        if(body.success){
+            if(body.data?.deviceId){
+                localStorage.setItem("deviceId", body.data.deviceId);
+            }
+            if(body.data?.accessToken && body.data?.refreshToken){
+                accessToken = result.accessToken;
+                refreshToken = result.refreshToken;
+                localStorage.setItem("accessToken", accessToken);
+                localStorage.setItem("refreshToken", refreshToken); 
+            }
         }
         // refresh token nếu 401
         if (res.status === 401 && !alreadyRefreshed && refreshToken) {
