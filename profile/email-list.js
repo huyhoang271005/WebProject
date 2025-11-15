@@ -16,8 +16,8 @@ export function initEmailList(initialEmails = []) {
             row.innerHTML = `
                 <input type="email" value="${email.email}" class="email-input"
                     data-index="${index}" />
-                <button class="removeEmailBtn" data-index="${index}" 
-                style="background: #EF4444; width: 50px;">X</button>
+                <button class="removeEmailBtn" data-index="${index}"
+                    style="background: #EF4444; width: 50px; margin: 8px 0;">X</button>
             `;
 
             list.appendChild(row);
