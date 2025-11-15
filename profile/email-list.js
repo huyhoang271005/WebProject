@@ -20,7 +20,8 @@ export function initEmailList(initialEmails = []) {
 
                 <button class="removeEmailBtn"
                     data-index="${index}"
-                    style="padding: 6px 10px; background: #EF4444; color: white; border:none; border-radius: 6px; cursor:pointer;">
+                    style="padding: 6px 10px; background: #EF4444; color: white; border:none; border-radius: 6px; cursor:pointer;
+                            width: 50px; margin: 8px 0;">
                     X
                 </button>
             `;
