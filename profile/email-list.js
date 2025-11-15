@@ -9,7 +9,7 @@ export function initEmailList(initialEmails = []) {
             const innerHTML = `
             <div style = "display: flex; gap: 10px; margin-bottom: 8px">
                 <input type="email" value="${email.email}" class="email-input"
-                    data-index="${index}" readonly = ${email.validated !== null}/>
+                    data-index="${index}" readonly = ${!email.validated}/>
                 <button class="removeEmailBtn" data-index="${index}"
                     style="background: #EF4444; width: 40px; margin: 8px 0; padding: 0;">X</button>
             </div>
