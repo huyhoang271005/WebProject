@@ -24,7 +24,7 @@ changeBtn.addEventListener("click", async() => {
     showLoader(true);
     changeBtn.classList.add('loading');
     const result = await callAPI(`/auth/verify-change-password?token=${token}`, 
-        "POST", data, false);
+        "POST", data);
     changeBtn.classList.remove('loading');
     showLoader(false);
     if(!result.success && result.data){

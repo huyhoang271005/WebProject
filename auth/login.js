@@ -69,7 +69,7 @@ forgotPassword.addEventListener('click', async () => {
         const data = {
             email: username
         }
-        const result = await callAPI(`/auth/send-verify-change-password`, 'POST', data, false);
+        const result = await callAPI(`/auth/send-verify-change-password`, 'POST', data);
         showDialog(result.success ? 'success' : 'error', result.message);
     });
 });
@@ -81,10 +81,10 @@ async function verify(result, email) {
         email: email
     }
     if(result.verifiedEmail === false){
-        resultSend = await callAPI(`/auth/send-verify-email`, 'POST', data, false);
+        resultSend = await callAPI(`/auth/send-verify-email`, 'POST', data);
     } 
     else if(result.verifiedDevice === false){
-        resultSend = await callAPI(`/auth/send-verify-device`, 'POST', data, false);
+        resultSend = await callAPI(`/auth/send-verify-device`, 'POST', data);
     }
     showDialog(resultSend.success ? 'success' : 'error', resultSend.message);
 }

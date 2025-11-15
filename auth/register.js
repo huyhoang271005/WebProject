@@ -60,5 +60,8 @@ registerBtn.addEventListener('click', async() => {
             });
         }
     }
+    else {
+        await callAPI('/auth/send-verify-email', 'POST', {email});
+    }
     showDialog(result.success ? 'success' : 'error', result.message);
 });
