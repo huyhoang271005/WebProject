@@ -3,7 +3,7 @@ let dismissDialog = true;
 async function loadDialog() {
   if (document.getElementById("myDialog")) return;
 
-  const response = await fetch("/WebProject/dialog/dialog.html");
+  const response = await fetch("/WebProject/dialog/index.html");
   const html = await response.text();
 
   document.body.insertAdjacentHTML("beforeend", html);
