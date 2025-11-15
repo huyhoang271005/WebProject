@@ -3,15 +3,15 @@ export function initEmailList(initialEmails = []) {
 
     const list = document.getElementById("emailList");
     const addBtn = document.getElementById("addEmailBtn");
-
     function render() {
+        list.innerHTML = "";
         emails.forEach((email, index) => {
             const innerHTML = `
             <div style = "display: flex; gap: 10px; margin-bottom: 8px">
                 <input type="email" value="${email.email}" class="email-input"
                     data-index="${index}" />
                 <button class="removeEmailBtn" data-index="${index}"
-                    style="background: #EF4444; width: 40px; margin: 8px 0;">X</button>
+                    style="background: #EF4444; width: 40px; margin: 8px 0; padding: 0;">X</button>
             </div>
             `;
             list.insertAdjacentHTML("beforeend", innerHTML);
@@ -36,7 +36,7 @@ export function initEmailList(initialEmails = []) {
     }
 
     addBtn.onclick = () => {
-        emails.push("");
+        emails.push({email, validated: false});
         render();
     };
 
