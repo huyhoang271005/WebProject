@@ -45,9 +45,13 @@ async function callAPIWithRetry(endpoint, method, data, isMultipart, alreadyRefr
         // refresh token nếu 401
         if (res.status === 401 && !alreadyRefreshed && refreshToken) {
             const result = await refreshAccessToken();
-            if (result?.accessToken && result?.refreshToken) {
-                accessToken = result.accessToken;
-                refreshToken = result.refreshToken;
+            if(!result.success){
+                return result;
+            }
+            const token = result.data;
+            if (token?.accessToken && token?.refreshToken) {
+                accessToken = token.accessToken;
+                refreshToken = token.refreshToken;
                 localStorage.setItem("accessToken", accessToken);
                 localStorage.setItem("refreshToken", refreshToken);
                 return await callAPIWithRetry(endpoint, method, data, isMultipart, true);
@@ -74,6 +78,5 @@ async function refreshAccessToken() {
         },
         body: JSON.stringify({ refreshToken })
     });
-    const body = await res.json();
-    return body.data;
+    return await res.json();
 }
