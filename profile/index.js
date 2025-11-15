@@ -1,11 +1,12 @@
 import { callAPI } from "../public/api.js";
 import { showDialog } from "../dialog/index.js";
 import { convertToVNTime } from "../public/public.js";
+import { initEmailList } from "./email-list.js";
 const usernameInput = document.getElementById('username');
 const fullNameInput = document.getElementById('fullName');
 const birthdayInput = document.getElementById('birthday');
 const genderInput = document.getElementById('gender');
-const emailInput = document.getElementById('email');
+const emailsSection = document.getElementById('emailsSection');
 const role = document.getElementById('role');
 const saveBtn = document.getElementById('saveBtn');
 const createdAt = document.getElementById('createdAt');
@@ -28,10 +29,12 @@ async function loadProfile() {
     fullNameInput.value = profile.fullName;
     birthdayInput.value = profile.birthday;
     genderInput.value = profile.genderName;
-    emailInput.value = profile.emails[0].email;
     role.value = profile.roleName;
     createdAt.textContent = convertToVNTime(profile.createdAt);
     updatedAt.textContent = convertToVNTime(profile.updatedAt);
+    const html = await fetch("./email-list.html").then(r => r.text());
+    container.innerHTML = html;
+    window.emailManager = initEmailList(profile.emails);
 }
 await loadProfile();
 avatarInput.addEventListener('change', (e) => {
