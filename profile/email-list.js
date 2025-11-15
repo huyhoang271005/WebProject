@@ -36,7 +36,7 @@ export function initEmailList(initialEmails = []) {
     }
 
     addBtn.onclick = () => {
-        emails.push({email, validated: false});
+        emails.push({email: 'email', validated: false});
         render();
     };
 
