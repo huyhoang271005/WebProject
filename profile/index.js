@@ -32,8 +32,9 @@ async function loadProfile() {
     role.value = profile.roleName;
     createdAt.textContent = convertToVNTime(profile.createdAt);
     updatedAt.textContent = convertToVNTime(profile.updatedAt);
-    const html = await fetch("./email-list.html").then(r => r.text());
-    emailsSection.innerHTML = html;
+    const html = await fetch("./email-list.html");
+    const text = await html.text();
+    emailsSection.insertAdjacentElement('beforeend', text);
     window.emailManager = initEmailList(profile.emails);
 }
 await loadProfile();
