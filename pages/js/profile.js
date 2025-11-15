@@ -26,11 +26,11 @@ async function loadProfile() {
     usernameInput.value = profile.username;
     fullNameInput.value = profile.fullName;
     birthdayInput.value = profile.birthday;
-    genderInput.value = profile.gender;
+    genderInput.value = profile.genderName;
     emailInput.value = profile.emails[0].email;
     role.value = profile.role;
-    createdAt = profile.createdAt;
-    updatedAt = profile.updatedAt;
+    createdAt.textContent = profile.createdAt;
+    updatedAt.textContent = profile.updatedAt;
 }
 await loadProfile();
 avatarInput.addEventListener('change', (e) => {
