@@ -9,7 +9,7 @@ export function initEmailList(initialEmails = []) {
             const innerHTML = `
             <div style = "display: flex; gap: 10px; margin-bottom: 8px">
                 <input type="email" value="${email.email}" class="email-input"
-                    data-index="${index}" />
+                    data-index="${index}" readonly = ${email.validated !== null}/>
                 <button class="removeEmailBtn" data-index="${index}"
                     style="background: #EF4444; width: 40px; margin: 8px 0; padding: 0;">X</button>
             </div>
@@ -30,13 +30,13 @@ export function initEmailList(initialEmails = []) {
         document.querySelectorAll(".email-input").forEach(input => {
             input.oninput = () => {
                 const idx = input.dataset.index;
-                emails[idx] = input.value;
+                emails[idx].email = input.value;
             };
         });
     }
 
     addBtn.onclick = () => {
-        emails.push({email: 'email', validated: false});
+        emails.push({emailId: null, email: 'abc@gmail.com', validated: null});
         render();
     };
 

@@ -11,7 +11,8 @@
     <style>
         .card {
             display: grid;
-            grid-template-columns: 150px 1fr;
+            padding: 20px 40px 20px 0;
+            grid-template-columns: 50% 50%;
             grid-template-rows: auto;
             gap: 20px;
         }
@@ -35,9 +36,8 @@
             margin-top: 5px;
             text-align: left;
         }
-        #addEmailBtn{
-            width: 40%;
-            margin-top: 0;
+        #addEmailBtn {
+            margin-top: 5px;
         }
     </style>
 </head>
@@ -46,7 +46,7 @@
     <!-- Avatar -->
     <div class="avatar-wrapper">
         <img id="avatarPreview" src="https://cdn-icons-png.flaticon.com/512/847/847969.png" class="avatar-img" />
-        <label for="avatar" style="cursor:pointer; color:#3B82F6">Đổi ảnh</label>
+        <label for="avatar" style="cursor:pointer; color:#3B82F6; margin-top: 5px;">Đổi ảnh</label>
         <input type="file" id="avatar" accept="image/*" style="display:none"/>
         <div id="emailsSection"></div>
     </div>
