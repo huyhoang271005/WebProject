@@ -50,7 +50,6 @@ button:active {
 /* trạng thái loading */
 button.loading {
   position: relative;
-  color: transparent; /* ẩn text khi loading */
   pointer-events: none; /* không cho click khi đang load */
 }
 
