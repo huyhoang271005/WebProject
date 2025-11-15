@@ -1,5 +1,5 @@
 import { callAPI } from "../../public/api.js";
-import {showDialog} from "../../dialog/dialog.js";
+import {showDialog} from "../../dialog/index.js";
 import { getEye, getLoader, showLoader } from "../../public/public.js";
 const token = new URLSearchParams(window.location.search).get("token");
 const idPassword = document.getElementById("newPassword");
