@@ -59,7 +59,7 @@ loginBtn.addEventListener('click', async () => {
         else {
             localStorage.setItem('rememberUser', 'false');
         }
-        showDialog('success', result.message);
+        window.location.replace('../pages/home');
     }
 });
 
