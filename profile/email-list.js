@@ -20,6 +20,7 @@ export function initEmailList(initialEmails = []) {
         // Xoá email
         document.querySelectorAll(".removeEmailBtn").forEach(btn => {
             btn.onclick = () => {
+                if(emails.length() < 2) return;
                 const idx = btn.dataset.index;
                 emails.splice(idx, 1);
                 render();
