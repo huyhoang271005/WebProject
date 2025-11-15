@@ -33,7 +33,7 @@ async function loadProfile() {
     createdAt.textContent = convertToVNTime(profile.createdAt);
     updatedAt.textContent = convertToVNTime(profile.updatedAt);
     const html = await fetch("./email-list.html").then(r => r.text());
-    container.innerHTML = html;
+    emailsSection.innerHTML = html;
     window.emailManager = initEmailList(profile.emails);
 }
 await loadProfile();
