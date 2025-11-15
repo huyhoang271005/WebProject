@@ -27,7 +27,7 @@ registerBtn.addEventListener('click', async() => {
     statusDiv.classList.remove('error');
     
     const data = new FormData();
-    data.append('data', new Blob(
+    data.append('userRequest', new Blob(
         [JSON.stringify(
             email,
             password,
