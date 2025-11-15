@@ -12,12 +12,14 @@ const updatedAt = document.getElementById('updatedAt');
 const avatarInput = document.getElementById('avatar');
 const avatarPreview = document.getElementById('avatarPreview');
 let avatarId = null;
+let userId = null;
 async function loadProfile() {
     const result = await callAPI('/profile');
-    if(!profile.success){
+    if(!result.success){
         showDialog('error', result.message);
         return;
     }
+    userId = profile.userId;
     const profile = result.data;
     avatarPreview.src = profile.imageUrl
     avatarId = profile.imageId;
