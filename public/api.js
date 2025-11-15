@@ -17,10 +17,9 @@ async function callAPIWithRetry(endpoint, method, data, isMultipart, alreadyRefr
         options.headers["Device-id"] = localStorage.getItem("deviceId");
     }
     options.headers["ngrok-skip-browser-warning"] = `26763`;
-    // if (!endpoint.startsWith("/auth") && accessToken) {
-        
-    // }
-    options.headers["Authorization"] = `Bearer ${accessToken}`;
+    if (!endpoint.startsWith("/auth") && accessToken) {
+        options.headers["Authorization"] = `Bearer ${accessToken}`;
+    }
     if (data) {
         if (isMultipart) options.body = data;
         else {
