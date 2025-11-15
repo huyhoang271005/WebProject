@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Hồ sơ cá nhân</title>
+    <link rel="stylesheet" href="../dialog/dialog.css"/>
+    <link rel="stylesheet" href="../public/card.css"/>
+    <link rel="stylesheet" href="../public/public.css"/>
+    <script src="https://kit.fontawesome.com/e9c281dd3f.js" crossorigin="anonymous"></script>
+    <style>
+
+        .avatar-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .avatar-img {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid #3B82F6;
+        }
+        .date-info {
+            font-size: 0.75rem;
+            color: #9CA3AF; /* xám nhạt hơn */
+            margin-top: 5px;
+            text-align: left;
+        }
+    </style>
+</head>
+<body>
+<div class="card">
+    <h1>Hồ sơ cá nhân</h1>
+
+    <div class="avatar-wrapper">
+        <img id="avatarPreview" src="https://cdn-icons-png.flaticon.com/512/847/847969.png" alt="Avatar Preview" class="avatar-img">
+        <label for="avatar" style="margin-top: 10px; cursor: pointer; color: #3B82F6;">Đổi ảnh</label>
+        <input type="file" id="avatar" accept="image/*" style="display: none;">
+    </div>
+
+    <input type="text" id="username" placeholder="Tên đăng nhập" />
+    <input type="text" id="fullName" placeholder="Họ và tên" />
+    <input type="date" id="birthday" placeholder="Ngày sinh" />
+    <select id="gender">
+        <option value="MALE">Nam</option>
+        <option value="FEMALE">Nữ</option>
+        <option value="OTHER">Khác</option>
+    </select>
+    <input type="email" id="email" placeholder="Email" />
+    <input type="text" id="role" placeholder="Chức vụ" />
+    <div class="date-info">
+        <div>Ngày tạo: <span id="createdAt">01/01/2024</span></div>
+        <div>Cập nhật lần cuối: <span id="updatedAt">15/11/2025</span></div>
+    </div>
+    <button id="saveBtn">Lưu thay đổi</button>
+    <div class="status" id="status"></div>
+</div>
+</body>
+<script type="module" src="./js/profile.js"></script>
+</html>
