@@ -36,8 +36,8 @@ async function callAPIWithRetry(endpoint, method, data, isMultipart, alreadyRefr
                 localStorage.setItem("deviceId", body.data.deviceId);
             }
             if(body.data?.accessToken && body.data?.refreshToken){
-                accessToken = result.accessToken;
-                refreshToken = result.refreshToken;
+                accessToken = body.data.accessToken;
+                refreshToken = body.data.refreshToken;
                 localStorage.setItem("accessToken", accessToken);
                 localStorage.setItem("refreshToken", refreshToken); 
             }
