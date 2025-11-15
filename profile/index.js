@@ -34,7 +34,7 @@ async function loadProfile() {
     updatedAt.textContent = convertToVNTime(profile.updatedAt);
     const html = await fetch("./email-list.html");
     const text = await html.text();
-    emailsSection.insertAdjacentElement('beforeend', text);
+    emailsSection.insertAdjacentHTML('beforeend', text);
     window.emailManager = initEmailList(profile.emails);
 }
 await loadProfile();
