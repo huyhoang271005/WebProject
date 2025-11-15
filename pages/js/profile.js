@@ -19,8 +19,8 @@ async function loadProfile() {
         showDialog('error', result.message);
         return;
     }
-    userId = profile.userId;
     const profile = result.data;
+    userId = profile.userId;
     avatarPreview.src = profile.imageUrl
     avatarId = profile.imageId;
     usernameInput.textContent = profile.username;
