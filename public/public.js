@@ -1,3 +1,6 @@
+/**
+ * Load icon loader
+ */
 export async function getLoader(idLayout) {
     const loader = document.getElementById(idLayout);
     if (!loader) return;
@@ -9,7 +12,6 @@ export async function getLoader(idLayout) {
     loader.insertAdjacentHTML("beforeend", html);
     loader.querySelector('.icon-loader').style.display = 'none';
 }
-
 
 export function showLoader(showLoading) {
     const loader = document.getElementsByClassName('icon-loader');
@@ -23,6 +25,9 @@ export function showLoader(showLoading) {
     }
 }
 
+/**
+ * Load Toggle showPassword, yêu cầu thẻ cha phải có class 'password-layout' và bên trong thẻ cha này có thẻ input
+ */
 export async function getEye() {
     const layoutPassword = document.getElementsByClassName('password-layout');
     const response = await fetch("/WebProject/public/icon-eye.html");

@@ -3,8 +3,7 @@ const API_BASE = "https://uncoagulative-tyrannisingly-eddie.ngrok-free.dev";
 let accessToken = localStorage.getItem("accessToken");
 let refreshToken = localStorage.getItem("refreshToken");
 /**
- * callAPI có thể tự refresh token
- * isMultipart: true nếu gửi FormData
+ * endpoint là bắt buộc, isMultipart: true nếu gửi FormData
  */
 export async function callAPI(endpoint, method = "GET", data = null, isMultipart = false) {
     return await callAPIWithRetry(endpoint, method, data, isMultipart, false);
@@ -18,9 +17,7 @@ async function callAPIWithRetry(endpoint, method, data, isMultipart, alreadyRefr
         options.headers["Device-id"] = localStorage.getItem("deviceId");
     }
     options.headers["ngrok-skip-browser-warning"] = `26763`;
-    if (!endpoint.startsWith("/auth") && localStorage.getItem('accessToken')) {
-        options.headers["Authorization"] = `Bearer ${localStorage.getItem('accessToken')}`;
-    }
+    options.headers["Authorization"] = `Bearer ${accessToken}`;
 
     if (data) {
         if (isMultipart) options.body = data;
