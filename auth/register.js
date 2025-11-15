@@ -28,14 +28,14 @@ registerBtn.addEventListener('click', async() => {
     
     const data = new FormData();
     data.append('userRequest', new Blob(
-        [JSON.stringify(
+        [JSON.stringify({
             email,
             password,
             username,
             fullName,
             birthday,
             gender
-        )],
+        })],
         {type: 'application/json'}
     ));
     data.append('avatar', avatar);
