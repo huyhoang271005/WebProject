@@ -1,10 +1,9 @@
-import { BASE_URL } from "../public/public.js";
 let currentCallback = null;
 let dismissDialog = true;
 async function loadDialog() {
   if (document.getElementById("myDialog")) return;
 
-  const response = await fetch(BASE_URL + "/dialog/dialog.html");
+  const response = await fetch("/WebProject/dialog/dialog.html");
   const html = await response.text();
 
   document.body.insertAdjacentHTML("beforeend", html);

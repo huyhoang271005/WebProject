@@ -1,13 +1,12 @@
 import { callAPI } from "../public/api.js";
 import {showDialog} from "../dialog/dialog.js";
-import { getEye, getLoader, showLoader, domIconEye } from "../public/public.js";
+import { getEye, getLoader, showLoader } from "../public/public.js";
 const token = new URLSearchParams(window.location.search).get("token");
 const idPassword = document.getElementById("newPassword");
 const idConfirmPassword = document.getElementById("confirmPassword");
 const changeBtn = document.getElementById("changeBtn");
 const status = document.getElementById("status");
 await getEye();
-await domIconEye();
 await getLoader('changeBtn');
 changeBtn.addEventListener("click", async() => {
     showLoader(true);

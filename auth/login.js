@@ -1,6 +1,6 @@
 import {callAPI} from "../public/api.js";
 import {showDialog} from "../dialog/dialog.js";
-import { showLoader, getLoader, getEye, domIconEye} from "../public/public.js";
+import { showLoader, getLoader, getEye} from "../public/public.js";
 
 const usernameInput = document.getElementById('username');
 const passwordInput = document.getElementById('password');
@@ -10,7 +10,6 @@ const forgotPassword = document.getElementById('forgotPassword');
 const rememberUser = document.getElementById('rememberUser');
 await getLoader('loginBtn');
 await getEye();
-await domIconEye();
 loginBtn.addEventListener('click', async () => {
     showLoader(true);
     const username = usernameInput.value.trim();
