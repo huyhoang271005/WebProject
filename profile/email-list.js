@@ -5,22 +5,16 @@ export function initEmailList(initialEmails = []) {
     const addBtn = document.getElementById("addEmailBtn");
 
     function render() {
-        list.innerHTML = "";
-
         emails.forEach((email, index) => {
-            const row = document.createElement("div");
-            row.style.display = "flex";
-            row.style.gap = "10px";
-            row.style.marginBottom = "8px";
-
-            row.innerHTML = `
+            const innerHTML = `
+            <div style = "display: flex; gap: 10px; margin-bottom: 8px">
                 <input type="email" value="${email.email}" class="email-input"
                     data-index="${index}" />
                 <button class="removeEmailBtn" data-index="${index}"
-                    style="background: #EF4444; width: 50px; margin: 8px 0;">X</button>
+                    style="background: #EF4444; width: 40px; margin: 8px 0;">X</button>
+            </div>
             `;
-
-            list.appendChild(row);
+            list.insertAdjacentHTML("beforeend", innerHTML);
         });
 
         // Xoá email
