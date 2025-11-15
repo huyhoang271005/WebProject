@@ -28,7 +28,7 @@ async function loadProfile() {
     birthdayInput.value = profile.birthday;
     genderInput.value = profile.genderName;
     emailInput.value = profile.emails[0].email;
-    role.value = profile.role;
+    role.value = profile.roleName;
     createdAt.textContent = profile.createdAt;
     updatedAt.textContent = profile.updatedAt;
 }
