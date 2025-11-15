@@ -11,7 +11,6 @@ const rememberUser = document.getElementById('rememberUser');
 await getLoader('loginBtn');
 await getEye();
 loginBtn.addEventListener('click', async () => {
-    showLoader(true);
     const username = usernameInput.value.trim();
     const password = passwordInput.value.trim();
 
@@ -24,13 +23,13 @@ loginBtn.addEventListener('click', async () => {
         statusDiv.style.display = 'block';
         statusDiv.textContent = 'Vui lòng nhập đầy đủ thông tin.';
         statusDiv.classList.add('error');
-        showLoader(false);
         return;
     }
     const data = {
         email: username,
         password: password
     }
+    showLoader(true);
     loginBtn.classList.add('loading');
     const result = await callAPI(`/auth/login`, 'POST', data, false);
     loginBtn.classList.remove('loading');

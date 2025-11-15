@@ -9,13 +9,11 @@ const status = document.getElementById("status");
 await getEye();
 await getLoader('changeBtn');
 changeBtn.addEventListener("click", async() => {
-    showLoader(true);
     const newPassword = idPassword.value.trim();
     const confirmPassword = idConfirmPassword.value.trim();
     if(newPassword != confirmPassword){
         status.textContent = "Mật khẩu không khớp";
         status.classList.add("error");
-        showLoader(false);
         return;
     }
     status.textContent = "";
@@ -23,8 +21,11 @@ changeBtn.addEventListener("click", async() => {
     const data = {
         password: newPassword
     }
+    showLoader(true);
+    changeBtn.classList.add('loading');
     const result = await callAPI(`/auth/verify-change-password?token=${token}`, 
         "POST", data, false);
+    changeBtn.classList.remove('loading');
     showLoader(false);
     if(!result.success && result.data){
         status.classList.add("error");
