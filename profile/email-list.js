@@ -1,4 +1,4 @@
-import { showDialog } from "../dialog";
+import { showDialog } from "../dialog/index.js";
 export function initEmailList(initialEmails = []) {
     let emails = [...initialEmails];
 
