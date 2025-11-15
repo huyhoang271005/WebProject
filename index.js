@@ -1,8 +1,8 @@
 const rememberUser = localStorage.getItem('rememberUser');
 
 if(rememberUser === 'true'){
-    window.location.replace("/WebProject/auth/login");
+    window.location.replace("./auth/login");
 }
 else {
-    window.location.replace("/WebProject/auth/register");
+    window.location.replace("./auth/register");
 }
