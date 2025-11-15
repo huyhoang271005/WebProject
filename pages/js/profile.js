@@ -1,5 +1,6 @@
 import { callAPI } from "../../public/api.js";
 import { showDialog } from "../../dialog/dialog.js";
+import { convertToVNTime } from "../../public/public.js";
 const usernameInput = document.getElementById('username');
 const fullNameInput = document.getElementById('fullName');
 const birthdayInput = document.getElementById('birthday');
@@ -29,8 +30,8 @@ async function loadProfile() {
     genderInput.value = profile.genderName;
     emailInput.value = profile.emails[0].email;
     role.value = profile.roleName;
-    createdAt.textContent = profile.createdAt;
-    updatedAt.textContent = profile.updatedAt;
+    createdAt.textContent = convertToVNTime(profile.createdAt);
+    updatedAt.textContent = convertToVNTime(profile.updatedAt);
 }
 await loadProfile();
 avatarInput.addEventListener('change', (e) => {

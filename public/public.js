@@ -1,5 +1,5 @@
 /**
- * Load icon loader
+ * Loader icon for button, yêu cầu truyền id của button vào hàm
  */
 export async function getLoader(idLayout) {
     const loader = document.getElementById(idLayout);
@@ -26,7 +26,7 @@ export function showLoader(showLoading) {
 }
 
 /**
- * Load Toggle showPassword, yêu cầu thẻ cha phải có class 'password-layout' và bên trong thẻ cha này có thẻ input
+ * Load toggle password, yêu cầu thẻ cha phải có class 'password-layout' và bên trong thẻ cha này có thẻ input
  */
 export async function getEye() {
     const layoutPassword = document.getElementsByClassName('password-layout');
@@ -57,4 +57,8 @@ export async function getEye() {
             input.value = val;
         })
     }
+}
+export function convertToVNTime(utcString) {
+    const date = new Date(utcString);
+    return date.toLocaleString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" });
 }
