@@ -9,7 +9,12 @@
     <link rel="stylesheet" href="../public/public.css"/>
     <script src="https://kit.fontawesome.com/e9c281dd3f.js" crossorigin="anonymous"></script>
     <style>
-
+        .card {
+            display: grid;
+            grid-template-columns: 150px 1fr;
+            grid-template-rows: auto;
+            gap: 20px;
+        }
         .avatar-wrapper {
             display: flex;
             flex-direction: column;
@@ -38,30 +43,33 @@
 </head>
 <body>
 <div class="card">
-    <h1>Hồ sơ cá nhân</h1>
-
+    <!-- Avatar -->
     <div class="avatar-wrapper">
-        <img id="avatarPreview" src="https://cdn-icons-png.flaticon.com/512/847/847969.png" alt="Avatar Preview" class="avatar-img">
-        <label for="avatar" style="margin-top: 10px; cursor: pointer; color: #3B82F6;">Đổi ảnh</label>
-        <input type="file" id="avatar" accept="image/*" style="display: none;">
+        <img id="avatarPreview" src="https://cdn-icons-png.flaticon.com/512/847/847969.png" class="avatar-img" />
+        <label for="avatar" style="cursor:pointer; color:#3B82F6">Đổi ảnh</label>
+        <input type="file" id="avatar" accept="image/*" style="display:none"/>
+        <div id="emailsSection"></div>
     </div>
 
-    <input type="text" id="username" placeholder="Biệt danh" />
-    <input type="text" id="fullName" placeholder="Họ và tên" />
-    <input type="date" id="birthday" placeholder="Ngày sinh" />
-    <select id="gender">
-        <option value="MALE">Nam</option>
-        <option value="FEMALE">Nữ</option>
-        <option value="OTHER">Khác</option>
-    </select>
-    <div id="emailsSection"></div>
-    <input type="text" id="role" placeholder="Chức vụ" />
-    <div class="date-info">
-        <div>Ngày tạo: <span id="createdAt">01/01/2024</span></div>
-        <div>Cập nhật lần cuối: <span id="updatedAt">15/11/2025</span></div>
+    <!-- Info -->
+    <div class="info">
+        <input type="text" id="username" placeholder="Biệt danh" />
+        <input type="text" id="fullName" placeholder="Họ và tên" />
+        <input type="date" id="birthday" placeholder="Ngày sinh" />
+        <select id="gender">
+            <option value="MALE">Nam</option>
+            <option value="FEMALE">Nữ</option>
+            <option value="OTHER">Khác</option>
+        </select>
+
+        <input type="text" id="role" placeholder="Chức vụ" />
+        <div class="date-info">
+            <div>Ngày tạo: <span id="createdAt">01/01/2024</span></div>
+            <div>Cập nhật lần cuối: <span id="updatedAt">15/11/2025</span></div>
+        </div>
+
+        <button id="saveBtn">Lưu thay đổi</button>
     </div>
-    <button id="saveBtn">Lưu thay đổi</button>
-    <div class="status" id="status"></div>
 </div>
 </body>
 <script type="module" src="index.js"></script>
