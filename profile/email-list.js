@@ -1,3 +1,4 @@
+import { showDialog } from "../dialog";
 export function initEmailList(initialEmails = []) {
     let emails = [...initialEmails];
 
@@ -20,10 +21,12 @@ export function initEmailList(initialEmails = []) {
         // Xoá email
         document.querySelectorAll(".removeEmailBtn").forEach(btn => {
             btn.onclick = () => {
-                if(emails.length < 2) return;
-                const idx = btn.dataset.index;
-                emails.splice(idx, 1);
-                render();
+                showDialog('question', 'Bạn có chắc muốn xoá', ()=>{
+                    if(emails.length < 2) return;
+                    const idx = btn.dataset.index;
+                    emails.splice(idx, 1);
+                    render();
+                });
             };
         });
 
