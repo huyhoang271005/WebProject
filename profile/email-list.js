@@ -14,7 +14,7 @@ export function initEmailList(initialEmails = []) {
                     value="${email.email}"
                     class="email-input"
                     data-index="${index}"
-                    ${email.validated ? "readonly" : ""} />
+                    ${email.validated ===true || email.validated === false? "readonly" : ""} />
 
                 <i class="status-icon fa-solid 
                     ${email.validated === true ? 'fa-circle-check' : 
