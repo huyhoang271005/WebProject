@@ -15,8 +15,17 @@ export function initEmailList(initialEmails = []) {
                     data-index="${index}"
                     ${email.validated ? "readonly" : ""} />
 
-                <i class="status-icon fa-solid ${email.validated ? 'fa-circle-check' : 'fa-circle-xmark'}"
-                style="color:${email.validated ? '#10B981' : '#EF4444'};"></i>
+                <i class="status-icon fa-solid 
+                    ${email.validated === true ? 'fa-circle-check' : 
+                    email.validated === false ? 'fa-circle-xmark' : 
+                    'fa-paper-plane'}"
+                    style="color:${
+                        email.validated === true ? '#10B981' : 
+                        email.validated === false ? '#EF4444' : 
+                        '#3B82F6'
+                    };">
+                </i>
+
 
                 <button class="removeEmailBtn" data-index="${index}">
                     X
@@ -55,7 +64,7 @@ export function initEmailList(initialEmails = []) {
     }
 
     addBtn.onclick = () => {
-        emails.push({emailId: null, email: 'abc@gmail.com', validated: false});
+        emails.push({email: 'abc@gmail.com'});
         render();
     };
 
