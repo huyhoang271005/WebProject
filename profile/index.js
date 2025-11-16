@@ -55,6 +55,7 @@ saveBtn.addEventListener('click', async()=> {
         })],
         {type: 'application/json'}
     ));
+    data.append('avatar', avatarInput.files[0]);
     const result = await callAPI('/profile', 'PUT', data, true);
     showDialog(result.success ? 'success': 'error', result.message);
 });
