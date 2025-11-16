@@ -97,7 +97,7 @@ export function initEmailList(initialEmails = []) {
     }
 
     addBtn.onclick = () => {
-        emails.push({email: 'abc@gmail.com'});
+        emails.push({email: 'abc@gmail.com', validated: null});
         render();
     };
 
