@@ -1,4 +1,5 @@
 import { showDialog } from "../dialog/index.js";
+import { callAPI } from "../public/api.js";
 export function initEmailList(initialEmails = []) {
     let emails = [...initialEmails];
 
@@ -18,7 +19,9 @@ export function initEmailList(initialEmails = []) {
                 <i class="status-icon fa-solid 
                     ${email.validated === true ? 'fa-circle-check' : 
                     email.validated === false ? 'fa-circle-xmark' : 
-                    'fa-paper-plane'}"
+                    'fa-paper-plane'}
+                    ${email.validated === null ? 'verify-icon' : ''}"
+                    data-index = "${index}"
                     style="color:${
                         email.validated === true ? '#10B981' : 
                         email.validated === false ? '#EF4444' : 
@@ -51,6 +54,16 @@ export function initEmailList(initialEmails = []) {
                     emails.splice(idx, 1);
                     render();
                 }
+            };
+        });
+
+        document.querySelectorAll(".verify-icon").forEach(icon => {
+            icon.onclick = () => {
+                const idx = icon.dataset.index;
+                const email = emails[idx];
+                showDialog('question', `Gửi email xác thực đến ${email.email}`, async () => {
+                    
+                });
             };
         });
 

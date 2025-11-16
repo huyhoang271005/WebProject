@@ -87,6 +87,22 @@
             transform: scale(0.95);
         }
 
+        .verify-icon {
+            cursor: pointer;
+            transition: transform 0.15s ease, opacity 0.15s ease;
+        }
+
+        /* Hover: phóng to nhẹ + sáng màu */
+        .verify-icon:hover {
+            transform: scale(1.15);
+            opacity: 0.9;
+        }
+
+        /* Click: thu nhỏ nhẹ */
+        .verify-icon:active {
+            transform: scale(0.9);
+            opacity: 0.7;
+        }
 
         #addEmailBtn {
             margin-top: 5px;
