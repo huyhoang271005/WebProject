@@ -14,7 +14,6 @@ const updatedAt = document.getElementById('updatedAt');
 const avatarInput = document.getElementById('avatar');
 const avatarPreview = document.getElementById('avatarPreview');
 let avatarId = null;
-let userId = null;
 async function loadProfile() {
     const result = await callAPI('/profile');
     if(!result.success){
@@ -22,7 +21,6 @@ async function loadProfile() {
         return;
     }
     const profile = result.data;
-    userId = profile.userId;
     avatarPreview.src = profile.imageUrl
     avatarId = profile.imageId;
     usernameInput.value = profile.username;
@@ -43,4 +41,16 @@ avatarInput.addEventListener('change', (e) => {
     if(file){
         avatarPreview.src = URL.createObjectURL(file);
     }
+});
+saveBtn.addEventListener('click', async()=> {
+    const data = {
+        usernane: usernameInput.value,
+        fullName: fullNameInput.value,
+        birthday: birthdayInput.value,
+        genderName: genderInput.value,
+        roleName: role.value,
+        imageId: avatarId
+    }
+    const result = await callAPI('/profile', 'PUT', data);
+    showDialog(result.success ? 'success': 'error', result.message);
 });
