@@ -55,6 +55,6 @@ saveBtn.addEventListener('click', async()=> {
         })],
         {type: 'application/json'}
     ));
-    const result = await callAPI('/profile', 'PUT', data);
+    const result = await callAPI('/profile', 'PUT', data, true);
     showDialog(result.success ? 'success': 'error', result.message);
 });
