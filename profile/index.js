@@ -1,6 +1,6 @@
 import { callAPI } from "../public/api.js";
 import { showDialog } from "../dialog/index.js";
-import { convertToVNTime } from "../public/public.js";
+import { convertToVNTime, getLoader, showLoader } from "../public/public.js";
 import { initEmailList } from "./email-list.js";
 const usernameInput = document.getElementById('username');
 const fullNameInput = document.getElementById('fullName');
@@ -13,6 +13,7 @@ const createdAt = document.getElementById('createdAt');
 const updatedAt = document.getElementById('updatedAt');
 const avatarInput = document.getElementById('avatar');
 const avatarPreview = document.getElementById('avatarPreview');
+await getLoader('saveBtn');
 let avatarId = null;
 async function loadProfile() {
     const result = await callAPI('/profile');
@@ -56,6 +57,8 @@ saveBtn.addEventListener('click', async()=> {
         {type: 'application/json'}
     ));
     data.append('avatar', avatarInput.files[0]);
+    showLoader(true);
     const result = await callAPI('/profile', 'PUT', data, true);
+    showLoader(false);
     showDialog(result.success ? 'success': 'error', result.message);
 });
