@@ -11,6 +11,8 @@ export function initEmailList(initialEmails = []) {
             <div style = "display: flex; gap: 10px; margin-bottom: 8px">
                 <input type="email" value="${email.email}" class="email-input"
                     data-index="${index}" ${email.validated ? 'readonly': ''}/>
+                    <i class="fa-solid ${email.validated ? 'fa-circle-check' : 'fa-circle-xmark'}"
+                        style="color:${email.validated ? '#10B981' : '#EF4444'};"></i>
                 <button class="removeEmailBtn" data-index="${index}"
                     style="background: #EF4444; width: 40px; margin: 8px 0; padding: 0;">X</button>
             </div>
@@ -21,12 +23,18 @@ export function initEmailList(initialEmails = []) {
         // Xoá email
         document.querySelectorAll(".removeEmailBtn").forEach(btn => {
             btn.onclick = () => {
-                showDialog('question', 'Bạn có chắc muốn xoá', ()=>{
-                    if(emails.length < 2) return;
-                    const idx = btn.dataset.index;
+                if(emails.length < 2) return;
+                const idx = btn.dataset.index;
+                if(emails[idx].validated){
+                    showDialog('question', 'Bạn có chắc muốn xoá email đã được xác thực rồi không?', ()=>{
+                        emails.splice(idx, 1);
+                        render();
+                    });
+                }
+                else {
                     emails.splice(idx, 1);
                     render();
-                });
+                }
             };
         });
 
