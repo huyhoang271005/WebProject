@@ -41,13 +41,20 @@ export function initEmailList(initialEmails = []) {
 
         // Xoá email
         document.querySelectorAll(".removeEmailBtn").forEach(btn => {
-            btn.onclick = () => {
+            btn.onclick = async() => {
                 if(emails.length < 2) return;
                 const idx = btn.dataset.index;
-                if(emails[idx].validated){
-                    showDialog('question', 'Bạn có chắc muốn xoá email đã được xác thực rồi không?', ()=>{
-                        emails.splice(idx, 1);
-                        render();
+                const email = emails[idx];
+                if(email.validated){
+                    showDialog('question', 'Bạn có chắc muốn xoá email đã được xác thực rồi không?', async()=>{
+                        const result = await callAPI(`/email?emailId=${email.emailId}`, 'DELETE')
+                        if(result.success){
+                            emails.splice(idx, 1);
+                            render();
+                        }
+                        else {
+                            showDialog('error', result.message);
+                        }
                     });
                 }
                 else {
@@ -58,11 +65,24 @@ export function initEmailList(initialEmails = []) {
         });
 
         document.querySelectorAll(".verify-icon").forEach(icon => {
-            icon.onclick = () => {
+            icon.onclick = async() => {
                 const idx = icon.dataset.index;
                 const email = emails[idx];
                 showDialog('question', `Gửi email xác thực đến ${email.email}`, async () => {
-                    
+                    const addEmail = await callAPI('/email', 'POST', {email: email.email});
+                    if (addEmail.success){
+                        const result = await callAPI('/auth/send-verify-email', 'POST', {email: email.email});
+                        if(result.success){
+                            email.validated = false;
+                            render();
+                        }
+                        else {
+                            showDialog('error', result.message);
+                        }
+                    }
+                    else {
+                        showDialog('error', addEmail.message);
+                    }
                 });
             };
         });
@@ -82,11 +102,4 @@ export function initEmailList(initialEmails = []) {
     };
 
     render();
-
-    // Hàm trả kết quả khi cần lưu
-    return {
-        getEmails() {
-            return emails;
-        }
-    };
 }
