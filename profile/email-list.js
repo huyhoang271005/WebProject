@@ -8,14 +8,21 @@ export function initEmailList(initialEmails = []) {
         list.innerHTML = "";
         emails.forEach((email, index) => {
             const innerHTML = `
-            <div style = "display: flex; align-items:center; gap: 10px; margin-bottom: 8px">
-                <input type="email" value="${email.email}" class="email-input"
-                    data-index="${index}" ${email.validated ? 'readonly': ''}/>
-                    <i class="fa-solid ${email.validated ? 'fa-circle-check' : 'fa-circle-xmark'}"
-                        style="color:${email.validated ? '#10B981' : '#EF4444'};"></i>
-                <button class="removeEmailBtn" data-index="${index}"
-                    style="background: #EF4444; width: 40px; margin: 8px 0; padding: 0;">X</button>
+            <div class="email-row">
+                <input type="email"
+                    value="${email.email}"
+                    class="email-input"
+                    data-index="${index}"
+                    ${email.validated ? "readonly" : ""} />
+
+                <i class="status-icon fa-solid ${email.validated ? 'fa-circle-check' : 'fa-circle-xmark'}"
+                style="color:${email.validated ? '#10B981' : '#EF4444'};"></i>
+
+                <button class="removeEmailBtn" data-index="${index}">
+                    X
+                </button>
             </div>
+
             `;
             list.insertAdjacentHTML("beforeend", innerHTML);
         });

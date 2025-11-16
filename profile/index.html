@@ -45,6 +45,47 @@
             font-size: 0.9rem;
             color: #333;
         }
+        .email-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 8px;
+        }
+
+        .email-input {
+            flex: 1;                    /* Input chiếm phần còn lại → icon + nút có không gian */
+            padding: 6px 10px;
+        }
+
+        .status-icon {
+            font-size: 18px;
+            line-height: 1;
+        }
+
+        .removeEmailBtn {
+            background: #EF4444;
+            color: white;
+            width: 32px;
+            height: 32px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.15s ease;   /* hiệu ứng mượt */
+        }
+
+        /* Hover: sáng màu, hơi phóng to */
+        .removeEmailBtn:hover {
+            background: #F87171;
+            transform: scale(1.05);
+        }
+
+        /* Khi Click: tối màu + thu nhỏ */
+        .removeEmailBtn:active {
+            background: #DC2626;
+            transform: scale(0.95);
+        }
+
+
         #addEmailBtn {
             margin-top: 5px;
         }
