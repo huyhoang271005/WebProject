@@ -14,18 +14,35 @@ h1 {
 input, select {
   width: 100%;
   box-sizing: border-box;
-  padding: 10px;
+  padding: 10px 12px;
   margin: 8px 0;
-  border: 1px solid #ccc;
+  border: 1.5px solid #d1d5db;   /* màu viền xám đẹp hơn */
   border-radius: 8px;
   font-size: 1rem;
+  transition: all 0.2s ease;     /* hiệu ứng mượt */
+  background-color: #fff;
 }
 
-input:focus, select:hover {
+/* Hover: viền đậm rất nhẹ */
+input:hover, select:hover {
+  border-color: #9ca3af; 
+}
+
+/* Focus: hiệu ứng bo màu xanh + shadow nhẹ kiểu Tailwind */
+input:focus, select:focus {
   outline: none;
   border-color: #3B82F6;
-  box-shadow: 0 0 5px rgba(59,130,246,0.5);
+  box-shadow: 0 0 0 3px rgba(59,130,246,0.25); /* vòng sáng xanh mượt */
+  background-color: #ffffff;
 }
+
+/* Khi disabled */
+input:disabled, select:disabled {
+  background-color: #f3f4f6;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
 button {
   margin-top: 20px;
   background-color: #3B82F6;
