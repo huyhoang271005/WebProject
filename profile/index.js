@@ -46,7 +46,7 @@ saveBtn.addEventListener('click', async()=> {
     const data = new FormData();
     data.append('profileRequest', new Blob(
         [JSON.stringify({
-            usernane: usernameInput.value,
+            username: usernameInput.value,
             fullName: fullNameInput.value,
             birthday: birthdayInput.value,
             genderName: genderInput.value,
