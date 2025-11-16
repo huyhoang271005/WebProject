@@ -43,14 +43,18 @@ avatarInput.addEventListener('change', (e) => {
     }
 });
 saveBtn.addEventListener('click', async()=> {
-    const data = {
-        usernane: usernameInput.value,
-        fullName: fullNameInput.value,
-        birthday: birthdayInput.value,
-        genderName: genderInput.value,
-        roleName: role.value,
-        imageId: avatarId
-    }
+    const data = new FormData();
+    data.append('profileRequest', new Blob(
+        [JSON.stringify({
+            usernane: usernameInput.value,
+            fullName: fullNameInput.value,
+            birthday: birthdayInput.value,
+            genderName: genderInput.value,
+            roleName: role.value,
+            imageId: avatarId
+        })],
+        {type: 'application/json'}
+    ));
     const result = await callAPI('/profile', 'PUT', data);
     showDialog(result.success ? 'success': 'error', result.message);
 });
