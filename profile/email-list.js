@@ -69,6 +69,7 @@ export function initEmailList(initialEmails = []) {
                 const idx = icon.dataset.index;
                 const email = emails[idx];
                 await showDialog('question', `Gửi email xác thực đến ${email.email}`, async () => {
+                    if(email.email == 'abc@gmail.com') return;
                     const addEmail = await callAPI('/email', 'POST', {email: email.email});
                     if (addEmail.success){
                         const result = await callAPI('/auth/send-verify-email', 'POST', {email: email.email});
