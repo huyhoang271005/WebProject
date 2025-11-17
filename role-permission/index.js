@@ -52,7 +52,7 @@ function render() {
 
                 <div style="margin-top:10px;">
                     <select class="perm-select" data-role="${roleIndex}">
-                        <option value="">-- Chọn permission --</option>
+                        <option value="">-- Chọn quyền --</option>
                         ${ALL_PERMISSIONS
                             .filter(p => !role.permissions.includes(p))
                             .map(p => `<option value="${p}">${p}</option>`)
