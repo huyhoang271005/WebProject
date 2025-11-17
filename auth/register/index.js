@@ -59,9 +59,11 @@ registerBtn.addEventListener('click', async() => {
                 statusDiv.textContent += err.error + '\n';
             });
         }
+        showDialog('error', result.message);
     }
     else {
-        await callAPI('/auth/send-verify-email', 'POST', {email});
+        const sendEmail = await callAPI('/auth/send-verify-email', 'POST', {email});
+        showDialog(sendEmail.success ? 'success' : 'error', sendEmail.message);
     }
-    showDialog(result.success ? 'success' : 'error', result.message);
+    
 });
