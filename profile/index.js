@@ -58,7 +58,9 @@ saveBtn.addEventListener('click', async()=> {
     ));
     data.append('avatar', avatarInput.files[0]);
     showLoader(true);
+    saveBtn.classList.add('loading');
     const result = await callAPI('/profile', 'PUT', data, true);
+    saveBtn.classList.remove('loading');
     showLoader(false);
     showDialog(result.success ? 'success': 'error', result.message);
 });
