@@ -1,6 +1,6 @@
 import { callAPI } from "../public/api.js";
 import { showDialog } from "../dialog/index.js";
-import { getLoader, showLoader } from "../public/public";
+import { getLoader, showLoader } from "../public/public.js";
 let roles = [
     { 
         name: "ADMIN",
