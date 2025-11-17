@@ -76,6 +76,18 @@ button:focus {
   outline: 3px solid rgba(59, 130, 246, 0.4);
 }
 
+button.delete {
+    background: #EF4444;
+}
+
+button.delete:active {
+  background: #DC2626;
+}
+
+button.delete:hover {
+    background: #F87171;
+}
+
 
 /* trạng thái loading */
 button.loading {

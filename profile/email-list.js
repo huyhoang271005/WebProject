@@ -30,7 +30,7 @@ export function initEmailList(initialEmails = []) {
                 </i>
 
 
-                <button class="removeEmailBtn" data-index="${index}">
+                <button class="delete removeEmailBtn" data-index="${index}">
                     X
                 </button>
             </div>
