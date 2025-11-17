@@ -49,7 +49,7 @@ loginBtn.addEventListener('click', async () => {
         else {
             status = 'question';
         }
-        showDialog(status, result.message, async () => await verify(result.data, username), 
+        await showDialog(status, result.message, async () => await verify(result.data, username), 
         status == 'error' || status == 'success' || !result.data? 'Đồng ý': 'Gửi email xác thực');
     }
     else {
@@ -64,13 +64,13 @@ loginBtn.addEventListener('click', async () => {
 });
 
 forgotPassword.addEventListener('click', async () => {
-    showDialog('question', "Chúng tôi sẽ gửi một thông báo qua địa chỉ email bạn nhập bên trên để xác nhận?", async () => {
+    await showDialog('question', "Chúng tôi sẽ gửi một thông báo qua địa chỉ email bạn nhập bên trên để xác nhận?", async () => {
         const username = usernameInput.value.trim();
         const data = {
             email: username
         }
         const result = await callAPI(`/auth/send-verify-change-password`, 'POST', data);
-        showDialog(result.success ? 'success' : 'error', result.message);
+        await showDialog(result.success ? 'success' : 'error', result.message);
     });
 });
 
@@ -86,5 +86,5 @@ async function verify(result, email) {
     else if(result.verifiedDevice === false){
         resultSend = await callAPI(`/auth/send-verify-device`, 'POST', data);
     }
-    showDialog(resultSend.success ? 'success' : 'error', resultSend.message);
+    await showDialog(resultSend.success ? 'success' : 'error', resultSend.message);
 }

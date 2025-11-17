@@ -33,5 +33,5 @@ changeBtn.addEventListener("click", async() => {
             status.textContent += err.error;
         });
     }
-    showDialog(result.success ? 'success' : 'error', result.message);
+    await showDialog(result.success ? 'success' : 'error', result.message);
 });

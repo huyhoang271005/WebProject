@@ -46,14 +46,14 @@ export function initEmailList(initialEmails = []) {
                 const idx = btn.dataset.index;
                 const email = emails[idx];
                 if(email.validated === true || email.validated === false){
-                    showDialog('question', 'Bạn có chắc muốn xoá email này không?', async()=>{
+                    await showDialog('question', 'Bạn có chắc muốn xoá email này không?', async()=>{
                         const result = await callAPI(`/email?emailId=${email.emailId}`, 'DELETE')
                         if(result.success){
                             emails.splice(idx, 1);
                             render();
                         }
                         else {
-                            showDialog('error', result.message);
+                            await showDialog('error', result.message);
                         }
                     });
                 }
@@ -68,7 +68,7 @@ export function initEmailList(initialEmails = []) {
             icon.onclick = async() => {
                 const idx = icon.dataset.index;
                 const email = emails[idx];
-                showDialog('question', `Gửi email xác thực đến ${email.email}`, async () => {
+                await showDialog('question', `Gửi email xác thực đến ${email.email}`, async () => {
                     const addEmail = await callAPI('/email', 'POST', {email: email.email});
                     if (addEmail.success){
                         const result = await callAPI('/auth/send-verify-email', 'POST', {email: email.email});
@@ -77,11 +77,11 @@ export function initEmailList(initialEmails = []) {
                             render();
                         }
                         else {
-                            showDialog('error', result.message);
+                            await showDialog('error', result.message);
                         }
                     }
                     else {
-                        showDialog('error', addEmail.message);
+                        await showDialog('error', addEmail.message);
                     }
                 });
             };

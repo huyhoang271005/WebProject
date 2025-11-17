@@ -18,7 +18,7 @@ let avatarId = null;
 async function loadProfile() {
     const result = await callAPI('/profile');
     if(!result.success){
-        showDialog('error', result.message);
+        await showDialog('error', result.message);
         return;
     }
     const profile = result.data;
@@ -62,5 +62,5 @@ saveBtn.addEventListener('click', async()=> {
     const result = await callAPI('/profile', 'PUT', data, true);
     saveBtn.classList.remove('loading');
     showLoader(false);
-    showDialog(result.success ? 'success': 'error', result.message);
+    await showDialog(result.success ? 'success': 'error', result.message);
 });
