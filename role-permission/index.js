@@ -1,3 +1,6 @@
+import { callAPI } from "../public/api.js";
+import { showDialog } from "../dialog/index.js";
+import { getLoader, showLoader } from "../public/public";
 let roles = [
     { 
         name: "ADMIN",
@@ -8,6 +11,17 @@ let roles = [
         permissions: ["VIEW_PROFILE"]
     }
 ];
+
+const ALL_PERMISSIONS = [
+  "VIEW_USER",
+  "EDIT_USER",
+  "DELETE_USER",
+  "VIEW_PROFILE",
+  "EDIT_PROFILE",
+  "BAN_USER",
+  "EXPORT_DATA"
+];
+
 
 const roleList = document.getElementById("roleList");
 const addRoleBtn = document.getElementById("addRoleBtn");
@@ -21,7 +35,7 @@ function render() {
             <div class="role">
                 <div class="role-header">
                     <strong>${role.name}</strong>
-                    <button class="delete delete-role-btn" data-index="${roleIndex}">Xóa Role</button>
+                    <button class="delete delete-role-btn" data-index="${roleIndex}">Xóa chức vụ</button>
                 </div>
 
                 <div class="permission-list" id="perm-${roleIndex}">
@@ -37,8 +51,14 @@ function render() {
                 </div>
 
                 <div style="margin-top:10px;">
-                    <input class="new-perm-input" id="new-perm-${roleIndex}" placeholder="Thêm permission...">
-                    <button class="add-perm-btn" data-role="${roleIndex}">Thêm</button>
+                    <select class="perm-select" data-role="${roleIndex}">
+                        <option value="">-- Chọn permission --</option>
+                        ${ALL_PERMISSIONS
+                            .filter(p => !role.permissions.includes(p))
+                            .map(p => `<option value="${p}">${p}</option>`)
+                            .join("")}
+                        </select>
+                        <button class="add-perm-btn" data-role="${roleIndex}">Thêm</button>
                 </div>
             </div>
         `;
@@ -85,15 +105,15 @@ function initEvents() {
     document.querySelectorAll(".add-perm-btn").forEach(btn => {
         btn.onclick = () => {
             const roleIdx = btn.dataset.role;
-            const input = document.getElementById(`new-perm-${roleIdx}`);
+            const select = document.querySelector(`.perm-select[data-role="${roleIdx}"]`);
+            const value = select.value;
+            if (!value) return;
 
-            if (!input.value.trim()) return;
-
-            roles[roleIdx].permissions.push(input.value.trim());
-            input.value = "";
-            render();
+            roles[roleIdx].permissions.push(value);
+            render(); // render lại danh sách role + permission
         };
     });
+
 }
 
 // Thêm Role
