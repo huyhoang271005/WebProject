@@ -127,6 +127,7 @@ async function initEvents() {
                 ROLE_PERMISSIONS[roleIdx].permissions.push({rolePermissionId: result.data.rolePermissionId, permissionName: value});
                 await render();
             }
+            await showDialog(result.success ? 'success' : 'error', result.message);
         };
     });
 
@@ -145,9 +146,7 @@ addRoleBtn.onclick = async() => {
         newRoleName.value = "";
         await render();
     }
-    else {
-        await showDialog('error', result.message);
-    }
+    await showDialog(result.success ? 'success' : 'error', result.message);
 };
 
 // Khởi động
