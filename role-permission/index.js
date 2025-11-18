@@ -1,7 +1,7 @@
 import { callAPI } from "../public/api.js";
 import { showDialog } from "../dialog/index.js";
 import { getLoader, showLoader } from "../public/public.js";
-let rolePermissions = [];
+let ROLE_PERMISSIONS = [];
 let ALL_PERMISSIONS = [];
 const resultRolePermission = await callAPI('/auth/role-permission');
 const resultPermission = await callAPI('/auth/permission');
@@ -10,7 +10,7 @@ async function loadRolePermission() {
         await showDialog('error', resultRolePermission.message);
         return;
     }
-    rolePermissions = resultRolePermission.data;
+    ROLE_PERMISSIONS = resultRolePermission.data;
 }
 async function loadPermission() {
     if(!resultPermission.success){
@@ -28,7 +28,7 @@ const newRoleName = document.getElementById("newRoleName");
 function render() {
     roleList.innerHTML = "";
 
-    rolePermissions.forEach((rolePermission, roleIndex) => {
+    ROLE_PERMISSIONS.forEach((rolePermission, roleIndex) => {
         const roleHTML = `
             <div class="role">
                 <div class="role-header">
@@ -52,10 +52,8 @@ function render() {
                     <select class="perm-select" data-role="${roleIndex}">
                         <option value="">-- Chọn quyền --</option>
                         ${ALL_PERMISSIONS
-                            .filter(p => !p.permissionName.include(rolePermissions.permissions.map(
-                                rp=>{
-                                    rp.permissionName
-                                }).join("")
+                            .filter(p => !p.permissionName.includes(ROLE_PERMISSIONS.permissions
+                                .map(rp=>rp.permissionName)
                             ))
                             .map(p => `<option value="${p.permissionName}">${p}</option>`)
                             .join("")}
@@ -77,7 +75,7 @@ function initEvents() {
     document.querySelectorAll(".delete-role-btn").forEach(btn => {
         btn.onclick = () => {
             const idx = btn.dataset.index;
-            rolePermissions.splice(idx, 1);
+            ROLE_PERMISSIONS.splice(idx, 1);
             render();
         };
     });
@@ -88,7 +86,7 @@ function initEvents() {
             const roleIdx = btn.dataset.role;
             const permIdx = btn.dataset.perm;
 
-            rolePermissions[roleIdx].permissions.splice(permIdx, 1);
+            ROLE_PERMISSIONS[roleIdx].permissions.splice(permIdx, 1);
             render();
         };
     });
@@ -99,7 +97,7 @@ function initEvents() {
             const roleIdx = input.dataset.role;
             const permIdx = input.dataset.perm;
 
-            rolePermissions[roleIdx].permissions[permIdx].permissionName = input.value;
+            ROLE_PERMISSIONS[roleIdx].permissions[permIdx].permissionName = input.value;
         };
     });
 
@@ -111,7 +109,7 @@ function initEvents() {
             const value = select.value;
             if (!value) return;
 
-            rolePermissions[roleIdx].permissions.push(value);
+            ROLE_PERMISSIONS[roleIdx].permissions.push(value);
             render(); // render lại danh sách role + permission
         };
     });
@@ -123,7 +121,7 @@ addRoleBtn.onclick = () => {
     const name = newRoleName.value.trim().toUpperCase();
     if (!name) return;
 
-    rolePermissions.push({ name, permissions: [] });
+    ROLE_PERMISSIONS.push({ name, permissions: [] });
     newRoleName.value = "";
     render();
 };
