@@ -78,26 +78,34 @@ async function initEvents() {
         btn.onclick = async() => {
             const idx = btn.dataset.index;
             const result = await callAPI(`/role?roleId=${ROLE_PERMISSIONS[idx].roleId}`, 'DELETE');
-            if(result.success){
-                ROLE_PERMISSIONS.splice(idx, 1);
-                await render();
-            }
-            await showDialog(result.success ? 'success' : 'error', result.message);
+            await showDialog('question', `Bạn có muốn xoá chức vụ ${ROLE_PERMISSIONS[idx].roleName} không?`,
+                async() => {
+                    if(result.success){
+                        ROLE_PERMISSIONS.splice(idx, 1);
+                        await render();
+                    }
+                    await showDialog(result.success ? 'success' : 'error', result.message);
+                }
+            )
         };
     });
 
-    // Xoá permission
+    // Xoá role permission
     document.querySelectorAll(".remove-perm-btn").forEach(btn => {
         btn.onclick = async() => {
             const roleIdx = btn.dataset.role;
             const permIdx = btn.dataset.perm;
             const rolePermissionId = ROLE_PERMISSIONS[roleIdx].permissions[permIdx].rolePermissionId;
-            const result = await callAPI(`/role-permission?rolePermissionId=${rolePermissionId}`, 'DELETE');
-            if(result.success){
-                ROLE_PERMISSIONS[roleIdx].permissions.splice(permIdx, 1);
-                await render();
-            }
-            await showDialog(result.success ? 'success' : 'error', result.message);
+            await showDialog('question', `Bạn có muốn xoá quyền ${ALL_PERMISSIONS[permIdx].permissionName} 
+                cho chức vụ ${ROLE_PERMISSIONS[roleIdx].roleName} không?`, 
+                async() => {
+                    const result = await callAPI(`/role-permission?rolePermissionId=${rolePermissionId}`, 'DELETE');
+                    if(result.success){
+                        ROLE_PERMISSIONS[roleIdx].permissions.splice(permIdx, 1);
+                        await render();
+                    }
+                    await showDialog(result.success ? 'success' : 'error', result.message);
+                });
         };
     });
 
