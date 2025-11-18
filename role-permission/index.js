@@ -77,16 +77,16 @@ async function initEvents() {
     document.querySelectorAll(".delete-role-btn").forEach(btn => {
         btn.onclick = async() => {
             const idx = btn.dataset.index;
-            const result = await callAPI(`/role?roleId=${ROLE_PERMISSIONS[idx].roleId}`, 'DELETE');
             await showDialog('question', `Bạn có muốn xoá chức vụ ${ROLE_PERMISSIONS[idx].roleName} không?`,
                 async() => {
+                    const result = await callAPI(`/role?roleId=${ROLE_PERMISSIONS[idx].roleId}`, 'DELETE');
                     if(result.success){
                         ROLE_PERMISSIONS.splice(idx, 1);
                         await render();
                     }
                     await showDialog(result.success ? 'success' : 'error', result.message);
                 }
-            )
+            );
         };
     });
 
