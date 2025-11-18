@@ -43,7 +43,7 @@ async function render() {
                 <div class="permission-list" id="perm-${roleIndex}">
                     ${rolePermission.permissions.map((p, permIndex) => `
                         <div class="permission-row">
-                            <input value="${p.permissionName}" data-role="${roleIndex}" data-perm="${permIndex}">
+                            <input value="${p.permissionName}" data-role="${roleIndex}" data-perm="${permIndex}" readonly>
                             <button class="delete remove-perm-btn" 
                                 data-role="${roleIndex}" data-perm="${permIndex}">
                                 X
@@ -77,8 +77,14 @@ async function initEvents() {
     document.querySelectorAll(".delete-role-btn").forEach(btn => {
         btn.onclick = async() => {
             const idx = btn.dataset.index;
-            ROLE_PERMISSIONS.splice(idx, 1);
-            await render();
+            const result = await callAPI(`/auth/role?roleId=${ROLE_PERMISSIONS[idx].roleId}`, 'DELETE');
+            if(result.success){
+                ROLE_PERMISSIONS.splice(idx, 1);
+                await render();
+            }
+            else {
+                await showDialog('error', result.message);
+            }
         };
     });
 
@@ -122,10 +128,18 @@ async function initEvents() {
 addRoleBtn.onclick = async() => {
     const name = newRoleName.value.trim().toUpperCase();
     if (!name) return;
-
-    ROLE_PERMISSIONS.push({ name, permissions: [] });
-    newRoleName.value = "";
-    await render();
+    const data = {
+        roleName: name
+    }
+    const result = await callAPI('/auth/role', 'POST', data);
+    if(result.success){
+        ROLE_PERMISSIONS.push({ RoleName: name});
+        newRoleName.value = "";
+        await render();
+    }
+    else {
+        await showDialog('error', result.message);
+    }
 };
 
 // Khởi động
