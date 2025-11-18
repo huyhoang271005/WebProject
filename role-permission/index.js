@@ -96,7 +96,7 @@ async function initEvents() {
             const roleIdx = btn.dataset.role;
             const permIdx = btn.dataset.perm;
             const rolePermissionId = ROLE_PERMISSIONS[roleIdx].permissions[permIdx].rolePermissionId;
-            await showDialog('question', `Bạn có muốn xoá quyền ${ALL_PERMISSIONS[permIdx].permissionName} 
+            await showDialog('question', `Bạn có muốn xoá quyền ${ROLE_PERMISSIONS[roleIdx].permissions[permIdx].permissionName} 
                 cho chức vụ ${ROLE_PERMISSIONS[roleIdx].roleName} không?`, 
                 async() => {
                     const result = await callAPI(`/role-permission?rolePermissionId=${rolePermissionId}`, 'DELETE');
