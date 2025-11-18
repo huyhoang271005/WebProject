@@ -111,7 +111,7 @@ async function initEvents() {
         };
     });
 
-    // Thêm permission
+    // Thêm role permission
     document.querySelectorAll(".add-perm-btn").forEach(btn => {
         btn.onclick = async() => {
             const roleIdx = btn.dataset.role;
@@ -141,7 +141,7 @@ addRoleBtn.onclick = async() => {
     }
     const result = await callAPI('/role', 'POST', data);
     if(result.success){
-        ROLE_PERMISSIONS.push({ roleName: name, permissions: []});
+        ROLE_PERMISSIONS.push({ roleId: result.data.roleId, roleName: name, permissions: []});
         newRoleName.value = "";
         await render();
     }
