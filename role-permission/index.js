@@ -141,7 +141,7 @@ addRoleBtn.onclick = async() => {
     }
     const result = await callAPI('/role', 'POST', data);
     if(result.success){
-        ROLE_PERMISSIONS.push({ RoleName: name, permissions: []});
+        ROLE_PERMISSIONS.push({ roleName: name, permissions: []});
         newRoleName.value = "";
         await render();
     }
