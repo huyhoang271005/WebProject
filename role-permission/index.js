@@ -77,7 +77,7 @@ async function initEvents() {
     document.querySelectorAll(".delete-role-btn").forEach(btn => {
         btn.onclick = async() => {
             const idx = btn.dataset.index;
-            const result = await callAPI(`/auth/role?roleId=${ROLE_PERMISSIONS[idx].roleId}`, 'DELETE');
+            const result = await callAPI(`/role?roleId=${ROLE_PERMISSIONS[idx].roleId}`, 'DELETE');
             if(result.success){
                 ROLE_PERMISSIONS.splice(idx, 1);
                 await render();
@@ -92,7 +92,7 @@ async function initEvents() {
             const roleIdx = btn.dataset.role;
             const permIdx = btn.dataset.perm;
             const rolePermissionId = ROLE_PERMISSIONS[roleIdx].permissions[permIdx].rolePermissionId;
-            const result = await callAPI(`/auth/role-permission?rolePermissionId=${rolePermissionId}`, 'DELETE');
+            const result = await callAPI(`/role-permission?rolePermissionId=${rolePermissionId}`, 'DELETE');
             if(result.success){
                 ROLE_PERMISSIONS[roleIdx].permissions.splice(permIdx, 1);
                 await render();
@@ -122,7 +122,7 @@ async function initEvents() {
                 roleId: ROLE_PERMISSIONS[roleIdx].roleId,
                 permissionId: ALL_PERMISSIONS.filter(p=>p.permissionName === value)[0].permissionId
             }
-            const result = await callAPI('/auth/role-permission', 'POST', data);
+            const result = await callAPI('/role-permission', 'POST', data);
             if(result.success){
                 ROLE_PERMISSIONS[roleIdx].permissions.push({rolePermissionId: result.data.rolePermissionId, permissionName: value});
                 await render();
@@ -139,7 +139,7 @@ addRoleBtn.onclick = async() => {
     const data = {
         roleName: name
     }
-    const result = await callAPI('/auth/role', 'POST', data);
+    const result = await callAPI('/role', 'POST', data);
     if(result.success){
         ROLE_PERMISSIONS.push({ RoleName: name, permissions: []});
         newRoleName.value = "";
