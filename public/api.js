@@ -1,6 +1,6 @@
 const API_BASE = "https://uncoagulative-tyrannisingly-eddie.ngrok-free.dev";
 
-let accessToken = sessionStorage.getItem("accessToken");
+let accessToken = null;
 let refreshToken = localStorage.getItem("refreshToken");
 /**
  * endpoint là bắt buộc, isMultipart: true nếu gửi FormData
@@ -38,7 +38,6 @@ async function callAPIWithRetry(endpoint, method, data, isMultipart, alreadyRefr
             if(body.data?.accessToken && body.data?.refreshToken){
                 accessToken = body.data.accessToken;
                 refreshToken = body.data.refreshToken;
-                sessionStorage.setItem("accessToken", accessToken);
                 localStorage.setItem("refreshToken", refreshToken); 
             }
         }
@@ -52,7 +51,6 @@ async function callAPIWithRetry(endpoint, method, data, isMultipart, alreadyRefr
             if (token?.accessToken && token?.refreshToken) {
                 accessToken = token.accessToken;
                 refreshToken = token.refreshToken;
-                sessionStorage.setItem("accessToken", accessToken);
                 localStorage.setItem("refreshToken", refreshToken);
                 return await callAPIWithRetry(endpoint, method, data, isMultipart, true);
             }
