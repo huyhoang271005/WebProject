@@ -25,10 +25,14 @@ const roleList = document.getElementById("roleList");
 const addRoleBtn = document.getElementById("addRoleBtn");
 const newRoleName = document.getElementById("newRoleName");
 
-function render() {
+async function render() {
     roleList.innerHTML = "";
 
     ROLE_PERMISSIONS.forEach((rolePermission, roleIndex) => {
+
+        // lấy danh sách permissionName đã có
+        const existingPermissions = rolePermission.permissions.map(p => p.permissionName);
+
         const roleHTML = `
             <div class="role">
                 <div class="role-header">
@@ -52,13 +56,11 @@ function render() {
                     <select class="perm-select" data-role="${roleIndex}">
                         <option value="">-- Chọn quyền --</option>
                         ${ALL_PERMISSIONS
-                            .filter(p => !p.permissionName.includes(ROLE_PERMISSIONS.permissions
-                                .map(rp=>rp.permissionName)
-                            ))
-                            .map(p => `<option value="${p.permissionName}">${p}</option>`)
+                            .filter(p => !existingPermissions.includes(p.permissionName))
+                            .map(p => `<option value="${p.permissionName}">${p.permissionName}</option>`)
                             .join("")}
-                        </select>
-                        <button class="add-perm-btn" data-role="${roleIndex}">Thêm</button>
+                    </select>
+                    <button class="add-perm-btn" data-role="${roleIndex}">Thêm</button>
                 </div>
             </div>
         `;
@@ -66,28 +68,28 @@ function render() {
         roleList.insertAdjacentHTML("beforeend", roleHTML);
     });
 
-    initEvents();
+    await initEvents();
 }
 
-function initEvents() {
+async function initEvents() {
 
     // Xoá role
     document.querySelectorAll(".delete-role-btn").forEach(btn => {
-        btn.onclick = () => {
+        btn.onclick = async() => {
             const idx = btn.dataset.index;
             ROLE_PERMISSIONS.splice(idx, 1);
-            render();
+            await render();
         };
     });
 
     // Xoá permission
     document.querySelectorAll(".remove-perm-btn").forEach(btn => {
-        btn.onclick = () => {
+        btn.onclick = async() => {
             const roleIdx = btn.dataset.role;
             const permIdx = btn.dataset.perm;
 
             ROLE_PERMISSIONS[roleIdx].permissions.splice(permIdx, 1);
-            render();
+            await render();
         };
     });
 
@@ -103,28 +105,28 @@ function initEvents() {
 
     // Thêm permission
     document.querySelectorAll(".add-perm-btn").forEach(btn => {
-        btn.onclick = () => {
+        btn.onclick = async() => {
             const roleIdx = btn.dataset.role;
             const select = document.querySelector(`.perm-select[data-role="${roleIdx}"]`);
             const value = select.value;
             if (!value) return;
 
-            ROLE_PERMISSIONS[roleIdx].permissions.push(value);
-            render(); // render lại danh sách role + permission
+            ROLE_PERMISSIONS[roleIdx].permissions.push({permissionName: value, permissions: []});
+            await render(); // render lại danh sách role + permission
         };
     });
 
 }
 
 // Thêm Role
-addRoleBtn.onclick = () => {
+addRoleBtn.onclick = async() => {
     const name = newRoleName.value.trim().toUpperCase();
     if (!name) return;
 
     ROLE_PERMISSIONS.push({ name, permissions: [] });
     newRoleName.value = "";
-    render();
+    await render();
 };
 
 // Khởi động
-render();
+await render();
