@@ -3,8 +3,8 @@ import { showDialog } from "../dialog/index.js";
 import { getLoader, showLoader } from "../public/public.js";
 let ROLE_PERMISSIONS = [];
 let ALL_PERMISSIONS = [];
-const resultRolePermission = await callAPI('/auth/role-permission');
-const resultPermission = await callAPI('/auth/permission');
+const resultRolePermission = await callAPI('/role-permission');
+const resultPermission = await callAPI('/permission');
 async function loadRolePermission() {
     if(!resultRolePermission.success){
         await showDialog('error', resultRolePermission.message);
