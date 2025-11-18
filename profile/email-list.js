@@ -14,7 +14,8 @@ export function initEmailList(initialEmails = []) {
                     value="${email.email}"
                     class="email-input"
                     data-index="${index}"
-                    ${email.validated === true || email.validated === false? "readonly" : ""} />
+                    ${email.validated === true || email.validated === false? "readonly" : ""} 
+                    placeholder = "Email"/>
 
                 <i class="status-icon fa-solid 
                     ${email.validated === true ? 'fa-circle-check' : 
@@ -98,7 +99,7 @@ export function initEmailList(initialEmails = []) {
     }
 
     addBtn.onclick = () => {
-        emails.push({email: 'abc@gmail.com', validated: null});
+        emails.push({email: '', validated: null});
         render();
     };
 
