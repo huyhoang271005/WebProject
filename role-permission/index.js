@@ -10,7 +10,7 @@ async function loadRolePermission() {
         await showDialog('error', resultRolePermission.message);
         return;
     }
-    roles = resultRolePermission.data;
+    rolePermissions = resultRolePermission.data;
 }
 async function loadPermission() {
     if(!resultPermission.success){
