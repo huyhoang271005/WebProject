@@ -76,6 +76,7 @@ button:focus {
   outline: 3px solid rgba(59, 130, 246, 0.4);
 }
 
+/*Button xoá*/
 button.delete {
     background: #EF4444;
 }

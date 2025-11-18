@@ -1,28 +1,26 @@
 import { callAPI } from "../public/api.js";
 import { showDialog } from "../dialog/index.js";
 import { getLoader, showLoader } from "../public/public.js";
-let roles = [
-    { 
-        name: "ADMIN",
-        permissions: ["VIEW_USER", "EDIT_USER", "DELETE_USER"]
-    },
-    {
-        name: "USER",
-        permissions: ["VIEW_PROFILE"]
+let roles = [];
+let ALL_PERMISSIONS = [];
+const resultRolePermission = await callAPI('/auth/role-permission');
+const resultPermission = await callAPI('/auth/permission');
+async function loadRolePermission() {
+    if(!resultRolePermission.success){
+        await showDialog('error', resultRolePermission.message);
+        return;
     }
-];
-
-const ALL_PERMISSIONS = [
-  "VIEW_USER",
-  "EDIT_USER",
-  "DELETE_USER",
-  "VIEW_PROFILE",
-  "EDIT_PROFILE",
-  "BAN_USER",
-  "EXPORT_DATA"
-];
-
-
+    roles = resultRolePermission.data;
+}
+async function loadPermission() {
+    if(!resultPermission.success){
+        await showDialog('error', resultPermission.message);
+        return;
+    }
+    ALL_PERMISSIONS = resultPermission.data;
+}
+await loadRolePermission();
+await loadPermission();
 const roleList = document.getElementById("roleList");
 const addRoleBtn = document.getElementById("addRoleBtn");
 const newRoleName = document.getElementById("newRoleName");
@@ -41,7 +39,7 @@ function render() {
                 <div class="permission-list" id="perm-${roleIndex}">
                     ${role.permissions.map((p, permIndex) => `
                         <div class="permission-row">
-                            <input value="${p}" data-role="${roleIndex}" data-perm="${permIndex}">
+                            <input value="${p.permissionName}" data-role="${roleIndex}" data-perm="${permIndex}">
                             <button class="delete remove-perm-btn" 
                                 data-role="${roleIndex}" data-perm="${permIndex}">
                                 X
@@ -54,8 +52,8 @@ function render() {
                     <select class="perm-select" data-role="${roleIndex}">
                         <option value="">-- Chọn quyền --</option>
                         ${ALL_PERMISSIONS
-                            .filter(p => !role.permissions.includes(p))
-                            .map(p => `<option value="${p}">${p}</option>`)
+                            .filter(p => !role.permissions.permissionId.includes(p.permissionId))
+                            .map(p => `<option value="${p.permissionName}">${p}</option>`)
                             .join("")}
                         </select>
                         <button class="add-perm-btn" data-role="${roleIndex}">Thêm</button>
@@ -97,7 +95,7 @@ function initEvents() {
             const roleIdx = input.dataset.role;
             const permIdx = input.dataset.perm;
 
-            roles[roleIdx].permissions[permIdx] = input.value;
+            roles[roleIdx].permissions[permIdx].permissionName = input.value;
         };
     });
 
