@@ -82,9 +82,7 @@ async function initEvents() {
                 ROLE_PERMISSIONS.splice(idx, 1);
                 await render();
             }
-            else {
-                await showDialog('error', result.message);
-            }
+            await showDialog(result.success ? 'success' : 'error', result.message);
         };
     });
 
@@ -93,9 +91,13 @@ async function initEvents() {
         btn.onclick = async() => {
             const roleIdx = btn.dataset.role;
             const permIdx = btn.dataset.perm;
-
-            ROLE_PERMISSIONS[roleIdx].permissions.splice(permIdx, 1);
-            await render();
+            const rolePermissionId = ROLE_PERMISSIONS[roleIdx].permissions[permIdx].rolePermissionId;
+            const result = await callAPI(`/auth/role-permission?rolePermissionId=${rolePermissionId}`, 'DELETE');
+            if(result.success){
+                ROLE_PERMISSIONS[roleIdx].permissions.splice(permIdx, 1);
+                await render();
+            }
+            await showDialog(result.success ? 'success' : 'error', result.message);
         };
     });
 
@@ -114,11 +116,17 @@ async function initEvents() {
         btn.onclick = async() => {
             const roleIdx = btn.dataset.role;
             const select = document.querySelector(`.perm-select[data-role="${roleIdx}"]`);
-            const value = select.value;
+            const value = select.value.trim().toUpperCase();
             if (!value) return;
-
-            ROLE_PERMISSIONS[roleIdx].permissions.push({permissionName: value, permissions: []});
-            await render(); // render lại danh sách role + permission
+            const data = {
+                roleId: ROLE_PERMISSIONS[roleIdx].roleId,
+                permissionId: ALL_PERMISSIONS.filter(p=>p.permissionName === value)[0].permissionId
+            }
+            const result = await callAPI('/auth/role-permission', 'POST', data);
+            if(result.success){
+                ROLE_PERMISSIONS[roleIdx].permissions.push({rolePermissionId: result.data.rolePermissionId, permissionName: value});
+                await render();
+            }
         };
     });
 
@@ -133,7 +141,7 @@ addRoleBtn.onclick = async() => {
     }
     const result = await callAPI('/auth/role', 'POST', data);
     if(result.success){
-        ROLE_PERMISSIONS.push({ RoleName: name});
+        ROLE_PERMISSIONS.push({ RoleName: name, permissions: []});
         newRoleName.value = "";
         await render();
     }
