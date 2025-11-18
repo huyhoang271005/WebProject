@@ -53,9 +53,7 @@ export function initEmailList(initialEmails = []) {
                             emails.splice(idx, 1);
                             render();
                         }
-                        else {
-                            await showDialog('error', result.message);
-                        }
+                        await showDialog(result.success ? 'success' : 'error', result.message);
                     });
                 }
                 else {
@@ -70,7 +68,7 @@ export function initEmailList(initialEmails = []) {
                 const idx = icon.dataset.index;
                 const email = emails[idx];
                 await showDialog('question', `Gửi email xác thực đến ${email.email}`, async () => {
-                    if(email.email == 'abc@gmail.com') return;
+                    if(email.email === '' || !email?.email) return;
                     const addEmail = await callAPI('/email', 'POST', {email: email.email});
                     if (addEmail.success){
                         const result = await callAPI('/auth/send-verify-email', 'POST', {email: email.email});
@@ -78,9 +76,7 @@ export function initEmailList(initialEmails = []) {
                             email.validated = false;
                             render();
                         }
-                        else {
-                            await showDialog('error', result.message);
-                        }
+                        await showDialog(result.success ? 'success' : 'error', result.message);
                     }
                     else {
                         await showDialog('error', addEmail.message);
