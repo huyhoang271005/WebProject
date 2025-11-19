@@ -15,11 +15,9 @@ changeBtn.addEventListener("click", async() => {
     if(newPassword != confirmPassword){
         status.style.display = 'block';
         status.textContent = "Mật khẩu không khớp";
-        status.classList.add("error");
         return;
     }
     status.textContent = "";
-    status.classList.remove("error");
     const data = {
         password: newPassword
     }
@@ -30,6 +28,7 @@ changeBtn.addEventListener("click", async() => {
     changeBtn.classList.remove('loading');
     showLoader(false);
     if(!result.success && result.data){
+        status.style.display = 'block';
         status.classList.add("error");
         result.data.forEach(err => {
             status.textContent += err.error;

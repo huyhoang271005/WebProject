@@ -7,6 +7,7 @@ import { callAPI } from "../../public/api.js";
   const image = document.getElementById("image");
   const back = document.getElementById("back");
 
+  h1.style.display = 'block';
   const result = await callAPI(`/auth/verify?token=${token}`);
   back.style.display = "inline-block";
   h1.classList.add(result.success ? 'success' : 'error')
