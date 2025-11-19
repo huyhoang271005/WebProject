@@ -75,13 +75,13 @@ async function refreshAccessToken() {
             "Device-type": "WEB"
         }
     });
-    if(res.status === 401) {
+    if(!res.ok) {
         setTimeout(()=>{
             window.location.replace('/WebProJect/auth/login');
         }, 5000);
         return {
             success: false,
-            message: 'Phiên đăng nhập đã hết hạn vui lòng đăng nhập lại',
+            message: 'Phiên đăng nhập đã hết hạn vui lòng đăng nhập lại, sẽ tự động thoát sau 5 giây',
             data: null
         }
     }
