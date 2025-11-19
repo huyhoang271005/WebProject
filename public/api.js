@@ -79,6 +79,7 @@ async function refreshAccessToken() {
         setTimeout(()=>{
             window.location.replace('/WebProject/auth/login');
         }, 5000);
+        localStorage.setItem('rememberUser', 'false');
         return {
             success: false,
             message: 'Phiên đăng nhập đã hết hạn vui lòng đăng nhập lại, sẽ tự động thoát sau 5 giây',
