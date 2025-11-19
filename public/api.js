@@ -71,7 +71,8 @@ async function refreshAccessToken() {
         credentials: "include",
         headers: {
             "Content-Type": "application/json",
-            "Accept": "*/*"
+            "Accept": "*/*",
+            "Device-type": "WEB"
         }
     });
     if(res.status === 401) {
