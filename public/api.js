@@ -50,7 +50,7 @@ async function callAPIWithRetry(endpoint, method, data, isMultipart, alreadyRefr
                 return result;
             }
             const token = result.data;
-            if (token?.accessToken && token?.refreshToken) {
+            if (token?.accessToken) {
                 accessToken = token.accessToken;
                 return await callAPIWithRetry(endpoint, method, data, isMultipart, true);
             }
@@ -77,10 +77,14 @@ async function refreshAccessToken() {
         }
     });
     if(res.status === 401) {
-        await showDialog('error', 'Phiên đăng nhập đã hết hạn vui lòng đăng nhập lại', async() => {
-            window.location.replace('/WebProject/auth/login');
-        });
-        return;
+        setTimeout(()=>{
+            window.location.replace('/WebProJect/auth/login');
+        }, 5000);
+        return {
+            success: false,
+            message: 'Phiên đăng nhập đã hết hạn vui lòng đăng nhập lại',
+            data: null
+        }
     }
     return await res.json();
 }
