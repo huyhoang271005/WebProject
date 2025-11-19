@@ -64,7 +64,7 @@ loginBtn.addEventListener('click', async () => {
 });
 
 forgotPassword.addEventListener('click', async () => {
-    await showDialog('question', "Chúng tôi sẽ gửi một thông báo qua địa chỉ email bạn nhập bên trên để xác nhận?", async () => {
+    await showDialog('question', `Gửi email xác thực đến ${usernameInput.value.trim()}?`, async () => {
         const username = usernameInput.value.trim();
         const data = {
             email: username
