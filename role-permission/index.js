@@ -8,14 +8,14 @@ const resultPermission = await callAPI('/permission');
 async function loadRolePermission() {
     if(!resultRolePermission.success){
         await showDialog('error', resultRolePermission.message);
-        return;
+        throw new Error("Lỗi lấy danh sách chức vụ theo quyền");
     }
     ROLE_PERMISSIONS = resultRolePermission.data;
 }
 async function loadPermission() {
     if(!resultPermission.success){
         await showDialog('error', resultPermission.message);
-        return;
+        throw new Error("Lỗi lấy danh sách quyền");
     }
     ALL_PERMISSIONS = resultPermission.data;
 }
