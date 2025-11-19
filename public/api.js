@@ -1,7 +1,8 @@
+import { showDialog } from "../dialog";
+
 const API_BASE = "https://uncoagulative-tyrannisingly-eddie.ngrok-free.dev";
 
 let accessToken = null;
-let refreshToken = localStorage.getItem("refreshToken");
 /**
  * endpoint là bắt buộc, isMultipart: true nếu gửi FormData
  */
@@ -20,6 +21,9 @@ async function callAPIWithRetry(endpoint, method, data, isMultipart, alreadyRefr
     if (!endpoint.startsWith("/auth") && accessToken) {
         options.headers["Authorization"] = `Bearer ${accessToken}`;
     }
+    else {
+        options.credentials = "include";
+    }
     if (data) {
         if (isMultipart) options.body = data;
         else {
@@ -35,14 +39,12 @@ async function callAPIWithRetry(endpoint, method, data, isMultipart, alreadyRefr
             if(body.data?.deviceId){
                 localStorage.setItem("deviceId", body.data.deviceId);
             }
-            if(body.data?.accessToken && body.data?.refreshToken){
+            if(body.data?.accessToken){
                 accessToken = body.data.accessToken;
-                refreshToken = body.data.refreshToken;
-                localStorage.setItem("refreshToken", refreshToken); 
             }
         }
         // refresh token nếu 401
-        if (res.status === 401 && !alreadyRefreshed && refreshToken) {
+        if (res.status === 401 && !alreadyRefreshed) {
             const result = await refreshAccessToken();
             if(!result.success){
                 return result;
@@ -50,8 +52,6 @@ async function callAPIWithRetry(endpoint, method, data, isMultipart, alreadyRefr
             const token = result.data;
             if (token?.accessToken && token?.refreshToken) {
                 accessToken = token.accessToken;
-                refreshToken = token.refreshToken;
-                localStorage.setItem("refreshToken", refreshToken);
                 return await callAPIWithRetry(endpoint, method, data, isMultipart, true);
             }
             return result;
@@ -70,11 +70,17 @@ async function callAPIWithRetry(endpoint, method, data, isMultipart, alreadyRefr
 async function refreshAccessToken() {
     const res = await fetch(`${API_BASE}/auth/refresh-token`, {
         method: "POST",
+        credentials: "include",
         headers: {
             "Content-Type": "application/json",
             "Accept": "*/*"
-        },
-        body: JSON.stringify({ refreshToken })
+        }
     });
+    if(res.status === 401) {
+        await showDialog('error', 'Phiên đăng nhập đã hết hạn vui lòng đăng nhập lại', async() => {
+            window.location.replace('/WebProject/auth/login');
+        });
+        return;
+    }
     return await res.json();
 }
