@@ -77,7 +77,7 @@ async function refreshAccessToken() {
     });
     if(!res.ok) {
         setTimeout(()=>{
-            window.location.replace('/WebProJect/auth/login');
+            window.location.replace('/WebProject/auth/login');
         }, 5000);
         return {
             success: false,
