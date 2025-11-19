@@ -1,5 +1,3 @@
-import { showDialog } from "../dialog";
-
 const API_BASE = "https://uncoagulative-tyrannisingly-eddie.ngrok-free.dev";
 
 let accessToken = null;
