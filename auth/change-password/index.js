@@ -9,9 +9,11 @@ const status = document.getElementById("status");
 await getEye();
 await getLoader('changeBtn');
 changeBtn.addEventListener("click", async() => {
+    status.style.display = 'none';
     const newPassword = idPassword.value.trim();
     const confirmPassword = idConfirmPassword.value.trim();
     if(newPassword != confirmPassword){
+        status.style.display = 'block';
         status.textContent = "Mật khẩu không khớp";
         status.classList.add("error");
         return;
