@@ -14,9 +14,9 @@ export async function getLoader(idLayout, callback) {
     iconLoader.style.display = 'none';
     if(callback && typeof callback === 'function'){
         iconLoader.style.display = 'inline-block';
-        idLayout.classList.add('loading');
+        loader.classList.add('loading');
         await callback();
-        idLayout.classList.remove('loading');
+        loader.classList.remove('loading');
         iconLoader.style.display = 'none';
     }
 }
