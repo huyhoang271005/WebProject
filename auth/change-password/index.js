@@ -1,13 +1,12 @@
 import { callAPI } from "../../public/api.js";
 import {showDialog} from "../../dialog/index.js";
-import { getEye, getLoader, showLoader } from "../../public/public.js";
+import { getEye, getLoader } from "../../public/public.js";
 const token = new URLSearchParams(window.location.search).get("token");
 const idPassword = document.getElementById("newPassword");
 const idConfirmPassword = document.getElementById("confirmPassword");
 const changeBtn = document.getElementById("changeBtn");
 const status = document.getElementById("status");
 await getEye();
-await getLoader('changeBtn');
 changeBtn.addEventListener("click", async() => {
     status.style.display = 'none';
     const newPassword = idPassword.value.trim();
@@ -21,12 +20,11 @@ changeBtn.addEventListener("click", async() => {
     const data = {
         password: newPassword
     }
-    showLoader(true);
-    changeBtn.classList.add('loading');
-    const result = await callAPI(`/auth/verify-change-password?token=${token}`, 
-        "POST", data);
-    changeBtn.classList.remove('loading');
-    showLoader(false);
+    let result = null;
+    await getLoader('changeBtn', async()=> {
+        result = await callAPI(`/auth/verify-change-password?token=${token}`, 
+            "POST", data);
+    })
     if(!result.success && result.data){
         status.style.display = 'block';
         status.classList.add("error");

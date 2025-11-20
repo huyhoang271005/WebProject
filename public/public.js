@@ -1,7 +1,7 @@
 /**
  * Loader icon for button, yêu cầu truyền id của button vào hàm
  */
-export async function getLoader(idLayout) {
+export async function getLoader(idLayout, callback) {
     const loader = document.getElementById(idLayout);
     if (!loader) return;
 
@@ -10,18 +10,14 @@ export async function getLoader(idLayout) {
     const response = await fetch("/WebProject/public/icon-loader.html");
     const html = await response.text();
     loader.insertAdjacentHTML("beforeend", html);
-    loader.querySelector('.icon-loader').style.display = 'none';
-}
-
-export function showLoader(showLoading) {
-    const loader = document.getElementsByClassName('icon-loader');
-    for (let load of loader){
-        if(showLoading){
-            load.style.display = '';
-        }
-        else {
-            load.style.display = 'none';
-        }
+    const iconLoader = loader.querySelector('.icon-loader');
+    iconLoader.style.display = 'none';
+    if(callback && typeof callback === 'function'){
+        iconLoader.style.display = 'inline-block';
+        idLayout.classList.add('loading');
+        await callback();
+        idLayout.classList.remove('loading');
+        iconLoader.style.display = 'none';
     }
 }
 

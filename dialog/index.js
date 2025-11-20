@@ -25,7 +25,6 @@ async function loadDialog() {
   });
 }
 
-// === Hàm showDialog(title, message) ===
 export async function showDialog(status, message, callback = null, contentButton = "Đồng ý", dismiss = true){
   currentCallback = callback;
   dismissDialog = dismiss;
