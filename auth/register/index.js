@@ -1,7 +1,7 @@
 // register.js
 import { showDialog } from "../../dialog/index.js";
 import { callAPI } from "../../public/api.js";
-import { getEye, getLoader, showLoader } from "../../public/public.js";
+import { getEye, getLoader } from "../../public/public.js";
 const usernameInput = document.getElementById('username');
 const fullNameInput = document.getElementById('fullName');
 const birthdayInput = document.getElementById('birthday');
@@ -14,7 +14,6 @@ const statusDiv = document.getElementById('status');
 const avatarPreview = document.getElementById('avatarPreview');
 
 getEye();
-getLoader('registerBtn');
 avatarInput.addEventListener('change', (event)=>{
     const file = event.target.files[0];
     if(file){
@@ -46,11 +45,10 @@ registerBtn.addEventListener('click', async() => {
         {type: 'application/json'}
     ));
     data.append('avatar', avatar);
-    showLoader(true);
-    registerBtn.classList.add('loading');
-    const result = await callAPI('/auth/register', 'POST', data, true);
-    registerBtn.classList.remove('loading');
-    showLoader(false);
+    let result = null;
+    await getLoader('registerBtn', async () => {
+        result = await callAPI('/auth/register', 'POST', data, true);
+    });
     if(!result.success){
         if(Array.isArray(result.data) && result.data){
             statusDiv.style.display = 'block';

@@ -1,6 +1,6 @@
 import {callAPI} from "../../public/api.js";
 import {showDialog} from "../../dialog/index.js";
-import { showLoader, getLoader, getEye} from "../../public/public.js";
+import {  getLoader, getEye} from "../../public/public.js";
 
 const usernameInput = document.getElementById('username');
 const passwordInput = document.getElementById('password');
@@ -8,7 +8,6 @@ const loginBtn = document.getElementById('loginBtn');
 const statusDiv = document.getElementById('status');
 const forgotPassword = document.getElementById('forgotPassword');
 const rememberUser = document.getElementById('rememberUser');
-await getLoader('loginBtn');
 await getEye();
 loginBtn.addEventListener('click', async () => {
     const username = usernameInput.value.trim();
@@ -29,11 +28,10 @@ loginBtn.addEventListener('click', async () => {
         email: username,
         password: password
     }
-    showLoader(true);
-    loginBtn.classList.add('loading');
-    const result = await callAPI(`/auth/login`, 'POST', data);
-    loginBtn.classList.remove('loading');
-    showLoader(false)
+    let result = null;
+    await getLoader('loginBtn', async () => {
+        result = await callAPI(`/auth/login`, 'POST', data);
+    })
     let status = result.success ? 'success' : 'error';
     if(!result.success){
         if(Array.isArray(result.data) && result.data){
