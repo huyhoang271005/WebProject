@@ -75,7 +75,7 @@ async function refreshAccessToken() {
             "Device-type": "WEB"
         }
     });
-    if(!res.ok) {
+    if(res.status === 401) {
         setTimeout(()=>{
             window.location.replace('/WebProject/auth/login');
         }, 5000);
