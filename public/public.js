@@ -2,17 +2,20 @@
  * Loader icon for button, yêu cầu truyền id của button vào hàm
  */
 export async function getLoader(idLayout, callback) {
-    const loader = document.getElementById(idLayout);
-    if (!loader) return;
-
-    if (loader.querySelector('.icon-loader')) return;
-
-    const response = await fetch("/WebProject/public/icon-loader.html");
-    const html = await response.text();
-    loader.insertAdjacentHTML("beforeend", html);
-    const iconLoader = loader.querySelector('.icon-loader');
-    iconLoader.style.display = 'none';
     if(callback && typeof callback === 'function'){
+        async function load(idLayout) {
+            const loader = document.getElementById(idLayout);
+            if (!loader) return;
+
+            if (loader.querySelector('.icon-loader')) return;
+
+            const response = await fetch("/WebProject/public/icon-loader.html");
+            const html = await response.text();
+            loader.insertAdjacentHTML("beforeend", html);
+        }
+        load(idLayout);
+        const iconLoader = loader.querySelector('.icon-loader');
+        iconLoader.style.display = 'none';
         iconLoader.style.display = 'inline-block';
         loader.classList.add('loading');
         await callback();
