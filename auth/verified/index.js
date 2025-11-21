@@ -1,9 +1,8 @@
 import { callAPI } from "../../public/api.js";
 
 (async () => {
-  const path = window.location.pathname;
-  const parts = path.split('/').filter(Boolean);
-  const token = parts[parts.length - 1];
+  const params = new URLSearchParams(window.location.search);
+  const token = params.get("verificaionId");
   const h1 = document.getElementById("status");
   const image = document.getElementById("image");
   const back = document.getElementById("back");
