@@ -16,12 +16,10 @@ loginBtn.addEventListener('click', async () => {
     // reset trạng thái
     statusDiv.style.display = 'none';
     statusDiv.textContent = '';
-    statusDiv.classList.remove('error');
 
     if (!username || !password) {
         statusDiv.style.display = 'block';
         statusDiv.textContent = 'Vui lòng nhập đầy đủ thông tin.';
-        statusDiv.classList.add('error');
         return;
     }
     const data = {
@@ -36,7 +34,6 @@ loginBtn.addEventListener('click', async () => {
     if(!result.success){
         if(Array.isArray(result.data)){
             statusDiv.style.display = 'block';
-            statusDiv.classList.add("error");
             result.data.forEach(err => {
                 statusDiv.textContent += err.error + '\n';
             });
@@ -73,7 +70,7 @@ forgotPassword.addEventListener('click', async () => {
 });
 
 async function verify(result, email) {
-    if(result.verifiedEmail === null && result.verifiedDevice === null) return;
+    if(!result) return;
     let resultSend;
     const data = {
         email: email
