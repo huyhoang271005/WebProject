@@ -18,6 +18,7 @@ export async function getLoader(idLayout, callback) {
         await callback();
         loader.classList.remove('loading');
         iconLoader.style.display = 'none';
+        callback = null;
     }
 }
 
