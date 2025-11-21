@@ -34,7 +34,7 @@ loginBtn.addEventListener('click', async () => {
     })
     let status = result.success ? 'success' : 'error';
     if(!result.success){
-        if(Array.isArray(result.data) && result.data){
+        if(Array.isArray(result.data)){
             statusDiv.style.display = 'block';
             statusDiv.classList.add("error");
             result.data.forEach(err => {
