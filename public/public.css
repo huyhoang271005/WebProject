@@ -14,7 +14,7 @@ h1 {
 input, select {
   display: block;
   width: 100%;
-  min-width: 20vw;
+  min-width: 300px;
   box-sizing: border-box;
   padding: 10px 12px;
   margin: 8px 0;
