@@ -1,19 +1,16 @@
-async function load(idLayout) {
-    const loader = document.getElementById(idLayout);
-
-    if (loader.querySelector('.icon-loader')) return;
-
-    const response = await fetch("/WebProject/public/icon-loader.html");
-    const html = await response.text();
-    loader.insertAdjacentHTML("beforeend", html);
-}
 /**
  * Loader icon for button, yêu cầu truyền id của button vào hàm
  */
 export async function getLoader(idLayout, callback) {
     if(callback && typeof callback === 'function'){
         const loader = document.getElementById(idLayout);
-        load(idLayout);
+        async () => {
+            if (loader.querySelector('.icon-loader')) return;
+
+            const response = await fetch("/WebProject/public/icon-loader.html");
+            const html = await response.text();
+            loader.insertAdjacentHTML("beforeend", html);
+        }
         const iconLoader = loader.querySelector('.icon-loader');
         iconLoader.style.display = 'none';
         iconLoader.style.display = 'inline-block';
@@ -21,7 +18,6 @@ export async function getLoader(idLayout, callback) {
         await callback();
         loader.classList.remove('loading');
         iconLoader.style.display = 'none';
-        callback = null;
     }
 }
 
