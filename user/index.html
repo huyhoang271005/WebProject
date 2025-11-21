@@ -1,49 +1,127 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-    <meta charset="UTF-8">
-    <title>Quản lý người dùng</title>
-    <link rel="stylesheet" href="../dialog/index.css">
-    <link rel="stylesheet" href="../public/card.css">
-    <link rel="stylesheet" href="../public/public.css">
-</head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quản lý người dùng</title>
+<link rel="stylesheet" href="../dialog/index.css">
+<link rel="stylesheet" href="../public/card.css">
+<link rel="stylesheet" href="../public/public.css">
 <style>
-    td {
-        margin: 5px;
+    table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    input {
+        min-width: 0;
+    }
+
+    th, td {
+        padding: 8px 10px;
+        border: 1px solid #ddd;
+        text-align: left;
+        vertical-align: middle;
+    }
+
+    th {
+        background-color: #3B82F6;
+        color: white;
+    }
+
+    .status-badge {
+        padding: 3px 8px;
+        border-radius: 12px;
+        font-size: 0.8rem;
+        color: white;
+        display: inline-block;
+    }
+
+    .Active { background-color: #10B981; }    /* xanh lá */
+    .Pending { background-color: #FBBF24; }   /* vàng cam */
+    .Banned { background-color: #EF4444; }    /* đỏ */
+
+    #loading {
+        text-align: center;
+        margin: 20px 0;
+        font-weight: 500;
+    }
+
+    /* Toast Notification */
+    .toast {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: #333;
+        color: #fff;
+        padding: 10px 20px;
+        border-radius: 8px;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+        z-index: 999;
+    }
+
+    .toast.show {
+        opacity: 1;
+    }
+
+    @media (max-width: 700px) {
+        table, tbody, th, td, tr {
+            display: block;
+        }
+        thead {
+            display: none;
+        }
+        tr {
+            margin-bottom: 15px;
+            border-bottom: 2px solid #ddd;
+        }
+        th {
+            display: none;
+        }
+        td {
+            justify-content: space-between;
+            padding: 8px 10px;
+        }
+        td::before {
+            content: attr(data-label);
+            font-weight: 500;
+        }
     }
 </style>
+</head>
 <body>
 
 <div class="card">
     <h2>Quản lý người dùng</h2>
-
     <div id="loading">Đang tải dữ liệu...</div>
 
-    <table id="userTable" style="display:none; width:100%; border-collapse: collapse;">
+    <table id="userTable" style="display:none;">
         <thead>
             <tr>
                 <th>ID</th>
                 <th>Họ tên</th>
                 <th>Email</th>
-                <th>Chức vụ</th>
+                <th>Role</th>
+                <th>Status</th>
                 <th>Hành động</th>
             </tr>
         </thead>
-        <tbody>
-            <!-- Dữ liệu người dùng sẽ render ở đây -->
-        </tbody>
+        <tbody></tbody>
     </table>
 </div>
 
+<div class="toast" id="toast">Cập nhật thành công!</div>
+
 <script type="module">
-    // Giả lập dữ liệu người dùng
     let users = [
-        { id: 1, name: "Nguyễn Văn A", email: "a@example.com", role: "user" },
-        { id: 2, name: "Trần Thị B", email: "b@example.com", role: "admin" },
-        { id: 3, name: "Lê Văn C", email: "c@example.com", role: "moderator" },
+        { id: 1, name: "Nguyễn Văn A", email: "a@example.com", role: "user", status: "Active" },
+        { id: 2, name: "Trần Thị B", email: "b@example.com", role: "admin", status: "Active" },
+        { id: 3, name: "Lê Văn C", email: "c@example.com", role: "moderator", status: "Banned" },
     ];
 
     const roles = ["user", "moderator", "admin"];
+    const statuses = ["Active", "Pending", "Banned"];
 
     function renderUsers() {
         const tbody = document.querySelector("#userTable tbody");
@@ -52,16 +130,22 @@
         users.forEach(user => {
             const tr = document.createElement("tr");
             tr.innerHTML = `
-                <td>${user.id}</td>
-                <td>${user.name}</td>
-                <td>${user.email}</td>
-                <td>
+                <td data-label="ID">${user.id}</td>
+                <td data-label="Họ tên">${user.name}</td>
+                <td data-label="Email">${user.email}</td>
+                <td data-label="Role">
                     <select id="role-${user.id}">
-                        ${roles.map(r => `<option value="${r}" ${r===user.role ? "selected" : ""}>${r}</option>`).join('')}
+                        ${roles.map(r => `<option value="${r}" ${r===user.role ? "selected":""}>${r}</option>`).join('')}
                     </select>
                 </td>
-                <td>
-                    <button onclick="updateRole(${user.id})">Cập nhật</button>
+                <td data-label="Status">
+                    <select id="status-${user.id}">
+                        ${statuses.map(s => `<option value="${s}" ${s===user.status ? "selected":""}>${s}</option>`).join('')}
+                    </select>
+                    <span class="status-badge ${user.status}">${user.status}</span>
+                </td>
+                <td data-label="Hành động">
+                    <button onclick="updateUser(${user.id})">Cập nhật</button>
                     <button class="delete" onclick="deleteUser(${user.id})">Xóa</button>
                 </td>
             `;
@@ -69,24 +153,37 @@
         });
     }
 
-    function updateRole(userId) {
-        const select = document.getElementById(`role-${userId}`);
-        const newRole = select.value;
+    function showToast(message) {
+        const toast = document.getElementById("toast");
+        toast.textContent = message;
+        toast.classList.add("show");
+        setTimeout(() => toast.classList.remove("show"), 2000);
+    }
+
+    function updateUser(userId) {
+        const roleSelect = document.getElementById(`role-${userId}`);
+        const statusSelect = document.getElementById(`status-${userId}`);
         const user = users.find(u => u.id === userId);
-        user.role = newRole;
-        console.log(`Cập nhật role của ${user.name} thành ${newRole}`);
-        // Nếu có API: fetch(`/api/users/${userId}/role`, { method:'PUT', body: JSON.stringify({role:newRole})})
+        user.role = roleSelect.value;
+        user.status = statusSelect.value;
+
+        renderUsers(); // refresh table to update badge color
+        showToast(`Cập nhật thành công: ${user.name}`);
+
+        console.log(`User updated:`, user);
+        // API PUT ở đây nếu có
     }
 
     function deleteUser(userId) {
         users = users.filter(u => u.id !== userId);
         renderUsers();
-        console.log(`Đã xóa user ${userId}`);
-        // Nếu có API: fetch(`/api/users/${userId}`, { method:'DELETE' })
+        showToast(`Đã xóa user ${userId}`);
+        console.log(`User deleted:`, userId);
+        // API DELETE ở đây nếu có
     }
 
     window.addEventListener("DOMContentLoaded", () => {
-        setTimeout(() => { // Giả lập delay load
+        setTimeout(() => {
             renderUsers();
             document.getElementById("loading").style.display = "none";
             document.getElementById("userTable").style.display = "table";
