@@ -1,6 +1,6 @@
 import { callAPI } from "../public/api.js";
 import { showDialog } from "../dialog/index.js";
-import { getLoader } from "../public/public.js";
+import { getLoader, loadPage } from "../public/public.js";
 let ROLE_PERMISSIONS = [];
 let ALL_PERMISSIONS = [];
 const resultRolePermission = await callAPI('/role-permission');
@@ -19,11 +19,9 @@ async function loadPermission() {
     }
     ALL_PERMISSIONS = resultPermission.data;
 }
-window.addEventListener('DOMContentLoaded', async()=> {
+await loadPage(async()=>{
     await loadRolePermission();
     await loadPermission();
-    document.getElementById('loadPage').style.display = 'none';
-    document.getElementById('info').style.display = 'block';
 });
 const roleList = document.getElementById("roleList");
 const addRoleBtn = document.getElementById("addRoleBtn");

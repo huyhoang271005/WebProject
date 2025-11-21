@@ -20,6 +20,14 @@ export async function getLoader(idLayout, callback) {
     }
 }
 
+export async function loadPage(callback) {
+    window.addEventListener('DOMContentLoaded', async()=>{
+        await callback();
+        document.getElementById('loadPage').style.display = 'none';
+        document.getElementById('info').style.display = 'block';
+    });
+}
+
 /**
  * Load toggle password, yêu cầu thẻ cha phải có class 'password-layout' và bên trong thẻ cha này có thẻ input
  */

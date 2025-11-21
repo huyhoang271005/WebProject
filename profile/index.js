@@ -1,6 +1,6 @@
 import { callAPI } from "../public/api.js";
 import { showDialog } from "../dialog/index.js";
-import { convertToVNTime, getLoader } from "../public/public.js";
+import { convertToVNTime, getLoader, loadPage } from "../public/public.js";
 import { initEmailList } from "./email-list.js";
 const usernameInput = document.getElementById('username');
 const fullNameInput = document.getElementById('fullName');
@@ -33,10 +33,8 @@ async function loadProfile() {
     emailsSection.insertAdjacentHTML('beforeend', text);
     window.emailManager = initEmailList(profile.emails);
 }
-window.addEventListener('DOMContentLoaded', async()=> {
+await loadPage(async()=> {
     await loadProfile();
-    document.getElementById('loadPage').style.display = 'none';
-    document.getElementById('info').style.display = 'block';
 });
 avatarInput.addEventListener('change', (e) => {
     const file = e.target.files[0];
