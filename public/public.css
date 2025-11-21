@@ -12,7 +12,9 @@ h1 {
 }
 
 input, select {
+  display: block;
   width: 100%;
+  min-width: 20vw;
   box-sizing: border-box;
   padding: 10px 12px;
   margin: 8px 0;
@@ -21,6 +23,10 @@ input, select {
   font-size: 1rem;
   transition: all 0.2s ease;     /* hiệu ứng mượt */
   background-color: #fff;
+}
+
+input[type = "checkbox"]{
+  min-width: 0;
 }
 
 /* Hover: viền đậm rất nhẹ */
