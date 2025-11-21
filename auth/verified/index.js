@@ -2,7 +2,7 @@ import { callAPI } from "../../public/api.js";
 
 (async () => {
   const params = new URLSearchParams(window.location.search);
-  const token = params.get("verificaionId");
+  const token = params.get("verificationId");
   const h1 = document.getElementById("status");
   const image = document.getElementById("image");
   const back = document.getElementById("back");
