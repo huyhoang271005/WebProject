@@ -33,7 +33,11 @@ async function loadProfile() {
     emailsSection.insertAdjacentHTML('beforeend', text);
     window.emailManager = initEmailList(profile.emails);
 }
-await loadProfile();
+window.addEventListener('DOMContentLoaded', async()=> {
+    await loadProfile();
+    document.getElementById('loadPage').style.display = 'none';
+    document.getElementById('info').style.display = 'block';
+});
 avatarInput.addEventListener('change', (e) => {
     const file = e.target.files[0];
     if(file){

@@ -24,6 +24,14 @@
         vertical-align: middle;
     }
 
+    td:nth-child(5) {
+        position: relative;
+    }
+
+    th{
+        text-align: center;
+    }
+
     th {
         background-color: #3B82F6;
         color: white;
@@ -35,17 +43,14 @@
         font-size: 0.8rem;
         color: white;
         display: inline-block;
+        position: absolute;
+        right: 5px;
+        top: 5px;
     }
 
     .Active { background-color: #10B981; }    /* xanh lá */
     .Pending { background-color: #FBBF24; }   /* vàng cam */
     .Banned { background-color: #EF4444; }    /* đỏ */
-
-    #loading {
-        text-align: center;
-        margin: 20px 0;
-        font-weight: 500;
-    }
 
     /* Toast Notification */
     .toast {
@@ -59,10 +64,6 @@
         opacity: 0;
         transition: opacity 0.3s ease;
         z-index: 999;
-    }
-
-    .toast.show {
-        opacity: 1;
     }
 
     @media (max-width: 700px) {
@@ -80,11 +81,17 @@
             display: none;
         }
         td {
-            justify-content: space-between;
             padding: 8px 10px;
         }
+        td:nth-child(1),
+        td:nth-child(2),
+        td:nth-child(3){
+        display: flex;
+        justify-content: space-between;
+    }
         td::before {
             content: attr(data-label);
+            margin-right: 10px;
             font-weight: 500;
         }
     }
@@ -94,7 +101,7 @@
 
 <div class="card">
     <h2>Quản lý người dùng</h2>
-    <div id="loading">Đang tải dữ liệu...</div>
+    <div id="loadPage">Đang tải dữ liệu...</div>
 
     <table id="userTable" style="display:none;">
         <thead>
@@ -111,13 +118,12 @@
     </table>
 </div>
 
-<div class="toast" id="toast">Cập nhật thành công!</div>
 
 <script type="module">
     let users = [
-        { id: 1, name: "Nguyễn Văn A", email: "a@example.com", role: "user", status: "Active" },
-        { id: 2, name: "Trần Thị B", email: "b@example.com", role: "admin", status: "Active" },
-        { id: 3, name: "Lê Văn C", email: "c@example.com", role: "moderator", status: "Banned" },
+        { id: "fádfkads-ádfaks adskjfdfdá d", name: "Nguyễn Văn A", email: "a@example.com", role: "user", status: "Active" },
+        { id: "2diaw4ạdfh9q384rip3r-9fdạfádff0fads", name: "Trần Thị B", email: "b@example.com", role: "admin", status: "Active" },
+        { id: "fjalsdfka sdkjádfj ádkjfádjkfkádf", name: "Lê Văn C", email: "c@example.com", role: "moderator", status: "Banned" },
     ];
 
     const roles = ["user", "moderator", "admin"];
@@ -139,10 +145,10 @@
                     </select>
                 </td>
                 <td data-label="Status">
+                    <span class="status-badge ${user.status}">${user.status}</span>
                     <select id="status-${user.id}">
                         ${statuses.map(s => `<option value="${s}" ${s===user.status ? "selected":""}>${s}</option>`).join('')}
                     </select>
-                    <span class="status-badge ${user.status}">${user.status}</span>
                 </td>
                 <td data-label="Hành động">
                     <button onclick="updateUser(${user.id})">Cập nhật</button>
@@ -153,13 +159,6 @@
         });
     }
 
-    function showToast(message) {
-        const toast = document.getElementById("toast");
-        toast.textContent = message;
-        toast.classList.add("show");
-        setTimeout(() => toast.classList.remove("show"), 2000);
-    }
-
     function updateUser(userId) {
         const roleSelect = document.getElementById(`role-${userId}`);
         const statusSelect = document.getElementById(`status-${userId}`);
@@ -168,24 +167,17 @@
         user.status = statusSelect.value;
 
         renderUsers(); // refresh table to update badge color
-        showToast(`Cập nhật thành công: ${user.name}`);
-
-        console.log(`User updated:`, user);
-        // API PUT ở đây nếu có
     }
 
     function deleteUser(userId) {
         users = users.filter(u => u.id !== userId);
         renderUsers();
-        showToast(`Đã xóa user ${userId}`);
-        console.log(`User deleted:`, userId);
-        // API DELETE ở đây nếu có
     }
 
     window.addEventListener("DOMContentLoaded", () => {
         setTimeout(() => {
             renderUsers();
-            document.getElementById("loading").style.display = "none";
+            document.getElementById("loadPage").style.display = "none";
             document.getElementById("userTable").style.display = "table";
         }, 500);
     });

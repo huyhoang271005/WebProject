@@ -19,8 +19,12 @@ async function loadPermission() {
     }
     ALL_PERMISSIONS = resultPermission.data;
 }
-await loadRolePermission();
-await loadPermission();
+window.addEventListener('DOMContentLoaded', async()=> {
+    await loadRolePermission();
+    await loadPermission();
+    document.getElementById('loadPage').style.display = 'none';
+    document.getElementById('info').style.display = 'block';
+});
 const roleList = document.getElementById("roleList");
 const addRoleBtn = document.getElementById("addRoleBtn");
 const newRoleName = document.getElementById("newRoleName");

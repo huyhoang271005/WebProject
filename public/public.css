@@ -135,3 +135,8 @@ button.loading::after {
 .password-layout input {
     padding-right: 35px;
 }
+#loadPage {
+  text-align: center;
+  margin: 20px 0;
+  font-weight: 500;
+}

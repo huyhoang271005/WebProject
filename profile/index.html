@@ -85,6 +85,9 @@
         #addEmailBtn {
             margin-top: 5px;
         }
+        #info{
+            display: none;
+        }
 
         @media (max-width: 700px) {
             .card {
@@ -97,14 +100,17 @@
 <div class="card">
     <!-- Avatar -->
     <div class="avatar-wrapper">
+        <h2>Hồ sơ cá nhân</h2>
         <img id="avatarPreview" src="https://cdn-icons-png.flaticon.com/512/847/847969.png" class="avatar-img" />
         <label for="avatar" style="cursor:pointer; color:#3B82F6; margin-top: 5px;">Đổi ảnh</label>
         <input type="file" id="avatar" accept="image/*" style="display:none"/>
         <div id="emailsSection"></div>
     </div>
 
+    <div id = "loadPage">Đang tải dữ liệu...</div>
+
     <!-- Info -->
-    <div class="info">
+    <div class="info" id = "info">
         <label for="username">Biệt danh</label>
         <input type="text" id="username" placeholder="Biệt danh" />
 

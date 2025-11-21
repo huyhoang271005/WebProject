@@ -45,18 +45,23 @@
             gap: 10px;
             margin-top: 8px;
         }
+        #info {
+            display: none;
+        }
     </style>
 </head>
 <body>
 
 <div class="card">
     <h2>Quản lý chức vụ theo quyền</h2>
+    <div id = 'loadPage'>Đang tải dữ liệu...</div>
+    <div id = "info">
+        <div id="roleList"></div>
 
-    <div id="roleList"></div>
-
-    <div style="margin-top:20px;">
-        <input id="newRoleName" placeholder="Tên chức vụ mới...">
-        <button id="addRoleBtn">Thêm chức vụ</button>
+        <div style="margin-top:20px;">
+            <input id="newRoleName" placeholder="Tên chức vụ mới...">
+            <button id="addRoleBtn">Thêm chức vụ</button>
+        </div>
     </div>
 </div>
 
