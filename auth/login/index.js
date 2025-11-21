@@ -26,10 +26,10 @@ loginBtn.addEventListener('click', async () => {
         email: username,
         password: password
     }
-    let result = null;
+    let result;
     await getLoader('loginBtn', async () => {
         result = await callAPI(`/auth/login`, 'POST', data);
-    })
+    });
     let status = result.success ? 'success' : 'error';
     if(!result.success){
         if(Array.isArray(result.data)){
@@ -45,7 +45,7 @@ loginBtn.addEventListener('click', async () => {
             status = 'question';
         }
         await showDialog(status, result.message, async () => await verify(result.data, username), 
-        status == 'error' || status == 'success' || !result.data? 'Đồng ý': 'Gửi email xác thực');
+        status == 'error' || status == 'success' ? 'Đồng ý': 'Gửi email xác thực');
     }
     else {
         if(rememberUser.checked){
@@ -70,7 +70,7 @@ forgotPassword.addEventListener('click', async () => {
 });
 
 async function verify(result, email) {
-    if(!result) return;
+    if(!result || Array.isArray(result)) return;
     let resultSend;
     const data = {
         email: email
