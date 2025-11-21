@@ -3,26 +3,25 @@ import { showDialog } from "../dialog/index.js";
 import { getLoader, loadPage } from "../public/public.js";
 let ROLE_PERMISSIONS = [];
 let ALL_PERMISSIONS = [];
-const resultRolePermission = await callAPI('/role-permission');
-const resultPermission = await callAPI('/permission');
-async function loadRolePermission() {
+await loadPage(async() => {
+    const resultRolePermission = await callAPI('/role-permission');
+    const resultPermission = await callAPI('/permission');
+
     if(!resultRolePermission.success){
         await showDialog('error', resultRolePermission.message);
-        throw new Error("Lỗi lấy danh sách chức vụ theo quyền");
+        return;
     }
-    ROLE_PERMISSIONS = resultRolePermission.data;
-}
-async function loadPermission() {
     if(!resultPermission.success){
         await showDialog('error', resultPermission.message);
-        throw new Error("Lỗi lấy danh sách quyền");
+        return;
     }
+
+    ROLE_PERMISSIONS = resultRolePermission.data;
     ALL_PERMISSIONS = resultPermission.data;
-}
-await loadPage(async()=>{
-    await loadRolePermission();
-    await loadPermission();
+
+    await render();
 });
+
 const roleList = document.getElementById("roleList");
 const addRoleBtn = document.getElementById("addRoleBtn");
 const newRoleName = document.getElementById("newRoleName");
@@ -160,6 +159,3 @@ addRoleBtn.onclick = async() => {
     }
     await showDialog(result.success ? 'success' : 'error', result.message);
 };
-
-// Khởi động
-await render();
