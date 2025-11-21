@@ -15,3 +15,4 @@ Các hàm chung gồm
 + showDialog(<success/error/question>, <message>, <callback>, <nội dung nút button>, <có đóng dialog khi nhấn bên ngoài không (true/false)>) // HIện dialog thông báo
 + getLoader(<id phím button>, <callback>)   // Lấy hiệu ứng load của nút button trong quá trình chạy callback
 + convertToVNTime(<giờ UTC>)  //Chuyển đổi giờ UTC sang giờ VN
++ loadPage(<callback>)	//Hiện ra trong lần đầu loadPage

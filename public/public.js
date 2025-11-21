@@ -20,6 +20,7 @@ export async function getLoader(idLayout, callback) {
     }
 }
 
+/*Load page lần đầu yêu cầu thẻ load page có id là loadPage và thẻ bao hàm thông tin có id là info*/
 export async function loadPage(callback) {
     window.addEventListener('DOMContentLoaded', async()=>{
         await callback();
