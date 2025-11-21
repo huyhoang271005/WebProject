@@ -79,7 +79,7 @@ export function initEmailList(initialEmails = []) {
                         await showDialog(result.success ? 'success' : 'error', result.message);
                     }
                     else {
-                        await showDialog('error', addEmail.message);
+                        await showDialog('error', addEmail.data[0].error);
                     }
                 });
             };
