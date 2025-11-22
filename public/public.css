@@ -153,6 +153,6 @@ button.loading::after {
     min-width: 200px;
   }
   .card {
-    display: inline-block;
+    display: inline-block !important;
   }
 }
