@@ -140,3 +140,8 @@ button.loading::after {
   margin: 20px 0;
   font-weight: 500;
 }
+@media (max-width: 700px){
+  input, select {
+    min-width: 200px;
+  }
+}
