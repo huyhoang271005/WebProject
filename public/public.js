@@ -23,8 +23,14 @@ export async function getLoader(idLayout, callback) {
 /*Load page lần đầu yêu cầu thẻ load page có id là loadPage và thẻ bao hàm thông tin có id là info*/
 export async function loadPage(callback) {
     window.addEventListener('DOMContentLoaded', async()=>{
+        const loadPage = document.getElementById('loadPage');
+        const response = await fetch("/WebProject/public/load-page.html");
+        const html = await response.text();
+        (async ()=>{
+            loadPage.insertAdjacentHTML('beforeend', html)
+        })();
         await callback();
-        document.getElementById('loadPage').style.display = 'none';
+        loadPage.style.display = 'none';
         document.getElementById('info').style.display = 'block';
     });
 }
