@@ -2,7 +2,7 @@ import { callAPI } from "../public/api.js";
 import { showDialog } from "../dialog/index.js";
 import { loadPage, convertToVNTime } from "../public/public.js";
 await loadPage(async()=>{
-    const result = await callAPI('/auth/users');
+    const result = await callAPI('/users');
     if(!result.success){
         await showDialog('error', result.message);
     }
