@@ -1,7 +1,7 @@
 import { loadPage, convertToVNTime } from "../public/public.js";
 import { showDialog } from "../dialog/index.js";
 import { callAPI } from "../public/api.js";
-import { initEmailList } from "../profile/email-list.js";
+import { initEmailList } from "./email-list.js";
 
 await loadPage(async()=>{
     const param = new URLSearchParams(window.location.search);
@@ -30,7 +30,7 @@ async function render(user, roles, status) {
         const emailsSection = document.getElementById("emailsSection");
         rolesSelect.value = user.extendUserResponse.roleId;
         statusSelect.value = user.extendUserResponse.userStatus;
-        const html = await fetch("../profile/email-list.html");
+        const html = await fetch("./email-list.html");
         const text = await html.text();
         emailsSection.insertAdjacentHTML('beforeend', text);
         initEmailList(user.extendUserResponse.emails);
