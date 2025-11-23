@@ -15,7 +15,6 @@ input, select {
   display: block;
   width: 100%;
   min-width: 300px;
-  max-width: 300px;
   box-sizing: border-box;
   padding: 10px 12px;
   margin: 8px 0;
@@ -55,7 +54,6 @@ button {
   background-color: #3B82F6;
   color: white;
   border: none;
-  max-width: 300px;
   padding: 10px 20px;
   border-radius: 8px;
   cursor: pointer;
