@@ -59,6 +59,9 @@ button.addEmailBtn {
     color: #9CA3AF;
     margin-top: 5px;
 }
+#info{
+    display: inline-block;
+}
 @media (max-width:700px){
     .profile { display: inline-block; }
     .email-row { flex-direction: column; align-items: flex-start; }
@@ -68,9 +71,9 @@ button.addEmailBtn {
 <body>
 <div class="card">
     <h2>Chi tiết người dùng</h2>
-    <div id="loadPage">Đang tải dữ liệu...</div>
+    <div id="loadPage"></div>
 
-    <div id="info" style="display:none;">
+    <div id="info">
         <div class="profile">
             <!-- Email bên trái -->
             <div class="avatar-wrapper">
@@ -95,97 +98,22 @@ button.addEmailBtn {
                 <!-- Admin-only fields -->
                 <div id="adminFields" style="margin-top:10px;">
                     <label>Chức vụ</label>
-                    <select id="roleSelect">
-                        <option value="user">User</option>
-                        <option value="moderator">Moderator</option>
-                        <option value="admin">Admin</option>
-                    </select>
+                    <select id="roleSelect"></select>
 
                     <label>Status</label>
-                    <select id="statusSelect">
-                        <option value="Active">Active</option>
-                        <option value="Pending">Pending</option>
-                        <option value="Banned">Banned</option>
-                    </select>
+                    <select id="statusSelect"></select>
                 </div>
 
                 <div class="date-info">
                     <div>Ngày tạo: <span id="createdAt"></span></div>
-                    <div>Cập nhật lần cuối: <span id="updatedAt"></span></div>
                 </div>
+                <button id = "btnUpdate">Cập nhật</button>
+                <button id = "btnDelete" class = "delete">Xoá người dùng</button>
             </div>
         </div>
     </div>
 </div>
 
-<script type="module">
-const isAdmin = true; // đổi false nếu người xem là user thường
-
-// Dữ liệu mô phỏng
-let user = {
-    id: "U01",
-    username: "vana",
-    role: "user",
-    status: "Active",
-    profile: {
-        fullname: "Nguyễn Văn A",
-        birthday: "1995-06-12",
-        gender: "Nam",
-        imageUrl: "https://i.pravatar.cc/100?img=1",
-        createdAt: "01/01/2024",
-        updatedAt: "15/11/2025"
-    },
-    emails: [
-        {email: "vana@example.com", validated: true},
-        {email: "vana.work@example.com", validated: false}
-    ]
-};
-
-// Hàm render email
-function renderEmails() {
-    const container = document.getElementById("emailsSection");
-    container.innerHTML = "<label>Email</label>";
-    user.emails.forEach((e, idx) => {
-        const div = document.createElement("div");
-        div.className = "email-row";
-        div.textContent = e.email + (e.validated ? " ✅" : " ❌");
-        container.appendChild(div);
-    });
-}
-
-window.addEventListener("DOMContentLoaded", () => {
-    document.getElementById("avatarPreview").src = user.profile.imageUrl;
-    document.getElementById("username").textContent = user.username;
-    document.getElementById("fullName").textContent = user.profile.fullname;
-    document.getElementById("birthday").textContent = user.profile.birthday;
-    document.getElementById("gender").textContent = user.profile.gender;
-    document.getElementById("createdAt").textContent = user.profile.createdAt;
-    document.getElementById("updatedAt").textContent = user.profile.updatedAt;
-
-    if(isAdmin){
-        document.getElementById("roleSelect").value = user.role;
-        document.getElementById("statusSelect").value = user.status;
-        document.getElementById("adminFields").style.display = "block";
-
-        // Thêm email
-        renderEmails();
-
-
-        // Thay đổi role/status
-        document.getElementById("roleSelect").onchange = (e)=>{
-            user.role = e.target.value;
-        };
-        document.getElementById("statusSelect").onchange = (e)=>{
-            user.status = e.target.value;
-        };
-
-    } else {
-        document.getElementById("adminFields").style.display = "none";
-    }
-
-    document.getElementById("loadPage").style.display = "none";
-    document.getElementById("info").style.display = "block";
-});
-</script>
+<script type="module" src="index.js"></script>
 </body>
 </html>

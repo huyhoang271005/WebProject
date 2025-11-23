@@ -31,7 +31,7 @@ async function loadProfile() {
     const html = await fetch("./email-list.html");
     const text = await html.text();
     emailsSection.insertAdjacentHTML('beforeend', text);
-    window.emailManager = initEmailList(profile.emails);
+    initEmailList(profile.emails);
 }
 await loadPage(async()=> {
     await loadProfile();
