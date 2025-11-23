@@ -6,17 +6,15 @@ import { initEmailList } from "./email-list.js";
 await loadPage(async()=>{
     const param = new URLSearchParams(window.location.search);
     const uid = param.get('uid');
-    const roles = await callAPI('/roles');
-    const status = await callAPI('/user-status');
     const user = await callAPI(`/user/${uid}`);
-    if(!roles.success || !status.success || !user.success){
-        await showDialog('error', "Lỗi khi tải dữ liệu vui lòng tải lại trang");
+    if(!user.success){
+        await showDialog('error', user.message);
         return;
     }
-    await render(user.data, roles.data, status.data);
+    await render(user.data);
 });
 
-async function render(user, roles, status) {
+async function render(user) {
     document.getElementById("avatarPreview").src = user.imageUrl;
     document.getElementById("username").textContent = user.username;
     document.getElementById("fullName").textContent = user.fullname;
@@ -24,6 +22,10 @@ async function render(user, roles, status) {
     document.getElementById("gender").textContent = user.gender == 'MALE' ? 'Nam': user.gender == 'FEMALE' ? 'Nữ' : 'Khác';
     document.getElementById("createdAt").textContent = convertToVNTime(user.createdAt);
     if(user.extendUserResponse){
+        const resultRoles = await callAPI('/roles');
+        const resultStatus = await callAPI('/user-status');
+        const roles = resultRoles.data;
+        const status = resultStatus.data;
         document.getElementById("adminFields").style.display = "block";
         const rolesSelect = document.getElementById("roleSelect");
         const statusSelect = document.getElementById("statusSelect");
