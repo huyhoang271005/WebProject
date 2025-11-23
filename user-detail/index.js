@@ -28,21 +28,21 @@ async function render(user, roles, status) {
         const rolesSelect = document.getElementById("roleSelect");
         const statusSelect = document.getElementById("statusSelect");
         const emailsSection = document.getElementById("emailsSection");
-        rolesSelect.value = user.extendUserResponse.roleId;
-        statusSelect.value = user.extendUserResponse.userStatus;
         const html = await fetch("./email-list.html");
         const text = await html.text();
         emailsSection.insertAdjacentHTML('beforeend', text);
         initEmailList(user.userId, user.extendUserResponse.emails);
         roles.forEach((role) => {
-            const html = `<option value=${role.roleId}>${role.roleName}</option>`;
+            const html = `<option value="${role.roleId}">${role.roleName}</option>`;
             rolesSelect.insertAdjacentHTML('beforeend', html);
         });
+        rolesSelect.value = user.extendUserResponse.roleId;
 
         status.forEach((st)=>{
-            const html = `<option value=${st}>${st}</option>`;
+            const html = `<option value="${st}">${st}</option>`;
             statusSelect.insertAdjacentHTML('beforeend', html);
-        })
+        });
+        statusSelect.value = user.extendUserResponse.userStatus;
 
         // Thay đổi role/status
         document.getElementById("roleSelect").onchange = (e)=>{
