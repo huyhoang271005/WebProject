@@ -1,4 +1,4 @@
-import { loadPage, convertToVNTime } from "../public/public.js";
+import { loadPage, convertToVNTime, getLoader } from "../public/public.js";
 import { showDialog } from "../dialog/index.js";
 import { callAPI } from "../public/api.js";
 import { initEmailList } from "./email-list.js";
@@ -60,8 +60,10 @@ async function render(user) {
                 userStatus: statusSelect.value,
                 roleId: rolesSelect.value
             }
-            const result = await callAPI('/user', 'POST', data);
-            await showDialog(result.success ? 'success' : 'error', result.message);
+            await getLoader('btnUpdate', async()=>{
+                const result = await callAPI('/user', 'POST', data);
+                await showDialog(result.success ? 'success' : 'error', result.message);
+            });
         });
 
     } else {
