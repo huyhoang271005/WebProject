@@ -3,185 +3,97 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Quản lý người dùng</title>
-<link rel="stylesheet" href="../dialog/index.css">
-<link rel="stylesheet" href="../public/card.css">
+<title>Danh sách người dùng</title>
+
 <link rel="stylesheet" href="../public/public.css">
+
 <style>
-    table {
-        width: 100%;
-        border-collapse: collapse;
-    }
 
-    input {
-        min-width: 0;
-    }
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+}
 
-    th, td {
-        padding: 8px 10px;
+th, td {
+    padding: 12px 14px;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+th {
+    background: #3B82F6;
+    color: white;
+    text-align: left;
+}
+
+tr:hover {
+    background: #f3f4f6;
+    cursor: pointer;
+}
+
+.avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin-right: 10px;
+}
+
+.user-info {
+    display: flex;
+    align-items: center;
+    font-weight: 600;
+}
+
+.sub {
+    font-size: 0.85rem;
+    color: #6b7280;
+    margin-top: 3px;
+}
+
+/* Responsive */
+@media (max-width: 700px) {
+    table, tbody, th, td, tr { display: block; }
+    thead { display: none; }
+
+    tr {
+        margin-bottom: 12px;
+        padding: 12px;
         border: 1px solid #ddd;
-        text-align: left;
-        vertical-align: middle;
+        border-radius: 10px;
     }
 
-    td:nth-child(5) {
-        position: relative;
-    }
-
-    th{
-        text-align: center;
-    }
-
-    th {
-        background-color: #3B82F6;
-        color: white;
-    }
-
-    .status-badge {
-        padding: 3px 8px;
-        border-radius: 12px;
-        font-size: 0.8rem;
-        color: white;
-        display: inline-block;
-        position: absolute;
-        right: 5px;
-        top: 5px;
-    }
-
-    .Active { background-color: #10B981; }    /* xanh lá */
-    .Pending { background-color: #FBBF24; }   /* vàng cam */
-    .Banned { background-color: #EF4444; }    /* đỏ */
-
-    /* Toast Notification */
-    .toast {
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        background: #333;
-        color: #fff;
-        padding: 10px 20px;
-        border-radius: 8px;
-        opacity: 0;
-        transition: opacity 0.3s ease;
-        z-index: 999;
-    }
-
-    @media (max-width: 700px) {
-        table, tbody, th, td, tr {
-            display: block;
-        }
-        thead {
-            display: none;
-        }
-        tr {
-            margin-bottom: 15px;
-            border-bottom: 2px solid #ddd;
-        }
-        th {
-            display: none;
-        }
-        td {
-            padding: 8px 10px;
-        }
-        td:nth-child(1),
-        td:nth-child(2),
-        td:nth-child(3){
+    td {
         display: flex;
         justify-content: space-between;
+        padding: 6px 0;
     }
-        td::before {
-            content: attr(data-label);
-            margin-right: 10px;
-            font-weight: 500;
-        }
+
+    td::before {
+        content: attr(data-label);
+        font-weight: 600;
+        margin-right: 10px;
     }
+}
 </style>
 </head>
+
 <body>
-
 <div class="card">
-    <h2>Quản lý người dùng</h2>
-    <div id="loadPage">Đang tải dữ liệu...</div>
+    <h2>Danh sách người dùng</h2>
+    <div id="loadPage"></div>
 
-    <table id="userTable" style="display:none;">
+    <table id="info">
         <thead>
             <tr>
-                <th>ID</th>
-                <th>Họ tên</th>
-                <th>Email</th>
-                <th>Role</th>
-                <th>Status</th>
-                <th>Hành động</th>
+                <th>Người dùng</th>
+                <th>Ngày tham gia</th>
             </tr>
         </thead>
         <tbody></tbody>
     </table>
 </div>
 
-
-<script type="module">
-    let users = [
-        { id: "fádfkads-ádfaks adskjfdfdá d", name: "Nguyễn Văn A", email: "a@example.com", role: "user", status: "Active" },
-        { id: "2diaw4ạdfh9q384rip3r-9fdạfádff0fads", name: "Trần Thị B", email: "b@example.com", role: "admin", status: "Active" },
-        { id: "fjalsdfka sdkjádfj ádkjfádjkfkádf", name: "Lê Văn C", email: "c@example.com", role: "moderator", status: "Banned" },
-    ];
-
-    const roles = ["user", "moderator", "admin"];
-    const statuses = ["Active", "Pending", "Banned"];
-
-    function renderUsers() {
-        const tbody = document.querySelector("#userTable tbody");
-        tbody.innerHTML = "";
-
-        users.forEach(user => {
-            const tr = document.createElement("tr");
-            tr.innerHTML = `
-                <td data-label="ID">${user.id}</td>
-                <td data-label="Họ tên">${user.name}</td>
-                <td data-label="Email">${user.email}</td>
-                <td data-label="Role">
-                    <select id="role-${user.id}">
-                        ${roles.map(r => `<option value="${r}" ${r===user.role ? "selected":""}>${r}</option>`).join('')}
-                    </select>
-                </td>
-                <td data-label="Status">
-                    <span class="status-badge ${user.status}">${user.status}</span>
-                    <select id="status-${user.id}">
-                        ${statuses.map(s => `<option value="${s}" ${s===user.status ? "selected":""}>${s}</option>`).join('')}
-                    </select>
-                </td>
-                <td data-label="Hành động">
-                    <button onclick="updateUser(${user.id})">Cập nhật</button>
-                    <button class="delete" onclick="deleteUser(${user.id})">Xóa</button>
-                </td>
-            `;
-            tbody.appendChild(tr);
-        });
-    }
-
-    function updateUser(userId) {
-        const roleSelect = document.getElementById(`role-${userId}`);
-        const statusSelect = document.getElementById(`status-${userId}`);
-        const user = users.find(u => u.id === userId);
-        user.role = roleSelect.value;
-        user.status = statusSelect.value;
-
-        renderUsers(); // refresh table to update badge color
-    }
-
-    function deleteUser(userId) {
-        users = users.filter(u => u.id !== userId);
-        renderUsers();
-    }
-
-    window.addEventListener("DOMContentLoaded", () => {
-        setTimeout(() => {
-            renderUsers();
-            document.getElementById("loadPage").style.display = "none";
-            document.getElementById("userTable").style.display = "table";
-        }, 500);
-    });
-</script>
-
+<script type="module" src="index.js"></script>
 </body>
 </html>

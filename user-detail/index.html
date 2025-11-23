@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Chi tiết người dùng</title>
+<link rel="stylesheet" href="../dialog/index.css"/>
+<link rel="stylesheet" href="../public/public.css"/>
+<script src="https://kit.fontawesome.com/e9c281dd3f.js" crossorigin="anonymous"></script>
+<style>
+.profile {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    grid-template-rows: auto;
+    gap: 5%;
+}
+.avatar-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 15px;
+}
+.avatar-img {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid #3B82F6;
+}
+.info {
+    text-align: start;
+}
+.info label {
+    font-weight: 500;
+    font-size: 0.9rem;
+    color: #333;
+}
+.info>div {
+    margin-bottom: 8px;
+    padding: 6px 0;
+    width: 100%;
+    box-sizing: border-box;
+}
+.email-row {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin-bottom: 8px;
+}
+.email-input {
+    flex: 1;
+    padding: 6px 10px;
+}
+button.addEmailBtn {
+    padding: 6px 12px;
+}
+.date-info {
+    font-size: 0.75rem;
+    color: #9CA3AF;
+    margin-top: 5px;
+}
+@media (max-width:700px){
+    .profile { display: inline-block; }
+    .email-row { flex-direction: column; align-items: flex-start; }
+}
+</style>
+</head>
+<body>
+<div class="card">
+    <h2>Chi tiết người dùng</h2>
+    <div id="loadPage">Đang tải dữ liệu...</div>
+
+    <div id="info" style="display:none;">
+        <div class="profile">
+            <!-- Email bên trái -->
+            <div class="avatar-wrapper">
+                <img id="avatarPreview" src="" class="avatar-img" />
+                <div id="emailsSection"></div>
+            </div>
+
+            <!-- Thông tin user -->
+            <div class="info">
+                <label>Biệt danh</label>
+                <div id="username"></div>
+
+                <label>Họ và tên</label>
+                <div id="fullName"></div>
+
+                <label>Ngày sinh</label>
+                <div id="birthday"></div>
+
+                <label>Giới tính</label>
+                <div id="gender"></div>
+
+                <!-- Admin-only fields -->
+                <div id="adminFields" style="margin-top:10px;">
+                    <label>Chức vụ</label>
+                    <select id="roleSelect">
+                        <option value="user">User</option>
+                        <option value="moderator">Moderator</option>
+                        <option value="admin">Admin</option>
+                    </select>
+
+                    <label>Status</label>
+                    <select id="statusSelect">
+                        <option value="Active">Active</option>
+                        <option value="Pending">Pending</option>
+                        <option value="Banned">Banned</option>
+                    </select>
+                </div>
+
+                <div class="date-info">
+                    <div>Ngày tạo: <span id="createdAt"></span></div>
+                    <div>Cập nhật lần cuối: <span id="updatedAt"></span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script type="module">
+const isAdmin = true; // đổi false nếu người xem là user thường
+
+// Dữ liệu mô phỏng
+let user = {
+    id: "U01",
+    username: "vana",
+    role: "user",
+    status: "Active",
+    profile: {
+        fullname: "Nguyễn Văn A",
+        birthday: "1995-06-12",
+        gender: "Nam",
+        imageUrl: "https://i.pravatar.cc/100?img=1",
+        createdAt: "01/01/2024",
+        updatedAt: "15/11/2025"
+    },
+    emails: [
+        {email: "vana@example.com", validated: true},
+        {email: "vana.work@example.com", validated: false}
+    ]
+};
+
+// Hàm render email
+function renderEmails() {
+    const container = document.getElementById("emailsSection");
+    container.innerHTML = "<label>Email</label>";
+    user.emails.forEach((e, idx) => {
+        const div = document.createElement("div");
+        div.className = "email-row";
+        div.textContent = e.email + (e.validated ? " ✅" : " ❌");
+        container.appendChild(div);
+    });
+}
+
+window.addEventListener("DOMContentLoaded", () => {
+    document.getElementById("avatarPreview").src = user.profile.imageUrl;
+    document.getElementById("username").textContent = user.username;
+    document.getElementById("fullName").textContent = user.profile.fullname;
+    document.getElementById("birthday").textContent = user.profile.birthday;
+    document.getElementById("gender").textContent = user.profile.gender;
+    document.getElementById("createdAt").textContent = user.profile.createdAt;
+    document.getElementById("updatedAt").textContent = user.profile.updatedAt;
+
+    if(isAdmin){
+        document.getElementById("roleSelect").value = user.role;
+        document.getElementById("statusSelect").value = user.status;
+        document.getElementById("adminFields").style.display = "block";
+
+        // Thêm email
+        renderEmails();
+
+
+        // Thay đổi role/status
+        document.getElementById("roleSelect").onchange = (e)=>{
+            user.role = e.target.value;
+        };
+        document.getElementById("statusSelect").onchange = (e)=>{
+            user.status = e.target.value;
+        };
+
+    } else {
+        document.getElementById("adminFields").style.display = "none";
+    }
+
+    document.getElementById("loadPage").style.display = "none";
+    document.getElementById("info").style.display = "block";
+});
+</script>
+</body>
+</html>
