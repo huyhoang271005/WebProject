@@ -48,7 +48,7 @@ export function initEmailList(initialEmails = []) {
                 const email = emails[idx];
                 if(email.validated === true || email.validated === false){
                     await showDialog('question', 'Bạn có chắc muốn xoá email này không?', async()=>{
-                        const result = await callAPI(`/email?emailId=${email.emailId}`, 'DELETE')
+                        const result = await callAPI(`/email/${email.emailId}`, 'DELETE')
                         if(result.success){
                             emails.splice(idx, 1);
                             render();
