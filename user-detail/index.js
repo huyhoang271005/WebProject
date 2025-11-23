@@ -28,6 +28,7 @@ async function render(user, roles, status) {
         const rolesSelect = document.getElementById("roleSelect");
         const statusSelect = document.getElementById("statusSelect");
         const emailsSection = document.getElementById("emailsSection");
+        const btnUpdate = document.getElementById('btnUpdate');
         const html = await fetch("./email-list.html");
         const text = await html.text();
         emailsSection.insertAdjacentHTML('beforeend', text);
@@ -51,6 +52,15 @@ async function render(user, roles, status) {
         document.getElementById("statusSelect").onchange = (e)=>{
             user.status = e.target.value;
         };
+        btnUpdate.addEventListener('click', async()=>{
+            const data = {
+                userId: user.userId,
+                userStatus: statusSelect.value,
+                roleId: rolesSelect.value
+            }
+            const result = await callAPI('/user', 'POST', data);
+            await showDialog(result.success ? 'success' : 'error', result.message);
+        });
 
     } else {
         document.getElementById("adminFields").style.display = "none";
