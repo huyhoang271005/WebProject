@@ -44,15 +44,44 @@
 .email-row {
     display: flex;
     align-items: center;
-    gap: 5px;
+    gap: 3%;
     margin-bottom: 8px;
 }
+
 .email-input {
-    flex: 1;
+    flex: 1;                    /* Input chiếm phần còn lại → icon + nút có không gian */
     padding: 6px 10px;
 }
-button.addEmailBtn {
-    padding: 6px 12px;
+
+.status-icon {
+    font-size: 18px;
+    line-height: 1;
+}
+
+.removeEmailBtn {
+    padding: 6px 15px;
+    margin: 8px 0;
+}
+
+.verify-icon {
+    cursor: pointer;
+    transition: transform 0.15s ease, opacity 0.15s ease;
+}
+
+/* Hover: phóng to nhẹ + sáng màu */
+.verify-icon:hover {
+    transform: scale(1.15);
+    opacity: 0.9;
+}
+
+/* Click: thu nhỏ nhẹ */
+.verify-icon:active {
+    transform: scale(0.9);
+    opacity: 0.7;
+}
+
+#addEmailBtn {
+    margin-top: 5px;
 }
 .date-info {
     font-size: 0.75rem;

@@ -1,6 +1,7 @@
 import { loadPage, convertToVNTime } from "../public/public.js";
 import { showDialog } from "../dialog/index.js";
 import { callAPI } from "../public/api.js";
+import { initEmailList } from "../profile/email-list.js";
 
 await loadPage(async()=>{
     const param = new URLSearchParams(window.location.search);
@@ -8,10 +9,14 @@ await loadPage(async()=>{
     const roles = await callAPI('/roles');
     const status = await callAPI('/user-status');
     const user = await callAPI(`/user/${uid}`);
-    render(user.data, roles.data, status.data);
+    if(!roles.success || !status.success || !user.success){
+        await showDialog('error', "Lỗi khi tải dữ liệu vui lòng tải lại trang");
+        return;
+    }
+    await render(user.data, roles.data, status.data);
 });
 
-function render(user, roles, status) {
+async function render(user, roles, status) {
     document.getElementById("avatarPreview").src = user.imageUrl;
     document.getElementById("username").textContent = user.username;
     document.getElementById("fullName").textContent = user.fullname;
@@ -22,9 +27,13 @@ function render(user, roles, status) {
         document.getElementById("adminFields").style.display = "block";
         const rolesSelect = document.getElementById("roleSelect");
         const statusSelect = document.getElementById("statusSelect");
+        const emailsSection = document.getElementById("emailsSection");
         rolesSelect.value = user.extendUserResponse.roleId;
         statusSelect.value = user.extendUserResponse.userStatus;
-        
+        const html = await fetch("../profile/email-list.html");
+        const text = await html.text();
+        emailsSection.insertAdjacentHTML('beforeend', text);
+        initEmailList(user.extendUserResponse.emails);
         roles.forEach((role) => {
             const html = `<option value=${role.roleId}>${role.roleName}</option>`;
             rolesSelect.insertAdjacentHTML('beforeend', html);
