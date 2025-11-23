@@ -33,7 +33,7 @@ async function render(user, roles, status) {
         const html = await fetch("./email-list.html");
         const text = await html.text();
         emailsSection.insertAdjacentHTML('beforeend', text);
-        initEmailList(user.extendUserResponse.emails);
+        initEmailList(user.userId, user.extendUserResponse.emails);
         roles.forEach((role) => {
             const html = `<option value=${role.roleId}>${role.roleName}</option>`;
             rolesSelect.insertAdjacentHTML('beforeend', html);

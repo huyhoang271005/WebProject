@@ -1,6 +1,6 @@
 import { showDialog } from "../dialog/index.js";
 import { callAPI } from "../public/api.js";
-export function initEmailList(initialEmails = []) {
+export function initEmailList(userId, initialEmails = []) {
     let emails = [...initialEmails];
 
     const list = document.getElementById("emailList");
@@ -41,7 +41,7 @@ export function initEmailList(initialEmails = []) {
                 const email = emails[idx];
                 await showDialog('question', `Gửi email xác thực đến ${email.email}`, async () => {
                     if(email.email === '' || !email?.email) return;
-                    const addEmail = await callAPI('/email', 'POST', {email: email.email});
+                    const addEmail = await callAPI(`/email/${userId}`, 'POST', {email: email.email});
                     if (addEmail.success){
                         const result = await callAPI('/auth/send-verify-email', 'POST', {email: email.email});
                         if(result.success){
