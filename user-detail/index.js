@@ -68,7 +68,7 @@ async function render(user) {
         });
         btnLogout.addEventListener('click', async()=>{
             await getLoader('btnLogout', async()=>{
-                const result = await callAPI(`/logout-user/${user.userId}`);
+                const result = await callAPI(`/logout-all/${user.userId}`);
                 await showDialog(result.success ? 'success' : 'error', result.message);
             })
         });
