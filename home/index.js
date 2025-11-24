@@ -8,5 +8,5 @@ btn.addEventListener('mouseover', ()=>{
 const logout = document.getElementById('logout');
 logout.addEventListener('click', ()=>{
     localStorage.setItem('rememberUser', 'false');
-    window.location.replace("/WebProject/auth/login");
+    window.location.replace("/WebProject");
 });

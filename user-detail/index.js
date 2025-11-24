@@ -31,6 +31,7 @@ async function render(user) {
         const statusSelect = document.getElementById("statusSelect");
         const emailsSection = document.getElementById("emailsSection");
         const btnUpdate = document.getElementById('btnUpdate');
+        const btnLogout = document.getElementById('btnLogout');
         const html = await fetch("./email-list.html");
         const text = await html.text();
         emailsSection.insertAdjacentHTML('beforeend', text);
@@ -64,6 +65,10 @@ async function render(user) {
                 const result = await callAPI('/user', 'POST', data);
                 await showDialog(result.success ? 'success' : 'error', result.message);
             });
+        });
+        btnLogout.addEventListener('click', async()=>{
+            const result = await callAPI(`/logout-user/${user.userId}`);
+            await showDialog(result.success ? 'success' : 'error', result.message);
         });
 
     } else {
