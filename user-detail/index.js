@@ -67,8 +67,10 @@ async function render(user) {
             });
         });
         btnLogout.addEventListener('click', async()=>{
-            const result = await callAPI(`/logout-user/${user.userId}`);
-            await showDialog(result.success ? 'success' : 'error', result.message);
+            await getLoader('btnLogout', async()=>{
+                const result = await callAPI(`/logout-user/${user.userId}`);
+                await showDialog(result.success ? 'success' : 'error', result.message);
+            })
         });
 
     } else {
