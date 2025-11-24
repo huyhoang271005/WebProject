@@ -17,7 +17,7 @@ await loadPage(async()=>{
 async function render(user) {
     document.getElementById("avatarPreview").src = user.imageUrl;
     document.getElementById("username").textContent = user.username;
-    document.getElementById("fullName").textContent = user.fullname;
+    document.getElementById("fullName").textContent = user.fullName;
     document.getElementById("birthday").textContent = user.birthday;
     document.getElementById("gender").textContent = user.gender == 'MALE' ? 'Nam': user.gender == 'FEMALE' ? 'Nữ' : 'Khác';
     document.getElementById("createdAt").textContent = convertToVNTime(user.createdAt);
