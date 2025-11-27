@@ -22,7 +22,7 @@ jobs:
 
           # ĐỊNH NGHĨA FOLDER CHO MỖI NGƯỜI
           if [ "$BRANCH" = "huy" ]; then
-            FOLDERS=("login" "profile")
+            FOLDERS=("cart" "order")
           elif [ "$BRANCH" = "long" ]; then
             FOLDERS=("dashboard")
           elif [ "$BRANCH" = "an" ]; then
