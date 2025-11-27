@@ -3,24 +3,26 @@ name: Auto copy folders to main
 on:
   push:
     branches-ignore:
-      - main      # TRỪ main
+      - main  # TRỪ main
 
 jobs:
   update-main:
     runs-on: ubuntu-latest
 
     steps:
+      # 1️⃣ Checkout branch nguồn (branch vừa push)
       - name: Checkout source branch
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
+          fetch-all: true
 
+      # 2️⃣ Xác định folder cần sync theo branch
       - name: Determine branch and folders to sync
         run: |
           BRANCH=${GITHUB_REF#refs/heads/}
           echo "Current branch: $BRANCH"
 
-          # ĐỊNH NGHĨA FOLDER CHO MỖI NGƯỜI
           if [ "$BRANCH" = "huy" ]; then
             FOLDERS=("cart" "order")
           elif [ "$BRANCH" = "long" ]; then
@@ -28,27 +30,37 @@ jobs:
           elif [ "$BRANCH" = "an" ]; then
             FOLDERS=("settings")
           else
-            echo "Branch $BRANCH không có folder quy định → thoát!"
+            echo "Branch $BRANCH không có folder quy định → workflow dừng."
             exit 0
           fi
 
+          echo "Folders to copy: ${FOLDERS[@]}"
           echo "${FOLDERS[@]}" > folders.txt
 
+      # 3️⃣ Checkout main và pull để tránh conflict
       - name: Checkout main
         run: |
           git fetch origin main
           git checkout main
           git pull --rebase origin main
 
+      # 4️⃣ Copy folder từ branch nguồn sang main
       - name: Copy folders from source branch to main
         run: |
           SRC_BRANCH=${GITHUB_REF#refs/heads/}
           mapfile -t FOLDERS < folders.txt
 
-          git checkout $SRC_BRANCH -- ${FOLDERS[@]}
+          # Kiểm tra folder tồn tại trước khi checkout
+          for f in "${FOLDERS[@]}"; do
+            if [ ! -d "$f" ]; then
+              echo "Folder $f không tồn tại trên branch $SRC_BRANCH"
+            fi
+          done
 
+          git checkout $SRC_BRANCH -- ${FOLDERS[@]}
           echo "Copied folders: ${FOLDERS[@]}"
 
+      # 5️⃣ Commit và merge folder vào main
       - name: Commit and push changes to main
         env:
           TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -57,10 +69,18 @@ jobs:
           git config user.email "actions@github.com"
 
           git add ${FOLDERS[@]}
+
+          # Nếu không có gì thay đổi → exit
           if git diff-index --quiet HEAD; then
-            echo "Không có gì thay đổi."
+            echo "Không có gì thay đổi, workflow dừng."
             exit 0
           fi
 
+          # Commit
           git commit -m "Auto sync ${FOLDERS[@]} from branch $SRC_BRANCH"
+
+          # Merge branch nguồn vào main (tạo commit merge)
+          git merge --no-ff $SRC_BRANCH -m "Auto merge $SRC_BRANCH into main"
+
+          # Push lên main
           git push https://x-access-token:$TOKEN@github.com/${{ github.repository }} main
