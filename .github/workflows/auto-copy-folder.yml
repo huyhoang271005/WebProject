@@ -1,0 +1,66 @@
+name: Auto copy folders to main
+
+on:
+  push:
+    branches-ignore:
+      - main      # TRỪ main
+
+jobs:
+  update-main:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout source branch
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Determine branch and folders to sync
+        run: |
+          BRANCH=${GITHUB_REF#refs/heads/}
+          echo "Current branch: $BRANCH"
+
+          # ĐỊNH NGHĨA FOLDER CHO MỖI NGƯỜI
+          if [ "$BRANCH" = "huy" ]; then
+            FOLDERS=("login" "profile")
+          elif [ "$BRANCH" = "long" ]; then
+            FOLDERS=("dashboard")
+          elif [ "$BRANCH" = "an" ]; then
+            FOLDERS=("settings")
+          else
+            echo "Branch $BRANCH không có folder quy định → thoát!"
+            exit 0
+          fi
+
+          echo "${FOLDERS[@]}" > folders.txt
+
+      - name: Checkout main
+        run: |
+          git fetch origin main
+          git checkout main
+          git pull --rebase origin main
+
+      - name: Copy folders from source branch to main
+        run: |
+          SRC_BRANCH=${GITHUB_REF#refs/heads/}
+          mapfile -t FOLDERS < folders.txt
+
+          git checkout $SRC_BRANCH -- ${FOLDERS[@]}
+
+          echo "Copied folders: ${FOLDERS[@]}"
+
+      - name: Commit and push changes to main
+        env:
+          TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+
+          git add ${FOLDERS[@]}
+          if git diff-index --quiet HEAD; then
+            echo "Không có gì thay đổi."
+            exit 0
+          fi
+
+          git commit -m "Auto sync ${FOLDERS[@]} from branch $SRC_BRANCH"
+          git push https://x-access-token:$TOKEN@github.com/${{ github.repository }} main
