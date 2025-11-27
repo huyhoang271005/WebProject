@@ -40,9 +40,10 @@ jobs:
       # 3️⃣ Checkout main và pull để tránh conflict
       - name: Checkout main
         run: |
-          git fetch origin main
+          git fetch origin refs/heads/main:refs/remotes/origin/main
           git checkout main
           git pull --rebase origin main
+
 
       # 4️⃣ Copy folder từ branch nguồn sang main
       - name: Copy folders from source branch to main
