@@ -10,14 +10,14 @@ await loadPage(async()=>{
         await showDialog('error', result.message);
     }
     else {
-        renderUsers(result.data.users);
+        renderUsers(result.data.listData);
         loadMore.style.display = result.data.hasMore ? 'block' : 'none';
         loadMore.addEventListener('click', async()=>{
             page+=1;
             await getLoader('loadMore', async()=>{
                 const result1 = await callAPI(`/users?page=${page}&&size=${size}`);
-                result.data.users = [...result.data.users, ...result1.data.users]
-                renderUsers(result.data.users);
+                result.data.users = [...result.data.listData, ...result1.data.listData]
+                renderUsers(result.data.listData);
                 loadMore.style.display = result1.data.hasMore ? 'block' : 'none';
             });
         })
