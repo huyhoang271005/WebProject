@@ -1,13 +1,22 @@
 import { callAPI } from "../public/api.js";
 import { showDialog } from "../dialog/index.js";
 import { loadPage, convertToVNTime } from "../public/public.js";
+let page = 0;
+let size = 1;
 await loadPage(async()=>{
-    const result = await callAPI('/users');
+    const result = await callAPI(`/users?page=${page}&&size=${size}`);
     if(!result.success){
         await showDialog('error', result.message);
     }
     else {
         renderUsers(result.data);
+        const loadMore = document.getElementById('loadMore');
+        loadMore.addEventListener('click', async()=>{
+            page+=1;
+            const result1 = await callAPI(`/users?page=${page}&&size=${size}`);
+            result.data = result.data.push(result1.data);
+            renderUsers(result.data);
+        })
     }
 });
 
