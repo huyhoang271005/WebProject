@@ -11,6 +11,7 @@ async function loadUsers() {
         return;
     }
     else {
+        page+=1;
         loadMore.style.display = result.data.hasMore ? 'block' : 'none';
         return result.data.listData;
     }
@@ -19,7 +20,6 @@ await loadPage(async()=>{
     let data = await loadUsers();
     renderUsers(data)
     loadMore.addEventListener('click', async()=>{
-        page+=1;
         await getLoader('loadMore', async()=>{
             data = [...data, ...await loadUsers()];
             renderUsers(data);
