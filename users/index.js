@@ -16,11 +16,11 @@ async function loadUsers() {
     }
 }
 await loadPage(async()=>{
-    let data = loadUsers();
+    let data = await loadUsers();
     renderUsers(data)
     loadMore.addEventListener('click', async()=>{
         page+=1;
-        data = [...data, ...loadUsers()];
+        data = [...data, ...await loadUsers()];
         renderUsers(data);
     })
 });
