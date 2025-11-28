@@ -16,9 +16,14 @@ await loadPage(async()=>{
             page+=1;
             await getLoader('loadMore', async()=>{
                 const result1 = await callAPI(`/users?page=${page}&&size=${size}`);
-                result.data.listData = [...result.data.listData, ...result1.data.listData]
-                renderUsers(result.data.listData);
-                loadMore.style.display = result1.data.hasMore ? 'block' : 'none';
+                if(!result1.success){
+                    await showDialog('error', result1.message);
+                }
+                else {
+                    result.data.listData = [...result.data.listData, ...result1.data.listData]
+                    renderUsers(result.data.listData);
+                    loadMore.style.display = result1.data.hasMore ? 'block' : 'none';
+                }
             });
         })
     }
