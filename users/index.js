@@ -5,7 +5,7 @@ const loadMore = document.getElementById('loadMore');
 let page = 0;
 let size = 1;
 await loadPage(async()=>{
-    let result = await callAPI(`/users?page=${page}&&size=${size}`);
+    const result = await callAPI(`/users?page=${page}&&size=${size}`);
     if(!result.success){
         await showDialog('error', result.message);
     }

@@ -1,101 +1,102 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Danh sách người dùng</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Danh sách người dùng</title>
 
-<link rel="stylesheet" href="../public/public.css">
-<link rel="stylesheet" href="../dialog/index.css">
+    <link rel="stylesheet" href="../public/public.css">
+    <link rel="stylesheet" href="../dialog/index.css">
+    <script src="https://kit.fontawesome.com/e9c281dd3f.js" crossorigin="anonymous"></script>
 
-<style>
+    <style>
 
-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 15px;
-}
-
-th, td {
-    padding: 12px 14px;
-    border-bottom: 1px solid #e5e7eb;
-}
-
-th {
-    background: #3B82F6;
-    color: white;
-    text-align: left;
-}
-
-tr:hover {
-    background: #f3f4f6;
-    cursor: pointer;
-}
-
-.avatar {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    object-fit: cover;
-    margin-right: 10px;
-}
-
-.user-info {
-    display: flex;
-    align-items: center;
-    font-weight: 600;
-}
-
-.sub {
-    font-size: 0.85rem;
-    color: #6b7280;
-    margin-top: 3px;
-}
-
-/* Responsive */
-@media (max-width: 700px) {
-    table, tbody, th, td, tr { display: block; }
-    thead { display: none; }
-
-    tr {
-        margin-bottom: 12px;
-        padding: 12px;
-        border: 1px solid #ddd;
-        border-radius: 10px;
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 15px;
     }
 
-    td {
-        display: flex;
-        justify-content: space-between;
-        padding: 6px 0;
+    th, td {
+        padding: 12px 14px;
+        border-bottom: 1px solid #e5e7eb;
     }
 
-    td::before {
-        content: attr(data-label);
-        font-weight: 600;
+    th {
+        background: #3B82F6;
+        color: white;
+        text-align: left;
+    }
+
+    tr:hover {
+        background: #f3f4f6;
+        cursor: pointer;
+    }
+
+    .avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        object-fit: cover;
         margin-right: 10px;
     }
-}
-</style>
+
+    .user-info {
+        display: flex;
+        align-items: center;
+        font-weight: 600;
+    }
+
+    .sub {
+        font-size: 0.85rem;
+        color: #6b7280;
+        margin-top: 3px;
+    }
+
+    /* Responsive */
+    @media (max-width: 700px) {
+        table, tbody, th, td, tr { display: block; }
+        thead { display: none; }
+
+        tr {
+            margin-bottom: 12px;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+        }
+
+        td {
+            display: flex;
+            justify-content: space-between;
+            padding: 6px 0;
+        }
+
+        td::before {
+            content: attr(data-label);
+            font-weight: 600;
+            margin-right: 10px;
+        }
+    }
+    </style>
 </head>
 
 <body>
-<div class="card">
-    <h2>Danh sách người dùng</h2>
-    <div id="loadPage"></div>
+    <div class="card">
+        <h2>Danh sách người dùng</h2>
+        <div id="loadPage"></div>
 
-    <table id="info">
-        <thead>
-            <tr>
-                <th>Người dùng</th>
-                <th>Ngày tham gia</th>
-            </tr>
-        </thead>
-        <tbody></tbody>
-    </table>
-    <button id = "loadMore">Hiển thị thêm</button>
-</div>
+        <table id="info">
+            <thead>
+                <tr>
+                    <th>Người dùng</th>
+                    <th>Ngày tham gia</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+        <button id = "loadMore">Hiển thị thêm</button>
+    </div>
 
-<script type="module" src="index.js"></script>
+    <script type="module" src="index.js"></script>
 </body>
 </html>
