@@ -20,8 +20,10 @@ await loadPage(async()=>{
     renderUsers(data)
     loadMore.addEventListener('click', async()=>{
         page+=1;
-        data = [...data, ...await loadUsers()];
-        renderUsers(data);
+        await getLoader('loadMore', async()=>{
+            data = [...data, ...await loadUsers()];
+            renderUsers(data);
+        })
     })
 });
 
