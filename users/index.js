@@ -1,6 +1,6 @@
 import { callAPI } from "../public/api.js";
 import { showDialog } from "../dialog/index.js";
-import { loadPage, convertToVNTime } from "../public/public.js";
+import { loadPage, convertToVNTime, getLoader } from "../public/public.js";
 const loadMore = document.getElementById('loadMore');
 let page = 0;
 let size = 1;
@@ -14,10 +14,12 @@ await loadPage(async()=>{
         loadMore.style.display = result.data.hasMore ? 'block' : 'none';
         loadMore.addEventListener('click', async()=>{
             page+=1;
-            const result1 = await callAPI(`/users?page=${page}&&size=${size}`);
-            result.data.users = [...result.data.users, ...result1.data.users]
-            renderUsers(result.data.users);
-            loadMore.style.display = result1.data.hasMore ? 'block' : 'none';
+            await getLoader('loadMore', async()=>{
+                const result1 = await callAPI(`/users?page=${page}&&size=${size}`);
+                result.data.users = [...result.data.users, ...result1.data.users]
+                renderUsers(result.data.users);
+                loadMore.style.display = result1.data.hasMore ? 'block' : 'none';
+            });
         })
     }
 });
