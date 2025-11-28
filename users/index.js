@@ -5,7 +5,7 @@ const loadMore = document.getElementById('loadMore');
 let page = 0;
 let size = 1;
 await loadPage(async()=>{
-    const result = await callAPI(`/users?page=${page}&&size=${size}`);
+    let result = await callAPI(`/users?page=${page}&&size=${size}`);
     if(!result.success){
         await showDialog('error', result.message);
     }
@@ -15,7 +15,7 @@ await loadPage(async()=>{
         loadMore.addEventListener('click', async()=>{
             page+=1;
             const result1 = await callAPI(`/users?page=${page}&&size=${size}`);
-            result.data = [...result.data.users, ...result1.data.users]
+            result.data.users = [...result.data.users, ...result1.data.users]
             renderUsers(result.data);
             loadMore.style.display = result1.data.hasMore ? 'block' : 'none';
         })
