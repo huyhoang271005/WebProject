@@ -4,29 +4,25 @@ import { loadPage, convertToVNTime, getLoader } from "../public/public.js";
 const loadMore = document.getElementById('loadMore');
 let page = 0;
 let size = 1;
-await loadPage(async()=>{
+async function loadUsers() {
     const result = await callAPI(`/users?page=${page}&&size=${size}`);
     if(!result.success){
         await showDialog('error', result.message);
+        return;
     }
     else {
-        renderUsers(result.data.listData);
         loadMore.style.display = result.data.hasMore ? 'block' : 'none';
-        loadMore.addEventListener('click', async()=>{
-            page+=1;
-            await getLoader('loadMore', async()=>{
-                const result1 = await callAPI(`/users?page=${page}&&size=${size}`);
-                if(!result1.success){
-                    await showDialog('error', result1.message);
-                }
-                else {
-                    result.data.listData = [...result.data.listData, ...result1.data.listData]
-                    renderUsers(result.data.listData);
-                    loadMore.style.display = result1.data.hasMore ? 'block' : 'none';
-                }
-            });
-        })
+        return result.data.listData;
     }
+}
+await loadPage(async()=>{
+    let data = loadUsers();
+    renderUsers(data)
+    loadMore.addEventListener('click', async()=>{
+        page+=1;
+        data = [...data, ...loadUsers()];
+        renderUsers(data);
+    })
 });
 
 function renderUsers(users) {

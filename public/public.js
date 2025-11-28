@@ -1,6 +1,5 @@
-/**
- * Loader icon for button, yêu cầu truyền id của button vào hàm
- */
+/*Loader icon for button, yêu cầu truyền id của button vào hàm*/
+/*Buộc có thẻ này đặt ở header <script src="https://kit.fontawesome.com/e9c281dd3f.js" crossorigin="anonymous"></script> */
 export async function getLoader(idLayout, callback) {
     if(callback && typeof callback === 'function'){
         const loader = document.getElementById(idLayout);
