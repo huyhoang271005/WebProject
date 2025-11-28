@@ -14,7 +14,7 @@ await loadPage(async()=>{
         loadMore.addEventListener('click', async()=>{
             page+=1;
             const result1 = await callAPI(`/users?page=${page}&&size=${size}`);
-            result.data = result.data.push(result1.data);
+            result.data = [...result.data, ...result1.data]
             renderUsers(result.data);
         })
     }
