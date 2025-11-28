@@ -16,7 +16,7 @@ await loadPage(async()=>{
             page+=1;
             await getLoader('loadMore', async()=>{
                 const result1 = await callAPI(`/users?page=${page}&&size=${size}`);
-                result.data.users = [...result.data.listData, ...result1.data.listData]
+                result.data.listData = [...result.data.listData, ...result1.data.listData]
                 renderUsers(result.data.listData);
                 loadMore.style.display = result1.data.hasMore ? 'block' : 'none';
             });
