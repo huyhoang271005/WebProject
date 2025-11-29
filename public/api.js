@@ -96,6 +96,7 @@ export async function connectSse(endpoint, callback) {
             const result = await refreshAccessToken()
             if(!result.success){
                 await callback(result);
+                return;
             }
             const token = result.data;
             if (token?.accessToken) {
