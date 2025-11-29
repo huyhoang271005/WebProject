@@ -95,21 +95,21 @@ export async function connectSse(endpoint, callback) {
         });
 
         es.listen({
-            onMessage(e) {
+            async onMessage(e) {
                 try {
                     const obj = JSON.parse(e.data);
-                    callback(obj);
+                    await callback(obj);
                 } catch(err) {
                     console.error(err);
                 }
             },
-            onError(e) {
+            async onError(e) {
                 es.close();
-                start();
+                await start();
                 return;
             }
         });
     }
 
-    start();
+    await start();
 }
