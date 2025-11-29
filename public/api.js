@@ -108,6 +108,9 @@ export async function connectSse(endpoint, callback) {
                     return;
                 }
                 accessToken = result.data.accessToken;
+                es.close();
+                start();
+                return;
             }
         }
     });
