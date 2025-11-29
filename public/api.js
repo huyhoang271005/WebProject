@@ -84,8 +84,38 @@ async function refreshAccessToken() {
 }
 
 export async function connectSse(endpoint, callback) {
+    let reconnectAttempts = 0;
+    const MAX_RECONNECT = 3;
 
     async function start() {
+        // ✅ 1. Test connection trước với fetch
+        try {
+            const testResponse = await fetch(`${API_BASE}${endpoint}`, {
+                method: 'HEAD', // hoặc GET nhưng không đọc body
+                headers: {
+                    'Authorization': `Bearer ${accessToken}`,
+                    'ngrok-skip-browser-warning': '2710'
+                }
+            });
+
+            // Nếu 401 → refresh token trước
+            if (testResponse.status === 401) {
+                console.log("🔄 Token expired, refreshing before SSE...");
+                const result = await refreshAccessToken();
+                
+                if (!result.success) {
+                    callback(result);
+                    return;
+                }
+                
+                accessToken = result.data.accessToken;
+                console.log("✅ Token refreshed, now connecting SSE");
+            }
+        } catch (err) {
+            console.error("❌ Pre-connection test failed:", err);
+        }
+
+        // ✅ 2. Tạo SSE connection
         const es = new EventSourcePlus(`${API_BASE}${endpoint}`, {
             headers: {
                 'Authorization': `Bearer ${accessToken}`,
@@ -94,39 +124,68 @@ export async function connectSse(endpoint, callback) {
         });
 
         es.listen({
+            onOpen() {
+                console.log("✅ SSE connected");
+                reconnectAttempts = 0; // Reset counter khi connect thành công
+            },
+
             onMessage(e) {
                 try {
-                    callback(JSON.parse(e.data));
+                    const data = JSON.parse(e.data);
+                    callback(data);
                 } catch {
-                    console.error("Invalid JSON:", e.data);
+                    console.error("❌ Invalid JSON:", e.data);
                 }
             },
 
-            async onError(err) {
-                console.warn("SSE error:", err);
-
-                // 401 → Refresh token
-                console.log("Token expired → refreshing...");
-
-                const result = await refreshAccessToken();
-
-                if (!result.success) {
-                    callback(result);
+            async onResponseError({ response }) {
+                // ✅ onResponseError có thông tin response
+                console.log("📛 Response error, status:", response?.status);
+                
+                if (response?.status === 401) {
+                    console.log("🔄 401 detected, refreshing token...");
+                    
+                    const result = await refreshAccessToken();
+                    
+                    if (!result.success) {
+                        callback(result);
+                        es.close();
+                        return;
+                    }
+                    
+                    accessToken = result.data.accessToken;
+                    console.log("✅ Token refreshed, reconnecting SSE...");
+                    
                     es.close();
+                    setTimeout(start, 500);
                     return;
                 }
+            },
 
-                accessToken = result.data.accessToken;
-                console.log("Token refreshed → reconnecting SSE");
-
-                es.close();  // ĐÓNG SSE CŨ NGAY LẬP TỨC
-
-                // TẠO SSE MỚI VỚI TOKEN MỚI
-                setTimeout(start, 500);  
-                return;
+            onError(err) {
+                console.warn("⚠️ SSE error:", err);
+                
+                // Retry logic cho network errors
+                if (reconnectAttempts < MAX_RECONNECT) {
+                    reconnectAttempts++;
+                    console.log(`🔄 Reconnecting... (${reconnectAttempts}/${MAX_RECONNECT})`);
+                    
+                    es.close();
+                    setTimeout(start, 2000 * reconnectAttempts); // Exponential backoff
+                } else {
+                    console.error("❌ Max reconnect attempts reached");
+                    es.close();
+                    callback({
+                        success: false,
+                        message: "Không thể kết nối SSE",
+                        data: null
+                    });
+                }
             }
         });
+
+        return es;
     }
 
-    start();  // chạy lần đầu
+    return start();
 }
