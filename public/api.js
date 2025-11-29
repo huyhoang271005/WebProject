@@ -87,8 +87,6 @@ export async function connectSse(endpoint, callback) {
     const es = new EventSourcePlus(`${API_BASE}${endpoint}`, {
         headers: {
             'ngrok-skip-browser-warning': '2710',
-            'X-Accel-Buffering': 'no',
-            'Cache-Control': 'no-cache, no-transform'
         },
     });
     es.listen({

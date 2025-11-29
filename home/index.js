@@ -17,6 +17,6 @@ logout.addEventListener('click', async()=>{
     }
 });
 
-connectSse('/auth/connect', data => {
+connectSse('/connect', data => {
     showDialog(data.success ? 'success' : 'error', data.message);
 });
