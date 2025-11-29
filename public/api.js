@@ -1,4 +1,4 @@
-const API_BASE = "http://localhost:8080";
+const API_BASE = "https://uncoagulative-tyrannisingly-eddie.ngrok-free.dev";
 import { EventSourcePlus } from "https://cdn.jsdelivr.net/npm/event-source-plus/+esm";
 
 let accessToken = null;
@@ -84,14 +84,23 @@ async function refreshAccessToken() {
 }
 
 export async function connectSse(endpoint, callback) {
-    const es = new EventSource(`${API_BASE}${endpoint}`);
-    es.onmessage = (e) => {
-        try{
-            const obj = JSON.parse(e.data);
-            callback(obj);
-        }
-        catch {
-            console.error(e);
-        }
-    }
+    const es = new EventSourcePlus(`${API_BASE}${endpoint}`, {
+        headers: {
+            'ngrok-skip-browser-warning': '2710',
+            'X-Accel-Buffering': 'no',
+            'Cache-Control': 'no-cache, no-transform'
+        },
+    });
+    es.listen({
+        onMessage: e => {
+            try{
+                const obj = JSON.parse(e.data)
+                callback(obj);
+            }
+            catch {
+                console.error('This is not Json');
+            }
+        },
+        onError: e=> console.error('Connect error', e)
+    });
 }
