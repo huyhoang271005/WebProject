@@ -89,32 +89,7 @@ export async function connectSse(endpoint, callback) {
 
     async function start() {
         // ✅ 1. Test connection trước với fetch
-        try {
-            const testResponse = await fetch(`${API_BASE}${endpoint}`, {
-                method: 'HEAD', // hoặc GET nhưng không đọc body
-                headers: {
-                    'Authorization': `Bearer ${accessToken}`,
-                    'ngrok-skip-browser-warning': '2710'
-                }
-            });
-
-            // Nếu 401 → refresh token trước
-            if (testResponse.status === 401) {
-                console.log("🔄 Token expired, refreshing before SSE...");
-                const result = await refreshAccessToken();
-                
-                if (!result.success) {
-                    callback(result);
-                    return;
-                }
-                
-                accessToken = result.data.accessToken;
-                console.log("✅ Token refreshed, now connecting SSE");
-            }
-        } catch (err) {
-            console.error("❌ Pre-connection test failed:", err);
-        }
-
+        await callAPI(`/${endpoint}`);
         // ✅ 2. Tạo SSE connection
         const es = new EventSourcePlus(`${API_BASE}${endpoint}`, {
             headers: {
