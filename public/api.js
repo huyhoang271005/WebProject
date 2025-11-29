@@ -104,7 +104,8 @@ export async function connectSse(endpoint, callback) {
                 }
             },
             onError: e => {
-                console.error(e);
+                start();
+                return;
             }
         });
     }
