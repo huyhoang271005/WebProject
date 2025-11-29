@@ -17,7 +17,7 @@ logout.addEventListener('click', async()=>{
     }
 });
 const eventSource = new EventSource(`${API_BASE}/auth/connect`);
-eventSource.onmessage = function(event){
-    const data = JSON.parse(event.data);
-    showDialog(data.success ? 'success' : 'error', data.message);
+eventSource.onmessage = async function(event){
+    const data = await JSON.parse(event.data);
+    await showDialog(data.success ? 'success' : 'error', data.message);
 };
