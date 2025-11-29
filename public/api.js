@@ -95,7 +95,7 @@ export async function connectSse(endpoint, callback) {
         });
 
         es.listen({
-            onMessage: e => {
+            onMessage(e) {
                 try {
                     const obj = JSON.parse(e.data);
                     callback(obj);
@@ -103,12 +103,13 @@ export async function connectSse(endpoint, callback) {
                     console.error(err);
                 }
             },
-            onError: e => {
+            onError(e) {
+                es.close();
                 start();
                 return;
             }
         });
     }
 
-    return start();
+    start();
 }
