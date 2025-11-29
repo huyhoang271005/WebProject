@@ -1,4 +1,5 @@
-export const API_BASE = "https://uncoagulative-tyrannisingly-eddie.ngrok-free.dev";
+const API_BASE = "https://uncoagulative-tyrannisingly-eddie.ngrok-free.dev";
+import { EventSourcePlus } from "https://cdn.jsdelivr.net/npm/event-source-plus/+esm";
 
 let accessToken = null;
 /**
@@ -80,4 +81,24 @@ async function refreshAccessToken() {
         }
     }
     return await res.json();
+}
+
+export async function connectSse(endpoint, callback) {
+    const es = new EventSourcePlus(`${API_BASE}${endpoint}`, {
+        headers: {
+            'ngrok-skip-browser-warning': '2710'
+        },
+    });
+    es.listen({
+        onMessage: e => {
+            try{
+                const obj = JSON.parse(e.data)
+                callback(obj);
+            }
+            catch {
+                console.error('This is not Json');
+            }
+        },
+        onError: e=> console.error('Connect error', e)
+    });
 }

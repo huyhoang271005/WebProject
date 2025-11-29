@@ -1,5 +1,5 @@
 import { showDialog } from "../dialog/index.js";
-import { callAPI, API_BASE } from "../public/api.js";
+import { callAPI, connectSse } from "../public/api.js";
 import { getLoader } from "../public/public.js";
 const btn = document.getElementById('test');
 btn.style.position = 'absolute';
@@ -16,8 +16,7 @@ logout.addEventListener('click', async()=>{
         window.location.replace("/WebProject");
     }
 });
-const eventSource = new EventSource(`${API_BASE}/auth/connect`);
-eventSource.onmessage = async function(event){
-    const data = await JSON.parse(event.data);
-    await showDialog(data.success ? 'success' : 'error', data.message);
-};
+
+connectSse('/auth/connect', data => {
+    showDialog(data.success ? 'success' : 'error', data.message);
+});
