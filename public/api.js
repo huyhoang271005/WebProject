@@ -86,7 +86,8 @@ async function refreshAccessToken() {
 export async function connectSse(endpoint, callback) {
     const es = new EventSourcePlus(`${API_BASE}${endpoint}`, {
         headers: {
-            'ngrok-skip-browser-warning': '2710'
+            'ngrok-skip-browser-warning': '2710',
+            'X-Accel-Buffering': 'no'
         },
     });
     es.listen({
