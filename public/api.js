@@ -106,30 +106,24 @@ export async function connectSse(endpoint, callback) {
                 console.warn("SSE error:", err);
 
                 // 401 → Refresh token
-                if (err?.status === 401 || err?.xhr?.status === 401) {
-                    console.log("Token expired → refreshing...");
+                console.log("Token expired → refreshing...");
 
-                    const result = await refreshAccessToken();
+                const result = await refreshAccessToken();
 
-                    if (!result.success) {
-                        callback(result);
-                        es.close();
-                        return;
-                    }
-
-                    accessToken = result.data.accessToken;
-                    console.log("Token refreshed → reconnecting SSE");
-
-                    es.close();  // ĐÓNG SSE CŨ NGAY LẬP TỨC
-
-                    // TẠO SSE MỚI VỚI TOKEN MỚI
-                    setTimeout(start, 500);  
+                if (!result.success) {
+                    callback(result);
+                    es.close();
                     return;
                 }
 
-                // Các lỗi khác → retry nhẹ
-                es.close();
-                setTimeout(start, 2000);
+                accessToken = result.data.accessToken;
+                console.log("Token refreshed → reconnecting SSE");
+
+                es.close();  // ĐÓNG SSE CŨ NGAY LẬP TỨC
+
+                // TẠO SSE MỚI VỚI TOKEN MỚI
+                setTimeout(start, 500);  
+                return;
             }
         });
     }
