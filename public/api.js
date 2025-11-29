@@ -84,16 +84,6 @@ async function refreshAccessToken() {
 }
 
 export async function connectSse(endpoint, callback) {
-    if(!accessToken){
-        const result = await refreshAccessToken();
-        if(!result.success){
-            await callback(result);
-        }
-        const token = result.data;
-        if (token?.accessToken) {
-            accessToken = token.accessToken;
-        }
-    }
     const es = new EventSourcePlus(`${API_BASE}${endpoint}`, {
         headers: {
             'ngrok-skip-browser-warning': '2710',
@@ -110,6 +100,15 @@ export async function connectSse(endpoint, callback) {
                 console.error('This is not Json');
             }
         },
-        onError: e=> console.error('Connect error', e)
+        onError: async(e)=> {
+            if(e?.status === 401 || e?.xhr?.status === 401){
+                const result = await refreshAccessToken();
+                if(!result.success){
+                    await callback(result);
+                    return;
+                }
+                accessToken = result.data.accessToken;
+            }
+        }
     });
 }
