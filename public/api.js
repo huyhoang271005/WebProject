@@ -89,7 +89,7 @@ export async function connectSse(endpoint, callback) {
 
     async function start() {
         // ✅ 1. Test connection trước với fetch
-        await callAPI(`/${endpoint}`);
+        await callAPI(`${endpoint}`);
         // ✅ 2. Tạo SSE connection
         const es = new EventSourcePlus(`${API_BASE}${endpoint}`, {
             headers: {
