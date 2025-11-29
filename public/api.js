@@ -1,4 +1,4 @@
-const API_BASE = "https://uncoagulative-tyrannisingly-eddie.ngrok-free.dev";
+export const API_BASE = "https://uncoagulative-tyrannisingly-eddie.ngrok-free.dev";
 
 let accessToken = null;
 /**

@@ -1,4 +1,5 @@
-import { callAPI } from "../public/api.js";
+import { showDialog } from "../dialog/index.js";
+import { callAPI, API_BASE } from "../public/api.js";
 import { getLoader } from "../public/public.js";
 const btn = document.getElementById('test');
 btn.style.position = 'absolute';
@@ -15,3 +16,8 @@ logout.addEventListener('click', async()=>{
         window.location.replace("/WebProject");
     }
 });
+const eventSource = new EventSource(`${API_BASE}/auth/connect`);
+eventSource.onmessage = function(event){
+    const data = JSON.parse(event.data);
+    showDialog(data.success ? 'success' : 'error', data.message);
+};
