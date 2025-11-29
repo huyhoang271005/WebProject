@@ -1,4 +1,4 @@
-const API_BASE = "https://uncoagulative-tyrannisingly-eddie.ngrok-free.dev";
+const API_BASE = "http://localhost:8080";
 import { EventSourcePlus } from "https://cdn.jsdelivr.net/npm/event-source-plus/+esm";
 
 let accessToken = null;
@@ -87,7 +87,8 @@ export async function connectSse(endpoint, callback) {
     const es = new EventSourcePlus(`${API_BASE}${endpoint}`, {
         headers: {
             'ngrok-skip-browser-warning': '2710',
-            'X-Accel-Buffering': 'no'
+            'X-Accel-Buffering': 'no',
+            'Cache-Control': 'no-cache, no-transform'
         },
     });
     es.listen({
