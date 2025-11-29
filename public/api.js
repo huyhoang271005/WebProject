@@ -86,14 +86,21 @@ async function refreshAccessToken() {
 export async function connectSse(endpoint, callback) {
 
     async function start() {
-        const result = await fetch(`${API_BASE}`, {
+        const res = await fetch(`${API_BASE}`, {
             headers: {
                 'Authorization': `Bearer ${accessToken}`,
                 'ngrok-skip-browser-warning': '2710'
             }
         });
-        if(result.status === 401){
-            await refreshAccessToken()
+        if(res.status === 401){
+            const result = await refreshAccessToken()
+            if(!result.success){
+                await callback(result);
+            }
+            const token = result.data;
+            if (token?.accessToken) {
+                accessToken = token.accessToken;
+            }
         }
         const es = new EventSourcePlus(`${API_BASE}${endpoint}`, {
             headers: {
