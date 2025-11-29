@@ -84,34 +84,55 @@ async function refreshAccessToken() {
 }
 
 export async function connectSse(endpoint, callback) {
-    const es = new EventSourcePlus(`${API_BASE}${endpoint}`, {
-        headers: {
-            'ngrok-skip-browser-warning': '2710',
-            'Authorization': `Bearer ${accessToken}`
-        },
-    });
-    es.listen({
-        onMessage: e => {
-            try{
-                const obj = JSON.parse(e.data)
-                callback(obj);
+
+    async function start() {
+        const es = new EventSourcePlus(`${API_BASE}${endpoint}`, {
+            headers: {
+                'Authorization': `Bearer ${accessToken}`,
+                'ngrok-skip-browser-warning': '2710'
             }
-            catch {
-                console.error('This is not Json');
-            }
-        },
-        onError: async(e)=> {
-            if(e?.status === 401 || e?.xhr?.status === 401){
-                const result = await refreshAccessToken();
-                if(!result.success){
-                    await callback(result);
+        });
+
+        es.listen({
+            onMessage(e) {
+                try {
+                    callback(JSON.parse(e.data));
+                } catch {
+                    console.error("Invalid JSON:", e.data);
+                }
+            },
+
+            async onError(err) {
+                console.warn("SSE error:", err);
+
+                // 401 → Refresh token
+                if (err?.status === 401 || err?.xhr?.status === 401) {
+                    console.log("Token expired → refreshing...");
+
+                    const result = await refreshAccessToken();
+
+                    if (!result.success) {
+                        callback(result);
+                        es.close();
+                        return;
+                    }
+
+                    accessToken = result.data.accessToken;
+                    console.log("Token refreshed → reconnecting SSE");
+
+                    es.close();  // ĐÓNG SSE CŨ NGAY LẬP TỨC
+
+                    // TẠO SSE MỚI VỚI TOKEN MỚI
+                    setTimeout(start, 500);  
                     return;
                 }
-                accessToken = result.data.accessToken;
+
+                // Các lỗi khác → retry nhẹ
                 es.close();
-                start();
-                return;
+                setTimeout(start, 2000);
             }
-        }
-    });
+        });
+    }
+
+    start();  // chạy lần đầu
 }
