@@ -83,6 +83,7 @@ async function refreshAccessToken() {
     return await res.json();
 }
 
+/*enpoint connect sse, bên trong hàm callback có data trả về*/
 export async function connectSse(endpoint, callback) {
 
     async function start() {

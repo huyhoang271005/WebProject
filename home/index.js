@@ -2,6 +2,8 @@ import { showDialog } from "../dialog/index.js";
 import { callAPI, connectSse } from "../public/api.js";
 import { getLoader } from "../public/public.js";
 const btn = document.getElementById('test');
+const message = document.getElementById('message');
+const sendAll = document.getElementById('sendAll');
 btn.style.position = 'absolute';
 btn.style.width = 'auto';
 btn.addEventListener('mouseover', ()=>{
@@ -16,7 +18,14 @@ logout.addEventListener('click', async()=>{
         window.location.replace("/WebProject");
     }
 });
-
+sendAll.addEventListener('click', async()=>{
+    const data = {
+        success: true,
+        message: message.value,
+        data: null
+    }
+    await callAPI('/auth/push', 'POST', data);
+});
 connectSse('/connect', data => {
     showDialog(data.success ? 'success' : 'error', data.message);
 });
