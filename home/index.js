@@ -24,7 +24,10 @@ sendAll.addEventListener('click', async()=>{
         message: message.value,
         data: null
     }
-    await callAPI('/push', 'POST', data);
+    const result = await callAPI('/push', 'POST', data);
+    if(result.success){
+        message.textContent = '';
+    }
 });
 connectSse('/connect', data => {
     showDialog(data.success ? 'success' : 'error', data.message);
