@@ -4,6 +4,12 @@ import { getLoader } from "../public/public.js";
 const btn = document.getElementById('test');
 const message = document.getElementById('message');
 const sendAll = document.getElementById('sendAll');
+const listMessage = document.getElementById('listMessage');
+function addHistory(message){
+    const div = document.createElement('div');
+    div.innerHTML= message;
+    listMessage.appendChild(div);
+}
 btn.style.position = 'absolute';
 btn.style.width = 'auto';
 btn.addEventListener('mouseover', ()=>{
@@ -30,5 +36,7 @@ sendAll.addEventListener('click', async()=>{
     }
 });
 connectSse('/connect', data => {
-    showDialog(data.success ? 'success' : 'error', data.message);
+    if(data.success){
+        addHistory(data.message);
+    }
 });
