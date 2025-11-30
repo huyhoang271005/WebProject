@@ -24,7 +24,7 @@ sendAll.addEventListener('click', async()=>{
         message: message.value,
         data: null
     }
-    await callAPI('/auth/push', 'POST', data);
+    await callAPI('/push', 'POST', data);
 });
 connectSse('/connect', data => {
     showDialog(data.success ? 'success' : 'error', data.message);
