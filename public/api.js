@@ -121,7 +121,6 @@ export async function connectSse(endpoint, callback) {
                 }
             },
             async onError(e) {
-                es.close();
                 await start();
                 return;
             }
