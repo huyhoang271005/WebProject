@@ -3,86 +3,83 @@ name: Auto copy folders to main
 on:
   push:
     branches-ignore:
-      - main  # TRỪ main
+      - main
 
 jobs:
-  update-main:
+  sync-folders:
     runs-on: ubuntu-latest
 
     steps:
-      # 1️⃣ Checkout branch nguồn (branch vừa push)
+      # 1. Checkout source branch
       - name: Checkout source branch
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
 
-      # 2️⃣ Xác định folder cần sync theo branch
-      - name: Determine branch and folders to sync
+      # 2. Determine folders
+      - name: Determine sync folders
+        id: folders
         run: |
           BRANCH=${GITHUB_REF#refs/heads/}
-          echo "Current branch: $BRANCH"
-
           if [ "$BRANCH" = "huy" ]; then
-            FOLDERS=("cart" "order")
+            echo "folders=cart order" >> $GITHUB_OUTPUT
           elif [ "$BRANCH" = "nhat" ]; then
-            FOLDERS=("dashboard")
+            echo "folders=dashboard" >> $GITHUB_OUTPUT
           elif [ "$BRANCH" = "tung" ]; then
-            FOLDERS=("settings")
+            echo "folders=settings" >> $GITHUB_OUTPUT
           elif [ "$BRANCH" = "thanh" ]; then
-            FOLDERS=("settings")
+            echo "folders=settings" >> $GITHUB_OUTPUT
           else
-            echo "Branch $BRANCH không có folder quy định → workflow dừng."
-            exit 0
+            echo "folders=" >> $GITHUB_OUTPUT
           fi
+          echo "branch=$BRANCH" >> $GITHUB_OUTPUT
 
-          echo "Folders to copy: ${FOLDERS[@]}"
-          echo "${FOLDERS[@]}" > folders.txt
-
-      # 3️⃣ Checkout main và pull để tránh conflict
-      - name: Checkout main
+      # 3. Stop if no folders
+      - name: Stop if no folders
+        if: steps.folders.outputs.folders == ''
         run: |
-          git fetch origin refs/heads/main:refs/remotes/origin/main
-          git checkout main
-          git pull --rebase origin main
+          echo "No folders configured for branch ${{ steps.folders.outputs.branch }} — stopping."
+          exit 0
 
-
-      # 4️⃣ Copy folder từ branch nguồn sang main
-      - name: Copy folders from source branch to main
-        run: |
-          SRC_BRANCH=${GITHUB_REF#refs/heads/}
-          mapfile -t FOLDERS < folders.txt
-
-          # Kiểm tra folder tồn tại trước khi checkout
-          for f in "${FOLDERS[@]}"; do
-            if [ ! -d "$f" ]; then
-              echo "Folder $f không tồn tại trên branch $SRC_BRANCH"
-            fi
-          done
-
-          git checkout $SRC_BRANCH -- ${FOLDERS[@]}
-          echo "Copied folders: ${FOLDERS[@]}"
-
-      # 5️⃣ Commit và merge folder vào main
-      - name: Commit and push changes to main
-        env:
-          TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # 4. Configure Git
+      - name: Configure Git
         run: |
           git config user.name "GitHub Actions"
           git config user.email "actions@github.com"
 
-          git add ${FOLDERS[@]}
+      # 5. Fetch and checkout main
+      - name: Fetch main branch
+        run: |
+          git fetch origin main:main
 
-          # Nếu không có gì thay đổi → exit
-          if git diff-index --quiet HEAD; then
-            echo "Không có gì thay đổi, workflow dừng."
+      # 6. Copy folders to main
+      - name: Copy folders to main
+        run: |
+          SRC_BRANCH=${{ steps.folders.outputs.branch }}
+          
+          # Checkout main
+          git checkout main
+          
+          # Copy each folder from source branch
+          for F in ${{ steps.folders.outputs.folders }}; do
+            echo "Syncing folder: $F"
+            rm -rf "$F"
+            git checkout $SRC_BRANCH -- "$F" || echo "Folder $F not found in $SRC_BRANCH"
+          done
+
+      # 7. Commit and push changes
+      - name: Commit and push
+        run: |
+          git add .
+          
+          if git diff --cached --quiet; then
+            echo "No changes to commit — skipping"
             exit 0
           fi
 
-          # Commit
-          git commit -m "Auto sync ${FOLDERS[@]} from branch $SRC_BRANCH"
-
-          # Merge branch nguồn vào main (tạo commit merge)
-          git merge --no-ff $SRC_BRANCH -m "Auto merge $SRC_BRANCH into main"
-
-          # Push lên main
-          git push https://x-access-token:$TOKEN@github.com/${{ github.repository }} main
+          SRC_BRANCH=${{ steps.folders.outputs.branch }}
+          FOLDERS="${{ steps.folders.outputs.folders }}"
+          
+          git commit -m "Auto sync folders ($FOLDERS) from $SRC_BRANCH"
+          git push origin main
