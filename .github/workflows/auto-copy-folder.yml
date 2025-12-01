@@ -5,6 +5,10 @@ on:
     branches-ignore:
       - main
 
+permissions:
+  contents: write
+  pull-requests: write
+
 jobs:
   sync-folders:
     runs-on: ubuntu-latest
@@ -45,8 +49,8 @@ jobs:
       # 4. Configure Git
       - name: Configure Git
         run: |
-          git config user.name "GitHub Actions"
-          git config user.email "actions@github.com"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
 
       # 5. Fetch and checkout main
       - name: Fetch main branch
