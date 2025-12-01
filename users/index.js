@@ -3,7 +3,7 @@ import { showDialog } from "../dialog/index.js";
 import { loadPage, convertToVNTime, getLoader } from "../public/public.js";
 const loadMore = document.getElementById('loadMore');
 let page = 0;
-let size = 1;
+let size = 5;
 async function loadUsers() {
     const result = await callAPI(`/users?page=${page}&&size=${size}`);
     if(!result.success){

@@ -15,7 +15,6 @@ jobs:
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
-          fetch-all: true
 
       # 2️⃣ Xác định folder cần sync theo branch
       - name: Determine branch and folders to sync
@@ -25,9 +24,11 @@ jobs:
 
           if [ "$BRANCH" = "huy" ]; then
             FOLDERS=("cart" "order")
-          elif [ "$BRANCH" = "long" ]; then
+          elif [ "$BRANCH" = "nhat" ]; then
             FOLDERS=("dashboard")
-          elif [ "$BRANCH" = "an" ]; then
+          elif [ "$BRANCH" = "tung" ]; then
+            FOLDERS=("settings")
+          elif [ "$BRANCH" = "thanh" ]; then
             FOLDERS=("settings")
           else
             echo "Branch $BRANCH không có folder quy định → workflow dừng."
