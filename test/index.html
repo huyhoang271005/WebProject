@@ -125,7 +125,7 @@
         // Biến toàn cục
         var stompClient = null;
         var username = null;
-        const API_BASE = "https://uncoagulative-tyrannisingly-eddie.ngrok-free.dev";
+        const API_BASE = "https://tony-conf-palmer-spots.trycloudflare.com";
         // Khi trang load xong
         window.onload = function() {
             // Hỏi tên người dùng
@@ -144,7 +144,7 @@
          */
         function connect() {
             // Tạo SockJS connection đến endpoint đã config
-            var socket = new SockJS(`${API_BASE}/websocket?ngrokSkip=2710`);
+            var socket = new SockJS(`${API_BASE}/websocket`);
             
             // Bọc STOMP protocol lên WebSocket
             stompClient = Stomp.over(socket);
