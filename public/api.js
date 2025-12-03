@@ -1,4 +1,4 @@
-const API_BASE = "https://uncoagulative-tyrannisingly-eddie.ngrok-free.dev";
+const API_BASE = "https://ingredients-pair-notices-unfortunately.trycloudflare.com";
 import { EventSourcePlus } from "https://cdn.jsdelivr.net/npm/event-source-plus/+esm";
 
 let accessToken = null;
