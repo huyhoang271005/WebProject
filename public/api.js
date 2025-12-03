@@ -28,6 +28,12 @@ async function callAPIWithRetry(endpoint, method, data, isMultipart, alreadyRefr
     }
 
     try {
+        if(!accessToken){
+            const result = await refreshAccessToken();
+            if(!result.success){
+                return result;
+            }
+        }
         const res = await fetch(`${API_BASE}${endpoint}`, options);
         const body = await res.json();
         if(body.success){
@@ -41,12 +47,7 @@ async function callAPIWithRetry(endpoint, method, data, isMultipart, alreadyRefr
             if(!result.success){
                 return result;
             }
-            const token = result.data;
-            if (token?.accessToken) {
-                accessToken = token.accessToken;
-                return await callAPIWithRetry(endpoint, method, data, isMultipart, true);
-            }
-            return result;
+            callAPIWithRetry(endpoint, method, data, isMultipart, true);
         }
         return body;
     } catch (err) {
@@ -80,7 +81,12 @@ async function refreshAccessToken() {
             data: null
         }
     }
-    return await res.json();
+    const body = await res.json();
+    const token = body.data;
+    if (token?.accessToken) {
+        accessToken = token.accessToken;
+    }
+    return body;
 }
 
 /*enpoint connect sse, bên trong hàm callback có data trả về*/
