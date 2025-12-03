@@ -160,7 +160,7 @@
             console.log('Đã kết nối WebSocket!');
             
             // Subscribe để nhận message từ server
-            stompClient.subscribe('/websocket/topic/messages', onMessageReceived);
+            stompClient.subscribe('/topic/messages', onMessageReceived);
             
             // Cập nhật UI
             document.getElementById('status').textContent = 'Đã kết nối';
@@ -174,7 +174,7 @@
                 content: 'đã vào phòng chat',
                 time: ''
             };
-            stompClient.send("/websocket/app/send", {}, JSON.stringify(joinMessage));
+            stompClient.send("/app/send", {}, JSON.stringify(joinMessage));
         }
         
         /**
@@ -202,7 +202,7 @@
                 };
                 
                 // Gửi đến server qua WebSocket
-                stompClient.send("/websocket/app/send", {}, JSON.stringify(chatMessage));
+                stompClient.send("/app/send", {}, JSON.stringify(chatMessage));
                 
                 // Xóa input
                 messageInput.value = '';
