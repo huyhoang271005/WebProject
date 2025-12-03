@@ -33,21 +33,19 @@ async function callAPIWithRetry(endpoint, method, data, isMultipart, alreadyRefr
             if(!result.success){
                 return result;
             }
+            await callAPIWithRetry(endpoint, method, data, isMultipart, true);
+            return;
         }
         const res = await fetch(`${API_BASE}${endpoint}`, options);
         const body = await res.json();
-        if(body.success){
-            if(body.data?.accessToken){
-                accessToken = body.data.accessToken;
-            }
-        }
         // refresh token nếu 401
         if (res.status === 401 && !alreadyRefreshed) {
             const result = await refreshAccessToken();
             if(!result.success){
                 return result;
             }
-            callAPIWithRetry(endpoint, method, data, isMultipart, true);
+            await callAPIWithRetry(endpoint, method, data, isMultipart, true);
+            return;
         }
         return body;
     } catch (err) {
