@@ -95,6 +95,8 @@
 </head>
 <body>
     <div id="chat-container">
+        <button id = "skip-ngrok">Nhấn vào đây nếu lỗi kết nối</button>
+        <button id = "reconnect">Nhấn vào đây để kết nối lại</button>
         <h2>Simple WebSocket Chat</h2>
         
         <!-- Hiển thị trạng thái kết nối -->
@@ -132,16 +134,17 @@
             username = prompt("Nhập tên của bạn:");
             
             if (username) {
-                if(!document.cookie.includes("_ngrok")){
-                    window.location.href = `index.html`;
-                    return;
-                }
                 connect();
             } else {
                 alert("Bạn cần nhập tên để sử dụng chat!");
             }
         };
-        
+        document.getElementById('skip-ngrok').addEventListener('click', async()=>{
+            window.location.href = `${API_BASE}/websocket`;
+        });
+        document.getElementById('reconnect').addEventListener('click', async()=>{
+            connect();
+        });
         /**
          * Kết nối đến WebSocket server
          */
