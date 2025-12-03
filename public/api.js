@@ -33,8 +33,7 @@ async function callAPIWithRetry(endpoint, method, data, isMultipart, alreadyRefr
             if(!result.success){
                 return result;
             }
-            await callAPIWithRetry(endpoint, method, data, isMultipart, true);
-            return;
+            return await callAPIWithRetry(endpoint, method, data, isMultipart, true);
         }
         const res = await fetch(`${API_BASE}${endpoint}`, options);
         const body = await res.json();
@@ -44,8 +43,7 @@ async function callAPIWithRetry(endpoint, method, data, isMultipart, alreadyRefr
             if(!result.success){
                 return result;
             }
-            await callAPIWithRetry(endpoint, method, data, isMultipart, true);
-            return;
+            return await callAPIWithRetry(endpoint, method, data, isMultipart, true);
         }
         return body;
     } catch (err) {
