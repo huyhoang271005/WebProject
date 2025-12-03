@@ -127,12 +127,16 @@
         var username = null;
         const API_BASE = "https://uncoagulative-tyrannisingly-eddie.ngrok-free.dev";
         // Khi trang load xong
-        window.onload = function() {
+        window.onload = async function() {
             // Hỏi tên người dùng
             username = prompt("Nhập tên của bạn:");
             
             if (username) {
-                // Kết nối WebSocket
+                const result = await fetch(`${API_BASE}/websocket`, 'GET');
+                if(!result.startWith('Welcome')){
+                    window.location.href = `${API_BASE}/websocket`;
+                    return;
+                }
                 connect();
             } else {
                 alert("Bạn cần nhập tên để sử dụng chat!");
