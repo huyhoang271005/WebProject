@@ -117,92 +117,133 @@
         </div>
     </div>
 
+    <!-- Thư viện SockJS và STOMP -->
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+    
     <script>
-    var stompClient = null;
-    var username = null;
-    const API_BASE = "wss://uncoagulative-tyrannisingly-eddie.ngrok-free.dev";
-
-    window.onload = function() {
-        username = prompt("Nhập tên của bạn:");
-
-        if (username) {
-            connect();
-        } else {
-            alert("Bạn cần nhập tên để sử dụng chat!");
-        }
-    };
-
-    function connect() {
-        // Dùng query param để thay header skip ngrok
-        var ws = new WebSocket(`${API_BASE}/websocket?ngrokSkip=2710`);
-        
-        // Bọc STOMP protocol lên WebSocket native
-        stompClient = Stomp.over(ws);
-        
-        stompClient.connect({}, onConnected, onError);
-    }
-
-    function onConnected() {
-        console.log('Đã kết nối WebSocket!');
-        
-        stompClient.subscribe('/topic/messages', onMessageReceived);
-        
-        document.getElementById('status').textContent = 'Đã kết nối';
-        document.getElementById('status').className = 'connected';
-        document.getElementById('messageInput').disabled = false;
-        document.getElementById('sendButton').disabled = false;
-
-        var joinMessage = {
-            sender: username,
-            content: 'đã vào phòng chat',
-            time: ''
+        // Biến toàn cục
+        var stompClient = null;
+        var username = null;
+        const API_BASE = "https://uncoagulative-tyrannisingly-eddie.ngrok-free.dev";
+        // Khi trang load xong
+        window.onload = function() {
+            // Hỏi tên người dùng
+            username = prompt("Nhập tên của bạn:");
+            
+            if (username) {
+                // Kết nối WebSocket
+                connect();
+            } else {
+                alert("Bạn cần nhập tên để sử dụng chat!");
+            }
         };
-        stompClient.send("/app/send", {}, JSON.stringify(joinMessage));
-    }
-
-    function onError(error) {
-        console.error('Lỗi kết nối:', error);
-        document.getElementById('status').textContent = 'Lỗi kết nối!';
-        document.getElementById('status').className = 'disconnected';
-    }
-
-    function sendMessage() {
-        var messageInput = document.getElementById('messageInput');
-        var messageContent = messageInput.value.trim();
         
-        if (messageContent && stompClient) {
-            var chatMessage = {
+        /**
+         * Kết nối đến WebSocket server
+         */
+        function connect() {
+            // Tạo SockJS connection đến endpoint đã config
+            var socket = new SockJS(`${API_BASE}/websocket?ngrokSkip=2710`);
+            
+            // Bọc STOMP protocol lên WebSocket
+            stompClient = Stomp.over(socket);
+            
+            // Kết nối với callback
+            stompClient.connect({
+                'ngrok-skip-browser-warning': '2710'
+            }, onConnected, onError);
+        }
+        
+        /**
+         * Callback khi kết nối thành công
+         */
+        function onConnected() {
+            console.log('Đã kết nối WebSocket!');
+            
+            // Subscribe để nhận message từ server
+            stompClient.subscribe('/topic/messages', onMessageReceived);
+            
+            // Cập nhật UI
+            document.getElementById('status').textContent = 'Đã kết nối';
+            document.getElementById('status').className = 'connected';
+            document.getElementById('messageInput').disabled = false;
+            document.getElementById('sendButton').disabled = false;
+            
+            // Gửi message thông báo vào phòng
+            var joinMessage = {
                 sender: username,
-                content: messageContent,
+                content: 'đã vào phòng chat',
                 time: ''
             };
-            
-            stompClient.send("/app/send", {}, JSON.stringify(chatMessage));
-            messageInput.value = '';
+            stompClient.send("/app/send", {}, JSON.stringify(joinMessage));
         }
-    }
-
-    function onMessageReceived(payload) {
-        var message = JSON.parse(payload.body);
-        var messageElement = document.createElement('div');
-        messageElement.className = 'message';
-        messageElement.innerHTML = 
-            '<span class="sender">' + message.sender + '</span>' +
-            '<span class="time">' + message.time + '</span>' +
-            '<div>' + message.content + '</div>';
-        var messagesDiv = document.getElementById('messages');
-        messagesDiv.appendChild(messageElement);
-        messagesDiv.scrollTop = messagesDiv.scrollHeight;
-    }
-
-    document.addEventListener('DOMContentLoaded', function() {
-        var input = document.getElementById('messageInput');
-        input.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                sendMessage();
+        
+        /**
+         * Callback khi có lỗi kết nối
+         */
+        function onError(error) {
+            console.error('Lỗi kết nối:', error);
+            document.getElementById('status').textContent = 'Lỗi kết nối!';
+            document.getElementById('status').className = 'disconnected';
+        }
+        
+        /**
+         * Gửi message
+         */
+        function sendMessage() {
+            var messageInput = document.getElementById('messageInput');
+            var messageContent = messageInput.value.trim();
+            
+            if (messageContent && stompClient) {
+                // Tạo object message
+                var chatMessage = {
+                    sender: username,
+                    content: messageContent,
+                    time: ''  // Server sẽ thêm thời gian
+                };
+                
+                // Gửi đến server qua WebSocket
+                stompClient.send("/app/send", {}, JSON.stringify(chatMessage));
+                
+                // Xóa input
+                messageInput.value = '';
             }
+        }
+        
+        /**
+         * Nhận message từ server
+         */
+        function onMessageReceived(payload) {
+            // Parse JSON từ server
+            var message = JSON.parse(payload.body);
+            
+            // Tạo element để hiển thị
+            var messageElement = document.createElement('div');
+            messageElement.className = 'message';
+            
+            messageElement.innerHTML = 
+                '<span class="sender">' + message.sender + '</span>' +
+                '<span class="time">' + message.time + '</span>' +
+                '<div>' + message.content + '</div>';
+            
+            // Thêm vào khung chat
+            var messagesDiv = document.getElementById('messages');
+            messagesDiv.appendChild(messageElement);
+            
+            // Auto scroll xuống tin nhắn mới nhất
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+        
+        // Cho phép gửi bằng phím Enter
+        document.addEventListener('DOMContentLoaded', function() {
+            var input = document.getElementById('messageInput');
+            input.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    sendMessage();
+                }
+            });
         });
-    });
-</script>
+    </script>
 </body>
 </html>
