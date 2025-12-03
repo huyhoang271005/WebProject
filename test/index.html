@@ -132,7 +132,9 @@
             username = prompt("Nhập tên của bạn:");
             
             if (username) {
-                const result = await fetch(`${API_BASE}/websocket`, 'GET');
+                const result = await fetch(`${API_BASE}/websocket`, {
+                    method: 'GET'
+                });
                 if(!result.startWith('Welcome')){
                     window.location.href = `${API_BASE}/websocket`;
                     return;
