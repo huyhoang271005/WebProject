@@ -67,6 +67,7 @@ async function refreshAccessToken() {
         headers: {
             "Content-Type": "application/json",
             "Accept": "*/*",
+            "ngrok-skip-browser-warning":"271005",
         }
     });
     if(res.status === 401) {
