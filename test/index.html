@@ -143,6 +143,9 @@
             window.location.href = `${API_BASE}/websocket`;
         });
         document.getElementById('reconnect').addEventListener('click', async()=>{
+            if(stompClient !== null && stompClient.connected){
+                stompClient.disconnect();
+            }
             connect();
         });
         /**
