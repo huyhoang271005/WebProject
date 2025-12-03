@@ -150,7 +150,9 @@
             stompClient = Stomp.over(socket);
             
             // Kết nối với callback
-            stompClient.connect({}, onConnected, onError);
+            stompClient.connect({
+                'ngrok-skip-browser-warning': '2710'
+            }, onConnected, onError);
         }
         
         /**
