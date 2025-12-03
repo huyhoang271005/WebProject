@@ -28,7 +28,7 @@ async function callAPIWithRetry(endpoint, method, data, isMultipart, alreadyRefr
     }
 
     try {
-        if(!accessToken){
+        if(accessToken === null){
             const result = await refreshAccessToken();
             if(!result.success){
                 return result;
@@ -67,7 +67,6 @@ async function refreshAccessToken() {
         headers: {
             "Content-Type": "application/json",
             "Accept": "*/*",
-            "Device-type": "WEB"
         }
     });
     if(res.status === 401) {
