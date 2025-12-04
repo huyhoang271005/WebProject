@@ -17,13 +17,13 @@ const contentDiv = document.getElementById("info");
 // Hàm làm đẹp tên thiết bị
 function parseDeviceName(deviceName) {
   if (!deviceName) return "Thiết bị ẩn danh";
-  if (deviceName.includes("Windows")) return "Máy tính Windows";
-  if (deviceName.includes("Macintosh")) return "Máy tính Mac";
-  if (deviceName.includes("Android")) return "Điện thoại Android";
+  if (deviceName.includes("Windows")) return "Trình duyệt Windows";
+  if (deviceName.includes("Macintosh")) return "Trình duyệt Mac";
+  if (deviceName.includes("Android")) return "Trình duyệt Android";
   if (deviceName.includes("iPhone") || userAgent.includes("iPad"))
-    return "iPhone/iPad";
-  if (deviceName.includes("Linux")) return "Máy tính Linux";
-  return "Thiết bị khác";
+    return "Trình duyệt iPhone/iPad";
+  if (deviceName.includes("Linux")) return "Trình duyệt Linux";
+  return "Trình duyệt không xác định";
 }
 
 // Hàm lấy icon
