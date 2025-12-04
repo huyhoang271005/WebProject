@@ -26,7 +26,7 @@ async function callAPIWithRetry(endpoint, method, data, isMultipart, alreadyRefr
     }
 
     try {
-        if(accessToken === null){
+        if(!accessToken){
             const result = await refreshAccessToken();
             if(!result.success){
                 return result;
@@ -64,6 +64,11 @@ async function refreshAccessToken() {
             "ngrok-skip-browser-warning":"271005",
         }
     });
+    const body = await res.json();
+    const token = body.data;
+    if (body.success &&token?.accessToken) {
+        accessToken = token.accessToken;
+    }
     if(res.status === 401) {
         setTimeout(()=>{
             window.location.replace('/WebProject/auth/login');
@@ -74,11 +79,6 @@ async function refreshAccessToken() {
             message: 'Phiên đăng nhập đã hết hạn vui lòng đăng nhập lại, sẽ tự động thoát sau 5 giây',
             data: null
         }
-    }
-    const body = await res.json();
-    const token = body.data;
-    if (token?.accessToken) {
-        accessToken = token.accessToken;
     }
     return body;
 }
