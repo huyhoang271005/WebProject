@@ -9,7 +9,7 @@ const API_GET_SESSION = "/auth/sessions?page=0&size=20";
 // --- QUAN TRỌNG: Link API xoá session ---
 // Tớ đang giả định backend dùng Method DELETE vào link này.
 // Nếu sai bro hỏi bạn backend: "API revoke session đường dẫn là gì?" nhé.
-const API_REVOKE_SESSION = "/auth/sessions";
+const API_REVOKE_SESSION = "/logout";
 
 const sessionListEl = document.getElementById("sessionList");
 const contentDiv = document.getElementById("info");
@@ -143,8 +143,7 @@ async function handleRevoke(sessionId) {
     async () => {
       // Gọi API DELETE: /auth/sessions/{sessionId}
       const result = await callAPI(
-        `${API_REVOKE_SESSION}/${sessionId}`,
-        "DELETE"
+        `${API_REVOKE_SESSION}/${sessionId}`
       );
 
       if (result.success) {
