@@ -10,25 +10,27 @@ export async function callAPI(endpoint, method = "GET", data = null, isMultipart
 }
 
 async function callAPIWithRetry(endpoint, method, data, isMultipart, alreadyRefreshed) {
-    const options = { method, headers: { "Accept": "*/*" } };
-    options.headers["Device-name"] =  "WEB";
-    options.headers["ngrok-skip-browser-warning"] = `26763`;
-    if (!endpoint.startsWith("/auth") && accessToken) {
-        options.headers["Authorization"] = `Bearer ${accessToken}`;
-    }
-    options.credentials = "include";
-    if (data) {
-        if (isMultipart) options.body = data;
-        else {
-            options.headers["Content-Type"] = "application/json";
-            options.body = JSON.stringify(data);
-        }
-    }
-
     try {
-        if(!accessToken){
-            await refreshAccessToken();
-            return await callAPIWithRetry(endpoint, method, data, isMultipart, true);
+        const options = { method, headers: { "Accept": "*/*" } };
+        options.headers["Device-name"] =  "WEB";
+        options.headers["ngrok-skip-browser-warning"] = `26763`;
+        if (!endpoint.startsWith("/auth") && accessToken) {
+            options.headers["Authorization"] = `Bearer ${accessToken}`;
+            if(!accessToken){
+                const result = await refreshAccessToken();
+                if(!result.success){
+                    return result;
+                }
+                return await callAPIWithRetry(endpoint, method, data, isMultipart, true);
+            }
+        }
+        options.credentials = "include";
+        if (data) {
+            if (isMultipart) options.body = data;
+            else {
+                options.headers["Content-Type"] = "application/json";
+                options.body = JSON.stringify(data);
+            }
         }
         const res = await fetch(`${API_BASE}${endpoint}`, options);
         const body = await res.json();
