@@ -1,14 +1,176 @@
 <!DOCTYPE html>
 <html lang="vi">
-<head>
+  <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Trang chủ</title>
-    <link rel="stylesheet" href="../dialog/index.css"/>
-    <link rel="stylesheet" href="../public/public.css"/>
-    <script src="https://kit.fontawesome.com/e9c281dd3f.js" crossorigin="anonymous"></script>
-</head>
-<body>
-</body>
-<script type="module" src="index.js"></script>
+    <title>Quản lý phiên đăng nhập</title>
+    <link rel="stylesheet" href="../public/public.css" />
+    <link rel="stylesheet" href="../dialog/index.css" />
+    <script
+      src="https://kit.fontawesome.com/e9c281dd3f.js"
+      crossorigin="anonymous"
+    ></script>
+    <style>
+      /* CSS tuỳ chỉnh cho bảng session */
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 15px;
+      }
+      th,
+      td {
+        padding: 12px 14px;
+        border-bottom: 1px solid #e5e7eb;
+        text-align: left;
+        vertical-align: middle;
+      }
+      th {
+        background: #3b82f6;
+        color: white;
+        white-space: nowrap;
+      }
+
+      /* Device Info Column */
+      .device-info {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      .device-icon {
+        font-size: 1.4rem;
+        color: #4b5563;
+        width: 24px;
+        text-align: center;
+      }
+
+      /* --- STYLES MỚI CHO TRẠNG THÁI (STATUS) --- */
+      .status-badge {
+        padding: 4px 10px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        display: inline-block;
+        white-space: nowrap;
+      }
+
+      /* 1. Máy đang dùng (Màu xanh dương) */
+      .current {
+        background-color: #dbeafe;
+        color: #1e40af;
+        border: 1px solid #bfdbfe;
+      }
+
+      /* 2. Máy đang hoạt động khác (Màu xanh lá) */
+      .active {
+        background-color: #d1fae5;
+        color: #065f46;
+        border: 1px solid #a7f3d0;
+      }
+
+      /* 3. Máy đã đăng xuất (Màu xám) */
+      .revoked {
+        background-color: #f3f4f6;
+        color: #6b7280;
+        border: 1px solid #e5e7eb;
+      }
+
+      /* Làm mờ cả dòng nếu đã revoked để dễ nhìn */
+      .row-revoked {
+        opacity: 0.6;
+        background-color: #f9fafb;
+      }
+      .row-revoked:hover {
+        opacity: 1; /* Rê chuột vào thì hiện rõ lại */
+      }
+
+      /* Nút thu hồi (Revoke) */
+      .revoke-btn {
+        background-color: #ef4444;
+        color: white;
+        padding: 6px 12px;
+        border-radius: 6px;
+        border: none;
+        cursor: pointer;
+        font-size: 0.85rem;
+        margin-top: 0;
+        width: auto;
+        transition: background 0.2s;
+      }
+      .revoke-btn:hover {
+        background-color: #dc2626;
+      }
+
+      /* Responsive cho điện thoại */
+      @media (max-width: 700px) {
+        table,
+        thead,
+        tbody,
+        th,
+        td,
+        tr {
+          display: block;
+        }
+        thead {
+          display: none;
+        }
+        tr {
+          margin-bottom: 15px;
+          border: 1px solid #ddd;
+          padding: 15px;
+          border-radius: 12px;
+          background: white;
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+        td {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 8px 0;
+          border-bottom: 1px dashed #eee;
+        }
+        td:last-child {
+          border-bottom: none;
+        }
+        td::before {
+          content: attr(data-label);
+          font-weight: bold;
+          color: #374151;
+          margin-right: 15px;
+        }
+        .device-info {
+          flex-direction: row-reverse; /* Đảo ngược để text nằm bên phải trên mobile */
+          justify-content: flex-end;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      <h2>Quản lý thiết bị đăng nhập</h2>
+
+      <div id="loadPage"></div>
+
+      <div id="info" style="display: none">
+        <table>
+          <thead>
+            <tr>
+              <th width="45%">Thiết bị</th>
+              <th width="20%">Thời gian</th>
+              <th width="20%">Trạng thái</th>
+              <th width="15%">Hành động</th>
+            </tr>
+          </thead>
+          <tbody id="sessionList"></tbody>
+        </table>
+
+        <button
+          style="width: auto; margin-top: 25px; background: #6b7280"
+          onclick="window.history.back()"
+        >
+          <i class="fa-solid fa-arrow-left"></i> Quay lại
+        </button>
+      </div>
+    </div>
+    <script type="module" src="index.js"></script>
+  </body>
 </html>
