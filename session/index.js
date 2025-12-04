@@ -4,7 +4,7 @@ import { loadPage, convertToVNTime } from "../public/public.js";
 
 // --- CẤU HÌNH API ---
 // Bro lưu ý: tớ để size=20 để hiện được nhiều thiết bị hơn, chứ size=3 thì ít quá
-const API_GET_SESSION = "/auth/sessions?page=0&size=20";
+const API_GET_SESSION = "/sessions?page=0&size=20";
 
 // --- QUAN TRỌNG: Link API xoá session ---
 // Tớ đang giả định backend dùng Method DELETE vào link này.
@@ -15,23 +15,23 @@ const sessionListEl = document.getElementById("sessionList");
 const contentDiv = document.getElementById("info");
 
 // Hàm làm đẹp tên thiết bị
-function parseDeviceName(userAgent) {
-  if (!userAgent) return "Thiết bị ẩn danh";
-  if (userAgent.includes("Windows")) return "Máy tính Windows";
-  if (userAgent.includes("Macintosh")) return "Máy tính Mac";
-  if (userAgent.includes("Android")) return "Điện thoại Android";
-  if (userAgent.includes("iPhone") || userAgent.includes("iPad"))
+function parseDeviceName(deviceName) {
+  if (!deviceName) return "Thiết bị ẩn danh";
+  if (deviceName.includes("Windows")) return "Máy tính Windows";
+  if (deviceName.includes("Macintosh")) return "Máy tính Mac";
+  if (deviceName.includes("Android")) return "Điện thoại Android";
+  if (deviceName.includes("iPhone") || userAgent.includes("iPad"))
     return "iPhone/iPad";
-  if (userAgent.includes("Linux")) return "Máy tính Linux";
+  if (deviceName.includes("Linux")) return "Máy tính Linux";
   return "Thiết bị khác";
 }
 
 // Hàm lấy icon
-function getDeviceIcon(userAgent) {
+function getDeviceIcon(deviceName) {
   if (
-    userAgent.includes("Android") ||
-    userAgent.includes("iPhone") ||
-    userAgent.includes("Mobile")
+    deviceName.includes("Android") ||
+    deviceName.includes("iPhone") ||
+    deviceName.includes("Mobile")
   ) {
     return "fa-mobile-screen";
   }
@@ -71,8 +71,8 @@ function renderSessions(sessions) {
   }
 
   sessions.forEach((session) => {
-    const deviceNamePretty = parseDeviceName(session.userAgent);
-    const icon = getDeviceIcon(session.userAgent);
+    const deviceNamePretty = session.deviceType === 'WEB' ? parseDeviceName(session.deviceName) : session.deviceName;
+    const icon = getDeviceIcon(session.deviceName);
 
     // --- XỬ LÝ TRẠNG THÁI ---
     let statusHtml = "";
