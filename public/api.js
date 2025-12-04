@@ -12,7 +12,6 @@ export async function callAPI(endpoint, method = "GET", data = null, isMultipart
 async function callAPIWithRetry(endpoint, method, data, isMultipart, alreadyRefreshed) {
     try {
         const options = { method, headers: { "Accept": "*/*" } };
-        options.headers["Device-name"] =  "WEB";
         options.headers["ngrok-skip-browser-warning"] = `26763`;
         if (!endpoint.startsWith("/auth")) {
             if(!accessToken){
@@ -59,7 +58,6 @@ async function refreshAccessToken() {
         credentials: "include",
         headers: {
             "Content-Type": "application/json",
-            "Accept": "*/*",
             "ngrok-skip-browser-warning":"271005",
         }
     });
