@@ -15,14 +15,24 @@ const sessionListEl = document.getElementById("sessionList");
 const contentDiv = document.getElementById("info");
 
 // Hàm làm đẹp tên thiết bị
-function parseDeviceName(deviceName) {
-  if (!deviceName) return "Thiết bị ẩn danh";
-  if (deviceName.includes("Windows")) return "Trình duyệt Windows";
-  if (deviceName.includes("Macintosh")) return "Trình duyệt Mac";
-  if (deviceName.includes("Android")) return "Trình duyệt Android";
-  if (deviceName.includes("iPhone") || userAgent.includes("iPad"))
-    return "Trình duyệt iPhone/iPad";
-  if (deviceName.includes("Linux")) return "Trình duyệt Linux";
+function parseDeviceName(userAgent) {
+  if (!userAgent) return "Không xác định";
+
+  if (/chrome|crios|crmo/i.test(userAgent) && !/edge|edg|opr|opera/i.test(userAgent))
+    return "Trình duyệt Chrome";
+
+  if (/firefox|fxios/i.test(userAgent))
+    return "Trình duyệt Firefox";
+
+  if (/safari/i.test(userAgent) && !/chrome|crios|crmo/i.test(userAgent))
+    return "Trình duyệt Safari";
+
+  if (/edg|edge/i.test(userAgent))
+    return "Trình duyệt Microsoft Edge";
+
+  if (/opr|opera/i.test(userAgent))
+    return "Trình duyệt Opera";
+
   return "Trình duyệt không xác định";
 }
 
@@ -71,7 +81,7 @@ function renderSessions(sessions) {
   }
 
   sessions.forEach((session) => {
-    const deviceNamePretty = session.deviceType === 'WEB' ? parseDeviceName(session.deviceName) : session.deviceName;
+    const deviceNamePretty = session.deviceType === 'WEB' ? parseDeviceName(session.userAgent) : session.deviceName;
     const icon = getDeviceIcon(session.deviceName);
 
     // --- XỬ LÝ TRẠNG THÁI ---
