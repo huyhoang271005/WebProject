@@ -1,0 +1,107 @@
+* { 
+    box-sizing: border-box;
+}
+
+.chat-layout {
+    width: 98vw !important;
+    height: 96vh !important;
+    max-width: none !important;
+    margin: auto;
+    display: flex;
+    padding: 0 !important;
+    overflow: hidden; 
+    text-align: left !important;
+    border-radius: 12px;
+    background: white;
+    box-shadow: 0 5px 30px rgba(0,0,0,0.2);
+}
+
+/* --- SIDEBAR --- */
+.sidebar {
+    width: 350px;
+    background: #F9FAFB;
+    border-right: 1px solid #E5E7EB;
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+}
+.sidebar-header { padding: 20px; background: white; border-bottom: 1px solid #f0f0f0; }
+.sidebar-header h2 { color: #1E3A8A; margin: 0; font-size: 1.5rem; }
+.search-wrapper { padding: 15px; }
+.search-wrapper input { font-size: 0.9rem; padding: 10px 12px; margin: 0; }
+.user-list { flex: 1; overflow-y: auto; }
+.user-item { display: flex; padding: 15px; cursor: pointer; transition: all 0.2s; border-bottom: 1px solid #f3f4f6; align-items: center; }
+.user-item:hover { background: #EBF5FF; }
+.user-item.active { background: white; border-left: 5px solid #3B82F6; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+.avatar { width: 50px; height: 50px; border-radius: 50%; color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 1.1rem; margin-right: 15px; flex-shrink: 0; }
+.u-info { flex: 1; overflow: hidden; }
+.u-info .name { font-weight: 600; color: #1F2937; margin-bottom: 5px; font-size: 1rem; }
+.u-info .last-message { font-size: 0.85rem; color: #6B7280; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.time-stamp { font-size: 0.75rem; color: #9CA3AF; margin-left: 5px; min-width: 35px; text-align: right;}
+
+/* --- MAIN CHAT --- */
+.chat-main { flex: 1; display: flex; flex-direction: column; background: white; min-width: 0; }
+.chat-header { padding: 15px 25px; border-bottom: 1px solid #E5E7EB; height: 70px; display: flex; align-items: center; }
+.chat-target { display: flex; align-items: center; gap: 12px; }
+.avatar-small { width: 40px; height: 40px; border-radius: 50%; background: #ccc; color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; }
+.target-info h3 { margin: 0; font-size: 1.1rem; color: #111827; }
+.status-online { font-size: 0.8rem; color: #10B981; }
+
+/* KHUNG TIN NHẮN */
+.message-container {
+    flex: 1;
+    padding: 20px;
+    overflow-y: auto;
+    background: #ffffff;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+/* Dòng tin nhắn */
+.msg-row { 
+    display: flex; 
+    width: 100%; 
+    align-items: flex-end; 
+}
+.msg-row.received { justify-content: flex-start; }
+.msg-row.sent { justify-content: flex-end; }
+
+/* Avatar nhỏ trong khung chat */
+.msg-avatar {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 0.8rem;
+    margin-right: 10px; 
+    flex-shrink: 0;
+    margin-bottom: 5px; 
+}
+
+/* Bong bóng chat */
+.bubble {
+    max-width: 70%;
+    padding: 12px 18px;
+    border-radius: 15px;
+    font-size: 1rem;
+    line-height: 1.5;
+    position: relative;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    word-wrap: break-word;
+}
+.msg-row.received .bubble { background: #F3F4F6; color: #1F2937; border-bottom-left-radius: 2px; }
+.msg-row.sent .bubble { background: #3B82F6; color: white; border-bottom-right-radius: 2px; }
+.bubble .time { font-size: 0.7rem; display: block; margin-top: 5px; opacity: 0.8; text-align: right; }
+
+/* INPUT */
+.chat-input-area { padding: 15px 20px; border-top: 1px solid #E5E7EB; display: flex; align-items: center; gap: 12px; background: white; height: 80px; }
+.chat-input-area input { flex: 1; margin: 0 !important; border-radius: 25px; background: #F9FAFB; padding: 12px 20px; }
+.chat-input-area input:focus { background: white; border-color: #3B82F6; }
+.chat-input-area button { width: 50px; height: 50px; margin: 0 !important; border-radius: 50%; padding: 0; display: flex; align-items: center; justify-content: center; flex-shrink: 0; cursor: pointer; }
+.btn-att { background: transparent !important; color: #9CA3AF !important; box-shadow: none !important; width: auto !important; margin: 0 !important; font-size: 1.2rem; }
+.btn-att:hover { color: #3B82F6 !important; transform: none !important; }

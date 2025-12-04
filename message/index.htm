@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hệ thống Chat</title>
+    <link rel="stylesheet" href="../public/public.css">
+    <link rel="stylesheet" href="index.css">
+    <script src="https://kit.fontawesome.com/e9c281dd3f.js" crossorigin="anonymous"></script>
+</head>
+<body>
+
+    <div id="loadPage"></div>
+
+    <div id="info">
+        <div class="card chat-layout">
+            
+            <div class="sidebar">
+                <div class="sidebar-header">
+                    <h2>Tin nhắn</h2>
+                </div>
+                
+                <div class="search-wrapper">
+                    <input type="text" placeholder="Tìm khách hàng..." />   
+                </div>
+
+                <div class="user-list" id="user-list">
+                    </div>
+            </div>
+
+            <div class="chat-main">
+                <div class="chat-header">
+                    <div class="chat-target">
+                        <div class="avatar-small">?</div>
+                        <div class="target-info">
+                            <h3>Đang tải...</h3>
+                            <span class="status-online">...</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="message-list" class="message-container">
+                    </div>
+
+                <div class="chat-input-area">
+                    <button class="btn-att"><i class="fa-solid fa-paperclip"></i></button>
+                    <input type="text" id="msg-content" placeholder="Nhập tin nhắn tư vấn..." autocomplete="off">
+                    <button id="btn-send"><i class="fa-solid fa-paper-plane"></i></button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="index.js"></script>
+</body>
+</html>
