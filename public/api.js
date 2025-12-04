@@ -27,10 +27,7 @@ async function callAPIWithRetry(endpoint, method, data, isMultipart, alreadyRefr
 
     try {
         if(!accessToken){
-            const result = await refreshAccessToken();
-            if(!result.success){
-                return result;
-            }
+            await refreshAccessToken();
             return await callAPIWithRetry(endpoint, method, data, isMultipart, true);
         }
         const res = await fetch(`${API_BASE}${endpoint}`, options);
