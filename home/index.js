@@ -21,8 +21,8 @@ logout.addEventListener('click', async()=>{
     const result = await callAPI('/logout');
     if(result.success){
         localStorage.setItem('rememberUser', 'false');
-        window.location.replace("/WebProject");
     }
+    window.location.replace("/WebProject");
 });
 sendAll.addEventListener('click', async()=>{
     const data = {
