@@ -14,8 +14,7 @@ async function callAPIWithRetry(endpoint, method, data, isMultipart, alreadyRefr
         const options = { method, headers: { "Accept": "*/*" } };
         options.headers["Device-name"] =  "WEB";
         options.headers["ngrok-skip-browser-warning"] = `26763`;
-        if (!endpoint.startsWith("/auth") && accessToken) {
-            options.headers["Authorization"] = `Bearer ${accessToken}`;
+        if (!endpoint.startsWith("/auth")) {
             if(!accessToken){
                 const result = await refreshAccessToken();
                 if(!result.success){
@@ -23,6 +22,7 @@ async function callAPIWithRetry(endpoint, method, data, isMultipart, alreadyRefr
                 }
                 return await callAPIWithRetry(endpoint, method, data, isMultipart, true);
             }
+            options.headers["Authorization"] = `Bearer ${accessToken}`;
         }
         options.credentials = "include";
         if (data) {
