@@ -38,7 +38,7 @@ function renderUsers(users) {
         tr.innerHTML = `
             <td data-label="Người dùng">
                 <div class="user-info">
-                    <img src="${user.imageUrl}" class="avatar" />
+                    <img src="${user.imageUrl ? user.imageUrl : "https://cdn-icons-png.flaticon.com/512/847/847969.png"}" class="avatar" />
                     ${name}
                 </div>
             </td>

@@ -20,7 +20,9 @@ async function loadProfile() {
         return;
     }
     const profile = result.data;
-    avatarPreview.src = profile.imageUrl
+    if(profile.imageUrl){
+        avatarPreview.src = profile.imageUrl
+    }
     usernameInput.value = profile.username;
     fullNameInput.value = profile.fullName;
     birthdayInput.value = profile.birthday;
