@@ -183,6 +183,36 @@
         background: #4b5563;
       }
 
+      .device-card {
+        position: relative; /* Quan trọng để định vị dòng createdAt */
+        display: flex;
+        align-items: center;
+        padding: 20px 16px 16px 16px; /* Tăng padding top lên chút */
+        border-bottom: 1px solid #e5e7eb;
+        transition: background 0.2s;
+      }
+
+      .created-at-label {
+        position: absolute;
+        top: 5px;
+        right: 10px;
+        font-size: 0.65rem;
+        color: #9ca3af;
+        font-style: italic;
+        pointer-events: none; /* Không cho chuột bấm vào */
+      }
+
+      .device-name {
+        cursor: help; /* Con trỏ hình dấu hỏi hoặc mặc định */
+        width: fit-content;
+        /* ... các thuộc tính cũ ... */
+      }
+
+      .device-meta span.time-ago {
+        cursor: help;
+        border-bottom: 1px dotted #9ca3af; /* Gạch chân chấm bi nhẹ để gợi ý hover */
+      }
+
       @media (max-width: 600px) {
         .card {
           padding: 15px;
