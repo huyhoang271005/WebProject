@@ -9,7 +9,7 @@ const API_GET_SESSION = "/sessions?page=0&size=20";
 const API_LOGOUT_ONE = "/logout";
 
 // 2. Xoá phiên (DELETE) - Đã sửa thành số ít theo ý bro
-const API_REVOKE_ONE = "/sessionId";
+const API_REVOKE_ONE = "/session";
 
 // 3. Đăng xuất các thiết bị KHÁC (GET)
 const API_LOGOUT_OTHERS = "/logout-all";
