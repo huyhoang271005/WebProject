@@ -2,14 +2,17 @@ import { callAPI } from "../public/api.js";
 import { showDialog } from "../dialog/index.js";
 import { loadPage, convertToVNTime } from "../public/public.js";
 
-// --- CẤU HÌNH API (Đã bỏ /auth theo lời backend) ---
+// --- CẤU HÌNH API (Dựa trên ảnh bro gửi) ---
 const API_GET_SESSION = "/sessions?page=0&size=20";
-const API_REVOKE_ONE = "/logout"; // DELETE /sessions/{id}
 
-// ⚠️ Bro hỏi lại backend xem 2 link này có đúng là /sessions/... không nhé
-// Nếu backend bảo chỉ bỏ /auth thì khả năng cao là như này:
-const API_REVOKE_OTHERS = "/sessions/revoke-others";
-const API_REVOKE_ALL = "/sessions/revoke-all";
+// 1. Đăng xuất từng thiết bị (GET)
+// Endpoint trong ảnh là: /logout/{sessionId}
+const API_LOGOUT_ONE = "/logout";
+
+// 3. Đăng xuất thiết bị khác (GET)
+// ⚠️ LƯU Ý: Trong ảnh tớ không thấy endpoint này, nhưng bro bảo backend có làm.
+// Bro hỏi lại backend xem link là gì nhé. Tớ đang đoán là:
+const API_LOGOUT_OTHERS = "/logout-all";
 
 const currentListEl = document.getElementById("currentDeviceList");
 const otherListEl = document.getElementById("otherDeviceList");
@@ -48,6 +51,7 @@ function renderSessions(sessions) {
 
   if (contentDiv) contentDiv.style.display = "block";
 
+  // Tách danh sách: Hiện tại vs Khác
   const currentSession = sessions.find((s) => s.thisSession === true);
   const otherSessions = sessions.filter((s) => s.thisSession !== true);
 
@@ -59,8 +63,8 @@ function renderSessions(sessions) {
   // 2. Render Các thiết bị khác
   if (otherSessions.length === 0) {
     otherListEl.innerHTML =
-      '<div style="padding:15px; color:#888; text-align:center;">Không có thiết bị khác</div>';
-    document.getElementById("revokeOthersBtn").style.display = "none";
+      '<div style="padding:20px; color:#9CA3AF; text-align:center; font-style:italic;">Không có thiết bị khác đang đăng nhập</div>';
+    document.getElementById("revokeOthersBtn").style.display = "none"; // Ẩn nút nếu ko có gì để xoá
   } else {
     document.getElementById("revokeOthersBtn").style.display = "block";
     otherSessions.forEach((session) => {
@@ -71,23 +75,26 @@ function renderSessions(sessions) {
     });
   }
 
-  // Gán sự kiện click
+  // Gán sự kiện click cho các nút X
   document.querySelectorAll(".close-btn").forEach((btn) => {
     btn.onclick = async () => {
-      await handleRevokeOne(btn.dataset.id);
+      await handleLogoutOne(btn.dataset.id);
     };
   });
 }
 
-// Hàm tạo HTML
+// Hàm tạo HTML giao diện giống Discord
 function createDeviceHTML(session, isCurrent) {
   const icon = getDeviceIcon(session.deviceType);
   const location = formatLocation(session.address);
   const time = convertToVNTime(session.lastLogin);
 
+  // Nút X chỉ hiện cho thiết bị khác
   const actionBtn = isCurrent
     ? ""
-    : `<button class="close-btn" data-id="${session.sessionId}" title="Đăng xuất thiết bị này"><i class="fa-solid fa-xmark"></i></button>`;
+    : `<button class="close-btn" data-id="${session.sessionId}" title="Đăng xuất thiết bị này">
+             <i class="fa-solid fa-xmark"></i>
+           </button>`;
 
   const nameBadge = isCurrent
     ? '<span class="current-badge">Hiện tại</span>'
@@ -111,16 +118,20 @@ function createDeviceHTML(session, isCurrent) {
     `;
 }
 
-// 1. Xoá 1 thiết bị
-async function handleRevokeOne(sessionId) {
+// --- XỬ LÝ HÀNH ĐỘNG (Dùng Method GET / Logout) ---
+
+// 1. Đăng xuất 1 thiết bị
+async function handleLogoutOne(sessionId) {
   await showDialog("question", "Đăng xuất thiết bị này?", async () => {
-    const result = await callAPI(`${API_REVOKE_ONE}/${sessionId}`);
+    // Gọi: GET /logout/{sessionId}
+    const result = await callAPI(`${API_LOGOUT_ONE}/${sessionId}`);
+
     if (result.success) await loadSessions();
     else await showDialog("error", result.message);
   });
 }
 
-// 3. Xoá KHÁC
+// 3. Đăng xuất CÁC THIẾT BỊ KHÁC
 document
   .getElementById("revokeOthersBtn")
   .addEventListener("click", async () => {
@@ -128,7 +139,9 @@ document
       "question",
       "Đăng xuất tất cả các thiết bị khác?",
       async () => {
-        const result = await callAPI(API_REVOKE_OTHERS, "DELETE");
+        // Gọi: GET /logout-others (Hoặc link tương tự)
+        const result = await callAPI(API_LOGOUT_OTHERS);
+
         if (result.success) {
           await showDialog("success", "Đã đăng xuất các thiết bị khác.");
           await loadSessions();
