@@ -4,7 +4,7 @@ import { loadPage, convertToVNTime } from "../public/public.js";
 
 // --- CẤU HÌNH API (Đã bỏ /auth theo lời backend) ---
 const API_GET_SESSION = "/sessions?page=0&size=20";
-const API_REVOKE_ONE = "/sessions"; // DELETE /sessions/{id}
+const API_REVOKE_ONE = "/logout"; // DELETE /sessions/{id}
 
 // ⚠️ Bro hỏi lại backend xem 2 link này có đúng là /sessions/... không nhé
 // Nếu backend bảo chỉ bỏ /auth thì khả năng cao là như này:
@@ -114,27 +114,11 @@ function createDeviceHTML(session, isCurrent) {
 // 1. Xoá 1 thiết bị
 async function handleRevokeOne(sessionId) {
   await showDialog("question", "Đăng xuất thiết bị này?", async () => {
-    const result = await callAPI(`${API_REVOKE_ONE}/${sessionId}`, "DELETE");
+    const result = await callAPI(`${API_REVOKE_ONE}/${sessionId}`);
     if (result.success) await loadSessions();
     else await showDialog("error", result.message);
   });
 }
-
-// 2. Xoá TẤT CẢ
-document.getElementById("revokeAllBtn").addEventListener("click", async () => {
-  await showDialog(
-    "question",
-    "Bạn sẽ bị đăng xuất khỏi TẤT CẢ thiết bị. Tiếp tục?",
-    async () => {
-      const result = await callAPI(API_REVOKE_ALL, "DELETE");
-      if (result.success) {
-        window.location.replace("../auth/login");
-      } else {
-        await showDialog("error", result.message);
-      }
-    }
-  );
-});
 
 // 3. Xoá KHÁC
 document
