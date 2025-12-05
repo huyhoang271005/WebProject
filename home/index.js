@@ -18,10 +18,8 @@ btn.addEventListener('mouseover', ()=>{
 });
 const logout = document.getElementById('logout');
 logout.addEventListener('click', async()=>{
-    const result = await callAPI('/logout');
-    if(result.success){
-        localStorage.setItem('rememberUser', 'false');
-    }
+    await callAPI('/logout');
+    localStorage.setItem('rememberUser', 'false');
     window.location.replace("/WebProject");
 });
 sendAll.addEventListener('click', async()=>{
