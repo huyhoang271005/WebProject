@@ -13,6 +13,8 @@
     ></script>
 
     <style>
+      /* GIỮ NGUYÊN CSS CŨ VÀ CẬP NHẬT THÊM CÁC DÒNG NÀY: */
+
       .section-title {
         font-size: 0.85rem;
         font-weight: 700;
@@ -45,6 +47,15 @@
         background-color: #f9fafb;
       }
 
+      /* Dòng đã đăng xuất thì mờ đi */
+      .row-inactive {
+        background-color: #f9fafb;
+        opacity: 0.75;
+      }
+      .row-inactive:hover {
+        opacity: 1;
+      }
+
       .device-icon-wrapper {
         width: 48px;
         height: 48px;
@@ -53,7 +64,7 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 1.4rem;
+        font-size: 1.5rem;
         color: #4b5563;
         margin-right: 16px;
         flex-shrink: 0;
@@ -68,10 +79,7 @@
         font-weight: 600;
         font-size: 1rem;
         color: #111827;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        margin-bottom: 4px;
+        margin-bottom: 2px;
       }
       .device-meta {
         font-size: 0.85rem;
@@ -79,25 +87,37 @@
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
+        margin-bottom: 4px;
       }
 
-      .current-badge {
+      /* --- TRẠNG THÁI (STATUS) --- */
+      .status-badge {
         font-size: 0.7rem;
-        background: #10b981;
-        color: white;
         padding: 2px 8px;
         border-radius: 12px;
         font-weight: 700;
         text-transform: uppercase;
+        display: inline-block;
+      }
+      .current {
+        background: #d1fae5;
+        color: #065f46;
+      }
+      .active {
+        background: #dbeafe;
+        color: #1e40af;
+      }
+      .inactive {
+        background: #f3f4f6;
+        color: #6b7280;
+        border: 1px solid #e5e7eb;
       }
 
-      /* --- CỤM NÚT HÀNH ĐỘNG --- */
+      /* --- NÚT BẤM --- */
       .action-group {
         display: flex;
-        gap: 5px; /* Khoảng cách giữa nút logout và nút xóa */
+        gap: 4px;
       }
-
-      /* Style chung cho nút icon */
       .icon-btn {
         background: transparent;
         border: none;
@@ -111,8 +131,7 @@
         justify-content: center;
         transition: all 0.2s;
       }
-
-      /* 1. Nút Đăng xuất (Màu xám/xanh) */
+      /* Logout Button */
       .logout-btn {
         color: #6b7280;
       }
@@ -121,7 +140,7 @@
         background: #eff6ff;
       }
 
-      /* 2. Nút Xóa (Màu đỏ) */
+      /* Delete Button */
       .delete-btn {
         color: #9ca3af;
       }
@@ -129,8 +148,6 @@
         color: #ef4444;
         background: #fef2f2;
       }
-
-      /* --- END CỤM NÚT --- */
 
       .action-area {
         margin-top: 30px;
@@ -146,6 +163,9 @@
         border: 1px solid #ef4444;
         color: #ef4444;
         font-weight: 500;
+        padding: 10px;
+        border-radius: 8px;
+        cursor: pointer;
       }
       .btn-danger-outline:hover {
         background: #fef2f2;
@@ -154,6 +174,10 @@
       .btn-back {
         background: #6b7280;
         color: white;
+        padding: 10px;
+        border-radius: 8px;
+        border: none;
+        cursor: pointer;
       }
       .btn-back:hover {
         background: #4b5563;
@@ -169,15 +193,8 @@
   <body>
     <div class="card" style="max-width: 600px; width: 100%; margin: 20px auto">
       <h2 style="margin-bottom: 10px">Thiết bị</h2>
-      <p
-        style="
-          font-size: 0.9rem;
-          color: #6b7280;
-          margin-bottom: 20px;
-          line-height: 1.5;
-        "
-      >
-        Đây là danh sách các thiết bị đang đăng nhập vào tài khoản của bạn.
+      <p style="font-size: 0.9rem; color: #6b7280; margin-bottom: 20px">
+        Danh sách các thiết bị đang đăng nhập vào tài khoản của bạn.
       </p>
 
       <div id="loadPage"></div>

@@ -5,23 +5,28 @@ import { loadPage, convertToVNTime } from "../public/public.js";
 // --- CẤU HÌNH API ---
 const API_GET_SESSION = "/sessions?page=0&size=20";
 
-// 1. Đăng xuất 1 thiết bị (GET) - Cái bro vừa yêu cầu thêm
-const API_LOGOUT_ONE = "/logout"; // -> GET /logout/{id}
+// 1. Đăng xuất 1 thiết bị (GET)
+const API_LOGOUT_ONE = "/logout";
 
-// 2. Xoá phiên 1 thiết bị (DELETE) - Cái nút X đỏ
-const API_REVOKE_ONE = "/sessions"; // -> DELETE /sessions/{id}
+// 2. Xoá phiên (DELETE) - Đã sửa thành số ít theo ý bro
+const API_REVOKE_ONE = "/session";
 
-// 3. Đăng xuất các thiết bị KHÁC (GET) - Nút to ở dưới
+// 3. Đăng xuất các thiết bị KHÁC (GET)
 const API_LOGOUT_OTHERS = "/logout-all";
 
 const currentListEl = document.getElementById("currentDeviceList");
 const otherListEl = document.getElementById("otherDeviceList");
 const contentDiv = document.getElementById("info");
 
-function getDeviceIcon(type) {
-  if (type === "MOBILE") return "fa-mobile-screen";
-  if (type === "TABLET") return "fa-tablet-screen-button";
-  return "fa-desktop";
+// Hàm lấy icon xịn xò hơn (Phân biệt Windows, Android, iOS)
+function getDeviceIcon(userAgent) {
+  const ua = userAgent.toLowerCase();
+  if (ua.includes("windows")) return "fa-windows";
+  if (ua.includes("android")) return "fa-android";
+  if (ua.includes("iphone") || ua.includes("ipad") || ua.includes("mac"))
+    return "fa-apple";
+  if (ua.includes("linux")) return "fa-linux";
+  return "fa-desktop"; // Mặc định
 }
 
 function formatLocation(addr) {
@@ -51,13 +56,15 @@ function renderSessions(sessions) {
   const currentSession = sessions.find((s) => s.thisSession === true);
   const otherSessions = sessions.filter((s) => s.thisSession !== true);
 
+  // 1. Render Thiết bị hiện tại
   if (currentSession) {
     currentListEl.innerHTML = createDeviceHTML(currentSession, true);
   }
 
+  // 2. Render Các thiết bị khác
   if (otherSessions.length === 0) {
     otherListEl.innerHTML =
-      '<div style="padding:20px; color:#9CA3AF; text-align:center; font-style:italic;">Không có thiết bị khác đang đăng nhập</div>';
+      '<div style="padding:20px; color:#9CA3AF; text-align:center; font-style:italic;">Không có thiết bị khác</div>';
     document.getElementById("revokeOthersBtn").style.display = "none";
   } else {
     document.getElementById("revokeOthersBtn").style.display = "block";
@@ -69,56 +76,72 @@ function renderSessions(sessions) {
     });
   }
 
-  // --- GÁN SỰ KIỆN CHO CÁC NÚT ---
-
-  // 1. Nút Logout (Mới thêm)
-  document.querySelectorAll(".logout-btn").forEach((btn) => {
-    btn.onclick = async () => {
-      await handleLogoutOne(btn.dataset.id);
-    };
-  });
-
-  // 2. Nút Xóa phiên (Nút X đỏ)
-  document.querySelectorAll(".delete-btn").forEach((btn) => {
-    btn.onclick = async () => {
-      await handleRevokeOne(btn.dataset.id);
-    };
-  });
+  // Gán sự kiện click
+  initButtonEvents();
 }
 
 function createDeviceHTML(session, isCurrent) {
-  const icon = getDeviceIcon(session.deviceType);
+  // Nếu api trả về userAgent thì dùng, không thì dùng deviceName để đoán icon
+  const iconStr = session.userAgent || session.deviceName || "";
+  const icon = getDeviceIcon(iconStr);
   const location = formatLocation(session.address);
   const time = convertToVNTime(session.lastLogin);
 
-  // Nếu là thiết bị hiện tại thì không hiện nút gì cả
-  // Nếu là thiết bị khác: Hiện cả nút Logout (cửa) và Revoke (X)
-  const actionBtns = isCurrent
-    ? ""
-    : `<div class="action-group">
-             <button class="icon-btn logout-btn" data-id="${session.sessionId}" title="Đăng xuất thiết bị này (Logout)">
-                <i class="fa-solid fa-right-from-bracket"></i>
-             </button>
-             <button class="icon-btn delete-btn" data-id="${session.sessionId}" title="Xóa phiên (Force Revoke)">
-                <i class="fa-solid fa-xmark"></i>
-             </button>
-           </div>`;
+  let statusBadge = "";
+  let actionBtns = "";
+  let rowClass = "";
 
-  const nameBadge = isCurrent
-    ? '<span class="current-badge">Hiện tại</span>'
-    : "";
+  if (isCurrent) {
+    // --- THIẾT BỊ HIỆN TẠI ---
+    statusBadge = '<span class="status-badge current">Đang truy cập</span>';
+    // Không hiện nút gì cả
+  } else {
+    // --- THIẾT BỊ KHÁC ---
+    if (session.revoked === true) {
+      // A. ĐÃ ĐĂNG XUẤT (Logged Out)
+      statusBadge = '<span class="status-badge inactive">Đã đăng xuất</span>';
+      rowClass = "row-inactive"; // Làm mờ dòng này đi
+
+      // Chỉ hiện nút Xóa (X) để dọn dẹp, Ẩn nút Logout
+      actionBtns = `
+                <div class="action-group">
+                     <button class="icon-btn delete-btn" data-id="${session.sessionId}" title="Xóa lịch sử phiên này">
+                        <i class="fa-solid fa-xmark"></i>
+                     </button>
+                </div>`;
+    } else {
+      // B. ĐANG HOẠT ĐỘNG (Active)
+      statusBadge = '<span class="status-badge active">Đang hoạt động</span>';
+
+      // Hiện cả 2 nút: Logout và Delete
+      actionBtns = `
+                <div class="action-group">
+                     <button class="icon-btn logout-btn" data-id="${session.sessionId}" title="Đăng xuất thiết bị này">
+                        <i class="fa-solid fa-right-from-bracket"></i>
+                     </button>
+                     <button class="icon-btn delete-btn" data-id="${session.sessionId}" title="Xóa phiên (Bắt buộc đăng nhập lại)">
+                        <i class="fa-solid fa-xmark"></i>
+                     </button>
+                </div>`;
+    }
+  }
 
   return `
-    <div class="device-card">
+    <div class="device-card ${rowClass}">
         <div class="device-icon-wrapper">
-            <i class="fa-solid ${icon}"></i>
+            <i class="fa-brands ${icon} ${
+    icon === "fa-desktop" ? "fa-solid" : ""
+  }"></i>
         </div>
         <div class="device-details">
             <div class="device-name">
-                ${session.deviceName} ${nameBadge}
+                ${session.deviceName}
             </div>
             <div class="device-meta">
                 ${location} • ${time}
+            </div>
+            <div style="margin-top: 5px;">
+                ${statusBadge}
             </div>
         </div>
         ${actionBtns}
@@ -126,31 +149,47 @@ function createDeviceHTML(session, isCurrent) {
     `;
 }
 
-// ---------------- CÁC HÀM XỬ LÝ ----------------
+function initButtonEvents() {
+  // 1. Nút Logout (Cửa)
+  document.querySelectorAll(".logout-btn").forEach((btn) => {
+    btn.onclick = async () => {
+      await handleLogoutOne(btn.dataset.id);
+    };
+  });
 
-// A. Đăng xuất 1 thiết bị (GET /logout/{id}) - Nhẹ nhàng
+  // 2. Nút Xóa (X)
+  document.querySelectorAll(".delete-btn").forEach((btn) => {
+    btn.onclick = async () => {
+      await handleRevokeOne(btn.dataset.id);
+    };
+  });
+}
+
+// --- CÁC HÀM XỬ LÝ ---
+
+// A. Đăng xuất (GET /logout) -> Reload list để cập nhật trạng thái thành "Đã đăng xuất"
 async function handleLogoutOne(sessionId) {
   await showDialog("question", "Đăng xuất thiết bị này?", async () => {
     const result = await callAPI(`${API_LOGOUT_ONE}/${sessionId}`);
     if (result.success) {
       await showDialog("success", "Đã đăng xuất thành công.");
-      await loadSessions();
+      await loadSessions(); // Tải lại để thấy trạng thái chuyển sang màu xám
     } else {
       await showDialog("error", result.message);
     }
   });
 }
 
-// B. Xóa phiên (DELETE /sessions/{id}) - Mạnh tay
+// B. Xóa phiên (DELETE /session) -> Xóa hẳn khỏi danh sách
 async function handleRevokeOne(sessionId) {
   await showDialog(
     "question",
-    "Xóa phiên đăng nhập này? (Thiết bị sẽ phải xác thực lại)",
+    "Xóa phiên đăng nhập này khỏi danh sách?",
     async () => {
       const result = await callAPI(`${API_REVOKE_ONE}/${sessionId}`, "DELETE");
       if (result.success) {
         await showDialog("success", "Đã xóa phiên thành công.");
-        await loadSessions();
+        await loadSessions(); // Mục đó sẽ biến mất
       } else {
         await showDialog("error", result.message);
       }
@@ -158,7 +197,7 @@ async function handleRevokeOne(sessionId) {
   );
 }
 
-// C. Đăng xuất các thiết bị KHÁC (GET /logout-all)
+// C. Đăng xuất người khác
 document
   .getElementById("revokeOthersBtn")
   .addEventListener("click", async () => {
