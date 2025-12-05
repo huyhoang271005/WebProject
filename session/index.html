@@ -11,6 +11,120 @@
       crossorigin="anonymous"
     ></script>
     <style>
+<<<<<<< HEAD
+      /* Style giống Discord */
+      .section-title {
+        font-size: 0.9rem;
+        font-weight: 700;
+        color: #4b5563;
+        text-transform: uppercase;
+        margin-bottom: 10px;
+        margin-top: 20px;
+        text-align: left;
+      }
+
+      .device-card {
+        display: flex;
+        align-items: center;
+        padding: 15px;
+        border-bottom: 1px solid #e5e7eb;
+        transition: background 0.2s;
+      }
+      .device-card:last-child {
+        border-bottom: none;
+      }
+
+      /* Icon thiết bị to bên trái */
+      .device-icon-wrapper {
+        width: 50px;
+        height: 50px;
+        background-color: #f3f4f6;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        color: #4b5563;
+        margin-right: 15px;
+      }
+
+      /* Thông tin ở giữa */
+      .device-details {
+        flex: 1;
+        text-align: left;
+      }
+      .device-name {
+        font-weight: 600;
+        font-size: 1rem;
+        color: #1f2937;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .device-meta {
+        font-size: 0.85rem;
+        color: #6b7280;
+        margin-top: 4px;
+      }
+
+      /* Badge xanh cho thiết bị hiện tại */
+      .current-badge {
+        font-size: 0.7rem;
+        background: #10b981;
+        color: white;
+        padding: 2px 6px;
+        border-radius: 4px;
+        text-transform: uppercase;
+      }
+
+      /* Nút X bên phải */
+      .close-btn {
+        background: transparent;
+        color: #9ca3af;
+        border: none;
+        font-size: 1.2rem;
+        cursor: pointer;
+        padding: 8px;
+        width: auto;
+        margin: 0;
+        box-shadow: none;
+      }
+      .close-btn:hover {
+        color: #ef4444;
+        background: #fef2f2;
+        transform: none;
+      }
+
+      /* Khu vực nút hành động lớn dưới cùng */
+      .action-area {
+        margin-top: 30px;
+        border-top: 1px solid #e5e7eb;
+        padding-top: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+      .btn-danger-outline {
+        background: white;
+        border: 1px solid #ef4444;
+        color: #ef4444;
+      }
+      .btn-danger-outline:hover {
+        background: #fef2f2;
+      }
+      .btn-danger-fill {
+        background: #ef4444;
+        color: white;
+      }
+      .btn-danger-fill:hover {
+        background: #dc2626;
+      }
+
+      @media (max-width: 600px) {
+        .device-card {
+          flex-direction: row;
+        } /* Giữ ngang trên mobile cho đẹp */
+=======
       /* CSS tuỳ chỉnh cho bảng session */
       table {
         width: 100%;
@@ -141,21 +255,67 @@
           flex-direction: row-reverse; /* Đảo ngược để text nằm bên phải trên mobile */
           justify-content: flex-end;
         }
+>>>>>>> 8ea699efb635b0bb0d7c15fae02e7ed258f893c0
       }
     </style>
   </head>
   <body>
+<<<<<<< HEAD
+    <div class="card" style="max-width: 600px; width: 100%">
+      <h2>Thiết bị</h2>
+      <p style="font-size: 0.9rem; color: #666; margin-bottom: 20px">
+        Đây là danh sách các thiết bị đang đăng nhập vào tài khoản của bạn.
+      </p>
+=======
     <div class="card">
       <h2>Quản lý thiết bị đăng nhập</h2>
+>>>>>>> 8ea699efb635b0bb0d7c15fae02e7ed258f893c0
 
       <div id="loadPage"></div>
 
       <div id="info" style="display: none">
+<<<<<<< HEAD
+        <div class="section-title">Thiết bị hiện tại</div>
+        <div
+          id="currentDeviceList"
+          style="
+            background: #fff;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            margin-bottom: 20px;
+          "
+        ></div>
+
+        <div class="section-title">Các thiết bị khác</div>
+        <div
+          id="otherDeviceList"
+          style="
+            background: #fff;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+          "
+        ></div>
+
+        <div class="action-area">
+          <button id="revokeOthersBtn" class="btn-danger-outline">
+            Đăng xuất tất cả thiết bị khác
+          </button>
+          <button id="revokeAllBtn" class="btn-danger-fill">
+            Đăng xuất khỏi tất cả các thiết bị
+          </button>
+          <button
+            style="width: 100%; margin-top: 10px; background: #6b7280"
+            onclick="window.history.back()"
+          >
+            Quay lại
+          </button>
+        </div>
+=======
         <table>
           <thead>
             <tr>
               <th width="45%">Thiết bị</th>
-              <th width="20%">Lần đăng nhập cuối</th>
+              <th width="20%">Thời gian</th>
               <th width="20%">Trạng thái</th>
               <th width="15%">Hành động</th>
             </tr>
@@ -169,6 +329,7 @@
         >
           <i class="fa-solid fa-arrow-left"></i> Quay lại
         </button>
+>>>>>>> 8ea699efb635b0bb0d7c15fae02e7ed258f893c0
       </div>
     </div>
     <script type="module" src="index.js"></script>
