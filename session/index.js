@@ -89,7 +89,7 @@ function renderSessions(sessions) {
     let actionHtml = "";
     let rowClass = ""; // Class để chỉnh màu dòng nếu cần
 
-    if (session.mySession === true) {
+    if (session.thisSession === true) {
       // Trường hợp 1: Máy đang dùng
       statusHtml = '<span class="status-badge current">Đang truy cập</span>';
       actionHtml =
