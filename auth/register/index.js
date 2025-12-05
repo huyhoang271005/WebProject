@@ -1,7 +1,7 @@
 // register.js
 import { showDialog } from "../../dialog/index.js";
 import { callAPI } from "../../public/api.js";
-import { getEye, getLoader } from "../../public/public.js";
+import { getEye, getLoader, noImage } from "../../public/public.js";
 const usernameInput = document.getElementById('username');
 const fullNameInput = document.getElementById('fullName');
 const birthdayInput = document.getElementById('birthday');
@@ -12,7 +12,7 @@ const avatarInput = document.getElementById('avatar');
 const registerBtn = document.getElementById('registerBtn');
 const statusDiv = document.getElementById('status');
 const avatarPreview = document.getElementById('avatarPreview');
-
+avatarPreview.src = noImage;
 getEye();
 avatarInput.addEventListener('change', (event)=>{
     const file = event.target.files[0];

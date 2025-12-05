@@ -1,3 +1,5 @@
+/*Ảnh hiển thị khi người dùng không có ảnh*/
+export const noImage = "https://cdn-icons-png.flaticon.com/512/847/847969.png";
 /*Loader icon for button, yêu cầu truyền id của button vào hàm*/
 /*Buộc có thẻ này đặt ở header <script src="https://kit.fontawesome.com/e9c281dd3f.js" crossorigin="anonymous"></script> */
 export async function getLoader(idLayout, callback) {

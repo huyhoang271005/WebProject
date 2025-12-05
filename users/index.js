@@ -1,6 +1,6 @@
 import { callAPI } from "../public/api.js";
 import { showDialog } from "../dialog/index.js";
-import { loadPage, convertToVNTime, getLoader } from "../public/public.js";
+import { loadPage, convertToVNTime, getLoader, noImage } from "../public/public.js";
 const loadMore = document.getElementById('loadMore');
 let page = 0;
 let size = 5;
@@ -38,7 +38,7 @@ function renderUsers(users) {
         tr.innerHTML = `
             <td data-label="Người dùng">
                 <div class="user-info">
-                    <img src="${user.imageUrl ? user.imageUrl : "https://cdn-icons-png.flaticon.com/512/847/847969.png"}" class="avatar" />
+                    <img src="${user.imageUrl ? user.imageUrl : noImage}" class="avatar" />
                     ${name}
                 </div>
             </td>

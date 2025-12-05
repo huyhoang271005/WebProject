@@ -1,4 +1,4 @@
-import { loadPage, convertToVNTime, getLoader } from "../public/public.js";
+import { loadPage, convertToVNTime, getLoader, noImage } from "../public/public.js";
 import { showDialog } from "../dialog/index.js";
 import { callAPI } from "../public/api.js";
 import { initEmailList } from "./email-list.js";
@@ -15,7 +15,7 @@ await loadPage(async()=>{
 });
 
 async function render(user) {
-    document.getElementById("avatarPreview").src = user.imageUrl ? user.imageUrl : "https://cdn-icons-png.flaticon.com/512/847/847969.png";
+    document.getElementById("avatarPreview").src = user.imageUrl ? user.imageUrl : noImage;
     document.getElementById("username").textContent = user.username;
     document.getElementById("fullName").textContent = user.fullName;
     document.getElementById("birthday").textContent = user.birthday;
