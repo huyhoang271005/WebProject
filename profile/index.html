@@ -1,144 +1,178 @@
 <!DOCTYPE html>
 <html lang="vi">
-<head>
+  <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Hồ sơ cá nhân</title>
-    <link rel="stylesheet" href="../dialog/index.css"/>
-    <link rel="stylesheet" href="../public/public.css"/>
-    <script src="https://kit.fontawesome.com/e9c281dd3f.js" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="../dialog/index.css" />
+    <link rel="stylesheet" href="../public/public.css" />
+    <script
+      src="https://kit.fontawesome.com/e9c281dd3f.js"
+      crossorigin="anonymous"
+    ></script>
     <style>
+      .profile {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        grid-template-rows: auto;
+        gap: 5%;
+      }
+      .avatar-wrapper {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        margin-bottom: 15px;
+      }
+
+      .avatar-img {
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 3px solid #3b82f6;
+      }
+      .date-info {
+        font-size: 0.75rem;
+        color: #9ca3af; /* xám nhạt hơn */
+        margin-top: 5px;
+        text-align: left;
+      }
+      .info {
+        text-align: start;
+      }
+      .info label {
+        font-weight: 500;
+        font-size: 0.9rem;
+        color: #333;
+      }
+      .email-row {
+        display: flex;
+        align-items: center;
+        gap: 3%;
+        margin-bottom: 8px;
+      }
+
+      .email-input {
+        flex: 1; /* Input chiếm phần còn lại → icon + nút có không gian */
+        padding: 6px 10px;
+      }
+
+      .status-icon {
+        font-size: 18px;
+        line-height: 1;
+      }
+
+      .removeEmailBtn {
+        padding: 6px 15px;
+        margin: 8px 0;
+      }
+
+      .verify-icon {
+        cursor: pointer;
+        transition: transform 0.15s ease, opacity 0.15s ease;
+      }
+
+      /* Hover: phóng to nhẹ + sáng màu */
+      .verify-icon:hover {
+        transform: scale(1.15);
+        opacity: 0.9;
+      }
+
+      /* Click: thu nhỏ nhẹ */
+      .verify-icon:active {
+        transform: scale(0.9);
+        opacity: 0.7;
+      }
+
+      #addEmailBtn {
+        margin-top: 5px;
+      }
+      @media (max-width: 700px) {
         .profile {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            grid-template-rows: auto;
-            gap: 5%;
+          display: inline-block;
         }
-        .avatar-wrapper {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            margin-bottom: 15px;
-        }
-
-        .avatar-img {
-            width: 120px;
-            height: 120px;
-            border-radius: 50%;
-            object-fit: cover;
-            border: 3px solid #3B82F6;
-        }
-        .date-info {
-            font-size: 0.75rem;
-            color: #9CA3AF; /* xám nhạt hơn */
-            margin-top: 5px;
-            text-align: left;
-        }
-        .info {
-            text-align: start;
-        }
-        .info label {
-            font-weight: 500;
-            font-size: 0.9rem;
-            color: #333;
-        }
-        .email-row {
-            display: flex;
-            align-items: center;
-            gap: 3%;
-            margin-bottom: 8px;
-        }
-
-        .email-input {
-            flex: 1;                    /* Input chiếm phần còn lại → icon + nút có không gian */
-            padding: 6px 10px;
-        }
-
-        .status-icon {
-            font-size: 18px;
-            line-height: 1;
-        }
-
         .removeEmailBtn {
-            padding: 6px 15px;
-            margin: 8px 0;
+          padding: 6px 10px;
         }
-
-        .verify-icon {
-            cursor: pointer;
-            transition: transform 0.15s ease, opacity 0.15s ease;
-        }
-
-        /* Hover: phóng to nhẹ + sáng màu */
-        .verify-icon:hover {
-            transform: scale(1.15);
-            opacity: 0.9;
-        }
-
-        /* Click: thu nhỏ nhẹ */
-        .verify-icon:active {
-            transform: scale(0.9);
-            opacity: 0.7;
-        }
-
-        #addEmailBtn {
-            margin-top: 5px;
-        }
-        @media (max-width: 700px){
-            .profile {
-                display: inline-block;
-            }
-            .removeEmailBtn {
-                padding: 6px 10px;
-            }
-        }
+      }
     </style>
-</head>
-<body>
-<div class="card">
-    <h2>Hồ sơ cá nhân</h2>
-    <div id = "loadPage"></div>
-    <div id = info>
-        <div class = "profile">
-            <!-- Avatar -->
-            <div class="avatar-wrapper">
-                <img id="avatarPreview" src="https://cdn-icons-png.flaticon.com/512/847/847969.png" class="avatar-img" />
-                <label for="avatar" style="cursor:pointer; color:#3B82F6; margin-top: 5px;">Đổi ảnh</label>
-                <input type="file" id="avatar" accept="image/*" style="display:none"/>
-                <div id="emailsSection"></div>
+  </head>
+  <body>
+    <div class="card">
+      <h2>Hồ sơ cá nhân</h2>
+      <div id="loadPage"></div>
+      <div id="info">
+        <div class="profile">
+          <div class="avatar-wrapper">
+            <img
+              id="avatarPreview"
+              src="https://cdn-icons-png.flaticon.com/512/847/847969.png"
+              class="avatar-img"
+            />
+            <label
+              for="avatar"
+              style="cursor: pointer; color: #3b82f6; margin-top: 5px"
+              >Đổi ảnh</label
+            >
+            <input
+              type="file"
+              id="avatar"
+              accept="image/*"
+              style="display: none"
+            />
+            <div id="emailsSection"></div>
+          </div>
+
+          <div class="info">
+            <label for="username">Biệt danh</label>
+            <input type="text" id="username" placeholder="Biệt danh" />
+
+            <label for="fullName">Họ và tên</label>
+            <input type="text" id="fullName" placeholder="Họ và tên" />
+
+            <label for="birthday">Ngày sinh</label>
+            <input type="date" id="birthday" placeholder="Ngày sinh" />
+
+            <label for="gender">Giới tính</label>
+            <select id="gender">
+              <option value="MALE">Nam</option>
+              <option value="FEMALE">Nữ</option>
+              <option value="OTHER">Khác</option>
+            </select>
+
+            <label for="role">Chức vụ</label>
+            <input type="text" id="role" placeholder="Chức vụ" readonly />
+
+            <div class="date-info">
+              <div>Ngày tạo: <span id="createdAt">01/01/2024</span></div>
+              <div>
+                Cập nhật lần cuối: <span id="updatedAt">15/11/2025</span>
+              </div>
             </div>
 
-            <!-- Info -->
-            <div class="info">
-                <label for="username">Biệt danh</label>
-                <input type="text" id="username" placeholder="Biệt danh" />
+            <div
+              style="
+                margin-top: 20px;
+                display: flex;
+                gap: 10px;
+                flex-wrap: wrap;
+              "
+            >
+              <button id="saveBtn" style="margin-top: 0; flex: 1">
+                Cập nhật trang cá nhân
+              </button>
 
-                <label for="fullName">Họ và tên</label>
-                <input type="text" id="fullName" placeholder="Họ và tên" />
-
-                <label for="birthday">Ngày sinh</label>
-                <input type="date" id="birthday" placeholder="Ngày sinh" />
-
-                <label for="gender">Giới tính</label>
-                <select id="gender">
-                    <option value="MALE">Nam</option>
-                    <option value="FEMALE">Nữ</option>
-                    <option value="OTHER">Khác</option>
-                </select>
-
-                <label for="role">Chức vụ</label>
-                <input type="text" id="role" placeholder="Chức vụ" readonly/>
-
-                <div class="date-info">
-                    <div>Ngày tạo: <span id="createdAt">01/01/2024</span></div>
-                    <div>Cập nhật lần cuối: <span id="updatedAt">15/11/2025</span></div>
-                </div>
-
-                <button id="saveBtn">Cập nhật trang cá nhân</button>
+              <button
+                onclick="window.location.href='../session'"
+                style="background-color: #4b5563; margin-top: 0; width: auto"
+              >
+                <i class="fa-solid fa-shield-halved"></i> Quản lý thiết bị
+              </button>
             </div>
+          </div>
         </div>
+      </div>
     </div>
-</div>
-</body>
-<script type="module" src="index.js"></script>
+  </body>
+  <script type="module" src="index.js"></script>
 </html>
