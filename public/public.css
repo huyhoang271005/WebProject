@@ -84,15 +84,21 @@ button:focus {
 
 /*Button xoá*/
 button.delete {
-    background: #EF4444;
+    background: white;
+    border: 1px solid #ef4444;
+    color: #ef4444;
+    font-weight: 500;
+    padding: 10px;
+    border-radius: 8px;
+    cursor: pointer;
 }
 
 button.delete:active {
-  background: #DC2626;
+  background: #F87171;
 }
 
 button.delete:hover {
-    background: #F87171;
+    background: #fef2f2;
 }
 
 
