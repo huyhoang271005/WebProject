@@ -31,7 +31,7 @@ jobs:
           elif [ "$BRANCH" = "nhat" ]; then
             echo "folders=dashboard" >> $GITHUB_OUTPUT
           elif [ "$BRANCH" = "tung" ]; then
-            echo "folders=session" >> $GITHUB_OUTPUT
+            echo "folders=session profile" >> $GITHUB_OUTPUT
           elif [ "$BRANCH" = "thanh" ]; then
             echo "folders=settings" >> $GITHUB_OUTPUT
           else
