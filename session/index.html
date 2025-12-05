@@ -13,8 +13,6 @@
     ></script>
 
     <style>
-      /* --- STYLE GIAO DIỆN GIỐNG DISCORD --- */
-
       .section-title {
         font-size: 0.85rem;
         font-weight: 700;
@@ -47,7 +45,6 @@
         background-color: #f9fafb;
       }
 
-      /* Icon thiết bị */
       .device-icon-wrapper {
         width: 48px;
         height: 48px;
@@ -62,7 +59,6 @@
         flex-shrink: 0;
       }
 
-      /* Thông tin ở giữa */
       .device-details {
         flex: 1;
         text-align: left;
@@ -85,7 +81,6 @@
         text-overflow: ellipsis;
       }
 
-      /* Badge xanh "HIỆN TẠI" */
       .current-badge {
         font-size: 0.7rem;
         background: #10b981;
@@ -96,31 +91,47 @@
         text-transform: uppercase;
       }
 
-      /* Nút X bên phải */
-      .close-btn {
+      /* --- CỤM NÚT HÀNH ĐỘNG --- */
+      .action-group {
+        display: flex;
+        gap: 5px; /* Khoảng cách giữa nút logout và nút xóa */
+      }
+
+      /* Style chung cho nút icon */
+      .icon-btn {
         background: transparent;
-        color: #9ca3af;
         border: none;
-        font-size: 1.2rem;
+        font-size: 1.1rem;
         cursor: pointer;
-        padding: 8px;
-        width: 40px;
-        height: 40px;
-        margin: 0;
-        box-shadow: none;
+        width: 36px;
+        height: 36px;
         border-radius: 50%;
         display: flex;
         align-items: center;
         justify-content: center;
         transition: all 0.2s;
       }
-      .close-btn:hover {
-        color: #ef4444;
-        background: #fef2f2;
-        transform: none;
+
+      /* 1. Nút Đăng xuất (Màu xám/xanh) */
+      .logout-btn {
+        color: #6b7280;
+      }
+      .logout-btn:hover {
+        color: #3b82f6;
+        background: #eff6ff;
       }
 
-      /* Khu vực nút hành động lớn dưới cùng */
+      /* 2. Nút Xóa (Màu đỏ) */
+      .delete-btn {
+        color: #9ca3af;
+      }
+      .delete-btn:hover {
+        color: #ef4444;
+        background: #fef2f2;
+      }
+
+      /* --- END CỤM NÚT --- */
+
       .action-area {
         margin-top: 30px;
         padding-top: 20px;
@@ -148,7 +159,6 @@
         background: #4b5563;
       }
 
-      /* Responsive */
       @media (max-width: 600px) {
         .card {
           padding: 15px;
@@ -183,7 +193,6 @@
           <button id="revokeOthersBtn" class="btn-danger-outline">
             Đăng xuất tất cả thiết bị khác
           </button>
-
           <button class="btn-back" onclick="window.history.back()">
             Quay lại
           </button>
