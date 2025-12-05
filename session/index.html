@@ -30,7 +30,7 @@
         background: #fff;
         border: 1px solid #e5e7eb;
         border-radius: 8px;
-        overflow: hidden; /* Để bo góc */
+        overflow: hidden;
       }
 
       .device-card {
@@ -47,7 +47,7 @@
         background-color: #f9fafb;
       }
 
-      /* Icon thiết bị (Tròn, to bên trái) */
+      /* Icon thiết bị */
       .device-icon-wrapper {
         width: 48px;
         height: 48px;
@@ -151,10 +151,7 @@
       /* Responsive */
       @media (max-width: 600px) {
         .card {
-          padding: 20px; /* Giảm padding card trên mobile */
-        }
-        .device-meta {
-          font-size: 0.8rem;
+          padding: 15px;
         }
       }
     </style>
@@ -186,13 +183,13 @@
           <button id="revokeOthersBtn" class="btn-danger-outline">
             Đăng xuất tất cả thiết bị khác
           </button>
+
           <button class="btn-back" onclick="window.history.back()">
             Quay lại
           </button>
         </div>
       </div>
     </div>
-
     <script type="module" src="index.js"></script>
   </body>
 </html>
