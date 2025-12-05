@@ -15,7 +15,7 @@ await loadPage(async()=>{
 });
 
 async function render(user) {
-    document.getElementById("avatarPreview").src = user.imageUrl;
+    document.getElementById("avatarPreview").src = user.imageUrl ? user.imageUrl : "https://cdn-icons-png.flaticon.com/512/847/847969.png";
     document.getElementById("username").textContent = user.username;
     document.getElementById("fullName").textContent = user.fullName;
     document.getElementById("birthday").textContent = user.birthday;
