@@ -27,9 +27,9 @@ jobs:
         run: |
           BRANCH=${GITHUB_REF#refs/heads/}
           if [ "$BRANCH" = "huy" ]; then
-            echo "folders=home" >> $GITHUB_OUTPUT
+            echo "folders=" >> $GITHUB_OUTPUT
           elif [ "$BRANCH" = "nhat" ]; then
-            echo "folders=message home" >> $GITHUB_OUTPUT
+            echo "folders=message" >> $GITHUB_OUTPUT
           elif [ "$BRANCH" = "tung" ]; then
             echo "folders=session home" >> $GITHUB_OUTPUT
           elif [ "$BRANCH" = "thanh" ]; then
