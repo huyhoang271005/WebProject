@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý Danh mục</title>
+    <link rel="stylesheet" href="../dialog/index.css">
+    <link rel="stylesheet" href="../public/public.css">
+    <link rel="stylesheet" href="index.css">
+    <script src="https://kit.fontawesome.com/e9c281dd3f.js" crossorigin="anonymous"></script>
+    <style>
+        /* CSS riêng cho bảng và form nhập liệu */
+        .input-group {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 10px;
+            margin-bottom: 10px;
+            align-items: center;
+        }
+
+        .form-container {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        th,
+        td {
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+            text-align: left;
+        }
+
+        th {
+            background-color: #3B82F6;
+            color: white;
+        }
+
+        .action-btn {
+            margin: 0 5px;
+            padding: 5px 10px;
+            font-size: 0.8rem;
+            width: auto;
+            /* Ghi đè style width 100% của button chung */
+        }
+
+        /* Responsive */
+        @media (max-width: 700px) {
+            .input-group {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="card">
+        <h2>Quản lý Danh mục (Category)</h2>
+        <div id="loadPage"></div>
+
+        <div id="info">
+            <div style="max-height: 300px; overflow-y: auto;">
+                <table id="categoryTable">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Tên danh mục</th>
+                            <th>Mô tả</th>
+                            <th style="width: 120px;">Hành động</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+            <button id="loadMore" style="display: none; margin-top: 10px; background: #9CA3AF;">Xem thêm</button>
+
+            <div class="form-container">
+                <h3 id="formTitle">Thêm mới danh mục</h3>
+                <input type="hidden" id="categoryId">
+                <div class="input-group">
+                    <label>Tên danh mục:</label>
+                    <input type="text" id="categoryName" placeholder="Ví dụ: Đồ uống">
+                </div>
+                <div class="input-group">
+                    <label>Mô tả:</label>
+                    <input type="text" id="description" placeholder="Mô tả chi tiết...">
+                </div>
+
+                <div style="display: flex; gap: 10px;">
+                    <button id="saveBtn">Lưu lại</button>
+                    <button id="cancelBtn" class="delete" style="display: none;">Hủy sửa</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script type="module" src="index.js"></script>
+</body>
+
+</html>
