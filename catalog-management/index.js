@@ -88,7 +88,7 @@ async function loadData(isLoadMore = false) {
 
     const conf = config[currentType];
     // Gọi API lấy danh sách (Số nhiều: categories, brands...)
-    const result = await callAPI(`${conf.getList}?page=${page}&size=${size}`, "GET");
+    const result = await callAPI(`${conf.getList}?page=${page}&size=${size}`);
 
     if (!result.success) {
         await showDialog("error", result.message);
