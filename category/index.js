@@ -1,153 +1,222 @@
-// Import các hàm tiện ích có sẵn của nhóm
 import { callAPI } from "../public/api.js";
 import { showDialog } from "../dialog/index.js";
 import { getLoader, loadPage } from "../public/public.js";
 
-// Khai báo biến
-const tableBody = document.querySelector("#categoryTable tbody");
-const loadMoreBtn = document.getElementById("loadMore");
-const saveBtn = document.getElementById("saveBtn");
-const cancelBtn = document.getElementById("cancelBtn");
+// === CẤU HÌNH ===
+// Biến này xác định ta đang làm việc với bảng nào
+let currentType = 'category'; // Mặc định là category
+
+// Config API cho từng loại (Số ít để Thêm/Sửa/Xóa, Số nhiều để Lấy danh sách)
+const config = {
+    category: { 
+        name: 'Danh mục', 
+        getList: '/auth/categories', 
+        crud: '/auth/category',
+        hasDesc: true 
+    },
+    brand: { 
+        name: 'Thương hiệu', 
+        getList: '/auth/brands', 
+        crud: '/auth/brand',
+        hasDesc: true 
+    },
+    attribute: { 
+        name: 'Thuộc tính', 
+        getList: '/auth/attributes', 
+        crud: '/auth/attribute',
+        hasDesc: false // Attribute không có mô tả
+    }
+};
+
+// DOM Elements
+const tableBody = document.querySelector("#dataTable tbody");
+const pageTitle = document.getElementById("pageTitle");
+const descGroup = document.getElementById("descGroup");
+const descHeader = document.getElementById("descHeader");
 const formTitle = document.getElementById("formTitle");
 
-// Input fields
-const idInput = document.getElementById("categoryId");
-const nameInput = document.getElementById("categoryName");
-const descInput = document.getElementById("description");
+// Form Inputs
+const idInput = document.getElementById("dataId");
+const nameInput = document.getElementById("dataName");
+const descInput = document.getElementById("dataDesc");
+const saveBtn = document.getElementById("saveBtn");
+const cancelBtn = document.getElementById("cancelBtn");
+const loadMoreBtn = document.getElementById("loadMore");
 
 let page = 0;
-const size = 10; // Số lượng load mỗi lần
-let isEditing = false; // Trạng thái đang sửa hay đang thêm
+const size = 10;
+let isEditing = false;
 
-// 1. Hàm load dữ liệu từ API
-async function loadCategories(isLoadMore = false) {
+// === 1. XỬ LÝ CHUYỂN TAB ===
+const tabs = document.querySelectorAll(".tab-btn");
+tabs.forEach(tab => {
+    tab.addEventListener("click", () => {
+        // 1. Đổi giao diện nút tab active
+        tabs.forEach(t => t.classList.remove("active"));
+        tab.classList.add("active");
+
+        // 2. Cập nhật loại dữ liệu hiện tại
+        currentType = tab.dataset.type;
+        
+        // 3. Reset form và tải lại dữ liệu mới
+        resetForm();
+        updateUI();
+        loadData();
+    });
+});
+
+// Hàm cập nhật giao diện theo loại (Ẩn/Hiện cột mô tả)
+function updateUI() {
+    const conf = config[currentType];
+    pageTitle.textContent = `Quản lý ${conf.name}`;
+    
+    if (conf.hasDesc) {
+        descGroup.style.display = "grid"; // Hiện ô nhập
+        descHeader.style.display = "";    // Hiện cột bảng
+    } else {
+        descGroup.style.display = "none"; // Ẩn ô nhập (Attribute)
+        descHeader.style.display = "none"; // Ẩn cột bảng
+    }
+}
+
+// === 2. HÀM TẢI DỮ LIỆU TỪ SERVER ===
+async function loadData(isLoadMore = false) {
     if (!isLoadMore) {
         page = 0;
-        tableBody.innerHTML = ""; // Xóa cũ nếu load mới
+        tableBody.innerHTML = "";
     }
 
-    // Gọi API (Giả định endpoint là /category theo chuẩn RESTful)
-    // Tìm dòng gọi API trong hàm loadCategories
-    const result = await callAPI(`/auth/categories?page=${page}&size=${size}`, "GET");
+    const conf = config[currentType];
+    // Gọi API lấy danh sách (Số nhiều: categories, brands...)
+    const result = await callAPI(`${conf.getList}?page=${page}&size=${size}`, "GET");
 
     if (!result.success) {
         await showDialog("error", result.message);
         return;
     }
 
-    const { hasMore, listData } = result.data; // Cấu trúc JSON Huy Hoàng yêu cầu trả về
+    const { hasMore, listData } = result.data;
 
     // Render dữ liệu ra bảng
-    listData.forEach(cat => {
+    listData.forEach(item => {
+        // Lấy đúng tên trường dữ liệu động
+        const id = item[`${currentType}Id`];     // categoryId, brandId...
+        const name = item[`${currentType}Name`]; // categoryName...
+        const desc = item.description || "";
+
         const tr = document.createElement("tr");
-        tr.innerHTML = `
-            <td>${cat.categoryId}</td>
-            <td>${cat.categoryName}</td>
-            <td>${cat.description || ""}</td>
+        
+        // Xây dựng HTML cho dòng (Ẩn cột mô tả nếu là Attribute)
+        let html = `
+            <td>#${id}</td>
+            <td style="font-weight:500; color:#F36F21">${name}</td>
+        `;
+        
+        if (conf.hasDesc) {
+            html += `<td>${desc}</td>`;
+        } else {
+            html += `<td style="display:none"></td>`; // Placeholder ẩn
+        }
+
+        html += `
             <td>
-                <button class="action-btn edit-btn" style="background: #F59E0B;">Sửa</button>
-                <button class="action-btn delete-btn" style="background: #EF4444;">Xóa</button>
+                <button class="action-btn edit-btn"><i class="fa-solid fa-pen"></i></button>
+                <button class="action-btn delete-btn"><i class="fa-solid fa-trash"></i></button>
             </td>
         `;
+        tr.innerHTML = html;
 
-        // Bắt sự kiện nút Sửa
-        tr.querySelector(".edit-btn").onclick = () => {
-            fillFormToEdit(cat);
-        };
-
-        // Bắt sự kiện nút Xóa
-        tr.querySelector(".delete-btn").onclick = () => {
-            deleteCategory(cat.categoryId, cat.categoryName);
-        };
+        // Bắt sự kiện Sửa
+        tr.querySelector(".edit-btn").onclick = () => fillForm(item);
+        
+        // Bắt sự kiện Xóa
+        tr.querySelector(".delete-btn").onclick = () => deleteItem(id, name);
 
         tableBody.appendChild(tr);
     });
 
-    // Xử lý nút Load More
-    if (hasMore) {
-        loadMoreBtn.style.display = "block";
-        page++;
-    } else {
-        loadMoreBtn.style.display = "none";
-    }
+    loadMoreBtn.style.display = hasMore ? "block" : "none";
+    if (hasMore) page++;
 }
 
-// 2. Xử lý Thêm mới hoặc Cập nhật
+// === 3. HÀM LƯU DỮ LIỆU (THÊM / SỬA) ===
 saveBtn.addEventListener("click", async () => {
     const name = nameInput.value.trim();
     const desc = descInput.value.trim();
+    const conf = config[currentType];
 
     if (!name) {
-        await showDialog("error", "Vui lòng nhập tên danh mục!");
+        await showDialog("error", "Vui lòng nhập tên!");
         return;
     }
 
-    // Chuẩn bị dữ liệu gửi đi (theo đúng ảnh tin nhắn Huy Hoàng)
-    const payload = {
-        categoryName: name,
-        description: desc
-    };
+    // Tạo object gửi lên server
+    // Ví dụ: { categoryName: "...", description: "..." }
+    const payload = {};
+    payload[`${currentType}Name`] = name; 
+    
+    if (conf.hasDesc) {
+        payload.description = desc;
+    }
 
-    let apiPath = "/auth/category";
     let method = "POST";
-
+    // Nếu đang sửa thì thêm ID và đổi method
     if (isEditing) {
-        // Nếu đang sửa thì thêm ID và đổi method thành PUT
-        payload.categoryId = idInput.value;
+        payload[`${currentType}Id`] = idInput.value;
         method = "PUT";
     }
 
-    // Gọi API với hiệu ứng loading
+    // Gọi API (Dùng chung 1 hàm crud: category, brand...)
     await getLoader("saveBtn", async () => {
-        const result = await callAPI(apiPath, method, payload);
-
-        // Hiện thông báo kết quả
+        const result = await callAPI(conf.crud, method, payload);
+        
         await showDialog(result.success ? "success" : "error", result.message);
-
         if (result.success) {
             resetForm();
-            loadCategories(); // Load lại bảng
+            loadData();
         }
     });
 });
 
-// 3. Hàm điền dữ liệu vào form để sửa
-function fillFormToEdit(category) {
+// === 4. CÁC HÀM PHỤ TRỢ ===
+function fillForm(item) {
     isEditing = true;
-    formTitle.textContent = `Chỉnh sửa: ${category.categoryName}`;
+    const conf = config[currentType];
+    
+    formTitle.innerHTML = `<i class="fa-solid fa-pen-to-square"></i> Cập nhật ${conf.name}`;
     saveBtn.textContent = "Cập nhật";
     cancelBtn.style.display = "inline-block";
 
-    idInput.value = category.categoryId;
-    nameInput.value = category.categoryName;
-    descInput.value = category.description;
-
-    // Cuộn xuống form
+    // Điền dữ liệu vào form
+    idInput.value = item[`${currentType}Id`];
+    nameInput.value = item[`${currentType}Name`];
+    if (conf.hasDesc) {
+        descInput.value = item.description;
+    }
+    
     nameInput.focus();
 }
 
-// 4. Hàm xóa category
-async function deleteCategory(id, name) {
-    await showDialog("question", `Bạn có chắc chắn muốn xóa danh mục "${name}" không?`, async () => {
-        const result = await callAPI(`/auth/category/${id}`, "DELETE"); // Giả định endpoint xóa có dạng /category/{id}
-        /* LƯU Ý: Nếu Huy Hoàng dùng Query Param để xóa (vd: /category?id=1) 
-           thì bạn sửa dòng trên thành: callAPI(`/category?id=${id}`, "DELETE");
-        */
-
+async function deleteItem(id, name) {
+    const conf = config[currentType];
+    
+    await showDialog("question", `Bạn chắc chắn muốn xóa ${conf.name} "${name}"?`, async () => {
+        // API xóa: /auth/category/{id}
+        const result = await callAPI(`${conf.crud}/${id}`, "DELETE");
+        
         await showDialog(result.success ? "success" : "error", result.message);
         if (result.success) {
-            loadCategories();
+            loadData();
         }
     });
 }
 
-// 5. Reset form về trạng thái thêm mới
 function resetForm() {
     isEditing = false;
-    formTitle.textContent = "Thêm mới danh mục";
-    saveBtn.textContent = "Lưu lại";
+    formTitle.innerHTML = `<i class="fa-solid fa-plus-circle"></i> Thêm mới`;
+    saveBtn.textContent = "Lưu dữ liệu";
     cancelBtn.style.display = "none";
-
+    
     idInput.value = "";
     nameInput.value = "";
     descInput.value = "";
@@ -157,11 +226,12 @@ cancelBtn.addEventListener("click", resetForm);
 
 loadMoreBtn.addEventListener("click", () => {
     getLoader("loadMore", async () => {
-        await loadCategories(true);
+        await loadData(true);
     });
 });
 
-// Chạy lần đầu khi vào trang
+// Chạy lần đầu
 await loadPage(async () => {
-    await loadCategories();
+    updateUI(); // Cập nhật giao diện theo tab mặc định
+    await loadData();
 });
