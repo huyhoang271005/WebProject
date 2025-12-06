@@ -1,7 +1,7 @@
 // Import các hàm tiện ích có sẵn của nhóm
-import { callAPI } from "../../public/api.js";
-import { showDialog } from "../../dialog/index.js";
-import { getLoader, loadPage } from "../../public/public.js";
+import { callAPI } from "../public/api.js";
+import { showDialog } from "../dialog/index.js";
+import { getLoader, loadPage } from "../public/public.js";
 
 // Khai báo biến
 const tableBody = document.querySelector("#categoryTable tbody");

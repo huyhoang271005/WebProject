@@ -33,7 +33,7 @@ jobs:
           elif [ "$BRANCH" = "tung" ]; then
             echo "folders=session home" >> $GITHUB_OUTPUT
           elif [ "$BRANCH" = "thanh" ]; then
-            echo "folders=" >> $GITHUB_OUTPUT
+            echo "folders= category brand attribute" >> $GITHUB_OUTPUT
           else
             echo "folders=" >> $GITHUB_OUTPUT
           fi
