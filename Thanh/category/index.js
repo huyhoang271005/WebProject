@@ -1,5 +1,5 @@
 // Import các hàm tiện ích có sẵn của nhóm
-import { callAPI } from "../../public/api.js"; 
+import { callAPI } from "../../public/api.js";
 import { showDialog } from "../../dialog/index.js";
 import { getLoader, loadPage } from "../../public/public.js";
 
@@ -27,8 +27,8 @@ async function loadCategories(isLoadMore = false) {
     }
 
     // Gọi API (Giả định endpoint là /category theo chuẩn RESTful)
-    // Nếu API của Huy Hoàng khác (vd: /categories), bạn sửa lại chuỗi này nhé
-    const result = await callAPI(`/category?page=${page}&size=${size}`, "GET");
+    // Tìm dòng gọi API trong hàm loadCategories
+    const result = await callAPI(`/auth/categories?page=${page}&size=${size}`, "GET");
 
     if (!result.success) {
         await showDialog("error", result.message);
@@ -76,7 +76,7 @@ async function loadCategories(isLoadMore = false) {
 saveBtn.addEventListener("click", async () => {
     const name = nameInput.value.trim();
     const desc = descInput.value.trim();
-    
+
     if (!name) {
         await showDialog("error", "Vui lòng nhập tên danh mục!");
         return;
@@ -88,19 +88,19 @@ saveBtn.addEventListener("click", async () => {
         description: desc
     };
 
-    let apiPath = "/category";
+    let apiPath = "/auth/category";
     let method = "POST";
 
     if (isEditing) {
         // Nếu đang sửa thì thêm ID và đổi method thành PUT
         payload.categoryId = idInput.value;
-        method = "PUT"; 
+        method = "PUT";
     }
 
     // Gọi API với hiệu ứng loading
     await getLoader("saveBtn", async () => {
         const result = await callAPI(apiPath, method, payload);
-        
+
         // Hiện thông báo kết quả
         await showDialog(result.success ? "success" : "error", result.message);
 
@@ -121,7 +121,7 @@ function fillFormToEdit(category) {
     idInput.value = category.categoryId;
     nameInput.value = category.categoryName;
     descInput.value = category.description;
-    
+
     // Cuộn xuống form
     nameInput.focus();
 }
@@ -129,11 +129,11 @@ function fillFormToEdit(category) {
 // 4. Hàm xóa category
 async function deleteCategory(id, name) {
     await showDialog("question", `Bạn có chắc chắn muốn xóa danh mục "${name}" không?`, async () => {
-        const result = await callAPI(`/category/${id}`, "DELETE"); // Giả định endpoint xóa có dạng /category/{id}
+        const result = await callAPI(`/auth/category/${id}`, "DELETE"); // Giả định endpoint xóa có dạng /category/{id}
         /* LƯU Ý: Nếu Huy Hoàng dùng Query Param để xóa (vd: /category?id=1) 
            thì bạn sửa dòng trên thành: callAPI(`/category?id=${id}`, "DELETE");
         */
-        
+
         await showDialog(result.success ? "success" : "error", result.message);
         if (result.success) {
             loadCategories();
@@ -147,7 +147,7 @@ function resetForm() {
     formTitle.textContent = "Thêm mới danh mục";
     saveBtn.textContent = "Lưu lại";
     cancelBtn.style.display = "none";
-    
+
     idInput.value = "";
     nameInput.value = "";
     descInput.value = "";
