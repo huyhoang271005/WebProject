@@ -1,0 +1,181 @@
+/* --- Cấu hình màu sắc thương hiệu (Thành Đô Style) --- */
+:root {
+    --primary-orange: #F36F21; /* Cam thương hiệu */
+    --primary-green: #84CC16;  /* Xanh lá tiêu dùng */
+    --hover-orange: #d95d15;
+    --bg-soft: #fff7ed;        /* Nền cam rất nhạt */
+}
+
+/* --- Tùy chỉnh Card chính --- */
+/* Ghi đè class .card chung để thêm điểm nhấn */
+.card {
+    border-top: 5px solid var(--primary-orange); /* Viền trên màu cam tạo điểm nhấn */
+    box-shadow: 0 4px 20px rgba(243, 111, 33, 0.15); /* Đổ bóng màu cam nhẹ */
+}
+
+h2 {
+    color: var(--primary-orange);
+    text-transform: uppercase;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    border-bottom: 2px dashed #fed7aa;
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+}
+
+/* --- Bảng dữ liệu (Table) --- */
+.table-wrapper {
+    max-height: 400px;
+    overflow-y: auto;
+    border-radius: 10px;
+    border: 1px solid #fed7aa; /* Viền cam nhạt */
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+th {
+    background: linear-gradient(90deg, var(--primary-orange), #fb923c); /* Gradient Cam */
+    color: white;
+    padding: 14px 15px;
+    text-align: left;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+td {
+    padding: 12px 15px;
+    border-bottom: 1px solid #fff7ed;
+    color: #4B5563;
+    font-size: 0.95rem;
+}
+
+/* Hiệu ứng ngựa vằn nhưng màu cam nhạt */
+tr:nth-child(even) {
+    background-color: #fffaf5;
+}
+
+tr:hover td {
+    background-color: #ffedd5; /* Highlight khi di chuột */
+    color: #c2410c;
+}
+
+/* --- Form nhập liệu --- */
+.form-container {
+    margin-top: 30px;
+    padding: 25px;
+    background-color: #fffaf5; /* Nền khối nhập liệu hơi khác biệt */
+    border-radius: 12px;
+    border: 1px dashed var(--primary-orange);
+}
+
+.form-container h3 {
+    color: #c2410c; /* Cam đậm */
+    font-size: 1.1rem;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* Label & Input */
+.input-group {
+    display: grid;
+    grid-template-columns: 150px 1fr;
+    gap: 15px;
+    margin-bottom: 15px;
+    align-items: center;
+}
+
+.input-group label {
+    font-weight: 600;
+    color: #4b5563;
+    text-align: right;
+}
+
+/* Input tùy chỉnh đè lên style mặc định */
+.input-group input {
+    border: 1px solid #fed7aa !important;
+    border-radius: 8px !important;
+    padding: 10px 15px !important;
+    transition: all 0.3s ease;
+}
+
+.input-group input:focus {
+    border-color: var(--primary-orange) !important;
+    box-shadow: 0 0 0 3px rgba(243, 111, 33, 0.2) !important; /* Hào quang cam */
+}
+
+/* --- Các nút bấm (Buttons) --- */
+button {
+    border-radius: 30px !important; /* Bo tròn kiểu viên thuốc như ảnh mẫu */
+    font-weight: 600 !important;
+    text-transform: uppercase;
+    font-size: 0.85rem !important;
+    letter-spacing: 0.5px;
+    transition: all 0.2s ease;
+}
+
+/* Nút Sửa (dùng màu Xanh lá giống nút 'Tiêu dùng') */
+.edit-btn {
+    background-color: var(--primary-green) !important;
+    padding: 6px 15px;
+    width: auto !important;
+    color: white;
+    margin-right: 5px;
+}
+.edit-btn:hover {
+    background-color: #65a30d !important;
+    transform: translateY(-2px);
+}
+
+/* Nút Xóa (Đỏ) */
+.delete-btn {
+    background-color: #EF4444 !important;
+    padding: 6px 15px;
+    width: auto !important;
+    color: white;
+}
+.delete-btn:hover {
+    background-color: #DC2626 !important;
+    transform: translateY(-2px);
+}
+
+/* Nút Lưu (Cam chủ đạo) */
+#saveBtn {
+    background-color: var(--primary-orange) !important;
+    box-shadow: 0 4px 10px rgba(243, 111, 33, 0.3);
+}
+#saveBtn:hover {
+    background-color: var(--hover-orange) !important;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(243, 111, 33, 0.4);
+}
+
+/* Nút Hủy (Xám) */
+#cancelBtn {
+    background-color: #9CA3AF !important;
+    width: auto !important;
+    padding: 10px 25px;
+}
+
+/* --- Responsive --- */
+@media (max-width: 700px) {
+    .input-group {
+        grid-template-columns: 1fr;
+        gap: 5px;
+    }
+    .input-group label {
+        text-align: left;
+    }
+    .form-container {
+        padding: 15px;
+    }
+}
