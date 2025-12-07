@@ -2,9 +2,6 @@ import { showDialog } from "../dialog/index.js";
 import { callAPI, connectSse } from "../public/api.js";
 import { getLoader } from "../public/public.js";
 
-// --- CẤU HÌNH ---
-const IS_TEST_MODE = false; // Server thật
-
 const CATEGORIES = [
   { id: "an-vat", name: "Đồ ăn vặt", icon: "fa-cookie-bite" },
   { id: "nuoc-ngot", name: "Nước giải khát", icon: "fa-bottle-water" },
@@ -13,10 +10,8 @@ const CATEGORIES = [
   { id: "gia-dung", name: "Gia dụng", icon: "fa-pump-soap" },
 ];
 
-let allProducts = [];
-
 document.addEventListener("DOMContentLoaded", async () => {
-  // 1. Kiểm tra User
+  // 1. Check User
   try {
     const profile = await callAPI("/profile");
     if (profile && profile.success) {
@@ -25,100 +20,94 @@ document.addEventListener("DOMContentLoaded", async () => {
         document.getElementById("navAvatar").src = user.imageUrl;
       if (user.username)
         document.getElementById("welcomeName").textContent = user.username;
-
-      // Check Admin
       if (user.roleName === "ADMIN" || user.role === "ADMIN") {
         document
           .querySelectorAll(".admin-only")
-          .forEach((el) => (el.style.display = "flex"));
+          .forEach((el) => (el.style.display = "block")); // Hiện menu admin
       }
     } else {
-      // Chưa đăng nhập
-      window.location.replace("../auth/login");
+      window.location.replace("../auth/login"); // Chưa login -> về login
       return;
     }
   } catch (e) {
     console.error(e);
   }
 
-  // 2. Tạo dữ liệu & Render
-  allProducts = generateMockProducts();
+  // 2. Render UI
   renderNavCategories();
   renderHomeSections();
 
   // 3. SSE
   try {
     connectSse("/connect", (data) => {
-      if (data && data.success) showToast("Thông báo", data.message);
+      if (data.success) showToast("Thông báo", data.message);
     });
   } catch (e) {}
 });
 
-// --- RENDER HOME SECTIONS (Tempest Style) ---
 function renderHomeSections() {
   const container = document.getElementById("homeContainer");
-  container.innerHTML = "";
+  const products = generateMockProducts(); // Tạo sản phẩm giả
 
+  container.innerHTML = "";
   CATEGORIES.forEach((cat) => {
-    // Lấy 5 món đầu tiên
-    const list = allProducts.filter((p) => p.catId === cat.id).slice(0, 5);
+    const list = products.filter((p) => p.catId === cat.id).slice(0, 5); // Lấy 5 món đầu mỗi loại
 
     if (list.length > 0) {
-      const html = `
+      container.insertAdjacentHTML(
+        "beforeend",
+        `
             <div class="category-section">
                 <div class="section-header">
-                    <div class="section-title">
-                        <i class="fa-solid ${
-                          cat.icon
-                        }" style="color:#10B981; margin-right:10px;"></i> ${
-        cat.name
-      }
-                    </div>
+                    <div class="section-title"><i class="fa-solid ${
+                      cat.icon
+                    }" style="color:#10B981"></i> ${cat.name}</div>
                     <a href="../products/index.html?cat=${
                       cat.id
-                    }" class="btn-see-more">
-                        Xem thêm <i class="fa-solid fa-arrow-right"></i>
-                    </a>
+                    }" class="btn-see-more">Xem thêm <i class="fa-solid fa-arrow-right"></i></a>
                 </div>
                 <div class="product-grid-5">
-                    ${list.map((p) => createCardHTML(p)).join("")}
+                    ${list
+                      .map(
+                        (p) => `
+                        <div class="product-card" onclick="alert('Chi tiết: ${
+                          p.name
+                        }')">
+                            <div class="p-img">${p.name.charAt(0)}</div>
+                            <div class="p-info">
+                                <div class="p-name" title="${p.name}">${
+                          p.name
+                        }</div>
+                                <div class="p-price">${p.price}</div>
+                                <div class="p-sold">Đã bán ${Math.floor(
+                                  Math.random() * 2000
+                                )}</div>
+                            </div>
+                        </div>
+                    `
+                      )
+                      .join("")}
                 </div>
-            </div>`;
-      container.insertAdjacentHTML("beforeend", html);
+            </div>`
+      );
     }
   });
-}
-
-function createCardHTML(p) {
-  return `
-    <div class="product-card" onclick="alert('Xem chi tiết: ${p.name}')">
-        <div class="p-img">
-            ${p.name.charAt(0)} </div>
-        <div class="p-info">
-            <div class="p-name" title="${p.name}">${p.name}</div>
-            <div class="p-price">${p.price}</div>
-            <div class="p-sold">Đã bán ${Math.floor(Math.random() * 1000)}</div>
-        </div>
-    </div>`;
 }
 
 function renderNavCategories() {
   document.getElementById("catDropdown").innerHTML = CATEGORIES.map(
     (cat) =>
-      `<a href="../products/index.html?cat=${cat.id}">
-            <i class="fa-solid ${cat.icon}"></i> ${cat.name}
-        </a>`
+      `<a href="../products/index.html?cat=${cat.id}"><i class="fa-solid ${cat.icon}"></i> ${cat.name}</a>`
   ).join("");
 }
 
-// --- MOCK DATA CHUẨN ---
 function generateMockProducts() {
   let arr = [];
   CATEGORIES.forEach((c) => {
     for (let i = 1; i <= 10; i++) {
       arr.push({
         catId: c.id,
-        name: `${c.name} - Loại đặc biệt số ${i}`,
+        name: `${c.name} - Món ngon ${i}`,
         price: Math.floor(Math.random() * 200) + 10 + ".000đ",
       });
     }
@@ -126,7 +115,7 @@ function generateMockProducts() {
   return arr;
 }
 
-// --- LOGIC KHÁC ---
+// Logic khác
 const sendAllBtn = document.getElementById("sendAll");
 if (sendAllBtn) {
   sendAllBtn.onclick = async () => {
@@ -138,8 +127,10 @@ if (sendAllBtn) {
         message: msg,
         data: null,
       });
-      if (res.success) showToast("Thành công", "Đã gửi!");
-      else showToast("Lỗi", res.message);
+      if (res.success) {
+        document.getElementById("message").value = "";
+        showToast("Thành công", "Đã gửi!");
+      } else showToast("Lỗi", res.message);
     });
   };
 }
@@ -155,10 +146,27 @@ document.getElementById("logout").onclick = async () => {
 function showToast(title, msg) {
   const div = document.createElement("div");
   div.className = "toast";
-  div.innerHTML = `<i class="fa-solid fa-bell" style="color:#10B981"></i> <div><b>${title}</b><div>${msg}</div></div>`;
+  div.innerHTML = `<i class="fa-solid fa-bell" style="color:#10B981; font-size:1.2rem;"></i> <div><b>${title}</b><div>${msg}</div></div>`;
   document.getElementById("toast-container").appendChild(div);
   setTimeout(() => div.remove(), 5000);
 }
+
+// Dropdown Toggle
+document.getElementById("catBtn").onclick = (e) => {
+  e.stopPropagation();
+  document.getElementById("catDropdown").classList.toggle("show");
+  document.getElementById("userDropdown").classList.remove("show");
+};
+document.getElementById("userMenuBtn").onclick = (e) => {
+  e.stopPropagation();
+  document.getElementById("userDropdown").classList.toggle("show");
+  document.getElementById("catDropdown").classList.remove("show");
+};
+document.onclick = () => {
+  document
+    .querySelectorAll(".show")
+    .forEach((el) => el.classList.remove("show"));
+};
 
 // Search
 document.getElementById("btnSearch").onclick = () => {
@@ -168,17 +176,3 @@ document.getElementById("btnSearch").onclick = () => {
       q
     )}`;
 };
-
-// Dropdown
-document.getElementById("catBtn").onclick = (e) => {
-  e.stopPropagation();
-  document.getElementById("catDropdown").classList.toggle("show");
-};
-document.getElementById("userMenuBtn").onclick = (e) => {
-  e.stopPropagation();
-  document.getElementById("userDropdown").classList.toggle("show");
-};
-document.onclick = () =>
-  document
-    .querySelectorAll(".show")
-    .forEach((el) => el.classList.remove("show"));
