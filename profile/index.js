@@ -1,6 +1,6 @@
 import { callAPI } from "../public/api.js";
 import { showDialog } from "../dialog/index.js";
-import { convertToVNTime, getLoader, loadPage, noImage } from "../public/public.js";
+import { convertToVNTime, getLoader, loadPage } from "../public/public.js";
 import { initEmailList } from "./email-list.js";
 const usernameInput = document.getElementById('username');
 const fullNameInput = document.getElementById('fullName');
@@ -20,7 +20,7 @@ async function loadProfile() {
         return;
     }
     const profile = result.data;
-    avatarPreview.src = profile.imageUrl ? profile.imageUrl : noImage;
+    avatarPreview.src = profile.imageUrl
     usernameInput.value = profile.username;
     fullNameInput.value = profile.fullName;
     birthdayInput.value = profile.birthday;
