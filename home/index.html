@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Tạp Hóa Xanh - Danh sách sản phẩm</title>
+    <title>Tạp Hóa Xanh - Trang chủ</title>
 
     <link rel="stylesheet" href="../dialog/index.css" />
     <link rel="stylesheet" href="../public/public.css" />
@@ -13,77 +13,210 @@
     ></script>
 
     <style>
-      /* 1. KHÓA CUỘN TRANG CHÍNH (FIXED VIEWPORT) */
+      /* 1. RESET CSS */
       html,
       body {
-        height: 100%; /* Bắt buộc full chiều cao */
-        margin: 0;
-        overflow: hidden; /* Cấm cuộn body -> Chặn đứng việc bị thừa khoảng trắng */
+        margin: 0 !important;
+        padding: 0 !important;
+        width: 100% !important;
+        min-height: 100vh;
+        background-color: #f3f4f6 !important;
         font-family: "Segoe UI", sans-serif;
-        background-color: #f3f4f6;
-        display: flex; /* Dùng Flex để chia dọc */
-        flex-direction: column;
+        overflow-x: hidden;
+        display: block !important;
       }
 
-      /* 2. NAVBAR (Đứng yên trên cùng) */
+      /* 2. NAVBAR */
       .navbar {
-        height: 70px;
-        flex-shrink: 0; /* Không bị co lại */
         background: white;
+        height: 70px;
+        width: 100%;
+        position: fixed;
+        top: 0;
+        left: 0;
+        z-index: 1000;
         display: flex;
         align-items: center;
         justify-content: space-between;
         padding: 0 30px;
         box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-        z-index: 1000;
-        border-bottom: 1px solid #eee;
+        box-sizing: border-box;
       }
 
-      /* 3. MAIN CONTAINER (Chiếm phần còn lại) */
+      /* 3. MAIN CONTAINER (Để đẩy nội dung xuống dưới Navbar) */
       .main-container {
-        flex: 1; /* Tự động chiếm hết chiều cao còn lại (100vh - 70px) */
-        display: flex;
-        overflow: hidden; /* Khóa tràn ra ngoài */
+        margin-top: 70px; /* Bằng chiều cao navbar */
+        padding-bottom: 50px;
+      }
+
+      /* --- HERO BANNER --- */
+      .hero {
+        margin: 20px 30px;
+        border-radius: 16px;
+        overflow: hidden;
+        height: 380px; /* Banner cao và đẹp */
+        position: relative;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+      }
+      .hero img {
         width: 100%;
-      }
-
-      /* --- CỘT TRÁI: SIDEBAR (Cuộn độc lập) --- */
-      .sidebar {
-        width: 280px;
-        flex-shrink: 0;
-        background: white;
-        border-right: 1px solid #e5e7eb;
-        padding: 20px;
-        overflow-y: auto; /* Cho phép cuộn riêng cột này */
-        height: 100%; /* Full chiều cao cha */
-      }
-      /* Tùy chỉnh thanh cuộn cho đẹp */
-      .sidebar::-webkit-scrollbar {
-        width: 6px;
-      }
-      .sidebar::-webkit-scrollbar-thumb {
-        background: #ddd;
-        border-radius: 3px;
-      }
-
-      /* --- CỘT PHẢI: NỘI DUNG (Cuộn độc lập) --- */
-      .content-area {
-        flex: 1;
-        padding: 20px 30px;
-        background: #f9fafb;
-        overflow-y: auto; /* Cho phép cuộn riêng cột này */
         height: 100%;
-        scroll-behavior: smooth;
+        object-fit: cover;
+        filter: brightness(0.7); /* Làm tối ảnh để chữ nổi bật */
       }
-      .content-area::-webkit-scrollbar {
-        width: 8px;
+      .hero-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        padding-left: 80px;
+        color: white;
       }
-      .content-area::-webkit-scrollbar-thumb {
-        background: #ccc;
-        border-radius: 4px;
+      .hero h1 {
+        font-size: 3.5rem;
+        margin-bottom: 10px;
+        text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+        font-weight: 800;
+      }
+      .hero p {
+        font-size: 1.4rem;
+        margin-bottom: 30px;
+        opacity: 0.95;
+        font-weight: 500;
+      }
+      .hero button {
+        padding: 12px 40px;
+        background: #10b981;
+        color: white;
+        border: none;
+        border-radius: 30px;
+        font-weight: bold;
+        cursor: pointer;
+        font-size: 1.1rem;
+        transition: transform 0.2s, background 0.2s;
+        box-shadow: 0 5px 15px rgba(16, 185, 129, 0.4);
+      }
+      .hero button:hover {
+        transform: translateY(-3px);
+        background: #059669;
       }
 
-      /* --- CÁC STYLE CON (Giữ nguyên như cũ) --- */
+      /* --- CATEGORY SECTION (Tầng sản phẩm) --- */
+      .category-section {
+        background: white;
+        margin: 30px 30px; /* Cách lề 2 bên */
+        padding: 25px 30px;
+        border-radius: 16px;
+        border: 1px solid #e5e7eb;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02);
+      }
+
+      .section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 25px;
+        padding-bottom: 15px;
+        border-bottom: 2px solid #f3f4f6;
+      }
+      .section-title {
+        font-size: 1.5rem;
+        font-weight: 800;
+        color: #1f2937;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .btn-see-more {
+        text-decoration: none;
+        color: #10b981;
+        font-weight: 700;
+        border: 2px solid #10b981;
+        padding: 8px 20px;
+        border-radius: 25px;
+        transition: 0.2s;
+        font-size: 0.95rem;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+      }
+      .btn-see-more:hover {
+        background: #10b981;
+        color: white;
+      }
+
+      /* Grid 5 cột (Tempest Style) */
+      .product-grid-5 {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr); /* 5 Cột đều nhau */
+        gap: 20px;
+      }
+
+      /* Product Card */
+      .product-card {
+        background: white;
+        border-radius: 12px;
+        overflow: hidden;
+        border: 1px solid #e5e7eb;
+        transition: 0.2s;
+        cursor: pointer;
+        display: flex;
+        flex-direction: column;
+        position: relative;
+      }
+      .product-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        border-color: #10b981;
+      }
+
+      .p-img {
+        width: 100%;
+        height: 180px;
+        background: #f9fafb;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2.5rem;
+        color: #ccc;
+        font-weight: bold;
+      }
+      .p-info {
+        padding: 15px;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+      }
+      .p-name {
+        font-weight: 600;
+        color: #374151;
+        font-size: 1rem;
+        margin-bottom: 8px;
+        height: 44px;
+        overflow: hidden;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        line-height: 1.4;
+      }
+      .p-price {
+        color: #ef4444;
+        font-weight: 800;
+        font-size: 1.2rem;
+        margin-top: auto;
+      }
+      .p-sold {
+        font-size: 0.8rem;
+        color: #9ca3af;
+        margin-top: 5px;
+      }
+
+      /* CÁC STYLE NAVBAR & ADMIN (Giữ nguyên từ code cũ của bro) */
       .brand {
         font-size: 1.5rem;
         font-weight: bold;
@@ -94,15 +227,60 @@
         gap: 10px;
         min-width: 180px;
       }
+      .nav-cat-btn {
+        background: white;
+        border: 1px solid #e5e7eb;
+        padding: 8px 15px;
+        border-radius: 20px;
+        cursor: pointer;
+        font-weight: 600;
+        color: #374151;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        position: relative;
+      }
+      .cat-dropdown {
+        position: absolute;
+        top: 110%;
+        left: 0;
+        background: white;
+        width: 220px;
+        border-radius: 12px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+        display: none;
+        flex-direction: column;
+        overflow: hidden;
+        border: 1px solid #eee;
+      }
+      .cat-dropdown.show {
+        display: flex;
+      }
+      .cat-dropdown a {
+        padding: 12px 15px;
+        text-decoration: none;
+        color: #333;
+        border-bottom: 1px solid #f3f4f6;
+        transition: 0.2s;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .cat-dropdown a:hover {
+        background: #ecfdf5;
+        color: #10b981;
+        padding-left: 20px;
+      }
+
       .search-wrapper {
         flex: 1;
-        max-width: 500px;
+        max-width: 600px;
         position: relative;
         margin: 0 20px;
       }
       .search-input {
         width: 100%;
-        padding: 10px 40px 10px 20px;
+        padding: 10px 45px 10px 20px;
         border: 2px solid #e5e7eb;
         border-radius: 25px;
         outline: none;
@@ -123,6 +301,7 @@
         border-radius: 50%;
         cursor: pointer;
       }
+
       .nav-actions {
         display: flex;
         align-items: center;
@@ -154,6 +333,7 @@
         border-radius: 10px;
         border: 2px solid white;
       }
+
       .admin-link {
         color: #ea580c !important;
         background: #fff7ed;
@@ -163,6 +343,12 @@
       .admin-only {
         display: none !important;
       }
+
+      .user-menu {
+        position: relative;
+        cursor: pointer;
+        margin-left: 10px;
+      }
       .user-avatar {
         width: 42px;
         height: 42px;
@@ -170,279 +356,118 @@
         object-fit: cover;
         border: 2px solid #e5e7eb;
       }
-
-      .cat-dropdown,
       .user-dropdown {
         position: absolute;
-        top: 110%;
+        right: 0;
+        top: 60px;
         background: white;
-        width: 220px;
-        border-radius: 12px;
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+        width: 240px;
+        border-radius: 8px;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
         display: none;
         flex-direction: column;
         overflow: hidden;
-        border: 1px solid #eee;
+        border: 1px solid #e5e7eb;
         z-index: 1100;
       }
-      .cat-dropdown.show,
       .user-dropdown.show {
         display: flex;
       }
-      .cat-dropdown a,
       .user-dropdown a,
       .user-dropdown button {
-        padding: 12px 15px;
+        padding: 12px 20px;
         text-decoration: none;
         color: #333;
-        border-bottom: 1px solid #f3f4f6;
         text-align: left;
         background: none;
         border: none;
+        font-size: 0.95rem;
         cursor: pointer;
-      }
-      .cat-dropdown a:hover,
-      .user-dropdown a:hover,
-      .user-dropdown button:hover {
-        background: #f3f4f6;
-        color: #10b981;
-      }
-      .nav-cat-btn {
-        cursor: pointer;
-        padding: 8px 15px;
-        border: 1px solid #eee;
-        border-radius: 20px;
-        font-weight: 600;
-        color: #444;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        position: relative;
-      }
-
-      /* Sidebar Elements */
-      .filter-group {
-        margin-bottom: 25px;
-        padding-bottom: 20px;
         border-bottom: 1px solid #f3f4f6;
       }
-      .filter-title {
-        font-weight: 700;
-        margin-bottom: 15px;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        color: #111827;
-      }
-      .mini-search {
-        width: 100%;
-        padding: 8px 12px;
-        border: 1px solid #d1d5db;
-        border-radius: 6px;
-        outline: none;
+      .user-dropdown a:hover,
+      .user-dropdown button:hover {
         background: #f9fafb;
+        color: #10b981;
       }
-      .mini-search:focus {
-        border-color: #10b981;
+
+      /* Admin Toolbar */
+      .admin-toolbar {
         background: white;
-      }
-      .cat-list {
-        list-style: none;
-        padding: 0;
-        margin: 0;
-      }
-      .cat-item {
-        padding: 10px 12px;
-        margin-bottom: 5px;
-        border-radius: 6px;
-        cursor: pointer;
-        color: #4b5563;
+        margin: 20px 30px;
+        padding: 15px;
+        border-radius: 12px;
+        border-left: 5px solid #f59e0b;
         display: flex;
-        justify-content: space-between;
-        transition: 0.2s;
-      }
-      .cat-item:hover {
-        background: #f3f4f6;
-        color: #10b981;
-      }
-      .cat-item.active {
-        background: #ecfdf5;
-        color: #10b981;
-        font-weight: 600;
-      }
-      .price-range {
-        display: flex;
+        gap: 15px;
         align-items: center;
-        gap: 5px;
-        margin-bottom: 10px;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.03);
       }
-      .price-input {
-        width: 100%;
-        padding: 8px;
-        border: 1px solid #d1d5db;
+      .admin-input {
+        flex: 1;
+        padding: 10px;
+        border: 1px solid #ddd;
         border-radius: 6px;
         outline: none;
       }
-      .btn-filter {
-        width: 100%;
-        background: #10b981;
+      .admin-btn {
+        background: #f59e0b;
         color: white;
-        font-weight: 600;
         border: none;
-        padding: 10px;
+        padding: 10px 20px;
         border-radius: 6px;
         cursor: pointer;
-      }
-
-      /* Content Elements */
-      .page-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 20px;
-        background: white;
-        padding: 15px 20px;
-        border-radius: 8px;
-        border: 1px solid #e5e7eb;
-      }
-      .page-title {
-        font-size: 1.2rem;
-        font-weight: 800;
-        color: #111;
-        text-transform: uppercase;
-      }
-      .product-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
-        gap: 20px;
-        padding-bottom: 40px;
-      }
-
-      .product-card {
-        background: white;
-        border-radius: 8px;
-        overflow: hidden;
-        border: 1px solid #e5e7eb;
-        transition: 0.2s;
-        cursor: pointer;
-        display: flex;
-        flex-direction: column;
-      }
-      .product-card:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
-        border-color: #10b981;
-      }
-      .p-img {
-        width: 100%;
-        height: 180px;
-        background: #f3f4f6;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 2rem;
-        color: #ccc;
-      }
-      .p-body {
-        padding: 12px;
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-      }
-      .p-cat {
-        font-size: 0.7rem;
-        color: #9ca3af;
-        text-transform: uppercase;
         font-weight: bold;
-        margin-bottom: 4px;
-      }
-      .p-name {
-        font-weight: 600;
-        font-size: 0.95rem;
-        margin-bottom: 8px;
-        height: 40px;
-        overflow: hidden;
-        display: -webkit-box;
-        -webkit-line-clamp: 2;
-        -webkit-box-orient: vertical;
-        line-height: 1.4;
-        color: #374151;
-      }
-      .p-price {
-        color: #ef4444;
-        font-weight: 800;
-        font-size: 1.1rem;
-        margin-top: auto;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-      }
-      .btn-add {
-        background: #f3f4f6;
-        width: 32px;
-        height: 32px;
-        border-radius: 50%;
-        border: none;
-        cursor: pointer;
-        transition: 0.2s;
-        color: #374151;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-      }
-      .btn-add:hover {
-        background: #10b981;
-        color: white;
       }
 
-      /* Chat Btn */
-      .chat-btn {
+      /* Toast */
+      #toast-container {
         position: fixed;
         bottom: 30px;
         right: 30px;
-        width: 60px;
-        height: 60px;
-        background: #3b82f6;
-        color: white;
-        border-radius: 50%;
+        z-index: 9999;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        pointer-events: none;
+      }
+      .toast {
+        pointer-events: auto;
+        background: white;
+        padding: 15px 20px;
+        border-radius: 8px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+        border-left: 4px solid #10b981;
+        animation: slideIn 0.3s;
         display: flex;
         align-items: center;
-        justify-content: center;
-        font-size: 1.8rem;
-        cursor: pointer;
-        box-shadow: 0 5px 20px rgba(59, 130, 246, 0.4);
-        z-index: 9999;
-        border: 2px solid white;
-        transition: transform 0.3s;
+        gap: 10px;
       }
-      .chat-btn:hover {
-        transform: scale(1.1);
-      }
-      .chat-btn::after {
-        content: "";
-        position: absolute;
-        width: 100%;
-        height: 100%;
-        border-radius: 50%;
-        border: 2px solid #3b82f6;
-        animation: ripple 1.5s infinite;
-        opacity: 0;
-      }
-      @keyframes ripple {
-        0% {
-          transform: scale(1);
-          opacity: 0.6;
+      @keyframes slideIn {
+        from {
+          transform: translateX(100%);
         }
-        100% {
-          transform: scale(1.6);
-          opacity: 0;
+        to {
+          transform: translateX(0);
+        }
+      }
+
+      /* Responsive */
+      @media (max-width: 1200px) {
+        .product-grid-5 {
+          grid-template-columns: repeat(4, 1fr);
+        }
+      }
+      @media (max-width: 992px) {
+        .product-grid-5 {
+          grid-template-columns: repeat(3, 1fr);
         }
       }
     </style>
   </head>
   <body>
     <nav class="navbar">
-      <a href="../home/index.html" class="brand"
+      <a href="#" class="brand"
         ><i class="fa-solid fa-leaf"></i> Tạp Hóa Xanh</a
       >
 
@@ -464,7 +489,7 @@
       </div>
 
       <div class="nav-actions">
-        <a href="../products/index.html" class="nav-link" style="color: #10b981"
+        <a href="../products/index.html" class="nav-link"
           ><i class="fa-regular fa-compass"></i> Khám phá</a
         >
         <a href="../cart" class="nav-link cart-btn">
@@ -482,8 +507,23 @@
             onerror="this.src='https://cdn-icons-png.flaticon.com/512/847/847969.png'"
           />
           <div class="user-dropdown" id="userDropdown">
+            <div
+              style="
+                padding: 10px 20px;
+                background: #f9f9f9;
+                font-weight: bold;
+                border-bottom: 1px solid #eee;
+              "
+              id="welcomeName"
+            >
+              User
+            </div>
             <a href="../profile">Hồ sơ cá nhân</a>
             <a href="../session">Quản lý thiết bị</a>
+
+            <a href="../users" class="admin-only">Quản lý Users</a>
+            <a href="../catalog-management" class="admin-only">QL Danh mục</a>
+
             <button id="logout" style="color: red">Đăng xuất</button>
           </div>
         </div>
@@ -491,76 +531,38 @@
     </nav>
 
     <div class="main-container">
-      <aside class="sidebar">
-        <div class="filter-group">
-          <div class="filter-title">
-            <i class="fa-solid fa-magnifying-glass"></i> Tìm nhanh
-          </div>
-          <input
-            type="text"
-            id="sidebarSearch"
-            class="mini-search"
-            placeholder="Ví dụ: Bút Miku, Sting..."
-          />
-          <div style="font-size: 0.8rem; color: #888; margin-top: 5px">
-            *Lọc tên trong danh sách hiện tại
-          </div>
-        </div>
+      <div class="admin-toolbar admin-only">
+        <strong style="color: #b45309"
+          ><i class="fa-solid fa-bullhorn"></i> Gửi thông báo:</strong
+        >
+        <input
+          type="text"
+          id="message"
+          class="admin-input"
+          placeholder="Nhập tin nhắn gửi toàn hệ thống..."
+        />
+        <button id="sendAll" class="admin-btn">Gửi ngay</button>
+      </div>
 
-        <div class="filter-group">
-          <div class="filter-title">
-            <i class="fa-solid fa-layer-group"></i> Danh mục
-          </div>
-          <ul class="cat-list" id="catFilterList"></ul>
+      <div class="hero">
+        <img
+          src="https://img.freepik.com/free-photo/assortment-various-barbecue-food-grill_23-2148243673.jpg?w=1380"
+        />
+        <div class="hero-overlay">
+          <h1>Siêu Sale Tạp Hóa 🍡</h1>
+          <p>Giảm giá 50% các loại đồ ăn vặt & nước giải khát!</p>
+          <button
+            onclick="window.location.href='../products/index.html?cat=an-vat'"
+          >
+            Săn Ngay
+          </button>
         </div>
+      </div>
 
-        <div class="filter-group">
-          <div class="filter-title">
-            <i class="fa-solid fa-money-bill-wave"></i> Giá tiền (VNĐ)
-          </div>
-          <div style="display: flex; gap: 10px; margin-bottom: 10px">
-            <input
-              type="number"
-              id="priceFrom"
-              class="mini-search"
-              placeholder="Từ"
-            />
-            <input
-              type="number"
-              id="priceTo"
-              class="mini-search"
-              placeholder="Đến"
-            />
-          </div>
-          <button class="btn-filter" id="btnFilterPrice">Áp dụng</button>
-        </div>
-      </aside>
-
-      <main class="content-area">
-        <div class="page-header">
-          <div class="page-title" id="pageTitle">Tất cả sản phẩm</div>
-          <div style="display: flex; gap: 10px; align-items: center">
-            <span style="font-size: 0.9rem; color: #666">Sắp xếp:</span>
-            <select
-              style="padding: 5px; border: 1px solid #ddd; border-radius: 4px"
-            >
-              <option>Mới nhất</option>
-              <option>Bán chạy</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="product-grid" id="productGrid"></div>
-      </main>
+      <div id="homeContainer"></div>
     </div>
 
-    <div
-      class="chat-btn"
-      onclick="alert('Mở cửa sổ chat hỗ trợ!')"
-      title="Chat với nhân viên"
-    >
-      <i class="fa-solid fa-comments"></i>
-    </div>
+    <div id="toast-container"></div>
 
     <script type="module" src="index.js"></script>
   </body>

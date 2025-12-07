@@ -2,7 +2,9 @@ import { showDialog } from "../dialog/index.js";
 import { callAPI, connectSse } from "../public/api.js";
 import { getLoader } from "../public/public.js";
 
-// --- Dữ liệu giả cho sản phẩm (Vì API sản phẩm chưa có) ---
+// --- CẤU HÌNH ---
+const IS_TEST_MODE = false; // Server thật
+
 const CATEGORIES = [
   { id: "an-vat", name: "Đồ ăn vặt", icon: "fa-cookie-bite" },
   { id: "nuoc-ngot", name: "Nước giải khát", icon: "fa-bottle-water" },
@@ -11,137 +13,112 @@ const CATEGORIES = [
   { id: "gia-dung", name: "Gia dụng", icon: "fa-pump-soap" },
 ];
 
-(async () => {
-  // 1. Lấy thông tin User
-  const profile = await callAPI("/profile");
+let allProducts = [];
 
-  if (profile.success) {
-    const user = profile.data;
-    // Cập nhật Avatar Navbar
-    if (user.imageUrl) document.getElementById("navAvatar").src = user.imageUrl;
+document.addEventListener("DOMContentLoaded", async () => {
+  // 1. Kiểm tra User
+  try {
+    const profile = await callAPI("/profile");
+    if (profile && profile.success) {
+      const user = profile.data;
+      if (user.imageUrl)
+        document.getElementById("navAvatar").src = user.imageUrl;
+      if (user.username)
+        document.getElementById("welcomeName").textContent = user.username;
 
-    // Cập nhật thông tin trong Dropdown
-    document.getElementById("dropUsername").textContent =
-      user.username || "User";
-    document.getElementById("dropRole").textContent = user.roleName || "Member";
-
-    // CHECK QUYỀN ADMIN -> Hiện các mục ẩn
-    if (user.roleName === "ADMIN" || user.role === "ADMIN") {
-      document
-        .querySelectorAll(".admin-only")
-        .forEach((el) => (el.style.display = "flex"));
+      // Check Admin
+      if (user.roleName === "ADMIN" || user.role === "ADMIN") {
+        document
+          .querySelectorAll(".admin-only")
+          .forEach((el) => (el.style.display = "flex"));
+      }
+    } else {
+      // Chưa đăng nhập
+      window.location.replace("../auth/login");
+      return;
     }
-  } else {
-    // Chưa đăng nhập -> Về login
-    window.location.replace("../auth/login");
-    return;
+  } catch (e) {
+    console.error(e);
   }
 
-  // 2. Render giao diện bán hàng
+  // 2. Tạo dữ liệu & Render
+  allProducts = generateMockProducts();
   renderNavCategories();
   renderHomeSections();
 
-  // 3. Kết nối SSE (Nhận thông báo)
-  connectSse("/connect", (data) => {
-    if (data.success) {
-      showToast("Thông báo mới", data.message);
-    }
-  });
-})();
-
-// --- LOGIC GỬI THÔNG BÁO (Admin) ---
-const sendAllBtn = document.getElementById("sendAll");
-if (sendAllBtn) {
-  sendAllBtn.addEventListener("click", async () => {
-    const input = document.getElementById("message");
-    const msg = input.value.trim();
-    if (!msg) return;
-
-    const data = { success: true, message: msg, data: null };
-    await getLoader("sendAll", async () => {
-      const result = await callAPI("/push", "POST", data);
-      if (result.success) {
-        input.value = "";
-        showToast("Thành công", "Đã gửi thông báo!");
-      } else {
-        showToast("Lỗi", result.message);
-      }
+  // 3. SSE
+  try {
+    connectSse("/connect", (data) => {
+      if (data && data.success) showToast("Thông báo", data.message);
     });
-  });
-}
-
-// --- LOGIC ĐĂNG XUẤT ---
-document.getElementById("logout").addEventListener("click", async () => {
-  await showDialog("question", "Bạn có muốn đăng xuất?", async () => {
-    await callAPI("/logout");
-    localStorage.setItem("rememberUser", "false");
-    window.location.replace("../auth/login");
-  });
+  } catch (e) {}
 });
 
-// --- RENDER UI ---
+// --- RENDER HOME SECTIONS (Tempest Style) ---
 function renderHomeSections() {
   const container = document.getElementById("homeContainer");
   container.innerHTML = "";
-  const products = generateMockProducts();
 
   CATEGORIES.forEach((cat) => {
-    const list = products.filter((p) => p.catId === cat.id).slice(0, 5); // Lấy 5 món
+    // Lấy 5 món đầu tiên
+    const list = allProducts.filter((p) => p.catId === cat.id).slice(0, 5);
+
     if (list.length > 0) {
-      container.insertAdjacentHTML(
-        "beforeend",
-        `
+      const html = `
             <div class="category-section">
                 <div class="section-header">
-                    <div class="section-title"><i class="fa-solid ${
-                      cat.icon
-                    }" style="color:#10B981"></i> ${cat.name}</div>
+                    <div class="section-title">
+                        <i class="fa-solid ${
+                          cat.icon
+                        }" style="color:#10B981; margin-right:10px;"></i> ${
+        cat.name
+      }
+                    </div>
                     <a href="../products/index.html?cat=${
                       cat.id
-                    }" class="btn-see-more">Xem thêm <i class="fa-solid fa-arrow-right"></i></a>
+                    }" class="btn-see-more">
+                        Xem thêm <i class="fa-solid fa-arrow-right"></i>
+                    </a>
                 </div>
                 <div class="product-grid-5">
-                    ${list
-                      .map(
-                        (p) => `
-                        <div class="product-card" onclick="alert('Chi tiết: ${
-                          p.name
-                        }')">
-                            <div class="p-img">${p.name.charAt(0)}</div>
-                            <div class="p-info">
-                                <div class="p-name" title="${p.name}">${
-                          p.name
-                        }</div>
-                                <div class="p-price">${p.price}</div>
-                                <div class="p-sold">Đã bán ${Math.floor(
-                                  Math.random() * 1000
-                                )}</div>
-                            </div>
-                        </div>
-                    `
-                      )
-                      .join("")}
+                    ${list.map((p) => createCardHTML(p)).join("")}
                 </div>
-            </div>`
-      );
+            </div>`;
+      container.insertAdjacentHTML("beforeend", html);
     }
   });
+}
+
+function createCardHTML(p) {
+  return `
+    <div class="product-card" onclick="alert('Xem chi tiết: ${p.name}')">
+        <div class="p-img">
+            ${p.name.charAt(0)} </div>
+        <div class="p-info">
+            <div class="p-name" title="${p.name}">${p.name}</div>
+            <div class="p-price">${p.price}</div>
+            <div class="p-sold">Đã bán ${Math.floor(Math.random() * 1000)}</div>
+        </div>
+    </div>`;
 }
 
 function renderNavCategories() {
   document.getElementById("catDropdown").innerHTML = CATEGORIES.map(
     (cat) =>
-      `<a href="../products/index.html?cat=${cat.id}"><i class="fa-solid ${cat.icon}"></i> ${cat.name}</a>`
+      `<a href="../products/index.html?cat=${cat.id}">
+            <i class="fa-solid ${cat.icon}"></i> ${cat.name}
+        </a>`
   ).join("");
 }
 
+// --- MOCK DATA CHUẨN ---
 function generateMockProducts() {
   let arr = [];
   CATEGORIES.forEach((c) => {
     for (let i = 1; i <= 10; i++) {
       arr.push({
         catId: c.id,
-        name: `${c.name} - Sản phẩm số ${i}`,
+        name: `${c.name} - Loại đặc biệt số ${i}`,
         price: Math.floor(Math.random() * 200) + 10 + ".000đ",
       });
     }
@@ -149,41 +126,59 @@ function generateMockProducts() {
   return arr;
 }
 
+// --- LOGIC KHÁC ---
+const sendAllBtn = document.getElementById("sendAll");
+if (sendAllBtn) {
+  sendAllBtn.onclick = async () => {
+    const msg = document.getElementById("message").value.trim();
+    if (!msg) return;
+    await getLoader("sendAll", async () => {
+      const res = await callAPI("/push", "POST", {
+        success: true,
+        message: msg,
+        data: null,
+      });
+      if (res.success) showToast("Thành công", "Đã gửi!");
+      else showToast("Lỗi", res.message);
+    });
+  };
+}
+
+document.getElementById("logout").onclick = async () => {
+  await showDialog("question", "Đăng xuất?", async () => {
+    await callAPI("/logout");
+    localStorage.setItem("rememberUser", "false");
+    window.location.replace("../auth/login");
+  });
+};
+
 function showToast(title, msg) {
-  const toast = document.createElement("div");
-  toast.className = "toast";
-  toast.innerHTML = `<i class="fa-solid fa-bell" style="color:#10B981; font-size:1.2rem;"></i> <div><div style="font-weight:bold; margin-bottom:2px;">${title}</div><div style="font-size:0.9rem; color:#555;">${msg}</div></div>`;
-  document.getElementById("toast-container").appendChild(toast);
-  setTimeout(() => toast.remove(), 5000);
+  const div = document.createElement("div");
+  div.className = "toast";
+  div.innerHTML = `<i class="fa-solid fa-bell" style="color:#10B981"></i> <div><b>${title}</b><div>${msg}</div></div>`;
+  document.getElementById("toast-container").appendChild(div);
+  setTimeout(() => div.remove(), 5000);
 }
 
 // Search
-const searchInput = document.getElementById("searchInput");
-const handleSearch = () => {
-  const q = searchInput.value.trim();
+document.getElementById("btnSearch").onclick = () => {
+  const q = document.getElementById("mainSearch").value.trim();
   if (q)
     window.location.href = `../products/index.html?search=${encodeURIComponent(
       q
     )}`;
 };
-document.getElementById("btnSearch").onclick = handleSearch;
-searchInput.addEventListener("keypress", (e) => {
-  if (e.key === "Enter") handleSearch();
-});
 
-// Dropdown Toggle
+// Dropdown
 document.getElementById("catBtn").onclick = (e) => {
   e.stopPropagation();
   document.getElementById("catDropdown").classList.toggle("show");
-  document.getElementById("userDropdown").classList.remove("show");
 };
 document.getElementById("userMenuBtn").onclick = (e) => {
   e.stopPropagation();
   document.getElementById("userDropdown").classList.toggle("show");
-  document.getElementById("catDropdown").classList.remove("show");
 };
-document.onclick = () => {
+document.onclick = () =>
   document
     .querySelectorAll(".show")
     .forEach((el) => el.classList.remove("show"));
-};
