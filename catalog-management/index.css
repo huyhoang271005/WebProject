@@ -1,58 +1,127 @@
-/* Import style chung của Thành Đô mà mình đã gửi trước đó */
+/* === CẤU HÌNH MÀU SẮC (THEO STYLE TẠP HÓA XANH) === */
 :root {
-    --primary-orange: #F36F21;
-    --primary-green: #84CC16;
-    --bg-soft: #fff7ed;
+    --primary-color: #10B981;      /* Xanh ngọc chủ đạo (giống nút "Xem thêm") */
+    --primary-hover: #059669;      /* Xanh đậm hơn khi di chuột */
+    --bg-soft: #F0FDF4;            /* Nền xanh rất nhạt */
+    --text-dark: #1F2937;          /* Màu chữ đen xám */
+    --accent-red: #EF4444;         /* Màu đỏ (dùng cho giá hoặc nút xóa) */
+    --accent-yellow: #F59E0B;      /* Màu vàng (dùng cho nút sửa) */
 }
 
+/* --- Cấu hình chung --- */
 body {
-    background: var(--bg-soft) !important;
+    background-color: #F3F4F6 !important; /* Nền xám nhạt hiện đại */
+    font-family: 'Poppins', sans-serif;
 }
 
-/* --- Style cho thanh Tabs --- */
+/* --- Card chính --- */
+.card {
+    border-top: 5px solid var(--primary-color); /* Viền trên màu xanh */
+    box-shadow: 0 10px 25px rgba(16, 185, 129, 0.1); /* Đổ bóng xanh nhẹ */
+    border-radius: 16px;
+}
+
+h2 {
+    color: var(--primary-hover);
+    text-transform: uppercase;
+    font-weight: 700;
+    margin-bottom: 20px;
+    border-bottom: 2px dashed #A7F3D0; /* Gạch chân nét đứt xanh nhạt */
+    padding-bottom: 10px;
+}
+
+/* --- Thanh Tabs chuyển đổi --- */
 .tabs-container {
     display: flex;
     gap: 10px;
-    margin-bottom: 20px;
-    border-bottom: 2px solid #fed7aa;
-    padding-bottom: 10px;
+    margin-bottom: 25px;
+    padding-bottom: 5px;
 }
 
 .tab-btn {
     background-color: white !important;
-    color: #4b5563 !important;
-    border: 1px solid #e5e7eb !important;
-    border-radius: 8px !important;
-    padding: 8px 20px;
+    color: #6B7280 !important;
+    border: 1px solid #E5E7EB !important;
+    border-radius: 50px !important; /* Bo tròn hình viên thuốc */
+    padding: 8px 24px;
     font-weight: 600;
     cursor: pointer;
+    transition: all 0.3s ease;
     box-shadow: none !important;
     width: auto !important;
     margin-top: 0 !important;
 }
 
 .tab-btn:hover {
-    background-color: #fff7ed !important;
-    color: var(--primary-orange) !important;
+    color: var(--primary-color) !important;
+    border-color: var(--primary-color) !important;
+    background-color: var(--bg-soft) !important;
 }
 
+/* Tab đang chọn (Active) */
 .tab-btn.active {
-    background-color: var(--primary-orange) !important;
+    background: linear-gradient(135deg, var(--primary-color), var(--primary-hover)) !important;
     color: white !important;
-    border-color: var(--primary-orange) !important;
-    box-shadow: 0 4px 6px rgba(243, 111, 33, 0.2) !important;
+    border: none !important;
+    box-shadow: 0 4px 10px rgba(16, 185, 129, 0.3) !important;
 }
 
-/* --- Các phần khác giữ nguyên như cũ --- */
-.form-container {
-    margin-top: 25px;
-    padding: 20px;
-    background: white;
+/* --- Bảng dữ liệu (Table) --- */
+.table-wrapper {
+    max-height: 450px;
+    overflow-y: auto;
     border-radius: 12px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-    border: 1px dashed var(--primary-orange);
+    border: 1px solid #E5E7EB;
+    background: white;
 }
 
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+th {
+    background-color: var(--primary-color); /* Nền tiêu đề Xanh */
+    color: white;
+    padding: 15px;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+td {
+    padding: 12px 15px;
+    border-bottom: 1px solid #F3F4F6;
+    color: var(--text-dark);
+}
+
+tr:hover td {
+    background-color: var(--bg-soft); /* Highlight xanh nhạt khi di chuột */
+}
+
+/* --- Form nhập liệu --- */
+.form-container {
+    margin-top: 30px;
+    padding: 25px;
+    background-color: white;
+    border-radius: 16px;
+    border: 1px solid #E5E7EB;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+}
+
+.form-container h3 {
+    color: var(--primary-hover);
+    font-size: 1.1rem;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* Input Fields */
 .input-group {
     display: grid;
     grid-template-columns: 120px 1fr;
@@ -64,25 +133,86 @@ body {
 .input-group label {
     font-weight: 600;
     text-align: right;
-    color: #374151;
+    color: #4B5563;
 }
 
-/* Nút bấm trong bảng */
-.action-btn {
-    padding: 5px 10px;
-    border-radius: 6px;
-    color: white;
-    border: none;
-    cursor: pointer;
-    font-size: 0.8rem;
-    margin: 0 3px;
-    width: auto !important;
+.input-group input {
+    border: 1px solid #D1D5DB !important;
+    border-radius: 8px !important;
+    padding: 10px 15px !important;
+    transition: all 0.2s;
 }
-.edit-btn { background: var(--primary-green); }
-.delete-btn { background: #EF4444; }
+
+.input-group input:focus {
+    border-color: var(--primary-color) !important;
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2) !important; /* Hào quang xanh */
+    outline: none;
+}
+
+/* --- Buttons (Nút bấm) --- */
+button {
+    border-radius: 8px !important;
+    font-weight: 500 !important;
+    transition: all 0.2s ease;
+}
+
+/* Nút Lưu (Xanh chủ đạo) */
+#saveBtn {
+    background-color: var(--primary-color) !important;
+    padding: 10px 25px;
+    width: auto !important;
+    box-shadow: 0 4px 6px rgba(16, 185, 129, 0.25);
+}
+
+#saveBtn:hover {
+    background-color: var(--primary-hover) !important;
+    transform: translateY(-2px);
+}
+
+/* Nút Hủy (Xám) */
+#cancelBtn {
+    background-color: #9CA3AF !important;
+    color: white !important;
+}
+
+/* Nút Sửa (Vàng) */
+.edit-btn {
+    background-color: var(--accent-yellow) !important;
+    width: 32px !important;
+    height: 32px;
+    padding: 0 !important;
+    border-radius: 50% !important; /* Nút tròn */
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Nút Xóa (Đỏ) */
+.delete-btn {
+    background-color: var(--accent-red) !important;
+    width: 32px !important;
+    height: 32px;
+    padding: 0 !important;
+    border-radius: 50% !important; /* Nút tròn */
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.action-btn i {
+    font-size: 0.8rem;
+}
 
 /* Responsive */
 @media (max-width: 700px) {
-    .input-group { grid-template-columns: 1fr; }
-    .input-group label { text-align: left; }
+    .input-group {
+        grid-template-columns: 1fr;
+        gap: 5px;
+    }
+    .input-group label {
+        text-align: left;
+    }
+    .tabs-container {
+        flex-wrap: wrap;
+    }
 }

@@ -2,11 +2,13 @@ import { callAPI } from "../public/api.js";
 import { showDialog } from "../dialog/index.js";
 import { getLoader, loadPage } from "../public/public.js";
 
-// === CẤU HÌNH ===
-// Biến này xác định ta đang làm việc với bảng nào
-let currentType = 'category'; // Mặc định là category
+// === 1. CẤU HÌNH TRUNG TÂM ===
+let currentType = 'category'; // Mặc định
+let page = 0;
+const size = 10;
+let isEditing = false;
 
-// Config API cho từng loại (Số ít để Thêm/Sửa/Xóa, Số nhiều để Lấy danh sách)
+// Config cho 3 loại bảng (Đường dẫn API đã thêm /auth/ để test)
 const config = {
     category: { 
         name: 'Danh mục', 
@@ -24,7 +26,7 @@ const config = {
         name: 'Thuộc tính', 
         getList: '/auth/attributes', 
         crud: '/auth/attribute',
-        hasDesc: false // Attribute không có mô tả
+        hasDesc: false 
     }
 };
 
@@ -43,43 +45,77 @@ const saveBtn = document.getElementById("saveBtn");
 const cancelBtn = document.getElementById("cancelBtn");
 const loadMoreBtn = document.getElementById("loadMore");
 
-let page = 0;
-const size = 10;
-let isEditing = false;
+// === 2. HÀM TẠO HTML CHO 1 DÒNG (Quan trọng: Dùng để Render và Update nóng) ===
+function createRowHTML(item) {
+    const conf = config[currentType];
+    
+    // Lấy dữ liệu động dựa trên loại hiện tại
+    const id = item[`${currentType}Id`];     
+    const name = item[`${currentType}Name`]; 
+    const desc = item.description || "";
 
-// === 1. XỬ LÝ CHUYỂN TAB ===
+    const tr = document.createElement("tr");
+    tr.dataset.id = id; // Lưu ID ẩn vào attribute của thẻ tr
+
+    // Cột Tên (Không hiện cột ID nữa theo yêu cầu trưởng nhóm)
+    let html = `<td style="font-weight:500;">${name}</td>`;
+    
+    // Cột Mô tả (Ẩn/Hiện tùy config)
+    if (conf.hasDesc) {
+        html += `<td>${desc}</td>`;
+    } else {
+        html += `<td style="display:none"></td>`;
+    }
+
+    // Cột Thao tác
+    html += `
+        <td style="text-align: center;">
+            <button class="action-btn edit-btn" style="margin-right:5px;"><i class="fa-solid fa-pen"></i></button>
+            <button class="action-btn delete-btn"><i class="fa-solid fa-trash"></i></button>
+        </td>
+    `;
+    tr.innerHTML = html;
+
+    // Bắt sự kiện trực tiếp cho nút Sửa/Xóa của dòng này
+    tr.querySelector(".edit-btn").onclick = () => fillForm(item);
+    tr.querySelector(".delete-btn").onclick = () => deleteItem(id, name, tr); // Truyền tr để xóa DOM
+
+    return tr;
+}
+
+// === 3. XỬ LÝ CHUYỂN TAB (Category -> Brand -> Attribute) ===
 const tabs = document.querySelectorAll(".tab-btn");
 tabs.forEach(tab => {
     tab.addEventListener("click", () => {
-        // 1. Đổi giao diện nút tab active
+        // Active lại tab giao diện
         tabs.forEach(t => t.classList.remove("active"));
         tab.classList.add("active");
 
-        // 2. Cập nhật loại dữ liệu hiện tại
+        // Cập nhật loại dữ liệu
         currentType = tab.dataset.type;
         
-        // 3. Reset form và tải lại dữ liệu mới
+        // Reset form và tải lại dữ liệu mới
         resetForm();
         updateUI();
         loadData();
     });
 });
 
-// Hàm cập nhật giao diện theo loại (Ẩn/Hiện cột mô tả)
 function updateUI() {
     const conf = config[currentType];
     pageTitle.textContent = `Quản lý ${conf.name}`;
     
+    // Ẩn/Hiện ô nhập mô tả và cột mô tả
     if (conf.hasDesc) {
-        descGroup.style.display = "grid"; // Hiện ô nhập
-        descHeader.style.display = "";    // Hiện cột bảng
+        descGroup.style.display = "grid";
+        descHeader.style.display = "";
     } else {
-        descGroup.style.display = "none"; // Ẩn ô nhập (Attribute)
-        descHeader.style.display = "none"; // Ẩn cột bảng
+        descGroup.style.display = "none";
+        descHeader.style.display = "none";
     }
 }
 
-// === 2. HÀM TẢI DỮ LIỆU TỪ SERVER ===
+// === 4. HÀM TẢI DỮ LIỆU TỪ SERVER ===
 async function loadData(isLoadMore = false) {
     if (!isLoadMore) {
         page = 0;
@@ -87,8 +123,7 @@ async function loadData(isLoadMore = false) {
     }
 
     const conf = config[currentType];
-    // Gọi API lấy danh sách (Số nhiều: categories, brands...)
-    const result = await callAPI(`${conf.getList}?page=${page}&size=${size}`);
+    const result = await callAPI(`${conf.getList}?page=${page}&size=${size}`, "GET");
 
     if (!result.success) {
         await showDialog("error", result.message);
@@ -97,41 +132,9 @@ async function loadData(isLoadMore = false) {
 
     const { hasMore, listData } = result.data;
 
-    // Render dữ liệu ra bảng
+    // Render từng dòng ra bảng
     listData.forEach(item => {
-        // Lấy đúng tên trường dữ liệu động
-        const id = item[`${currentType}Id`];     // categoryId, brandId...
-        const name = item[`${currentType}Name`]; // categoryName...
-        const desc = item.description || "";
-
-        const tr = document.createElement("tr");
-        
-        // Xây dựng HTML cho dòng (Ẩn cột mô tả nếu là Attribute)
-        let html = `
-            <td>#${id}</td>
-            <td style="font-weight:500; color:#F36F21">${name}</td>
-        `;
-        
-        if (conf.hasDesc) {
-            html += `<td>${desc}</td>`;
-        } else {
-            html += `<td style="display:none"></td>`; // Placeholder ẩn
-        }
-
-        html += `
-            <td>
-                <button class="action-btn edit-btn"><i class="fa-solid fa-pen"></i></button>
-                <button class="action-btn delete-btn"><i class="fa-solid fa-trash"></i></button>
-            </td>
-        `;
-        tr.innerHTML = html;
-
-        // Bắt sự kiện Sửa
-        tr.querySelector(".edit-btn").onclick = () => fillForm(item);
-        
-        // Bắt sự kiện Xóa
-        tr.querySelector(".delete-btn").onclick = () => deleteItem(id, name);
-
+        const tr = createRowHTML(item);
         tableBody.appendChild(tr);
     });
 
@@ -139,46 +142,61 @@ async function loadData(isLoadMore = false) {
     if (hasMore) page++;
 }
 
-// === 3. HÀM LƯU DỮ LIỆU (THÊM / SỬA) ===
+// === 5. HÀM LƯU DỮ LIỆU (THÊM / SỬA - KHÔNG LOAD LẠI TRANG) ===
 saveBtn.addEventListener("click", async () => {
     const name = nameInput.value.trim();
     const desc = descInput.value.trim();
     const conf = config[currentType];
 
     if (!name) {
-        await showDialog("error", "Vui lòng nhập tên!");
+        await showDialog("error", "Vui lòng nhập tên hiển thị!");
         return;
     }
 
-    // Tạo object gửi lên server
-    // Ví dụ: { categoryName: "...", description: "..." }
+    // Chuẩn bị dữ liệu gửi đi
     const payload = {};
     payload[`${currentType}Name`] = name; 
-    
-    if (conf.hasDesc) {
-        payload.description = desc;
-    }
+    if (conf.hasDesc) payload.description = desc;
 
     let method = "POST";
-    // Nếu đang sửa thì thêm ID và đổi method
     if (isEditing) {
         payload[`${currentType}Id`] = idInput.value;
         method = "PUT";
     }
 
-    // Gọi API (Dùng chung 1 hàm crud: category, brand...)
     await getLoader("saveBtn", async () => {
         const result = await callAPI(conf.crud, method, payload);
         
         await showDialog(result.success ? "success" : "error", result.message);
+        
         if (result.success) {
-            resetForm();
-            loadData();
+            // Lấy dữ liệu mới tinh từ Server trả về (Trưởng nhóm đã hứa trả về cục này)
+            const newItem = result.data;
+
+            if (isEditing) {
+                // UPDATE: Tìm dòng cũ -> Thay thế bằng dòng mới
+                // Tìm tr có data-id tương ứng
+                const oldTr = tableBody.querySelector(`tr[data-id="${payload[`${currentType}Id`]}"]`);
+                if (oldTr) {
+                    const newTr = createRowHTML(newItem);
+                    tableBody.replaceChild(newTr, oldTr);
+                }
+            } else {
+                // CREATE: Tạo dòng mới -> Chèn lên đầu bảng
+                const newTr = createRowHTML(newItem);
+                if (tableBody.firstChild) {
+                    tableBody.insertBefore(newTr, tableBody.firstChild);
+                } else {
+                    tableBody.appendChild(newTr);
+                }
+            }
+            
+            resetForm(); // Xóa trắng form để nhập tiếp
         }
     });
 });
 
-// === 4. CÁC HÀM PHỤ TRỢ ===
+// === 6. HÀM ĐIỀN FORM ĐỂ SỬA ===
 function fillForm(item) {
     isEditing = true;
     const conf = config[currentType];
@@ -187,30 +205,31 @@ function fillForm(item) {
     saveBtn.textContent = "Cập nhật";
     cancelBtn.style.display = "inline-block";
 
-    // Điền dữ liệu vào form
     idInput.value = item[`${currentType}Id`];
     nameInput.value = item[`${currentType}Name`];
     if (conf.hasDesc) {
         descInput.value = item.description;
     }
-    
     nameInput.focus();
 }
 
-async function deleteItem(id, name) {
+// === 7. HÀM XÓA (XÓA DOM NGAY LẬP TỨC) ===
+async function deleteItem(id, name, trElement) {
     const conf = config[currentType];
     
     await showDialog("question", `Bạn chắc chắn muốn xóa ${conf.name} "${name}"?`, async () => {
-        // API xóa: /auth/category/{id}
         const result = await callAPI(`${conf.crud}/${id}`, "DELETE");
         
         await showDialog(result.success ? "success" : "error", result.message);
+        
         if (result.success) {
-            loadData();
+            // Xóa dòng khỏi giao diện ngay lập tức
+            trElement.remove();
         }
     });
 }
 
+// === 8. RESET FORM ===
 function resetForm() {
     isEditing = false;
     formTitle.innerHTML = `<i class="fa-solid fa-plus-circle"></i> Thêm mới`;
@@ -230,8 +249,8 @@ loadMoreBtn.addEventListener("click", () => {
     });
 });
 
-// Chạy lần đầu
+// === KHỞI TẠO ===
 await loadPage(async () => {
-    updateUI(); // Cập nhật giao diện theo tab mặc định
+    updateUI();
     await loadData();
 });
