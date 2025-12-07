@@ -1,0 +1,88 @@
+/* Import style chung của Thành Đô mà mình đã gửi trước đó */
+:root {
+    --primary-orange: #F36F21;
+    --primary-green: #84CC16;
+    --bg-soft: #fff7ed;
+}
+
+body {
+    background: var(--bg-soft) !important;
+}
+
+/* --- Style cho thanh Tabs --- */
+.tabs-container {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    border-bottom: 2px solid #fed7aa;
+    padding-bottom: 10px;
+}
+
+.tab-btn {
+    background-color: white !important;
+    color: #4b5563 !important;
+    border: 1px solid #e5e7eb !important;
+    border-radius: 8px !important;
+    padding: 8px 20px;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: none !important;
+    width: auto !important;
+    margin-top: 0 !important;
+}
+
+.tab-btn:hover {
+    background-color: #fff7ed !important;
+    color: var(--primary-orange) !important;
+}
+
+.tab-btn.active {
+    background-color: var(--primary-orange) !important;
+    color: white !important;
+    border-color: var(--primary-orange) !important;
+    box-shadow: 0 4px 6px rgba(243, 111, 33, 0.2) !important;
+}
+
+/* --- Các phần khác giữ nguyên như cũ --- */
+.form-container {
+    margin-top: 25px;
+    padding: 20px;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    border: 1px dashed var(--primary-orange);
+}
+
+.input-group {
+    display: grid;
+    grid-template-columns: 120px 1fr;
+    gap: 15px;
+    margin-bottom: 15px;
+    align-items: center;
+}
+
+.input-group label {
+    font-weight: 600;
+    text-align: right;
+    color: #374151;
+}
+
+/* Nút bấm trong bảng */
+.action-btn {
+    padding: 5px 10px;
+    border-radius: 6px;
+    color: white;
+    border: none;
+    cursor: pointer;
+    font-size: 0.8rem;
+    margin: 0 3px;
+    width: auto !important;
+}
+.edit-btn { background: var(--primary-green); }
+.delete-btn { background: #EF4444; }
+
+/* Responsive */
+@media (max-width: 700px) {
+    .input-group { grid-template-columns: 1fr; }
+    .input-group label { text-align: left; }
+}
