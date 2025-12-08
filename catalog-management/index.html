@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="vi">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,8 +10,14 @@
     <link rel="stylesheet" href="index.css">
     <script src="https://kit.fontawesome.com/e9c281dd3f.js" crossorigin="anonymous"></script>
 </head>
+
 <body>
     <div class="card">
+        <div style="margin-bottom: 15px;">
+            <button id="backBtn" class="back-btn">
+                <i class="fa-solid fa-arrow-left"></i> Trở về Trang chủ
+            </button>
+        </div>
         <div class="tabs-container">
             <button class="tab-btn active" data-type="category">Danh mục</button>
             <button class="tab-btn" data-type="brand">Thương hiệu</button>
@@ -19,7 +26,7 @@
 
         <h2 id="pageTitle">Quản lý Danh mục</h2>
         <div id="loadPage"></div>
-        
+
         <div id="info">
             <div class="table-wrapper">
                 <table id="dataTable">
@@ -38,19 +45,20 @@
             <div class="form-container">
                 <h3 id="formTitle"><i class="fa-solid fa-plus-circle"></i> Thêm mới</h3>
                 <input type="hidden" id="dataId">
-                
+
                 <div class="input-group">
                     <label>Tên hiển thị:</label>
                     <input type="text" id="dataName" placeholder="Nhập tên...">
                 </div>
-                
+
                 <div class="input-group" id="descGroup">
                     <label>Mô tả:</label>
                     <input type="text" id="dataDesc" placeholder="Nhập mô tả chi tiết...">
                 </div>
 
                 <div class="btn-group" style="text-align: right;">
-                    <button id="cancelBtn" style="display: none; width: auto; background: #6B7280; margin-right: 10px;">Hủy</button>
+                    <button id="cancelBtn"
+                        style="display: none; width: auto; background: #6B7280; margin-right: 10px;">Hủy</button>
                     <button id="saveBtn" style="width: auto;">Lưu dữ liệu</button>
                 </div>
             </div>
@@ -58,4 +66,5 @@
     </div>
     <script type="module" src="index.js"></script>
 </body>
+
 </html>
