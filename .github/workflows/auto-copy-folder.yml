@@ -29,11 +29,11 @@ jobs:
           if [ "$BRANCH" = "huy" ]; then
             echo "folders=orders" >> $GITHUB_OUTPUT
           elif [ "$BRANCH" = "nhat" ]; then
-            echo "folders=message" >> $GITHUB_OUTPUT
+            echo "folders=message products" >> $GITHUB_OUTPUT
           elif [ "$BRANCH" = "tung" ]; then
-            echo "folders=session home products" >> $GITHUB_OUTPUT
+            echo "folders=session home" >> $GITHUB_OUTPUT
           elif [ "$BRANCH" = "thanh" ]; then
-            echo "folders= catalog-management" >> $GITHUB_OUTPUT
+            echo "folders= catalog-management cart" >> $GITHUB_OUTPUT
           else
             echo "folders=" >> $GITHUB_OUTPUT
           fi
