@@ -216,3 +216,22 @@ button {
         flex-wrap: wrap;
     }
 }
+.back-btn {
+    background-color: transparent !important;
+    color: var(--primary-color) !important; /* Chữ màu xanh */
+    border: 1px solid var(--primary-color) !important; /* Viền xanh */
+    padding: 8px 16px;
+    border-radius: 8px !important;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px; /* Khoảng cách giữa icon và chữ */
+    transition: all 0.2s ease;
+    width: auto !important; /* Không bị giãn full màn hình */
+}
+
+.back-btn:hover {
+    background-color: var(--bg-soft) !important; /* Nền xanh nhạt khi di chuột */
+    transform: translateX(-3px); /* Hiệu ứng lùi nhẹ sang trái */
+}
