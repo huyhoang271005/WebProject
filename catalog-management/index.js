@@ -47,6 +47,10 @@ const loadMoreBtn = document.getElementById("loadMore");
 
 // === 2. HÀM TẠO HTML CHO 1 DÒNG (Quan trọng: Dùng để Render và Update nóng) ===
 function createRowHTML(item) {
+    if (!item) {
+        console.warn("Server trả về dữ liệu null, bỏ qua dòng này.");
+        return document.createElement("tr"); 
+    }
     const conf = config[currentType];
     
     // Lấy dữ liệu động dựa trên loại hiện tại
