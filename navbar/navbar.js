@@ -18,8 +18,9 @@ const navbarHTML = `
         .nb-user-menu { position: relative; cursor: pointer; padding-left: 15px; border-left: 1px solid #eee; margin-left: 10px; }
         .nb-avatar { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; border: 2px solid #E5E7EB; }
         
+        /* Dropdown Menu rộng hơn chút để chứa tên dài */
         .nb-dropdown { 
-            position: absolute; right: 0; top: 60px; background: white; width: 260px; border-radius: 12px; 
+            position: absolute; right: 0; top: 60px; background: white; width: 280px; border-radius: 12px; 
             box-shadow: 0 10px 30px rgba(0,0,0,0.15); display: none; flex-direction: column; overflow: hidden; border: 1px solid #eee; 
         }
         .nb-dropdown.show { display: flex; }
@@ -55,14 +56,17 @@ const navbarHTML = `
                     <a href="../session"><i class="fa-solid fa-laptop-medical"></i> Quản lý phiên đăng nhập</a>
                     
                     <div class="nb-admin-only" style="border-top: 1px solid #eee; margin-top:5px;"></div>
-                    <div class="nb-admin-only" style="padding:5px 20px; font-size:0.7rem; color:#999; font-weight:bold;">QUẢN TRỊ VIÊN</div>
+                    <div class="nb-admin-only" style="padding:5px 20px; font-size:0.7rem; color:#999; font-weight:bold;">QUẢN TRỊ HỆ THỐNG</div>
                     
                     <a href="../role-permission" class="nb-admin-only"><i class="fa-solid fa-user-shield"></i> Quản lý quyền hạn</a>
                     <a href="../users" class="nb-admin-only"><i class="fa-solid fa-users-gear"></i> Danh sách người dùng</a>
                     <a href="../catalog-management" class="nb-admin-only"><i class="fa-solid fa-list-check"></i> Quản lý danh mục</a>
+                    
                     <a href="../Thanh/Category/index.html" class="nb-admin-only"><i class="fa-solid fa-folder-tree"></i> Quản lý Category (Thành)</a>
                     
-                    <button id="nbLogout" style="color:red; border-top: 1px solid #eee; margin-top:5px;"><i class="fa-solid fa-right-from-bracket"></i> Đăng xuất</button>
+                    <button id="nbLogout" style="color:red; border-top: 1px solid #eee; margin-top:5px;">
+                        <i class="fa-solid fa-right-from-bracket"></i> Đăng xuất
+                    </button>
                 </div>
             </div>
         </div>
@@ -70,17 +74,18 @@ const navbarHTML = `
 `;
 
 export async function loadNavbar(options = {}) {
+  // 1. Chèn HTML
   const div = document.createElement("div");
   div.innerHTML = navbarHTML;
   document.body.prepend(div);
 
-  // Chèn nội dung Custom (Search, Danh mục...)
+  // 2. Chèn Slot tùy chỉnh (Nếu trang Home truyền vào)
   if (options.centerHTML)
     document.getElementById("nbCenterSlot").innerHTML = options.centerHTML;
   if (options.rightHTML)
     document.getElementById("nbRightSlot").innerHTML = options.rightHTML;
 
-  // CHECK USER & ADMIN
+  // 3. Logic User & Check quyền Admin
   try {
     const profile = await callAPI("/profile");
     if (profile && profile.success) {
@@ -92,7 +97,7 @@ export async function loadNavbar(options = {}) {
       if (user.roleName)
         document.getElementById("nbRole").textContent = user.roleName;
 
-      // QUAN TRỌNG: Check quyền Admin để hiện menu
+      // QUAN TRỌNG: Check quyền để hiện các link Admin ẩn
       if (user.roleName === "ADMIN" || user.role === "ADMIN") {
         document
           .querySelectorAll(".nb-admin-only")
@@ -103,21 +108,33 @@ export async function loadNavbar(options = {}) {
     console.log("Lỗi navbar:", e);
   }
 
-  // Toggle Dropdown
+  // 4. Sự kiện bật tắt menu
   const menuBtn = document.getElementById("nbUserMenu");
   const dropdown = document.getElementById("nbDropdown");
-  menuBtn.onclick = (e) => {
-    e.stopPropagation();
-    dropdown.classList.toggle("show");
-  };
-  document.onclick = () => dropdown.classList.remove("show");
 
-  // Logout
-  document.getElementById("nbLogout").onclick = async () => {
-    await showDialog("question", "Đăng xuất?", async () => {
-      await callAPI("/logout");
-      localStorage.setItem("rememberUser", "false");
-      window.location.replace("../auth/login");
-    });
-  };
+  if (menuBtn) {
+    menuBtn.onclick = (e) => {
+      e.stopPropagation();
+      dropdown.classList.toggle("show");
+    };
+  }
+  document.addEventListener("click", () => {
+    if (dropdown) dropdown.classList.remove("show");
+  });
+
+  // 5. Logic Đăng xuất
+  const logoutBtn = document.getElementById("nbLogout");
+  if (logoutBtn) {
+    logoutBtn.onclick = async () => {
+      await showDialog(
+        "question",
+        "Bạn có chắc chắn muốn đăng xuất?",
+        async () => {
+          await callAPI("/logout");
+          localStorage.setItem("rememberUser", "false");
+          window.location.replace("../auth/login");
+        }
+      );
+    };
+  }
 }
