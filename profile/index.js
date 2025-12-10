@@ -14,7 +14,7 @@ const createdAt = document.getElementById('createdAt');
 const updatedAt = document.getElementById('updatedAt');
 const avatarInput = document.getElementById('avatar');
 const avatarPreview = document.getElementById('avatarPreview');
-await loadNavbar({});
+loadNavbar({});
 async function loadProfile() {
     const result = await callAPI('/profile');
     if(!result.success){
