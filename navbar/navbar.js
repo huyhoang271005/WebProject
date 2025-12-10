@@ -3,8 +3,14 @@ import { showDialog } from "../dialog/index.js";
 
 const navbarHTML = `
     <style>
+        :root {
+          --nav-height: 70px;
+        }
+        body {
+          padding-top: var(--nav-height);
+        }
         .navbar-component {
-            background: white; height: 70px; width: 100%;
+            background: white; height: var(--nav-height); width: 100%;
             position: fixed; top: 0; left: 0; z-index: 1000;
             display: flex; align-items: center; justify-content: space-between;
             padding: 0 30px; box-shadow: 0 2px 10px rgba(0,0,0,0.05);
