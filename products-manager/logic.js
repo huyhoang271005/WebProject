@@ -50,6 +50,7 @@ export const VariantLogic = {
                 name: comboName,
                 comboValues: combo,
                 price: existing?.price || basePrice,
+                priceOriginal: existing?.priceOriginal || basePrice,
                 stock: existing?.stock || 10,
                 imageName: existing?.imageName || "",
                 previewUrl: existing?.previewUrl || "",

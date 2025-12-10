@@ -8,6 +8,7 @@ let state = {
     products: [], 
     categories: [], 
     brands: [],
+    attributes: [], // Thêm attributes từ API
     variants: [], 
     currentAttributes: [],
     isEdit: false, 
@@ -24,14 +25,16 @@ let state = {
 })();
 
 async function reloadData() {
-    const [prods, cats, brands] = await Promise.all([
+    const [prods, cats, brands, attrs] = await Promise.all([
         ProductService.getAll(), 
         ProductService.getCategories(), 
-        ProductService.getBrands()
+        ProductService.getBrands(),
+        ProductService.getAttributes() // Load attributes từ API
     ]);
     state.products = prods; 
     state.categories = cats; 
     state.brands = brands;
+    state.attributes = attrs || [];
     UI.renderTable(state.products);
     
     UI.els.cateSelect.innerHTML = `<option value="">-- Chọn danh mục --</option>`;
@@ -47,7 +50,7 @@ function setupEventListeners() {
         reloadData(); 
     };
     document.getElementById("btnAddAttr").onclick = () => {
-        UI.addAttrRow("", "", handleCalcVariants, null, [], {});
+        UI.addAttrRow("", "", handleCalcVariants, null, [], {}, state.attributes);
     };
     UI.els.cateSelect.onchange = (e) => {
         UI.renderBrands(state.brands, e.target.value);
@@ -67,6 +70,9 @@ function setupEventListeners() {
     window.deleteProduct = handleDelete;
     window.updateVar = (i, f, v) => { 
         if (state.variants[i]) state.variants[i][f] = v; 
+    };
+    window.updateVarOriginalPrice = (i, v) => {
+        if (state.variants[i]) state.variants[i].priceOriginal = v;
     };
     window.removeVariant = (i) => { 
         state.variants.splice(i, 1); 
@@ -111,7 +117,8 @@ function openForm(product = null) {
                     handleCalcVariants, 
                     attr.attributeId,
                     valueIds,
-                    valueIdMap
+                    valueIdMap,
+                    state.attributes
                 );
             });
             
@@ -119,13 +126,14 @@ function openForm(product = null) {
                 id: v.variantId,
                 name: "Loading...",
                 price: v.price, 
+                priceOriginal: v.priceOriginal || v.price,
                 stock: v.stock,
                 imageName: v.imageName
             }));
             handleCalcVariants();
         }
     } else {
-        UI.addAttrRow("", "", handleCalcVariants, null, [], {});
+        UI.addAttrRow("", "", handleCalcVariants, null, [], {}, state.attributes);
     }
     UI.switchView('form');
 }
@@ -218,7 +226,7 @@ async function handleSave(e) {
             variantId: varId,
             imageName: v.imageName || "",
             price: v.price,
-            priceOriginal: v.price,
+            priceOriginal: v.priceOriginal || v.price,
             stock: v.stock
         });
         

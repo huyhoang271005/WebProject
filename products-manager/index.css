@@ -327,13 +327,22 @@ tbody tr:last-child td {
     background: linear-gradient(135deg, #ECFDF5 0%, #D1FAE5 100%);
 }
 
-.inp-attr-name { 
-    width: 200px !important; 
+.inp-attr-select {
     font-weight: 600;
+    background: white;
+    cursor: pointer;
+}
+
+.inp-attr-select:focus {
+    outline: none;
+    border-color: #10B981 !important;
+    box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.1);
 }
 
 .inp-attr-vals { 
-    flex: 1; 
+    flex: 1;
+    background: #F9FAFB !important;
+    cursor: not-allowed;
 }
 
 .btn-remove { 
@@ -387,6 +396,7 @@ tbody tr:last-child td {
     border-bottom: 1px solid #F3F4F6; 
     background: white;
     transition: all 0.2s;
+    flex-wrap: wrap;
 }
 
 .variant-item:hover {
@@ -435,12 +445,14 @@ tbody tr:last-child td {
     color: #111827; 
     flex: 1;
     font-size: 15px;
+    min-width: 150px;
 }
 
 .v-inputs { 
     display: flex; 
-    gap: 16px; 
-    align-items: center; 
+    gap: 12px; 
+    align-items: center;
+    flex-wrap: wrap;
 }
 
 .grp { 
