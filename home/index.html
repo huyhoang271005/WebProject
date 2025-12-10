@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Tạp Hóa Xanh - Trang chủ</title>
+    <title>Tạp Hóa Xanh</title>
 
     <link rel="stylesheet" href="../dialog/index.css" />
     <link rel="stylesheet" href="../public/public.css" />
@@ -24,14 +24,12 @@
         font-family: "Segoe UI", sans-serif;
         display: block !important;
       }
-
-      /* Đẩy nội dung xuống sau navbar */
       .main-container {
         margin-top: 70px;
         padding-bottom: 50px;
       }
 
-      /* Banner */
+      /* BANNER */
       .hero {
         margin: 20px 30px;
         border-radius: 16px;
@@ -74,10 +72,10 @@
         font-size: 1.1rem;
       }
 
-      /* Product Section */
+      /* PRODUCT CARD & GRID */
       .category-section {
         background: white;
-        margin: 30px;
+        margin: 30px 30px;
         padding: 25px;
         border-radius: 16px;
         border: 1px solid #e5e7eb;
@@ -105,10 +103,6 @@
         border-radius: 20px;
         font-weight: 700;
         font-size: 0.9rem;
-      }
-      .btn-see-more:hover {
-        background: #10b981;
-        color: white;
       }
 
       .product-grid-5 {
@@ -146,6 +140,7 @@
       }
       .p-name {
         font-weight: 600;
+        color: #374151;
         font-size: 0.95rem;
         margin-bottom: 5px;
         height: 40px;
@@ -157,39 +152,112 @@
         font-size: 1.1rem;
       }
 
-      /* Toast */
-      #toast-container {
-        position: fixed;
-        bottom: 30px;
-        right: 30px;
-        z-index: 9999;
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-        pointer-events: none;
-      }
-      .toast {
-        pointer-events: auto;
+      /* Custom Navbar Items */
+      .nav-cat-btn {
         background: white;
-        padding: 15px 20px;
-        border-radius: 8px;
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
-        border-left: 4px solid #10b981;
-        animation: slideIn 0.3s;
+        border: 1px solid #e5e7eb;
+        padding: 8px 15px;
+        border-radius: 20px;
+        cursor: pointer;
+        font-weight: 600;
+        color: #374151;
         display: flex;
         align-items: center;
-        gap: 10px;
+        gap: 8px;
+        position: relative;
       }
-      @keyframes slideIn {
-        from {
-          transform: translateX(100%);
-        }
-        to {
-          transform: translateX(0);
-        }
+      .cat-dropdown {
+        position: absolute;
+        top: 110%;
+        left: 0;
+        background: white;
+        width: 220px;
+        border-radius: 12px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+        display: none;
+        flex-direction: column;
+        overflow: hidden;
+        border: 1px solid #eee;
+      }
+      .cat-dropdown.show {
+        display: flex;
+      }
+      .cat-dropdown a {
+        padding: 12px 15px;
+        text-decoration: none;
+        color: #333;
+        border-bottom: 1px solid #f9f9f9;
+        display: flex;
+        gap: 10px;
+        align-items: center;
+      }
+      .cat-dropdown a:hover {
+        background: #ecfdf5;
+        color: #10b981;
+        padding-left: 20px;
       }
 
-      /* Floating Chat Btn */
+      .nav-search-input {
+        width: 400px;
+        padding: 10px 40px 10px 20px;
+        border: 2px solid #e5e7eb;
+        border-radius: 25px;
+        outline: none;
+      }
+      .nav-search-input:focus {
+        border-color: #10b981;
+      }
+      .nav-icon-link {
+        color: #4b5563;
+        font-size: 1.4rem;
+        position: relative;
+        margin-left: 10px;
+      }
+      .badge {
+        position: absolute;
+        top: -5px;
+        right: -5px;
+        background: #ef4444;
+        color: white;
+        font-size: 0.65rem;
+        padding: 2px 6px;
+        border-radius: 10px;
+        border: 2px solid white;
+      }
+
+      /* Admin Toolbar */
+      .admin-toolbar {
+        background: white;
+        margin: 20px 30px;
+        padding: 15px;
+        border-radius: 12px;
+        border-left: 5px solid #f59e0b;
+        display: flex;
+        gap: 15px;
+        align-items: center;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+      }
+      .admin-input {
+        flex: 1;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        outline: none;
+      }
+      .admin-btn {
+        background: #f59e0b;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-weight: bold;
+      }
+      .admin-only {
+        display: none !important;
+      }
+
+      /* Chat & Toast */
       .chat-btn {
         position: fixed;
         bottom: 30px;
@@ -206,68 +274,55 @@
         cursor: pointer;
         z-index: 9999;
         box-shadow: 0 5px 20px rgba(59, 130, 246, 0.4);
-        border: 2px solid white;
+        border: 3px solid white;
         transition: 0.2s;
       }
       .chat-btn:hover {
         transform: scale(1.1);
       }
-
-      /* Custom Styles cho Navbar (chèn từ JS) */
-      .nav-cat-btn {
+      #toast-container {
+        position: fixed;
+        bottom: 30px;
+        right: 30px;
+        z-index: 9999;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+      .toast {
         background: white;
-        border: 1px solid #e5e7eb;
-        padding: 8px 15px;
-        border-radius: 20px;
-        cursor: pointer;
-        font-weight: 600;
-        color: #374151;
+        padding: 15px 20px;
+        border-radius: 8px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+        border-left: 4px solid #10b981;
         display: flex;
         align-items: center;
-        gap: 8px;
-        position: relative;
-      }
-      .nav-search-input {
-        width: 400px;
-        padding: 10px 40px 10px 20px;
-        border: 2px solid #e5e7eb;
-        border-radius: 25px;
-        outline: none;
-      }
-      .nav-search-input:focus {
-        border-color: #10b981;
-      }
-      .nav-icon-link {
-        color: #4b5563;
-        font-size: 1.4rem;
-        position: relative;
-        transition: 0.2s;
-      }
-      .nav-icon-link:hover {
-        color: #10b981;
-      }
-      .badge {
-        position: absolute;
-        top: -5px;
-        right: -5px;
-        background: #ef4444;
-        color: white;
-        font-size: 0.65rem;
-        padding: 2px 6px;
-        border-radius: 10px;
-        border: 2px solid white;
+        gap: 10px;
       }
     </style>
   </head>
   <body>
     <div class="main-container">
+      <div class="admin-toolbar admin-only">
+        <strong style="color: #b45309"
+          ><i class="fa-solid fa-bullhorn"></i> Thông báo Admin:</strong
+        >
+        <input
+          type="text"
+          id="message"
+          class="admin-input"
+          placeholder="Nhập tin nhắn gửi toàn hệ thống..."
+        />
+        <button id="sendAll" class="admin-btn">Gửi</button>
+      </div>
+
       <div class="hero">
         <img
           src="https://img.freepik.com/free-photo/assortment-various-barbecue-food-grill_23-2148243673.jpg?w=1380"
         />
         <div class="hero-overlay">
           <h1>Siêu Sale Tạp Hóa 🍡</h1>
-          <p>Giảm giá 50% các loại đồ ăn vặt & nước giải khát!</p>
+          <p>Giảm giá 50% tất cả các loại đồ ăn vặt!</p>
           <button
             onclick="window.location.href='../products/index.html?cat=an-vat'"
           >
@@ -279,7 +334,7 @@
       <div id="homeContainer"></div>
     </div>
 
-    <div class="chat-btn" onclick="alert('Chat support!')">
+    <div class="chat-btn" onclick="alert('Chat với nhân viên!')">
       <i class="fa-solid fa-comments"></i>
     </div>
     <div id="toast-container"></div>
