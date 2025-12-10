@@ -3,7 +3,7 @@ import { showDialog } from "../dialog/index.js";
 import { callAPI } from "../public/api.js";
 import { initEmailList } from "./email-list.js";
 import { loadNavbar } from "../navbar/navbar.js";
-await loadNavbar();
+await loadNavbar({});
 await loadPage(async()=>{
     const param = new URLSearchParams(window.location.search);
     const uid = param.get('uid');
