@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý Tạp hóa</title>
+    <link rel="stylesheet" href="../public/public.css">
+    <link rel="stylesheet" href="../dialog/index.css">
+    <link rel="stylesheet" href="index.css">
+    <script src="https://kit.fontawesome.com/e9c281dd3f.js" crossorigin="anonymous"></script>
+</head>
+<body>
+    <div class="container">
+        <!-- VIEW LIST -->
+        <div id="view-list">
+            <div class="header">
+                <div style="display:flex; gap:15px; align-items:center;">
+                    <button onclick="window.location.href='../home/index.html'" class="btn-back" title="Quay về trang chủ">
+                        <i class="fa-solid fa-arrow-left"></i>
+                    </button>
+                    <h2>
+                        <i class="fa-solid fa-layer-group"></i> 
+                        Kho Hàng Tổng
+                    </h2>
+                </div>
+                <button id="btnOpenAdd" class="btn-primary">
+                    <i class="fa-solid fa-plus"></i> Nhập hàng mới
+                </button>
+            </div>
+            
+            <div class="table-wrapper">
+                <table id="productTable">
+                    <thead>
+                        <tr>
+                            <th style="width: 30%">Tên sản phẩm</th>
+                            <th style="width: 20%">Danh mục / Thương hiệu</th>
+                            <th style="width: 15%">Giá niêm yết</th>
+                            <th style="width: 15%">Phân loại</th>
+                            <th style="width: 20%">Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- VIEW FORM -->
+        <div id="view-form" class="hidden">
+            <div class="header">
+                <div style="display:flex; gap:15px; align-items:center;">
+                    <button id="btnBack" class="btn-back">
+                        <i class="fa-solid fa-arrow-left"></i>
+                    </button>
+                    <h2 id="formTitle">Thêm sản phẩm</h2>
+                </div>
+            </div>
+
+            <form id="productForm">
+                <div class="form-layout">
+                    <!-- SECTION 1: Thông tin cơ bản -->
+                    <div class="section">
+                        <h3>
+                            <i class="fa-solid fa-circle-info"></i>
+                            1. Thông tin cơ bản
+                        </h3>
+                        
+                        <div class="form-content">
+                            <!-- Image Section -->
+                            <div class="image-section">
+                                <label class="img-label">Ảnh đại diện</label>
+                                <div class="main-img-upload" onclick="document.getElementById('mainImgInput').click()">
+                                    <div class="placeholder" id="mainImgPlaceholder">
+                                        <i class="fa-solid fa-cloud-arrow-up"></i>
+                                        <span>Tải ảnh lên</span>
+                                    </div>
+                                    <img id="mainImgPreview" class="hidden" src="" alt="Preview">
+                                </div>
+                                <input type="file" id="mainImgInput" style="display: none;" accept="image/*">
+                            </div>
+
+                            <!-- Fields Section -->
+                            <div class="fields-section">
+                                <div class="form-group">
+                                    <label>
+                                        Tên sản phẩm 
+                                        <span class="required">*</span>
+                                    </label>
+                                    <input type="text" id="prodName" required placeholder="VD: Mì Hảo Hảo Tôm Chua Cay">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label>Mô tả</label>
+                                    <textarea id="prodDesc" rows="3" placeholder="Mô tả chi tiết về sản phẩm..."></textarea>
+                                </div>
+                                
+                                <div class="grid-2">
+                                    <div class="form-group">
+                                        <label>
+                                            Danh mục 
+                                            <span class="required">*</span>
+                                        </label>
+                                        <select id="prodCate" required>
+                                            <option value="">-- Chọn danh mục --</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>
+                                            Thương hiệu 
+                                            <span class="required">*</span>
+                                        </label>
+                                        <select id="prodBrand" required>
+                                            <option value="">-- Chọn danh mục trước --</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                
+                                <div class="grid-2">
+                                    <div class="form-group">
+                                        <label>Giá bán</label>
+                                        <input type="number" id="prodPrice" required placeholder="0" min="0">
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Giá gốc</label>
+                                        <input type="number" id="prodOriginalPrice" placeholder="0" min="0">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SECTION 2: Phân loại & Biến thể -->
+                    <div class="section">
+                        <h3>
+                            <i class="fa-solid fa-boxes-stacked"></i>
+                            2. Phân loại & Biến thể
+                        </h3>
+                        
+                        <p class="hint">
+                            <i class="fa-solid fa-lightbulb"></i>
+                            Thêm các thuộc tính để tạo biến thể sản phẩm (VD: Size, Màu sắc, Quy cách...)
+                        </p>
+                        
+                        <div id="attributes-container"></div>
+                        
+                        <div style="margin-top: 16px;">
+                            <button type="button" id="btnAddAttr" class="btn-secondary">
+                                <i class="fa-solid fa-plus-circle"></i> Thêm thuộc tính
+                            </button>
+                        </div>
+                        
+                        <!-- Variants List -->
+                        <div id="variants-wrapper" class="hidden">
+                            <h4>
+                                <i class="fa-solid fa-list-check"></i>
+                                Danh sách biến thể
+                            </h4>
+                            <div id="variant-list"></div>
+                        </div>
+                    </div>
+
+                    <!-- FOOTER ACTIONS -->
+                    <div class="footer-actions">
+                        <button type="button" class="btn-secondary" onclick="document.getElementById('btnBack').click()">
+                            <i class="fa-solid fa-xmark"></i>
+                            Hủy bỏ
+                        </button>
+                        <button type="submit" class="btn-primary">
+                            <i class="fa-solid fa-check"></i>
+                            Lưu sản phẩm
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <script type="module" src="index.js"></script>
+</body>
+</html>
