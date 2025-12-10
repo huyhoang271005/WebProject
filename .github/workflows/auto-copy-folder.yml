@@ -27,11 +27,11 @@ jobs:
         run: |
           BRANCH=${GITHUB_REF#refs/heads/}
           if [ "$BRANCH" = "huy" ]; then
-            echo "folders=orders" >> $GITHUB_OUTPUT
+            echo "folders=orders contact" >> $GITHUB_OUTPUT
           elif [ "$BRANCH" = "nhat" ]; then
             echo "folders=message products" >> $GITHUB_OUTPUT
           elif [ "$BRANCH" = "tung" ]; then
-            echo "folders=session home" >> $GITHUB_OUTPUT
+            echo "folders=session home navbar" >> $GITHUB_OUTPUT
           elif [ "$BRANCH" = "thanh" ]; then
             echo "folders= catalog-management cart" >> $GITHUB_OUTPUT
           else
@@ -61,10 +61,10 @@ jobs:
       - name: Copy folders to main
         run: |
           SRC_BRANCH=${{ steps.folders.outputs.branch }}
-          
+
           # Checkout main
           git checkout main
-          
+
           # Copy each folder from source branch
           for F in ${{ steps.folders.outputs.folders }}; do
             echo "Syncing folder: $F"
@@ -76,7 +76,7 @@ jobs:
       - name: Commit and push
         run: |
           git add .
-          
+
           if git diff --cached --quiet; then
             echo "No changes to commit — skipping"
             exit 0
@@ -84,6 +84,6 @@ jobs:
 
           SRC_BRANCH=${{ steps.folders.outputs.branch }}
           FOLDERS="${{ steps.folders.outputs.folders }}"
-          
+
           git commit -m "Auto sync folders ($FOLDERS) from $SRC_BRANCH"
           git push origin main
