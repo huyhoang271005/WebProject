@@ -79,13 +79,12 @@ function setupEventListeners() {
     window.handleSelectVariantImage = handleSelectVariantImage;
 }
 
-// Sửa: Lấy thông tin từ danh sách state thay vì gọi API getDetail
 async function loadAndOpenForm(id) {
     const product = state.products.find(p => p.productId === id);
     if (product) {
         openForm(product);
     } else {
-        showDialog("error", "Không tìm thấy thông tin sản phẩm");
+        showDialog("error", "Không tìm thấy dữ liệu sản phẩm");
     }
 }
 
@@ -104,6 +103,7 @@ function openForm(product = null) {
         UI.renderBrands(state.brands, product.categoryId, product.brandId);
         state.currentMainImageName = product.imageName || "";
 
+        // Map Attributes
         if (product.attributes?.length) {
             product.attributes.forEach(attr => {
                 const valStr = attr.attributeValues.map(v => v.attributeValueName).join(", ");
@@ -125,14 +125,14 @@ function openForm(product = null) {
                 );
             });
             
-            // Map lại variants từ dữ liệu cũ
+            // Map Variants
             state.variants = product.variants.map(v => ({
                 id: v.variantId,
-                name: "Loading...", // Tên sẽ được cập nhật khi calc lại logic
+                name: "Loading...", 
                 price: v.price, 
                 priceOriginal: v.priceOriginal || v.price,
                 stock: v.stock,
-                imageName: v.imageName
+                imageName: v.imageName // Giữ tên ảnh cũ
             }));
             handleCalcVariants();
         }
@@ -155,6 +155,7 @@ function handleSelectVariantImage(index, input) {
     if (file) {
         state.variants[index].rawFile = file;
         state.variants[index].previewUrl = URL.createObjectURL(file);
+        state.variants[index].imageName = file.name;
         UI.renderVariants(state.variants);
     }
 }
@@ -162,10 +163,8 @@ function handleSelectVariantImage(index, input) {
 async function handleSave(e) {
     e.preventDefault();
     
-    // 1. Tạo FormData
     const formData = new FormData();
 
-    // 2. Tạo cấu trúc JSON payload
     const payload = {
         productDetailDTO: {
             productId: state.isEdit ? state.currentId : null,
@@ -175,6 +174,7 @@ async function handleSave(e) {
             priceOriginal: document.getElementById("prodOriginalPrice").value || "0",
             categoryId: document.getElementById("prodCate").value,
             brandId: document.getElementById("prodBrand").value,
+            // Nếu không chọn ảnh mới thì giữ tên ảnh cũ
             imageName: state.currentMainImageName || "" 
         },
         attributes: [],
@@ -182,13 +182,11 @@ async function handleSave(e) {
         variantValues: []
     };
 
-    // --- MAP ẢNH CHÍNH ---
     if (state.mainImageFile) {
-        payload.productDetailDTO.imageName = state.mainImageFile.name; // Map tên file
-        formData.append("images", state.mainImageFile); // Đẩy file vào
+        payload.productDetailDTO.imageName = state.mainImageFile.name;
+        formData.append("images", state.mainImageFile);
     }
 
-    // --- XỬ LÝ ATTRIBUTES ---
     state.currentAttributes.forEach((attr, attrIndex) => {
         const attrId = attr.id || `attr_${Date.now()}_${attrIndex}`;
         
@@ -209,22 +207,22 @@ async function handleSave(e) {
         });
     });
 
-    // --- MAP ẢNH VARIANTS ---
     state.variants.forEach((v, vIndex) => {
         const varId = (v.id && !v.id.toString().startsWith("new_")) 
             ? v.id 
             : `var_${Date.now()}_${vIndex}`;
         
-        let finalImageName = v.imageName || "";
+        // Logic map ảnh biến thể
+        let finalImageName = v.imageName || ""; 
 
         if (v.rawFile) {
-            finalImageName = v.rawFile.name; // Map tên file
-            formData.append("images", v.rawFile); // Đẩy file vào
+            finalImageName = v.rawFile.name; 
+            formData.append("images", v.rawFile); 
         }
         
         payload.variants.push({
             variantId: varId,
-            imageName: finalImageName, // Tên file để BE tìm
+            imageName: finalImageName, 
             price: v.price,
             priceOriginal: v.priceOriginal || v.price,
             stock: v.stock
@@ -243,13 +241,13 @@ async function handleSave(e) {
         }
     });
 
-    // 3. Đóng gói JSON vào key "data"
     formData.append("data", new Blob([JSON.stringify(payload)], { type: "application/json" }));
 
-    console.log("Payload:", payload);
+    console.log("Payload sent:", payload);
     
-    // 4. Gọi Service
+    // 4. Gửi đi (Service đã sửa để nhận FormData)
     const res = await ProductService.save(formData);
+    
     if (res && res.success) {
         await showDialog("success", "Lưu thành công!");
         UI.switchView('list');
