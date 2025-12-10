@@ -2,6 +2,7 @@ import { callAPI } from "../public/api.js";
 import { showDialog } from "../dialog/index.js";
 import { convertToVNTime, getLoader, loadPage } from "../public/public.js";
 import { initEmailList } from "./email-list.js";
+import { loadNavbar } from "../navbar/navbar.js";
 const usernameInput = document.getElementById('username');
 const fullNameInput = document.getElementById('fullName');
 const birthdayInput = document.getElementById('birthday');
@@ -13,6 +14,7 @@ const createdAt = document.getElementById('createdAt');
 const updatedAt = document.getElementById('updatedAt');
 const avatarInput = document.getElementById('avatar');
 const avatarPreview = document.getElementById('avatarPreview');
+await loadNavbar();
 async function loadProfile() {
     const result = await callAPI('/profile');
     if(!result.success){
