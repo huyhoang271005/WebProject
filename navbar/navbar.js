@@ -1,5 +1,6 @@
 import { callAPI } from "../public/api.js";
 import { showDialog } from "../dialog/index.js";
+import { noImage } from "../public/public.js";
 
 const navbarHTML = `
     <style>
@@ -94,7 +95,7 @@ export async function loadNavbar(options = {}) {
     if (profile && profile.success) {
       const user = profile.data;
       if (user.imageUrl)
-        document.getElementById("nbAvatar").src = user.imageUrl;
+        document.getElementById("nbAvatar").src = user.imageUrl ? user.imageUrl : noImage;
       if (user.username)
         document.getElementById("nbUsername").textContent = user.username;
       if (user.roleName)
