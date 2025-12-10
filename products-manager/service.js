@@ -23,21 +23,8 @@ export const ProductService = {
         return res?.data?.listData || [];
     },
 
-    getDetail: async (id) => {
-        const res = await callAPI(`/auth/product/${id}`, "GET");
-        return res?.success ? res.data : null;
-    },
-
-    uploadImage: async (file) => {
-        const formData = new FormData();
-        formData.append("image", file);
-        const res = await callAPI("/auth/product/upload-image", "POST", formData, true);
-        return res?.success ? res.data : null;
-    },
-
-    save: async (payload, isEdit) => {
-        const method = isEdit ? "PUT" : "POST";
-        return await callAPI("/auth/product", method, payload);
+    save: async (formData) => {
+        return await callAPI("/auth/product", "POST", formData, true);
     },
 
     delete: async (id) => {

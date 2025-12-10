@@ -3,12 +3,11 @@ import { ProductService } from "./service.js";
 import { VariantLogic } from "./logic.js";
 import { UI } from "./ui.js";
 
-// === STATE ===
 let state = {
     products: [], 
     categories: [], 
     brands: [],
-    attributes: [], // Thêm attributes từ API
+    attributes: [], 
     variants: [], 
     currentAttributes: [],
     isEdit: false, 
@@ -18,7 +17,6 @@ let state = {
     currentMainImageName: ""
 };
 
-// === INIT ===
 (async function init() {
     await reloadData();
     setupEventListeners();
@@ -29,11 +27,11 @@ async function reloadData() {
         ProductService.getAll(), 
         ProductService.getCategories(), 
         ProductService.getBrands(),
-        ProductService.getAttributes() // Load attributes từ API
+        ProductService.getAttributes()
     ]);
-    state.products = prods; 
-    state.categories = cats; 
-    state.brands = brands;
+    state.products = prods || []; 
+    state.categories = cats || []; 
+    state.brands = brands || [];
     state.attributes = attrs || [];
     UI.renderTable(state.products);
     
@@ -81,9 +79,14 @@ function setupEventListeners() {
     window.handleSelectVariantImage = handleSelectVariantImage;
 }
 
+// Sửa: Lấy thông tin từ danh sách state thay vì gọi API getDetail
 async function loadAndOpenForm(id) {
-    const product = await ProductService.getDetail(id);
-    if (product) openForm(product);
+    const product = state.products.find(p => p.productId === id);
+    if (product) {
+        openForm(product);
+    } else {
+        showDialog("error", "Không tìm thấy thông tin sản phẩm");
+    }
 }
 
 function openForm(product = null) {
@@ -122,9 +125,10 @@ function openForm(product = null) {
                 );
             });
             
+            // Map lại variants từ dữ liệu cũ
             state.variants = product.variants.map(v => ({
                 id: v.variantId,
-                name: "Loading...",
+                name: "Loading...", // Tên sẽ được cập nhật khi calc lại logic
                 price: v.price, 
                 priceOriginal: v.priceOriginal || v.price,
                 stock: v.stock,
@@ -158,29 +162,10 @@ function handleSelectVariantImage(index, input) {
 async function handleSave(e) {
     e.preventDefault();
     
-    let finalMainImageName = state.currentMainImageName;
-    if (state.mainImageFile) {
-        try {
-            const uploaded = await ProductService.uploadImage(state.mainImageFile);
-            if (uploaded) finalMainImageName = uploaded;
-        } catch (err) { 
-            console.error("Main image upload failed", err); 
-        }
-    }
+    // 1. Tạo FormData
+    const formData = new FormData();
 
-    const variantPromises = state.variants.map(async (v) => {
-        if (v.rawFile) {
-            try {
-                const uploaded = await ProductService.uploadImage(v.rawFile);
-                if (uploaded) v.imageName = uploaded;
-            } catch (err) { 
-                console.error("Variant upload failed", err); 
-            }
-        }
-        return v;
-    });
-    await Promise.all(variantPromises);
-
+    // 2. Tạo cấu trúc JSON payload
     const payload = {
         productDetailDTO: {
             productId: state.isEdit ? state.currentId : null,
@@ -190,18 +175,25 @@ async function handleSave(e) {
             priceOriginal: document.getElementById("prodOriginalPrice").value || "0",
             categoryId: document.getElementById("prodCate").value,
             brandId: document.getElementById("prodBrand").value,
-            imageName: finalMainImageName
+            imageName: state.currentMainImageName || "" 
         },
         attributes: [],
         variants: [],
         variantValues: []
     };
 
+    // --- MAP ẢNH CHÍNH ---
+    if (state.mainImageFile) {
+        payload.productDetailDTO.imageName = state.mainImageFile.name; // Map tên file
+        formData.append("images", state.mainImageFile); // Đẩy file vào
+    }
+
+    // --- XỬ LÝ ATTRIBUTES ---
     state.currentAttributes.forEach((attr, attrIndex) => {
         const attrId = attr.id || `attr_${Date.now()}_${attrIndex}`;
         
         const attributeValues = attr.values.map((valName, valIndex) => {
-            const valueId = attr.valueIdMap[valName] || `attrval_${Date.now()}_${attrIndex}_${valIndex}`;
+            const valueId = attr.valueIdMap[valName] || `val_${Date.now()}_${attrIndex}_${valIndex}`;
             if (!attr.valueIdMap) attr.valueIdMap = {};
             attr.valueIdMap[valName] = valueId;
             
@@ -217,14 +209,22 @@ async function handleSave(e) {
         });
     });
 
+    // --- MAP ẢNH VARIANTS ---
     state.variants.forEach((v, vIndex) => {
         const varId = (v.id && !v.id.toString().startsWith("new_")) 
             ? v.id 
             : `var_${Date.now()}_${vIndex}`;
         
+        let finalImageName = v.imageName || "";
+
+        if (v.rawFile) {
+            finalImageName = v.rawFile.name; // Map tên file
+            formData.append("images", v.rawFile); // Đẩy file vào
+        }
+        
         payload.variants.push({
             variantId: varId,
-            imageName: v.imageName || "",
+            imageName: finalImageName, // Tên file để BE tìm
             price: v.price,
             priceOriginal: v.priceOriginal || v.price,
             stock: v.stock
@@ -243,15 +243,19 @@ async function handleSave(e) {
         }
     });
 
-    console.log("Payload to send:", JSON.stringify(payload, null, 2));
+    // 3. Đóng gói JSON vào key "data"
+    formData.append("data", new Blob([JSON.stringify(payload)], { type: "application/json" }));
+
+    console.log("Payload:", payload);
     
-    const res = await ProductService.save(payload, state.isEdit);
-    if (res.success) {
+    // 4. Gọi Service
+    const res = await ProductService.save(formData);
+    if (res && res.success) {
         await showDialog("success", "Lưu thành công!");
         UI.switchView('list');
         reloadData();
     } else {
-        await showDialog("error", res.message || "Có lỗi xảy ra");
+        await showDialog("error", res?.message || "Có lỗi xảy ra");
     }
 }
 
