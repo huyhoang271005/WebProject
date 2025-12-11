@@ -1,4 +1,4 @@
-// contact.js (Phiên bản chỉ dùng api.js)
+// index.js (Phiên bản chỉ dùng api.js)
 
 import { callAPI } from "../public/api";
 
@@ -133,7 +133,7 @@ async function addNewAddress(data) {
     startLoading(saveBtn, 'Đang thêm');
 
     // Sử dụng endpoint POST /contact
-    const result = await callAPI("/contact", "POST", data);
+    const result = await callAPI("/contacts", "POST", data);
 
     if (result.success) {
         alert("Thêm địa chỉ mới thành công!");
@@ -151,7 +151,7 @@ async function updateAddress(id, data) {
 
     // Gửi cả contactId và các trường dữ liệu. Endpoint PUT /contact
     const updateData = { contact_id: id, ...data };
-    const result = await callAPI("/contact", "PUT", updateData);
+    const result = await callAPI("/contacts", "PUT", updateData);
 
     if (result.success) {
         alert("Cập nhật địa chỉ thành công!");
@@ -168,7 +168,7 @@ async function deleteAddress(id) {
     if (!confirm("Bạn có chắc chắn muốn xóa địa chỉ này?")) return;
 
     // Sử dụng endpoint DELETE /contact/{contactId}
-    const result = await callAPI(`/contact/${id}`, "DELETE");
+    const result = await callAPI(`/contacts/${id}`, "DELETE");
 
     if (result.success) {
         alert("Xóa địa chỉ thành công!");
