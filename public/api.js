@@ -19,7 +19,6 @@ async function callAPIWithRetry(endpoint, method, data, isMultipart, alreadyRefr
                 if(!result.success){
                     return result;
                 }
-                return await callAPIWithRetry(endpoint, method, data, isMultipart, true);
             }
             options.headers["Authorization"] = `Bearer ${accessToken}`;
         }
