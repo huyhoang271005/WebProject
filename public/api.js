@@ -91,13 +91,13 @@ export async function connectSse(endpoint, callback) {
                 return;
             }
         }
-        const res = await fetch(`${API_BASE}`, {
+        const es = new EventSourcePlus(`${API_BASE}${endpoint}`, {
             headers: {
                 'Authorization': `Bearer ${accessToken}`,
                 'ngrok-skip-browser-warning': '2710'
             }
         });
-        if(res.status === 401){
+        if(es.status === 401){
             const result = await refreshAccessToken()
             if(!result.success){
                 await callback(result);
@@ -106,13 +106,6 @@ export async function connectSse(endpoint, callback) {
             await start();
             return;
         }
-        const es = new EventSourcePlus(`${API_BASE}${endpoint}`, {
-            headers: {
-                'Authorization': `Bearer ${accessToken}`,
-                'ngrok-skip-browser-warning': '2710'
-            }
-        });
-
         es.listen({
             async onMessage(e) {
                 try {
