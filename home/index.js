@@ -52,20 +52,12 @@ document.addEventListener("DOMContentLoaded", async () => {
 // --- HELPER FUNCTIONS ---
 
 async function checkAdminDisplay() {
-  try {
-    const profile = await callAPI("/profile");
-    if (profile.success) {
-      const user = profile.data;
-      if (user.roleName === "ADMIN" || user.role === "ADMIN") {
-        // Hiện thanh Admin Toolbar ở body
-        document
-          .querySelectorAll(".admin-only")
-          .forEach((el) => (el.style.display = "flex"));
-      }
-    } else {
-      window.location.replace("../auth/login");
-    }
-  } catch (e) {}
+  if (sessionStorage.getItem("roleName") === "ADMIN") {
+    // Hiện thanh Admin Toolbar ở body
+    document
+      .querySelectorAll(".admin-only")
+      .forEach((el) => (el.style.display = "flex"));
+  }
 }
 
 function setupNavbarEvents() {
