@@ -103,34 +103,37 @@ export const UI = {
             </button>
         `;
         
-        // Event khi chọn attribute
-        const selectEl = div.querySelector(".inp-attr-select");
-        const inputEl = div.querySelector(".inp-attr-vals");
-        
-        selectEl.addEventListener("change", (e) => {
-            const selectedAttrId = e.target.value;
-            if (selectedAttrId) {
-                const selectedAttr = allAttributes.find(a => a.attributeId === selectedAttrId);
-                if (selectedAttr && selectedAttr.attributeValues) {
-                    // Hiển thị values dạng checkbox/tags
-                    div.dataset.attrId = selectedAttrId;
-                    const values = selectedAttr.attributeValues.map(v => v.attributeValueName).join(", ");
-                    inputEl.value = values;
-                    inputEl.readOnly = true;
-                    
-                    // Lưu valueIdMap
-                    const newValueIdMap = {};
-                    selectedAttr.attributeValues.forEach(v => {
-                        newValueIdMap[v.attributeValueName] = v.attributeValueId;
-                    });
-                    div.dataset.valueIdMap = JSON.stringify(newValueIdMap);
-                }
-            } else {
-                inputEl.value = "";
-                inputEl.placeholder = "Chọn thuộc tính trước";
+
+    const selectEl = div.querySelector(".inp-attr-select");
+    const inputEl = div.querySelector(".inp-attr-vals");
+    
+    selectEl.addEventListener("change", (e) => {
+        const selectedAttrId = e.target.value;
+        if (selectedAttrId) {
+            const selectedAttr = allAttributes.find(a => a.attributeId === selectedAttrId);
+            if (selectedAttr && selectedAttr.attributeValues) {
+
+                div.dataset.attrId = selectedAttrId;
+                
+                const values = selectedAttr.attributeValues.map(v => v.attributeValueName).join(", ");
+                inputEl.value = values; 
+                inputEl.readOnly = false;
+
+                const newValueIdMap = {};
+                selectedAttr.attributeValues.forEach(v => {
+                    newValueIdMap[v.attributeValueName] = v.attributeValueId;
+                });
+                div.dataset.valueIdMap = JSON.stringify(newValueIdMap);
             }
-            onInputCallback();
-        });
+        } else {
+            inputEl.value = "";
+            inputEl.placeholder = "Nhập các giá trị ngăn cách bởi dấu phẩy...";
+            inputEl.readOnly = false;
+            delete div.dataset.attrId;
+            delete div.dataset.valueIdMap;
+        }
+        onInputCallback();
+    });
         
         inputEl.addEventListener("input", onInputCallback);
         
