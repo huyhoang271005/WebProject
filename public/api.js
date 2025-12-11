@@ -99,6 +99,8 @@ export async function connectSse(endpoint, callback) {
             const token = result.data;
             if (token?.accessToken) {
                 accessToken = token.accessToken;
+                await start();
+                return;
             }
         }
         const es = new EventSourcePlus(`${API_BASE}${endpoint}`, {
