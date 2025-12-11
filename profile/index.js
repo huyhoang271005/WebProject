@@ -25,7 +25,7 @@ async function loadProfile() {
     usernameInput.value = profile.username;
     fullNameInput.value = profile.fullName;
     birthdayInput.value = profile.birthday;
-    genderInput.value = profile.genderName;
+    genderInput.value = profile.gender;
     role.value = profile.roleName;
     createdAt.textContent = convertToVNTime(profile.createdAt);
     updatedAt.textContent = convertToVNTime(profile.updatedAt);
@@ -51,7 +51,7 @@ saveBtn.addEventListener('click', async()=> {
             username: usernameInput.value,
             fullName: fullNameInput.value,
             birthday: birthdayInput.value,
-            genderName: genderInput.value,
+            gender: genderInput.value,
             roleName: role.value
         })],
         {type: 'application/json'}
