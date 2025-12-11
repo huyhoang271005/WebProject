@@ -3,8 +3,8 @@ import { showDialog } from "../dialog/index.js";
 import { callAPI } from "../public/api.js";
 import { initEmailList } from "./email-list.js";
 import { loadNavbar } from "../navbar/navbar.js";
-loadNavbar({});
 await loadPage(async()=>{
+    await loadNavbar();
     const param = new URLSearchParams(window.location.search);
     const uid = param.get('uid');
     const user = await callAPI(`/users/${uid}`);

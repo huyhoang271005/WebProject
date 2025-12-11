@@ -4,8 +4,8 @@ import { getLoader, loadPage } from "../public/public.js";
 import { loadNavbar } from "../navbar/navbar.js";
 let ROLE_PERMISSIONS = [];
 let ALL_PERMISSIONS = [];
-loadNavbar({});
 await loadPage(async() => {
+    await loadNavbar();
     const resultRolePermission = await callAPI('/role-permission');
     const resultPermission = await callAPI('/permission');
 
