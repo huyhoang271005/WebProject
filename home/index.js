@@ -164,7 +164,7 @@ if (sendAllBtn) {
     const msg = document.getElementById("message").value.trim();
     if (!msg) return;
     await getLoader("sendAll", async () => {
-      const res = await callAPI("/push", "POST", {
+      const res = await callAPI("/sse/push", "POST", {
         success: true,
         message: msg,
         data: null,
