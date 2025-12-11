@@ -41,7 +41,7 @@ export function initEmailList(userId, initialEmails = []) {
                 const email = emails[idx];
                 await showDialog('question', `Gửi email xác thực đến ${email.email}`, async () => {
                     if(email.email === '' || !email?.email) return;
-                    const addEmail = await callAPI(`/email/${userId}`, 'POST', {email: email.email});
+                    const addEmail = await callAPI(`/emails/${userId}`, 'POST', {email: email.email});
                     if (addEmail.success){
                         const result = await callAPI('/auth/send-verify-email', 'POST', {email: email.email});
                         if(result.success){

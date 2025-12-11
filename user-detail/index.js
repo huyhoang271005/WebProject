@@ -7,7 +7,7 @@ loadNavbar({});
 await loadPage(async()=>{
     const param = new URLSearchParams(window.location.search);
     const uid = param.get('uid');
-    const user = await callAPI(`/user/${uid}`);
+    const user = await callAPI(`/users/${uid}`);
     if(!user.success){
         await showDialog('error', user.message);
         return;
@@ -63,7 +63,7 @@ async function render(user) {
                 roleId: rolesSelect.value
             }
             await getLoader('btnUpdate', async()=>{
-                const result = await callAPI('/user', 'POST', data);
+                const result = await callAPI('/users', 'POST', data);
                 await showDialog(result.success ? 'success' : 'error', result.message);
             });
         });
