@@ -1,6 +1,6 @@
 // index.js (Phiên bản chỉ dùng api.js)
 
-import { callAPI } from "../public/api";
+import { callAPI } from "../public/api.js";
 
 // --- Khai báo các phần tử DOM ---
 const addressForm = document.getElementById('addressForm');
