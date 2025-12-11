@@ -2,9 +2,6 @@ const API_BASE = "https://uncoagulative-tyrannisingly-eddie.ngrok-free.dev";
 import { EventSourcePlus } from "https://cdn.jsdelivr.net/npm/event-source-plus/+esm";
 
 let accessToken = null;
-if(!accessToken) {
-    await refreshAccessToken();
-}
 /**
  * endpoint là bắt buộc, isMultipart: true nếu gửi FormData
  */
@@ -17,6 +14,13 @@ async function callAPIWithRetry(endpoint, method, data, isMultipart, alreadyRefr
         const options = { method, headers: { "Accept": "*/*" } };
         options.headers["ngrok-skip-browser-warning"] = `26763`;
         if (!endpoint.startsWith("/auth")) {
+            if(!accessToken){
+                const result = await refreshAccessToken();
+                if(!result.success){
+                    return result;
+                }
+                return await callAPIWithRetry(endpoint, method, data, isMultipart, true);
+            }
             options.headers["Authorization"] = `Bearer ${accessToken}`;
         }
         options.credentials = "include";
@@ -80,6 +84,13 @@ async function refreshAccessToken() {
 export async function connectSse(endpoint, callback) {
 
     async function start() {
+        if(!accessToken){
+            const result = await refreshAccessToken();
+            if(!result.success){
+                await callback(result);
+                return;
+            }
+        }
         const res = await fetch(`${API_BASE}`, {
             headers: {
                 'Authorization': `Bearer ${accessToken}`,
