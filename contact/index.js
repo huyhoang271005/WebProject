@@ -85,7 +85,7 @@ function attachFormSubmitHandler() {
         event.preventDefault();
 
         const data = {
-            contact_name: document.getElementById('contact_name').value, // contact_name
+            contactName: document.getElementById('contact_name').value, // contact_name
             phone: document.getElementById('phone').value,
             address: document.getElementById('address').value
         };
