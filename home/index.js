@@ -43,7 +43,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // 4. SSE
   try {
-    connectSse("/connect", (data) => {
+    connectSse("/sse", (data) => {
       if (data.success) showToast("Thông báo", data.message);
     });
   } catch (e) {}
