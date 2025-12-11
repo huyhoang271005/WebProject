@@ -43,17 +43,14 @@ async function loadAddresses() {
     addressListEl.innerHTML = '';
     currentAddresses = []; // Reset danh sách
 
-    if (result.success && result.data && result.data.length > 0) {
-        currentAddresses = result.data; // Lưu trữ dữ liệu
-        result.data.forEach(address => {
+    if (result.success && result.data && result.data.listData.length > 0) {
+        currentAddresses = result.data.listData; // Lưu trữ dữ liệu
+        result.data.listData.forEach(address => {
             const addressItem = createAddressItem(address);
             addressListEl.appendChild(addressItem);
         });
     } else {
-        const message = result.success ?
-            'Bạn chưa có địa chỉ nào được lưu.' :
-            `Lỗi khi tải địa chỉ: ${result.message}`;
-
+        const message = `Lỗi khi tải địa chỉ: ${result.message}`;
         addressListEl.innerHTML = `<p class="no-address-message">${message}</p>`;
     }
 }
@@ -66,7 +63,7 @@ function createAddressItem(address) {
 
     // Hiển thị dữ liệu theo cấu trúc DB
     item.innerHTML = `
-        <h4>${address.contactName} - ${address.phone}</h4>
+        <h4>${address.address} - ${address.phone}</h4>
         <p>${address.address}</p>
         <div class="address-actions">
             <button class="edit-btn">Sửa</button> | 
@@ -75,8 +72,8 @@ function createAddressItem(address) {
     `;
 
     // Gắn sự kiện cho các nút hành động
-    item.querySelector('.edit-btn').addEventListener('click', () => editAddress(address.contact_id));
-    item.querySelector('.delete-btn').addEventListener('click', () => deleteAddress(address.contact_id));
+    item.querySelector('.edit-btn').addEventListener('click', () => editAddress(address.contactId));
+    item.querySelector('.delete-btn').addEventListener('click', () => deleteAddress(address.contactId));
 
     return item;
 }
@@ -88,7 +85,7 @@ function attachFormSubmitHandler() {
         event.preventDefault();
 
         const data = {
-            contact_name: document.getElementById('contact_name').value, // contact_name
+            contactName: document.getElementById('contact_name').value, // contact_name
             phone: document.getElementById('phone').value,
             address: document.getElementById('address').value
         };
@@ -150,7 +147,7 @@ async function updateAddress(id, data) {
     startLoading(saveBtn, 'Đang cập nhật');
 
     // Gửi cả contactId và các trường dữ liệu. Endpoint PUT /contact
-    const updateData = { contact_id: id, ...data };
+    const updateData = { contactId: id, ...data };
     const result = await callAPI("/contacts", "PUT", updateData);
 
     if (result.success) {
@@ -179,15 +176,15 @@ async function deleteAddress(id) {
 }
 
 function editAddress(id) {
-    const addressToEdit = currentAddresses.find(addr => addr.contact_id === id);
+    const addressToEdit = currentAddresses.find(addr => addr.contactId === id);
     if (!addressToEdit) {
         alert("Không tìm thấy địa chỉ để sửa.");
         return;
     }
 
     // Load dữ liệu lên form
-    contactIdInput.value = addressToEdit.contact_id;
-    document.getElementById('contact_name').value = addressToEdit.contact_name;
+    contactIdInput.value = addressToEdit.contactId;
+    document.getElementById('contact_name').value = addressToEdit.contactName;
     document.getElementById('phone').value = addressToEdit.phone;
     document.getElementById('address').value = addressToEdit.address;
 
