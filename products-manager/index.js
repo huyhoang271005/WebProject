@@ -3,11 +3,11 @@ import { ProductService } from "./service.js";
 import { VariantLogic } from "./logic.js";
 import { UI } from "./ui.js";
 
-// === STATE ===
 let state = {
     products: [], 
     categories: [], 
     brands: [],
+    attributes: [], 
     variants: [], 
     currentAttributes: [],
     isEdit: false, 
@@ -17,21 +17,22 @@ let state = {
     currentMainImageName: ""
 };
 
-// === INIT ===
 (async function init() {
     await reloadData();
     setupEventListeners();
 })();
 
 async function reloadData() {
-    const [prods, cats, brands] = await Promise.all([
+    const [prods, cats, brands, attrs] = await Promise.all([
         ProductService.getAll(), 
         ProductService.getCategories(), 
-        ProductService.getBrands()
+        ProductService.getBrands(),
+        ProductService.getAttributes()
     ]);
-    state.products = prods; 
-    state.categories = cats; 
-    state.brands = brands;
+    state.products = prods || []; 
+    state.categories = cats || []; 
+    state.brands = brands || [];
+    state.attributes = attrs || [];
     UI.renderTable(state.products);
     
     UI.els.cateSelect.innerHTML = `<option value="">-- Chọn danh mục --</option>`;
@@ -47,7 +48,7 @@ function setupEventListeners() {
         reloadData(); 
     };
     document.getElementById("btnAddAttr").onclick = () => {
-        UI.addAttrRow("", "", handleCalcVariants, null, [], {});
+        UI.addAttrRow("", "", handleCalcVariants, null, [], {}, state.attributes);
     };
     UI.els.cateSelect.onchange = (e) => {
         UI.renderBrands(state.brands, e.target.value);
@@ -68,6 +69,9 @@ function setupEventListeners() {
     window.updateVar = (i, f, v) => { 
         if (state.variants[i]) state.variants[i][f] = v; 
     };
+    window.updateVarOriginalPrice = (i, v) => {
+        if (state.variants[i]) state.variants[i].priceOriginal = v;
+    };
     window.removeVariant = (i) => { 
         state.variants.splice(i, 1); 
         UI.renderVariants(state.variants); 
@@ -76,8 +80,12 @@ function setupEventListeners() {
 }
 
 async function loadAndOpenForm(id) {
-    const product = await ProductService.getDetail(id);
-    if (product) openForm(product);
+    const product = state.products.find(p => p.productId === id);
+    if (product) {
+        openForm(product);
+    } else {
+        showDialog("error", "Không tìm thấy dữ liệu sản phẩm");
+    }
 }
 
 function openForm(product = null) {
@@ -95,6 +103,7 @@ function openForm(product = null) {
         UI.renderBrands(state.brands, product.categoryId, product.brandId);
         state.currentMainImageName = product.imageName || "";
 
+        // Map Attributes
         if (product.attributes?.length) {
             product.attributes.forEach(attr => {
                 const valStr = attr.attributeValues.map(v => v.attributeValueName).join(", ");
@@ -111,21 +120,24 @@ function openForm(product = null) {
                     handleCalcVariants, 
                     attr.attributeId,
                     valueIds,
-                    valueIdMap
+                    valueIdMap,
+                    state.attributes
                 );
             });
             
+            // Map Variants
             state.variants = product.variants.map(v => ({
                 id: v.variantId,
-                name: "Loading...",
+                name: "Loading...", 
                 price: v.price, 
+                priceOriginal: v.priceOriginal || v.price,
                 stock: v.stock,
-                imageName: v.imageName
+                imageName: v.imageName // Giữ tên ảnh cũ
             }));
             handleCalcVariants();
         }
     } else {
-        UI.addAttrRow("", "", handleCalcVariants, null, [], {});
+        UI.addAttrRow("", "", handleCalcVariants, null, [], {}, state.attributes);
     }
     UI.switchView('form');
 }
@@ -143,6 +155,7 @@ function handleSelectVariantImage(index, input) {
     if (file) {
         state.variants[index].rawFile = file;
         state.variants[index].previewUrl = URL.createObjectURL(file);
+        state.variants[index].imageName = file.name;
         UI.renderVariants(state.variants);
     }
 }
@@ -150,28 +163,7 @@ function handleSelectVariantImage(index, input) {
 async function handleSave(e) {
     e.preventDefault();
     
-    let finalMainImageName = state.currentMainImageName;
-    if (state.mainImageFile) {
-        try {
-            const uploaded = await ProductService.uploadImage(state.mainImageFile);
-            if (uploaded) finalMainImageName = uploaded;
-        } catch (err) { 
-            console.error("Main image upload failed", err); 
-        }
-    }
-
-    const variantPromises = state.variants.map(async (v) => {
-        if (v.rawFile) {
-            try {
-                const uploaded = await ProductService.uploadImage(v.rawFile);
-                if (uploaded) v.imageName = uploaded;
-            } catch (err) { 
-                console.error("Variant upload failed", err); 
-            }
-        }
-        return v;
-    });
-    await Promise.all(variantPromises);
+    const formData = new FormData();
 
     const payload = {
         productDetailDTO: {
@@ -182,18 +174,24 @@ async function handleSave(e) {
             priceOriginal: document.getElementById("prodOriginalPrice").value || "0",
             categoryId: document.getElementById("prodCate").value,
             brandId: document.getElementById("prodBrand").value,
-            imageName: finalMainImageName
+            // Nếu không chọn ảnh mới thì giữ tên ảnh cũ
+            imageName: state.currentMainImageName || "" 
         },
         attributes: [],
         variants: [],
         variantValues: []
     };
 
+    if (state.mainImageFile) {
+        payload.productDetailDTO.imageName = state.mainImageFile.name;
+        formData.append("images", state.mainImageFile);
+    }
+
     state.currentAttributes.forEach((attr, attrIndex) => {
         const attrId = attr.id || `attr_${Date.now()}_${attrIndex}`;
         
         const attributeValues = attr.values.map((valName, valIndex) => {
-            const valueId = attr.valueIdMap[valName] || `attrval_${Date.now()}_${attrIndex}_${valIndex}`;
+            const valueId = attr.valueIdMap[valName] || `val_${Date.now()}_${attrIndex}_${valIndex}`;
             if (!attr.valueIdMap) attr.valueIdMap = {};
             attr.valueIdMap[valName] = valueId;
             
@@ -214,11 +212,19 @@ async function handleSave(e) {
             ? v.id 
             : `var_${Date.now()}_${vIndex}`;
         
+        // Logic map ảnh biến thể
+        let finalImageName = v.imageName || ""; 
+
+        if (v.rawFile) {
+            finalImageName = v.rawFile.name; 
+            formData.append("images", v.rawFile); 
+        }
+        
         payload.variants.push({
             variantId: varId,
-            imageName: v.imageName || "",
+            imageName: finalImageName, 
             price: v.price,
-            priceOriginal: v.price,
+            priceOriginal: v.priceOriginal || v.price,
             stock: v.stock
         });
         
@@ -235,15 +241,19 @@ async function handleSave(e) {
         }
     });
 
-    console.log("Payload to send:", JSON.stringify(payload, null, 2));
+    formData.append("data", new Blob([JSON.stringify(payload)], { type: "application/json" }));
+
+    console.log("Payload sent:", payload);
     
-    const res = await ProductService.save(payload, state.isEdit);
-    if (res.success) {
+    // 4. Gửi đi (Service đã sửa để nhận FormData)
+    const res = await ProductService.save(formData);
+    
+    if (res && res.success) {
         await showDialog("success", "Lưu thành công!");
         UI.switchView('list');
         reloadData();
     } else {
-        await showDialog("error", res.message || "Có lỗi xảy ra");
+        await showDialog("error", res?.message || "Có lỗi xảy ra");
     }
 }
 

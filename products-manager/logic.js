@@ -2,13 +2,20 @@ export const VariantLogic = {
     parseAttributesFromDOM: () => {
         const rows = document.querySelectorAll(".attr-row");
         const attributes = [];
+        
         rows.forEach(row => {
-            const name = row.querySelector(".inp-attr-name").value.trim();
-            const valsStr = row.querySelector(".inp-attr-vals").value;
+            const selectEl = row.querySelector(".inp-attr-select"); 
+            const inputEl = row.querySelector(".inp-attr-vals");
+            
+            const name = selectEl && selectEl.options[selectEl.selectedIndex] 
+                ? selectEl.options[selectEl.selectedIndex].text 
+                : "";
+                
+            const valsStr = inputEl ? inputEl.value : "";
             const attrId = row.dataset.attrId;
             const valueIdMap = row.dataset.valueIdMap ? JSON.parse(row.dataset.valueIdMap) : {};
             
-            if (name && valsStr) {
+            if (name && name !== "-- Chọn thuộc tính --" && valsStr) {
                 const values = valsStr.split(",").map(v => v.trim()).filter(v => v !== "");
                 if (values.length) {
                     attributes.push({ 
@@ -50,6 +57,7 @@ export const VariantLogic = {
                 name: comboName,
                 comboValues: combo,
                 price: existing?.price || basePrice,
+                priceOriginal: existing?.priceOriginal || basePrice,
                 stock: existing?.stock || 10,
                 imageName: existing?.imageName || "",
                 previewUrl: existing?.previewUrl || "",

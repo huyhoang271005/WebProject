@@ -76,26 +76,64 @@ export const UI = {
         if (selectedBrandId) UI.els.brandSelect.value = selectedBrandId;
     },
 
-    addAttrRow: (nameVal = "", valuesVal = "", onInputCallback, attrId = null, valueIds = [], valueIdMap = {}) => {
+    addAttrRow: (nameVal = "", valuesVal = "", onInputCallback, attrId = null, valueIds = [], valueIdMap = {}, allAttributes = []) => {
         const div = document.createElement("div");
         div.className = "attr-row";
         if (attrId) div.dataset.attrId = attrId;
         if (valueIds.length) div.dataset.valueIds = JSON.stringify(valueIds);
         if (Object.keys(valueIdMap).length) div.dataset.valueIdMap = JSON.stringify(valueIdMap);
         
+        // Tạo options cho dropdown attributes
+        const attrOptions = allAttributes.map(attr => 
+            `<option value="${attr.attributeId}" ${attrId === attr.attributeId ? 'selected' : ''}>${attr.attributeName}</option>`
+        ).join('');
+        
         div.innerHTML = `
             <div style="flex: 0 0 200px;">
-                <input type="text" class="inp-attr-name" placeholder="Tên (VD: Size)" value="${nameVal}" style="width:100%">
+                <select class="inp-attr-select" style="width:100%; padding: 14px 18px; border: 2px solid #E5E7EB; border-radius: 10px; font-size: 14px;">
+                    <option value="">-- Chọn thuộc tính --</option>
+                    ${attrOptions}
+                </select>
             </div>
             <div style="flex: 1;">
-                <input type="text" class="inp-attr-vals" placeholder="S, M, L" value="${valuesVal}" style="width:100%">
+                <input type="text" class="inp-attr-vals" placeholder="Chọn thuộc tính trước" value="${valuesVal}" style="width:100%" readonly>
             </div>
             <button type="button" class="btn-remove" title="Xóa dòng này">
                 <i class="fa-solid fa-xmark"></i>
             </button>
         `;
         
-        div.querySelectorAll("input").forEach(inp => inp.addEventListener("input", onInputCallback));
+        // Event khi chọn attribute
+        const selectEl = div.querySelector(".inp-attr-select");
+        const inputEl = div.querySelector(".inp-attr-vals");
+        
+        selectEl.addEventListener("change", (e) => {
+            const selectedAttrId = e.target.value;
+            if (selectedAttrId) {
+                const selectedAttr = allAttributes.find(a => a.attributeId === selectedAttrId);
+                if (selectedAttr && selectedAttr.attributeValues) {
+                    // Hiển thị values dạng checkbox/tags
+                    div.dataset.attrId = selectedAttrId;
+                    const values = selectedAttr.attributeValues.map(v => v.attributeValueName).join(", ");
+                    inputEl.value = values;
+                    inputEl.readOnly = true;
+                    
+                    // Lưu valueIdMap
+                    const newValueIdMap = {};
+                    selectedAttr.attributeValues.forEach(v => {
+                        newValueIdMap[v.attributeValueName] = v.attributeValueId;
+                    });
+                    div.dataset.valueIdMap = JSON.stringify(newValueIdMap);
+                }
+            } else {
+                inputEl.value = "";
+                inputEl.placeholder = "Chọn thuộc tính trước";
+            }
+            onInputCallback();
+        });
+        
+        inputEl.addEventListener("input", onInputCallback);
+        
         div.querySelector(".btn-remove").onclick = () => { 
             div.remove(); 
             onInputCallback(); 
@@ -129,7 +167,11 @@ export const UI = {
                 
                 <div class="v-inputs">
                     <div class="grp">
-                        <label>Giá</label>
+                        <label>Giá gốc</label>
+                        <input type="number" value="${v.priceOriginal || v.price}" onchange="window.updateVarOriginalPrice(${i}, this.value)">
+                    </div>
+                    <div class="grp">
+                        <label>Giá bán</label>
                         <input type="number" value="${v.price}" onchange="window.updateVar(${i},'price',this.value)">
                     </div>
                     <div class="grp">
