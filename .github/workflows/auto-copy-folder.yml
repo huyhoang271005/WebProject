@@ -27,7 +27,7 @@ jobs:
         run: |
           BRANCH=${GITHUB_REF#refs/heads/}
           if [ "$BRANCH" = "huy" ]; then
-            echo "folders=orders contact" >> $GITHUB_OUTPUT
+            echo "folders=orders contact checkout" >> $GITHUB_OUTPUT
           elif [ "$BRANCH" = "nhat" ]; then
             echo "folders=message products-manager" >> $GITHUB_OUTPUT
           elif [ "$BRANCH" = "tung" ]; then
