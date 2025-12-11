@@ -62,11 +62,11 @@ function createAddressItem(address) {
     const item = document.createElement('div');
     // DB không có isDefault, nên ta bỏ class 'default'
     item.className = 'address-item';
-    item.setAttribute('data-id', address.contact_id);
+    item.setAttribute('data-id', address.contactId);
 
     // Hiển thị dữ liệu theo cấu trúc DB
     item.innerHTML = `
-        <h4>${address.contact_name} - ${address.phone}</h4>
+        <h4>${address.contactName} - ${address.phone}</h4>
         <p>${address.address}</p>
         <div class="address-actions">
             <button class="edit-btn">Sửa</button> | 
