@@ -79,7 +79,11 @@ const navbarHTML = `
         </div>
     </nav>
 `;
-
+const data = {
+  imageUrl: sessionStorage.getItem("imageUrl"),
+  username: sessionStorage.getItem("username"),
+  roleName: sessionStorage.getItem("roleName")
+}
 export async function loadNavbar(options = {}) {
   const div = document.createElement("div");
   div.innerHTML = navbarHTML;
@@ -91,23 +95,31 @@ export async function loadNavbar(options = {}) {
     document.getElementById("nbRightSlot").innerHTML = options.rightHTML;
 
   try {
-    const profile = await callAPI("/profile");
-    if (profile && profile.success) {
-      const user = profile.data;
-      if (user.imageUrl)
-        document.getElementById("nbAvatar").src = user.imageUrl ? user.imageUrl : noImage;
-      if (user.username)
-        document.getElementById("nbUsername").textContent = user.username;
-      if (user.roleName)
-        document.getElementById("nbRole").textContent = user.roleName;
+    if(!data.username || !data.roleName){
+      const profile = await callAPI("/profile");
+      if(profile && profile.success){
+        const user = profile.data;
+        sessionStorage.setItem("imageUrl", user.imageUrl);
+        data.imageUrl = user.imageUrl ? user.imageUrl : noImage;
+        sessionStorage.setItem("username", user.username);
+        data.username = user.username;
+        sessionStorage.setItem("roleName", user.roleName);
+        data.roleName = user.roleName;
+      }
+    }
+    if (data.imageUrl)
+        document.getElementById("nbAvatar").src = data.imageUrl;
+      if (data.username)
+        document.getElementById("nbUsername").textContent = data.username;
+      if (data.roleName)
+        document.getElementById("nbRole").textContent = data.roleName;
 
       // --- FIX LỖI Ở ĐÂY: Dùng setProperty để đè lên !important ---
-      if (user.roleName === "ADMIN" || user.role === "ADMIN") {
+      if (data.roleName === "ADMIN" || data.role === "ADMIN") {
         document.querySelectorAll(".nb-admin-only").forEach((el) => {
           el.style.setProperty("display", "flex", "important");
         });
       }
-    }
   } catch (e) {
     console.log("Lỗi navbar:", e);
   }
