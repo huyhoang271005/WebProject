@@ -43,16 +43,14 @@ async function loadAddresses() {
     addressListEl.innerHTML = '';
     currentAddresses = []; // Reset danh sách
 
-    if (result.success && result.data && result.data.length > 0) {
+    if (result.success && result.data && result.data.listData.length > 0) {
         currentAddresses = result.data.listData; // Lưu trữ dữ liệu
         result.data.listData.forEach(address => {
             const addressItem = createAddressItem(address);
             addressListEl.appendChild(addressItem);
         });
     } else {
-        const message = result.success ?
-            'Bạn chưa có địa chỉ nào được lưu.' :
-            `Lỗi khi tải địa chỉ: ${result.message}`;
+        const message = `Lỗi khi tải địa chỉ: ${result.message}`;
 
         addressListEl.innerHTML = `<p class="no-address-message">${message}</p>`;
     }
