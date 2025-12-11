@@ -51,7 +51,6 @@ async function loadAddresses() {
         });
     } else {
         const message = `Lỗi khi tải địa chỉ: ${result.message}`;
-
         addressListEl.innerHTML = `<p class="no-address-message">${message}</p>`;
     }
 }
@@ -185,7 +184,7 @@ function editAddress(id) {
 
     // Load dữ liệu lên form
     contactIdInput.value = addressToEdit.contactId;
-    document.getElementById('contact_name').value = addressToEdit.contact_name;
+    document.getElementById('contact_name').value = addressToEdit.contactName;
     document.getElementById('phone').value = addressToEdit.phone;
     document.getElementById('address').value = addressToEdit.address;
 
