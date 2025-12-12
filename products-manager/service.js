@@ -21,7 +21,6 @@ export const ProductService = {
         return res?.data?.listData || [];
     },
 
-    // CHỈ CÓ THÊM MỚI - METHOD POST
     create: async (formData) => {
         return await callAPI("/products", "POST", formData, true);
     }

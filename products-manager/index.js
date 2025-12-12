@@ -10,32 +10,10 @@ let state = {
     attributes: [],
     variants: [],
     currentAttributes: [],
-    isEdit: false,
-    currentId: null,
-    mainImageFile: null,
-    currentMainImageName: ""
+    mainImageFile: null
 };
 
-// --- HANDLERS (Khai báo trước để tránh lỗi not defined) ---
-
-async function handleDelete(id) {
-    await showDialog("question", "Bạn có chắc muốn xóa sản phẩm này?", async () => {
-        try {
-            // Gọi API xóa từ Service (bạn cần đảm bảo Service có hàm delete)
-            const res = await ProductService.delete(id); 
-            if (res && res.success) {
-                await showDialog("success", "Đã xóa thành công");
-                reloadData(); // Tải lại danh sách
-            } else {
-                await showDialog("error", res?.message || "Không thể xóa sản phẩm");
-            }
-        } catch (e) {
-            console.error(e);
-            await showDialog("error", "Lỗi khi xóa: " + e.message);
-        }
-    });
-}
-
+// --- HANDLER SAVE (CHỈ THÊM MỚI) ---
 async function handleSave(e) {
     e.preventDefault();
 
@@ -57,26 +35,29 @@ async function handleSave(e) {
     const payload = {
         productDetailDTO: {
             productName: productName,
-            description: document.getElementById("prodDesc").value.trim(),
+            description: document.getElementById("prodDesc").value.trim() || "",
             price: price,
             priceOriginal: parseFloat(document.getElementById("prodOriginalPrice").value) || price,
             categoryId: categoryId,
             brandId: brandId,
-            imageName: state.currentMainImageName || null
+            imageName: null,
+            imageUrl: null
         },
         attributes: [],
         variants: [],
         variantValues: []
     };
 
-    // Xử lý ảnh chính
+    // 3. Xử lý ảnh chính
     if (state.mainImageFile) {
         const fName = state.mainImageFile.name;
-        payload.productDetailDTO.imageName = fName.substring(0, fName.lastIndexOf('.')) || fName;
+        // Lấy tên file không có extension
+        const nameWithoutExt = fName.substring(0, fName.lastIndexOf('.')) || fName;
+        payload.productDetailDTO.imageName = nameWithoutExt;
         formData.append("images", state.mainImageFile);
     }
 
-    // 3. Xử lý Attributes
+    // 4. Xử lý Attributes
     state.currentAttributes.forEach((attr) => {
         const attributeValues = attr.values.map((valName) => {
             const existingId = attr.valueIdMap?.[valName];
@@ -93,17 +74,11 @@ async function handleSave(e) {
         });
     });
 
-    // 4. Xử lý Variants và variantValues
-    const variantIdCounter = {}; // Map tạm để track variant IDs
-    
+    // 5. Xử lý Variants và variantValues
     state.variants.forEach((v, idx) => {
-        const tempVariantId = state.isEdit && v.id && !v.id.toString().startsWith("new_") 
-            ? v.id 
-            : `temp_variant_${idx}`;
+        const tempVariantId = `variant_${idx}`;
         
-        variantIdCounter[idx] = tempVariantId;
-        
-        let finalImageName = v.imageName || null;
+        let finalImageName = null;
         if (v.rawFile) {
             const fName = v.rawFile.name;
             finalImageName = fName.substring(0, fName.lastIndexOf('.')) || fName;
@@ -136,22 +111,38 @@ async function handleSave(e) {
         }
     });
 
-    // 5. Đóng gói JSON
-    const jsonBlob = new Blob([JSON.stringify(payload)], { type: "application/json" });
-    formData.append("productDTO", jsonBlob, "productDTO.json");
+    // 6. ĐÂY LÀ CÁCH ĐÚNG: Append JSON như một field trong FormData
+    // Có 3 cách phổ biến, thử từng cách:
+    
+    // CÁCH 1: Gửi JSON string trực tiếp (phổ biến nhất)
+    formData.append("productDTO", JSON.stringify(payload));
+    
+    // NẾU CÁCH 1 KHÔNG WORK, thử CÁCH 2: Gửi như Blob
+    // const jsonBlob = new Blob([JSON.stringify(payload)], { type: "application/json" });
+    // formData.append("productDTO", jsonBlob);
+    
+    // NẾU CÁCH 2 KHÔNG WORK, thử CÁCH 3: Gửi như File
+    // const jsonFile = new File([JSON.stringify(payload)], "productDTO.json", { type: "application/json" });
+    // formData.append("productDTO", jsonFile);
 
     // Debug log
-    console.log("Payload:", payload);
+    console.log("Payload JSON:", payload);
+    console.log("FormData entries:");
+    for (let [key, value] of formData.entries()) {
+        console.log(key, value);
+    }
 
-    // 6. Gửi Request
+    // 7. Gửi Request
     try {
-        const res = await ProductService.save(formData, state.isEdit ? state.currentId : null);
+        const res = await ProductService.create(formData);
         if (res && res.success) {
-            await showDialog("success", state.isEdit ? "Cập nhật thành công!" : "Tạo sản phẩm thành công!");
+            await showDialog("success", "Tạo sản phẩm thành công!");
             UI.switchView('list');
             reloadData();
+            resetForm();
         } else {
             await showDialog("error", res?.message || "Có lỗi xảy ra khi lưu.");
+            console.error("Server response:", res);
         }
     } catch (error) {
         console.error("Save error:", error);
@@ -177,62 +168,33 @@ function handleSelectVariantImage(index, input) {
     }
 }
 
-async function loadAndOpenForm(id) {
-    const product = state.products.find(p => p.productId === id);
-    if (product) openForm(product);
-    else showDialog("error", "Không tìm thấy dữ liệu sản phẩm");
+function openForm() {
+    resetForm();
+    UI.switchView('form');
+    UI.addAttrRow("", "", handleCalcVariants, null, [], {}, state.attributes);
 }
 
-function openForm(product = null) {
-    state.isEdit = !!product;
-    state.currentId = product?.productId || null;
+function resetForm() {
     state.variants = [];
     state.mainImageFile = null;
-    state.currentMainImageName = "";
     state.currentAttributes = [];
-
-    UI.resetForm(state.isEdit);
-
-    if (product) {
-        UI.fillForm(product);
-        UI.renderBrands(state.brands, product.categoryId, product.brandId);
-        state.currentMainImageName = product.imageName || "";
-
-        if (product.attributes?.length) {
-            product.attributes.forEach(attr => {
-                const valStr = attr.attributeValues.map(v => v.attributeValueName).join(", ");
-                const valueIdMap = {};
-                const valueIds = [];
-                attr.attributeValues.forEach(v => {
-                    valueIdMap[v.attributeValueName] = v.attributeValueId;
-                    valueIds.push(v.attributeValueId);
-                });
-                UI.addAttrRow(attr.attributeName, valStr, handleCalcVariants, attr.attributeId, valueIds, valueIdMap, state.attributes);
-            });
-        }
-
-        state.variants = (product.variants || []).map(v => ({
-            id: v.variantId,
-            name: "Đang tải...",
-            price: v.price,
-            priceOriginal: v.priceOriginal || v.price,
-            stock: v.stock,
-            imageName: v.imageName,
-            previewUrl: v.imageName || null
-        }));
-        handleCalcVariants();
-    } else {
-        UI.addAttrRow("", "", handleCalcVariants, null, [], {}, state.attributes);
-    }
-    UI.switchView('form');
+    
+    document.getElementById("productForm").reset();
+    UI.els.attrContainer.innerHTML = "";
+    UI.els.variantWrapper.classList.add("hidden");
+    UI.els.brandSelect.innerHTML = `<option value="">-- Chọn danh mục trước --</option>`;
+    UI.els.formTitle.innerText = "Thêm sản phẩm mới";
+    UI.renderMainImage(null);
+    UI.els.mainImgInput.value = "";
 }
 
 // --- MAIN FUNCTIONS ---
-
 function setupEventListeners() {
-    document.getElementById("btnOpenAdd").onclick = () => openForm();
+    document.getElementById("btnOpenAdd").onclick = openForm;
     document.getElementById("btnBack").onclick = () => { UI.switchView('list'); reloadData(); };
-    document.getElementById("btnAddAttr").onclick = () => { UI.addAttrRow("", "", handleCalcVariants, null, [], {}, state.attributes); };
+    document.getElementById("btnAddAttr").onclick = () => { 
+        UI.addAttrRow("", "", handleCalcVariants, null, [], {}, state.attributes); 
+    };
     
     UI.els.cateSelect.onchange = (e) => UI.renderBrands(state.brands, e.target.value);
     document.getElementById("productForm").onsubmit = handleSave;
@@ -246,8 +208,6 @@ function setupEventListeners() {
     };
 
     // Global binding
-    window.editProduct = loadAndOpenForm;
-    window.deleteProduct = handleDelete; // Đã an toàn vì handleDelete được khai báo bên trên
     window.updateVar = (i, f, v) => { if (state.variants[i]) state.variants[i][f] = v; };
     window.updateVarOriginalPrice = (i, v) => { if (state.variants[i]) state.variants[i].priceOriginal = v; };
     window.removeVariant = (i) => { state.variants.splice(i, 1); UI.renderVariants(state.variants); };
@@ -276,7 +236,6 @@ async function reloadData() {
         });
     } catch (error) {
         console.error("Lỗi tải dữ liệu:", error);
-        // showDialog("error", "Không thể tải dữ liệu."); // Tạm comment để tránh popup khi lỗi 500 server
     }
 }
 
