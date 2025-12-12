@@ -24,7 +24,11 @@ export const ProductService = {
     },
 
     save: async (formData) => {
-        return await callAPI("/products", "POST", formData, true);
+        const response = await fetch("https://uncoagulative-tyrannisingly-eddie.ngrok-free.dev/auth/products", {
+            method: "POST",
+            body: formData
+        });
+        return await response.json();
     },
 
     delete: async (id) => {

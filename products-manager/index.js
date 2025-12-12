@@ -188,7 +188,10 @@ async function handleSave(e) {
 
     // Upload main image
     if (state.mainImageFile) {
-        payload.productDetailDTO.imageName = state.mainImageFile.name;
+        // Bỏ extension khỏi tên file
+        const fileName = state.mainImageFile.name;
+        const nameWithoutExt = fileName.substring(0, fileName.lastIndexOf('.')) || fileName;
+        payload.productDetailDTO.imageName = nameWithoutExt;
         formData.append("images", state.mainImageFile);
     }
 
@@ -222,7 +225,10 @@ async function handleSave(e) {
         let finalImageName = v.imageName || ""; 
 
         if (v.rawFile) {
-            finalImageName = v.rawFile.name; 
+            // Bỏ extension khỏi tên file variant
+            const fileName = v.rawFile.name;
+            const nameWithoutExt = fileName.substring(0, fileName.lastIndexOf('.')) || fileName;
+            finalImageName = nameWithoutExt;
             formData.append("images", v.rawFile); 
         }
         
