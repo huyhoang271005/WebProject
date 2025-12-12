@@ -83,7 +83,6 @@ export const UI = {
         if (valueIds.length) div.dataset.valueIds = JSON.stringify(valueIds);
         if (Object.keys(valueIdMap).length) div.dataset.valueIdMap = JSON.stringify(valueIdMap);
         
-        // Tạo options cho dropdown attributes
         const attrOptions = allAttributes.map(attr => 
             `<option value="${attr.attributeId}" ${attrId === attr.attributeId ? 'selected' : ''}>${attr.attributeName}</option>`
         ).join('');
@@ -103,37 +102,42 @@ export const UI = {
             </button>
         `;
         
+        const selectEl = div.querySelector(".inp-attr-select");
+        const inputEl = div.querySelector(".inp-attr-vals");
+        
+        if (nameVal) inputEl.readOnly = false;
 
-    const selectEl = div.querySelector(".inp-attr-select");
-    const inputEl = div.querySelector(".inp-attr-vals");
-    
-    selectEl.addEventListener("change", (e) => {
-        const selectedAttrId = e.target.value;
-        if (selectedAttrId) {
-            const selectedAttr = allAttributes.find(a => a.attributeId === selectedAttrId);
-            if (selectedAttr && selectedAttr.attributeValues) {
-
-                div.dataset.attrId = selectedAttrId;
-                
-                const values = selectedAttr.attributeValues.map(v => v.attributeValueName).join(", ");
-                inputEl.value = values; 
-                inputEl.readOnly = false;
-
-                const newValueIdMap = {};
-                selectedAttr.attributeValues.forEach(v => {
-                    newValueIdMap[v.attributeValueName] = v.attributeValueId;
-                });
-                div.dataset.valueIdMap = JSON.stringify(newValueIdMap);
+        selectEl.addEventListener("change", (e) => {
+            const selectedAttrId = e.target.value;
+            if (selectedAttrId) {
+                const selectedAttr = allAttributes.find(a => a.attributeId === selectedAttrId);
+                if (selectedAttr && selectedAttr.attributeValues && selectedAttr.attributeValues.length > 0) {
+                    // Có sẵn values -> điền và readonly
+                    div.dataset.attrId = selectedAttrId;
+                    const values = selectedAttr.attributeValues.map(v => v.attributeValueName).join(", ");
+                    inputEl.value = values;
+                    inputEl.readOnly = true;
+                    inputEl.placeholder = "Giá trị thuộc tính";
+                    
+                    const newValueIdMap = {};
+                    selectedAttr.attributeValues.forEach(v => {
+                        newValueIdMap[v.attributeValueName] = v.attributeValueId;
+                    });
+                    div.dataset.valueIdMap = JSON.stringify(newValueIdMap);
+                } else {
+                    // Không có values -> cho phép nhập
+                    div.dataset.attrId = selectedAttrId;
+                    inputEl.value = "";
+                    inputEl.readOnly = false;
+                    inputEl.placeholder = "Nhập giá trị (ngăn cách bằng dấu phẩy)...";
+                }
+            } else {
+                inputEl.value = "";
+                inputEl.readOnly = true;
+                inputEl.placeholder = "Chọn thuộc tính trước";
             }
-        } else {
-            inputEl.value = "";
-            inputEl.placeholder = "Nhập các giá trị ngăn cách bởi dấu phẩy...";
-            inputEl.readOnly = false;
-            delete div.dataset.attrId;
-            delete div.dataset.valueIdMap;
-        }
-        onInputCallback();
-    });
+            onInputCallback();
+        });
         
         inputEl.addEventListener("input", onInputCallback);
         
