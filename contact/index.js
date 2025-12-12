@@ -267,7 +267,13 @@ function updateAddressCount(count) {
 }
 
 function showNotification(message, type = 'success') {
-    alert(message);
+    Toastify({
+        text: message,
+        duration: 3000,
+        gravity: "top",
+        position: "right",
+        backgroundColor: type === "success" ? "green" : "red"
+    }).showToast();
 }
 
 // Utility Functions
