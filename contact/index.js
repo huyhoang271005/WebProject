@@ -131,7 +131,7 @@ async function addNewAddress(data) {
         showNotification("Thêm địa chỉ mới thành công!");
         resetForm();
         const newAddress = { contactId: result.data.contactId, ...data };
-        currentAddresses.push(newAddress);
+        currentAddresses.unshift(newAddress);
         renderAddressList();
     } else {
         showNotification(`Lỗi khi thêm: ${result.message || 'Không rõ'}`, 'error');
