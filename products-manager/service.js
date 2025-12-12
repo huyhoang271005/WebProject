@@ -9,17 +9,17 @@ export const ProductService = {
     },
 
     getCategories: async () => {
-        const res = await callAPI(`auth/categories`, "GET");
+        const res = await callAPI(`/auth/categories`, "GET");
         return res?.data?.listData || [];
     },
 
     getBrands: async () => {
-        const res = await callAPI(`auth/brands`, "GET");
+        const res = await callAPI(`/auth/brands`, "GET");
         return res?.data?.listData || [];
     },
 
     getAttributes: async () => {
-        const res = await callAPI(`auth/attributes`, "GET");
+        const res = await callAPI(`/auth/attributes`, "GET");
         return res?.data?.listData || [];
     },
 
