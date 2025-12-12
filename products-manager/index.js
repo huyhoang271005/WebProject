@@ -168,8 +168,6 @@ async function handleSave(e) {
         currentAttributes: state.currentAttributes
     });
     
-    const formData = new FormData();
-
     const payload = {
         productDetailDTO: {
             productId: state.isEdit ? state.currentId : null,
@@ -185,15 +183,6 @@ async function handleSave(e) {
         variants: [],
         variantValues: []
     };
-
-    // Upload main image
-    if (state.mainImageFile) {
-        // Bỏ extension khỏi tên file
-        const fileName = state.mainImageFile.name;
-        const nameWithoutExt = fileName.substring(0, fileName.lastIndexOf('.')) || fileName;
-        payload.productDetailDTO.imageName = nameWithoutExt;
-        formData.append("images", state.mainImageFile);
-    }
 
     // Map Attributes
     state.currentAttributes.forEach((attr, attrIndex) => {
@@ -217,6 +206,8 @@ async function handleSave(e) {
     });
 
     // Map Variants
+    const formData = new FormData();
+    
     state.variants.forEach((v, vIndex) => {
         const varId = (v.id && !v.id.toString().startsWith("new_")) 
             ? v.id 
@@ -225,14 +216,12 @@ async function handleSave(e) {
         let finalImageName = v.imageName || ""; 
 
         if (v.rawFile) {
-            // Bỏ extension khỏi tên file variant
             const fileName = v.rawFile.name;
             const nameWithoutExt = fileName.substring(0, fileName.lastIndexOf('.')) || fileName;
             finalImageName = nameWithoutExt;
             formData.append("images", v.rawFile); 
         }
         
-        // Đảm bảo price là số hợp lệ
         const varPrice = parseFloat(v.price) || 0;
         const varPriceOriginal = parseFloat(v.priceOriginal) || varPrice;
         
@@ -244,7 +233,6 @@ async function handleSave(e) {
             stock: parseInt(v.stock) || 0
         });
         
-        // Map variantValues - Đảm bảo có đủ cho tất cả attributes
         if (v.comboValues && v.comboValues.length > 0) {
             v.comboValues.forEach((valName) => {
                 const attr = state.currentAttributes.find(a => a.values.includes(valName));
@@ -258,10 +246,21 @@ async function handleSave(e) {
         }
     });
 
+    // Upload main image
+    if (state.mainImageFile) {
+        const fileName = state.mainImageFile.name;
+        const nameWithoutExt = fileName.substring(0, fileName.lastIndexOf('.')) || fileName;
+        payload.productDetailDTO.imageName = nameWithoutExt;
+        formData.append("images", state.mainImageFile);
+    }
+
     console.log("📤 Payload to send:", JSON.stringify(payload, null, 2));
-    console.log("📦 FormData images:", [...formData.keys()]);
     
-    formData.append("productDTO", new Blob([JSON.stringify(payload)], { type: "application/json" }));
+    // Append productDTO LAST
+    const jsonBlob = new Blob([JSON.stringify(payload)], { type: "application/json" });
+    formData.append("productDTO", jsonBlob, "productDTO.json");
+    
+    console.log("📦 FormData parts:", [...formData.keys()]);
     
     try {
         const res = await ProductService.save(formData);
