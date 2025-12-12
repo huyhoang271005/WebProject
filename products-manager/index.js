@@ -261,7 +261,7 @@ async function handleSave(e) {
     console.log("📤 Payload to send:", JSON.stringify(payload, null, 2));
     console.log("📦 FormData images:", [...formData.keys()]);
     
-    formData.append("data", new Blob([JSON.stringify(payload)], { type: "application/json" }));
+    formData.append("productDTO", new Blob([JSON.stringify(payload)], { type: "application/json" }));
     
     try {
         const res = await ProductService.save(formData);
