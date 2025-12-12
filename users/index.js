@@ -1,6 +1,7 @@
 import { callAPI } from "../public/api.js";
 import { showDialog } from "../dialog/index.js";
 import { loadPage, convertToVNTime, getLoader, noImage } from "../public/public.js";
+import { loadNavbar } from "../navbar/navbar.js";
 const loadMore = document.getElementById('loadMore');
 let page = 0;
 let size = 5;
@@ -17,6 +18,7 @@ async function loadUsers() {
     }
 }
 await loadPage(async()=>{
+    await loadNavbar();
     let data = await loadUsers();
     renderUsers(data)
     loadMore.addEventListener('click', async()=>{

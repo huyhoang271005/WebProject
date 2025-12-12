@@ -2,6 +2,7 @@ import { callAPI } from "../public/api.js";
 import { showDialog } from "../dialog/index.js";
 import { convertToVNTime, getLoader, loadPage } from "../public/public.js";
 import { initEmailList } from "./email-list.js";
+import { loadNavbar } from "../navbar/navbar.js";
 const usernameInput = document.getElementById('username');
 const fullNameInput = document.getElementById('fullName');
 const birthdayInput = document.getElementById('birthday');
@@ -24,7 +25,7 @@ async function loadProfile() {
     usernameInput.value = profile.username;
     fullNameInput.value = profile.fullName;
     birthdayInput.value = profile.birthday;
-    genderInput.value = profile.genderName;
+    genderInput.value = profile.gender;
     role.value = profile.roleName;
     createdAt.textContent = convertToVNTime(profile.createdAt);
     updatedAt.textContent = convertToVNTime(profile.updatedAt);
@@ -34,6 +35,7 @@ async function loadProfile() {
     initEmailList(profile.emails);
 }
 await loadPage(async()=> {
+    await loadNavbar();
     await loadProfile();
 });
 avatarInput.addEventListener('change', (e) => {
@@ -49,7 +51,7 @@ saveBtn.addEventListener('click', async()=> {
             username: usernameInput.value,
             fullName: fullNameInput.value,
             birthday: birthdayInput.value,
-            genderName: genderInput.value,
+            gender: genderInput.value,
             roleName: role.value
         })],
         {type: 'application/json'}

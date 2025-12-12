@@ -1,0 +1,134 @@
+:root {
+    --primary-color: #007bff;
+    --secondary-color: #6c757d;
+    --success-color: #28a745;
+    --danger-color: #dc3545;
+    --border-color: #ccc;
+    --bg-light: #f8f9fa;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    background-color: var(--bg-light);
+    margin: 0;
+    padding: 0;
+}
+
+header {
+    background-color: var(--primary-color);
+    color: white;
+    padding: 15px 20px;
+    text-align: center;
+}
+
+.contact-container {
+    max-width: 900px;
+    margin: 30px auto;
+    padding: 20px;
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    display: flex;
+    gap: 30px;
+}
+
+.add-address-section, .list-address-section {
+    flex: 1;
+    padding: 15px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+}
+
+/* Form Styling */
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+
+.form-group input[type="text"],
+.form-group input[type="tel"] {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    box-sizing: border-box;
+}
+
+/* Button Styling */
+.primary-btn {
+    background-color: var(--success-color);
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.3s;
+    width: 100%;
+    margin-bottom: 10px;
+}
+
+.secondary-btn {
+    background-color: var(--secondary-color);
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.3s;
+    width: 100%;
+}
+
+.primary-btn:hover:not(:disabled) {
+    background-color: #218838;
+}
+
+.secondary-btn:hover:not(:disabled) {
+    background-color: #5a6268;
+}
+
+button:disabled,
+button.loading {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+/* Address List Styling */
+.address-item {
+    padding: 15px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    margin-bottom: 15px;
+    position: relative;
+}
+
+.address-item h4 {
+    margin-top: 0;
+    color: var(--primary-color);
+}
+
+.address-actions button {
+    background: none;
+    border: none;
+    color: var(--primary-color);
+    cursor: pointer;
+    margin-right: 10px;
+    padding: 0;
+}
+
+.address-actions button:hover {
+    text-decoration: underline;
+}
+
+.no-address-message {
+    text-align: center;
+    color: var(--secondary-color);
+    font-style: italic;
+    padding: 20px;
+}

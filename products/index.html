@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Tạp Hóa Xanh - Danh sách sản phẩm</title>
+    <title>Tạp Hóa Xanh - Sản phẩm</title>
 
     <link rel="stylesheet" href="../dialog/index.css" />
     <link rel="stylesheet" href="../public/public.css" />
@@ -13,7 +13,7 @@
     ></script>
 
     <style>
-      /* 1. RESET CSS & LAYOUT CỐ ĐỊNH */
+      /* RESET & LAYOUT */
       html,
       body {
         margin: 0 !important;
@@ -22,12 +22,10 @@
         height: 100vh !important;
         background-color: #f3f4f6 !important;
         font-family: "Segoe UI", sans-serif;
-        overflow: hidden; /* Khóa cuộn trang chính */
+        overflow: hidden;
         display: flex;
         flex-direction: column;
       }
-
-      /* 2. NAVBAR (Giống hệt Home) */
       .navbar {
         height: 70px;
         flex-shrink: 0;
@@ -41,171 +39,15 @@
         width: 100%;
         box-sizing: border-box;
       }
-      .brand {
-        font-size: 1.5rem;
-        font-weight: bold;
-        color: #10b981;
-        text-decoration: none;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        min-width: 180px;
-      }
-
-      .nav-cat-btn {
-        background: white;
-        border: 1px solid #e5e7eb;
-        padding: 8px 15px;
-        border-radius: 20px;
-        cursor: pointer;
-        font-weight: 600;
-        color: #374151;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        position: relative;
-      }
-      .nav-cat-btn:hover {
-        border-color: #10b981;
-        color: #10b981;
-        background: #ecfdf5;
-      }
-
-      .search-wrapper {
-        flex: 1;
-        max-width: 600px;
-        position: relative;
-        margin: 0 20px;
-      }
-      .search-input {
-        width: 100%;
-        padding: 10px 45px 10px 20px;
-        border: 2px solid #e5e7eb;
-        border-radius: 25px;
-        outline: none;
-      }
-      .search-input:focus {
-        border-color: #10b981;
-      }
-      .search-btn {
-        position: absolute;
-        right: 5px;
-        top: 50%;
-        transform: translateY(-50%);
-        background: #10b981;
-        color: white;
-        border: none;
-        width: 34px;
-        height: 34px;
-        border-radius: 50%;
-        cursor: pointer;
-      }
-
-      .nav-actions {
-        display: flex;
-        align-items: center;
-        gap: 15px;
-      }
-      .nav-link {
-        text-decoration: none;
-        color: #4b5563;
-        font-weight: 600;
-        display: flex;
-        align-items: center;
-        gap: 5px;
-      }
-      .nav-link:hover {
-        color: #10b981;
-      }
-      .cart-btn {
-        position: relative;
-        font-size: 1.2rem;
-      }
-      .cart-badge {
-        position: absolute;
-        top: -8px;
-        right: -8px;
-        background: #ef4444;
-        color: white;
-        font-size: 0.7rem;
-        padding: 2px 6px;
-        border-radius: 10px;
-        border: 2px solid white;
-      }
-
-      /* User Menu & Dropdown (Giống Home) */
-      .user-menu {
-        position: relative;
-        cursor: pointer;
-        margin-left: 10px;
-      }
-      .user-avatar {
-        width: 42px;
-        height: 42px;
-        border-radius: 50%;
-        object-fit: cover;
-        border: 2px solid #e5e7eb;
-      }
-
-      .user-dropdown,
-      .cat-dropdown {
-        position: absolute;
-        top: 110%;
-        background: white;
-        width: 240px;
-        border-radius: 12px;
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
-        display: none;
-        flex-direction: column;
-        overflow: hidden;
-        border: 1px solid #eee;
-        z-index: 1100;
-        right: 0;
-        left: auto;
-      }
-      .cat-dropdown {
-        left: 0;
-        right: auto;
-        width: 220px;
-      }
-      .user-dropdown.show,
-      .cat-dropdown.show {
-        display: flex;
-      }
-
-      .user-dropdown a,
-      .user-dropdown button,
-      .cat-dropdown a {
-        padding: 12px 20px;
-        text-decoration: none;
-        color: #333;
-        text-align: left;
-        background: none;
-        border: none;
-        font-size: 0.95rem;
-        cursor: pointer;
-        border-bottom: 1px solid #f9f9f9;
-      }
-      .user-dropdown a:hover,
-      .user-dropdown button:hover,
-      .cat-dropdown a:hover {
-        background: #f9fafb;
-        color: #10b981;
-      }
-
-      .admin-only {
-        display: none !important;
-      } /* Ẩn link admin mặc định */
-
-      /* 3. MAIN CONTAINER (Sidebar + Content) */
       .main-container {
-        height: calc(100vh - 70px); /* Chiếm phần còn lại */
+        height: calc(100vh - 70px);
         width: 100%;
         display: flex;
         align-items: flex-start;
+        margin-top: 70px;
       }
 
-      /* Sidebar */
+      /* SIDEBAR */
       .sidebar {
         width: 280px;
         flex-shrink: 0;
@@ -214,6 +56,13 @@
         padding: 20px;
         height: 100%;
         overflow-y: auto;
+      }
+      .sidebar::-webkit-scrollbar {
+        width: 5px;
+      }
+      .sidebar::-webkit-scrollbar-thumb {
+        background: #ddd;
+        border-radius: 4px;
       }
       .filter-group {
         margin-bottom: 25px;
@@ -224,6 +73,9 @@
         font-weight: 700;
         margin-bottom: 12px;
         color: #111;
+        display: flex;
+        align-items: center;
+        gap: 8px;
       }
       .cat-list {
         list-style: none;
@@ -238,6 +90,7 @@
         transition: 0.2s;
         display: flex;
         justify-content: space-between;
+        font-size: 0.95rem;
       }
       .cat-item:hover {
         background: #f3f4f6;
@@ -250,60 +103,158 @@
       }
       .mini-search {
         width: 100%;
-        padding: 8px;
+        padding: 10px;
         border: 1px solid #ddd;
         border-radius: 6px;
         outline: none;
         background: #f9fafb;
       }
+      .mini-search:focus {
+        border-color: #10b981;
+        background: white;
+      }
+      .price-range {
+        display: flex;
+        gap: 5px;
+        margin-bottom: 10px;
+      }
       .price-input {
         width: 100%;
-        padding: 6px;
+        padding: 8px;
         border: 1px solid #ddd;
         border-radius: 4px;
+        font-size: 0.9rem;
       }
       .btn-filter {
         width: 100%;
         background: #10b981;
         color: white;
         border: none;
-        padding: 8px;
+        padding: 10px;
         border-radius: 6px;
         cursor: pointer;
-        margin-top: 10px;
+        font-weight: 600;
       }
 
-      /* Content Area */
+      /* CONTENT AREA */
       .content-area {
         flex: 1;
         padding: 20px 30px;
         background: #f3f4f6;
         height: 100%;
         overflow-y: auto;
+        scroll-behavior: smooth;
       }
-      .page-header {
+
+      /* Banner nhỏ */
+      .shop-banner {
+        width: 100%;
+        height: 180px;
+        border-radius: 12px;
+        overflow: hidden;
+        margin-bottom: 25px;
+        background: linear-gradient(135deg, #10b981, #3b82f6);
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        display: flex;
+        align-items: center;
+        padding: 0 40px;
+        color: white;
+      }
+      .shop-banner h2 {
+        font-size: 2rem;
+        margin: 0 0 5px 0;
+      }
+
+      /* >>> HEADER BLOCK (Chứa Title, Sort, Pagination) <<< */
+      .header-block {
         background: white;
-        padding: 15px 20px;
-        border-radius: 8px;
+        padding: 20px;
+        border-radius: 12px;
         margin-bottom: 20px;
+        border: 1px solid #e5e7eb;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.02);
+      }
+      .header-top {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        border: 1px solid #e5e7eb;
+        margin-bottom: 15px;
+        padding-bottom: 15px;
+        border-bottom: 1px solid #f3f4f6;
       }
       .page-title {
-        font-size: 1.2rem;
+        font-size: 1.3rem;
         font-weight: 800;
         color: #111;
         text-transform: uppercase;
       }
 
-      /* Grid */
+      .sort-wrapper {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .sort-select {
+        padding: 8px 15px;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        outline: none;
+        background: #fff;
+        cursor: pointer;
+        font-size: 0.9rem;
+      }
+
+      /* >>> PAGINATION STYLE (Vuông vắn như Tempest) <<< */
+      .pagination-wrapper {
+        display: flex;
+        justify-content: flex-end; /* Căn phải cho nút trên */
+      }
+      .pagination-wrapper.center {
+        justify-content: center;
+        margin-top: 30px;
+        padding-bottom: 50px;
+      } /* Căn giữa cho nút dưới */
+
+      .pagination {
+        display: flex;
+        gap: 5px;
+      }
+      .page-btn {
+        width: 36px;
+        height: 36px;
+        border: 1px solid #e5e7eb;
+        background: white;
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        color: #4b5563;
+        font-weight: 600;
+        transition: 0.2s;
+        font-size: 0.9rem;
+      }
+      .page-btn:hover {
+        background: #f3f4f6;
+        border-color: #10b981;
+        color: #10b981;
+      }
+      .page-btn.active {
+        background: #10b981;
+        color: white;
+        border-color: #10b981;
+      }
+      .page-btn.disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+        pointer-events: none;
+      }
+
+      /* GRID */
       .product-grid {
         display: grid;
         grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
         gap: 20px;
-        padding-bottom: 50px;
       }
       .product-card {
         background: white;
@@ -344,6 +295,11 @@
         margin-bottom: 4px;
         height: 40px;
         overflow: hidden;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        line-height: 1.4;
+        color: #374151;
       }
       .p-price {
         color: #ef4444;
@@ -370,6 +326,10 @@
         padding: 8px;
         font-weight: 600;
         cursor: pointer;
+        transition: 0.2s;
+      }
+      .btn-buy-now:hover {
+        background: #059669;
       }
       .btn-cart-add {
         width: 36px;
@@ -381,9 +341,58 @@
         display: flex;
         align-items: center;
         justify-content: center;
+        transition: 0.2s;
+      }
+      .btn-cart-add:hover {
+        background: #10b981;
+        color: white;
       }
 
-      /* Chat Button */
+      /* Helpers */
+      .nav-cat-btn {
+        background: white;
+        border: 1px solid #e5e7eb;
+        padding: 8px 15px;
+        border-radius: 20px;
+        cursor: pointer;
+        font-weight: 600;
+        color: #374151;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        position: relative;
+      }
+      .nav-search-input {
+        width: 400px;
+        padding: 10px 40px 10px 20px;
+        border: 2px solid #e5e7eb;
+        border-radius: 25px;
+        outline: none;
+      }
+      .nav-search-input:focus {
+        border-color: #10b981;
+      }
+      .nav-icon-link {
+        color: #4b5563;
+        font-size: 1.4rem;
+        position: relative;
+        margin-left: 10px;
+        text-decoration: none;
+      }
+      .nav-icon-link:hover {
+        color: #10b981;
+      }
+      .badge {
+        position: absolute;
+        top: -5px;
+        right: -5px;
+        background: #ef4444;
+        color: white;
+        font-size: 0.65rem;
+        padding: 2px 6px;
+        border-radius: 10px;
+        border: 2px solid white;
+      }
       .chat-btn {
         position: fixed;
         bottom: 30px;
@@ -409,93 +418,6 @@
     </style>
   </head>
   <body>
-    <nav class="navbar">
-      <a href="../home/index.html" class="brand"
-        ><i class="fa-solid fa-leaf"></i> Tạp Hóa Xanh</a
-      >
-
-      <div class="nav-cat-btn" id="catBtn">
-        <i class="fa-solid fa-bars"></i> <span>Danh mục</span>
-        <div class="cat-dropdown" id="catDropdown"></div>
-      </div>
-
-      <div class="search-wrapper">
-        <input
-          type="text"
-          class="search-input"
-          id="mainSearch"
-          placeholder="Tìm sản phẩm toàn hệ thống..."
-        />
-        <button class="search-btn" id="mainSearchBtn">
-          <i class="fa-solid fa-magnifying-glass"></i>
-        </button>
-      </div>
-
-      <div class="nav-actions">
-        <a
-          href="../products/index.html"
-          class="nav-link active"
-          style="color: #10b981"
-        >
-          <i class="fa-regular fa-compass"></i> Khám phá
-        </a>
-        <a href="../cart" class="nav-link cart-btn">
-          <i class="fa-solid fa-cart-shopping"></i>
-          <span class="cart-badge">3</span>
-        </a>
-
-        <a href="../role-permission" class="admin-link admin-only">Admin</a>
-
-        <div class="user-menu" id="userMenuBtn">
-          <img
-            src=""
-            class="user-avatar"
-            id="navAvatar"
-            onerror="this.src='https://cdn-icons-png.flaticon.com/512/847/847969.png'"
-          />
-          <div class="user-dropdown" id="userDropdown">
-            <div
-              style="
-                padding: 10px 20px;
-                background: #f9f9f9;
-                font-weight: bold;
-                border-bottom: 1px solid #eee;
-              "
-              id="welcomeName"
-            >
-              User
-            </div>
-            <a href="../profile">Hồ sơ cá nhân</a>
-            <a href="../session">Quản lý thiết bị</a>
-
-            <a
-              href="../role-permission"
-              class="admin-only"
-              style="color: #b45309"
-              >Phân quyền</a
-            >
-            <a href="../users" class="admin-only" style="color: #b45309"
-              >Quản lý Users</a
-            >
-            <a
-              href="../catalog-management"
-              class="admin-only"
-              style="color: #b45309"
-              >QL Danh mục</a
-            >
-            <a
-              href="../Thanh/Category/index.html"
-              class="admin-only"
-              style="color: #b45309"
-              >Category (Thành)</a
-            >
-
-            <button id="logout" style="color: red">Đăng xuất</button>
-          </div>
-        </div>
-      </div>
-    </nav>
-
     <div class="main-container">
       <aside class="sidebar">
         <div class="filter-group">
@@ -506,7 +428,7 @@
             type="text"
             id="sidebarSearch"
             class="mini-search"
-            placeholder="Lọc tên trong danh sách này..."
+            placeholder="Lọc tên..."
           />
         </div>
 
@@ -540,27 +462,40 @@
       </aside>
 
       <main class="content-area">
-        <div class="page-header">
-          <div class="page-title" id="pageTitle">Tất cả sản phẩm</div>
-          <select
-            style="
-              padding: 6px;
-              border: 1px solid #ddd;
-              border-radius: 4px;
-              outline: none;
-            "
-          >
-            <option>Mới nhất</option>
-            <option>Bán chạy</option>
-            <option>Giá thấp -> Cao</option>
-          </select>
+        <div class="shop-banner">
+          <div>
+            <h2>Thế Giới Đồ Ăn Vặt 🍟</h2>
+            <p>Khám phá hàng ngàn món ngon giá rẻ bất ngờ!</p>
+          </div>
+        </div>
+
+        <div class="header-block">
+          <div class="header-top">
+            <div class="page-title" id="pageTitle">TẤT CẢ SẢN PHẨM</div>
+            <div class="sort-wrapper">
+              <span>Sắp xếp:</span>
+              <select class="sort-select" id="sortSelect">
+                <option value="newest">Mới nhất</option>
+                <option value="price_asc">Giá: Thấp đến Cao</option>
+                <option value="price_desc">Giá: Cao đến Thấp</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="pagination-wrapper">
+            <div class="pagination" id="paginationTop"></div>
+          </div>
         </div>
 
         <div class="product-grid" id="productGrid"></div>
+
+        <div class="pagination-wrapper center">
+          <div class="pagination" id="paginationBottom"></div>
+        </div>
       </main>
     </div>
 
-    <div class="chat-btn" onclick="alert('Mở khung chat!')">
+    <div class="chat-btn" onclick="alert('Chat support!')">
       <i class="fa-solid fa-comments"></i>
     </div>
 

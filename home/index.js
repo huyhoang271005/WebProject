@@ -53,11 +53,19 @@ document.addEventListener("DOMContentLoaded", async () => {
 
 async function checkAdminDisplay() {
   try {
+    // Dùng sessionStorage để check nhanh nếu có
+    const role = sessionStorage.getItem("roleName");
+    if (role === "ADMIN") {
+      document
+        .querySelectorAll(".admin-only")
+        .forEach((el) => (el.style.display = "flex"));
+      return;
+    }
+
     const profile = await callAPI("/profile");
     if (profile.success) {
       const user = profile.data;
       if (user.roleName === "ADMIN" || user.role === "ADMIN") {
-        // Hiện thanh Admin Toolbar ở body
         document
           .querySelectorAll(".admin-only")
           .forEach((el) => (el.style.display = "flex"));
@@ -77,9 +85,9 @@ function setupNavbarEvents() {
       e.stopPropagation();
       catDropdown.classList.toggle("show");
     };
-    document.addEventListener("click", () =>
-      catDropdown.classList.remove("show")
-    );
+    document.addEventListener("click", () => {
+      if (catDropdown) catDropdown.classList.remove("show");
+    });
   }
 
   // Search

@@ -19,7 +19,6 @@ async function callAPIWithRetry(endpoint, method, data, isMultipart, alreadyRefr
                 if(!result.success){
                     return result;
                 }
-                return await callAPIWithRetry(endpoint, method, data, isMultipart, true);
             }
             options.headers["Authorization"] = `Bearer ${accessToken}`;
         }
@@ -84,21 +83,11 @@ async function refreshAccessToken() {
 export async function connectSse(endpoint, callback) {
 
     async function start() {
-        const res = await fetch(`${API_BASE}`, {
-            headers: {
-                'Authorization': `Bearer ${accessToken}`,
-                'ngrok-skip-browser-warning': '2710'
-            }
-        });
-        if(res.status === 401){
-            const result = await refreshAccessToken()
+        if(!accessToken){
+            const result = await refreshAccessToken();
             if(!result.success){
                 await callback(result);
                 return;
-            }
-            const token = result.data;
-            if (token?.accessToken) {
-                accessToken = token.accessToken;
             }
         }
         const es = new EventSourcePlus(`${API_BASE}${endpoint}`, {
@@ -107,7 +96,15 @@ export async function connectSse(endpoint, callback) {
                 'ngrok-skip-browser-warning': '2710'
             }
         });
-
+        if(es.status === 401){
+            const result = await refreshAccessToken()
+            if(!result.success){
+                await callback(result);
+                return;
+            }
+            await start();
+            return;
+        }
         es.listen({
             async onMessage(e) {
                 try {
