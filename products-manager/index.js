@@ -23,12 +23,12 @@ let state = {
 })();
 
 async function reloadData() {
-    const [prods, cats, brands, attrs] = await Promise.all([
-        ProductService.getAll(), 
-        ProductService.getCategories(), 
-        ProductService.getBrands(),
-        ProductService.getAttributes()
-    ]);
+    // Gọi tuần tự để tránh conflict khi refresh token
+    const prods = await ProductService.getAll();
+    const cats = await ProductService.getCategories();
+    const brands = await ProductService.getBrands();
+    const attrs = await ProductService.getAttributes();
+    
     state.products = prods || []; 
     state.categories = cats || []; 
     state.brands = brands || [];
@@ -244,7 +244,7 @@ async function handleSave(e) {
             stock: parseInt(v.stock) || 0
         });
         
-        // Map variantValues - đảm bảo có đủ cho tất cả attributes
+        // Map variantValues - Đảm bảo có đủ cho tất cả attributes
         if (v.comboValues && v.comboValues.length > 0) {
             v.comboValues.forEach((valName) => {
                 const attr = state.currentAttributes.find(a => a.values.includes(valName));
