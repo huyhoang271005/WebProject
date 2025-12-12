@@ -4,7 +4,7 @@ const PAGE_SIZE = 100;
 
 export const ProductService = {
     getAll: async () => {
-        const res = await callAPI(`/auth/products`, "GET");
+        const res = await callAPI(`/auth/products`, "POST");
         return res?.data?.listData || [];
     },
 
