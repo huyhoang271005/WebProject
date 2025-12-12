@@ -1,4 +1,3 @@
-// Import từ navbar của bạn kia
 import { loadNavbar } from "../navbar/navbar.js";
 
 const CATEGORIES = [
@@ -13,10 +12,12 @@ const CATEGORIES = [
 let allProducts = [];
 let currentFilter = { catId: "all", searchMain: "", searchSidebar: "" };
 
+// CẤU HÌNH PHÂN TRANG
+const ITEMS_PER_PAGE = 50;
+let currentPage = 1;
+
 document.addEventListener("DOMContentLoaded", async () => {
-  // 1. GỌI NAVBAR VÀ TRUYỀN HTML RIÊNG CỦA TRANG NÀY VÀO
   await loadNavbar({
-    // Nhét Tìm kiếm + Danh mục vào giữa
     centerHTML: `
             <div class="nav-cat-btn" onclick="window.location.href='../home/index.html'">
                 <i class="fa-solid fa-bars"></i> <span>Home</span>
@@ -26,49 +27,37 @@ document.addEventListener("DOMContentLoaded", async () => {
                 <i class="fa-solid fa-magnifying-glass" style="position:absolute; right:15px; top:50%; transform:translateY(-50%); color:#10B981; cursor:pointer;" id="prodSearchBtn"></i>
             </div>
         `,
-    // Nhét Giỏ hàng + Chuông vào bên phải
     rightHTML: `
-            <a href="#" class="nav-icon-link" title="Thông báo">
-                <i class="fa-regular fa-bell"></i><span class="badge">2</span>
-            </a>
-            <a href="../cart" class="nav-icon-link" title="Giỏ hàng">
-                <i class="fa-solid fa-cart-shopping"></i><span class="badge">3</span>
-            </a>
+            <a href="#" class="nav-icon-link" title="Thông báo"><i class="fa-regular fa-bell"></i><span class="badge">2</span></a>
+            <a href="../cart" class="nav-icon-link" title="Giỏ hàng"><i class="fa-solid fa-cart-shopping"></i><span class="badge">3</span></a>
         `,
   });
 
-  // 2. Logic Data
-  allProducts = generateMockProducts();
+  // Tạo dữ liệu giả nhiều (300 món) để test phân trang
+  allProducts = generateMockProducts(300);
   renderSidebarCats();
 
-  // 3. Xử lý URL (Lọc nếu có params)
   const params = new URLSearchParams(window.location.search);
   currentFilter.catId = params.get("cat") || "all";
   currentFilter.searchMain = params.get("search") || "";
   if (currentFilter.searchMain) {
-    // Điền lại vào ô tìm kiếm vừa tạo trên navbar
     const input = document.getElementById("prodSearch");
     if (input) input.value = currentFilter.searchMain;
   }
 
   applyFilters();
-
-  // 4. Gán sự kiện cho thanh Search trên Navbar (Vì giờ nó mới được tạo ra)
   setupNavbarEvents();
 });
-
-// --- CÁC HÀM LOGIC ---
 
 function setupNavbarEvents() {
   const searchInput = document.getElementById("prodSearch");
   const searchBtn = document.getElementById("prodSearchBtn");
-
   const doSearch = () => {
     currentFilter.searchMain = searchInput.value.trim();
-    currentFilter.catId = "all"; // Reset danh mục để tìm toàn bộ
+    currentFilter.catId = "all";
+    currentPage = 1; // Reset về trang 1 khi tìm kiếm
     applyFilters();
   };
-
   if (searchBtn) searchBtn.onclick = doSearch;
   if (searchInput)
     searchInput.addEventListener("keypress", (e) => {
@@ -89,21 +78,84 @@ function applyFilters() {
       p.name.toLowerCase().includes(currentFilter.searchSidebar.toLowerCase())
     );
 
+  // Render Title
   const catName =
     CATEGORIES.find((c) => c.id === currentFilter.catId)?.name || "Sản phẩm";
   document.getElementById("pageTitle").textContent = currentFilter.searchMain
     ? `Tìm kiếm: "${currentFilter.searchMain}"`
     : catName;
 
-  renderGrid(filtered);
+  // --- PHÂN TRANG LOGIC ---
+  const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
+
+  // Đảm bảo trang hiện tại hợp lệ
+  if (currentPage > totalPages) currentPage = 1;
+  if (totalPages > 0 && currentPage < 1) currentPage = 1;
+
+  // Cắt mảng sản phẩm
+  const start = (currentPage - 1) * ITEMS_PER_PAGE;
+  const end = start + ITEMS_PER_PAGE;
+  const itemsToShow = filtered.slice(start, end);
+
+  renderGrid(itemsToShow);
+  renderPagination(totalPages); // Vẽ nút phân trang
   updateSidebarActive();
 }
+
+function renderPagination(totalPages) {
+  // Nếu <= 1 trang thì không cần hiện nút
+  if (totalPages <= 1) {
+    document.getElementById("paginationTop").innerHTML = "";
+    document.getElementById("paginationBottom").innerHTML = "";
+    return;
+  }
+
+  const createBtn = (page, text, isActive = false, isDisabled = false) => {
+    return `<div class="page-btn ${isActive ? "active" : ""} ${
+      isDisabled ? "disabled" : ""
+    }" onclick="goToPage(${page})">${text}</div>`;
+  };
+
+  let html = "";
+  // Nút Prev
+  html += createBtn(
+    currentPage - 1,
+    '<i class="fa-solid fa-chevron-left"></i>',
+    false,
+    currentPage === 1
+  );
+
+  // Các nút số trang
+  for (let i = 1; i <= totalPages; i++) {
+    html += createBtn(i, i, i === currentPage);
+  }
+
+  // Nút Next
+  html += createBtn(
+    currentPage + 1,
+    '<i class="fa-solid fa-chevron-right"></i>',
+    false,
+    currentPage === totalPages
+  );
+
+  // Render ra 2 vị trí
+  document.getElementById("paginationTop").innerHTML = html;
+  document.getElementById("paginationBottom").innerHTML = html;
+}
+
+// Hàm chuyển trang (Gán vào window để HTML gọi được)
+window.goToPage = (page) => {
+  currentPage = page;
+  applyFilters();
+  // Cuộn lên đầu vùng content
+  document.querySelector(".content-area").scrollTop = 0;
+};
 
 function renderGrid(products) {
   const grid = document.getElementById("productGrid");
   if (products.length === 0) {
     grid.innerHTML =
-      '<div style="grid-column:1/-1; text-align:center; padding:50px;">Không có sản phẩm nào!</div>';
+      '<div style="grid-column:1/-1; text-align:center; padding:50px;">Không tìm thấy sản phẩm nào!</div>';
     return;
   }
 
@@ -128,11 +180,12 @@ function renderGrid(products) {
     .join("");
 }
 
-function generateMockProducts() {
+function generateMockProducts(count = 100) {
   let arr = [];
   const cats = CATEGORIES.filter((c) => c.id !== "all");
   cats.forEach((c) => {
-    for (let i = 1; i <= 15; i++) {
+    // Tạo nhiều sản phẩm để test phân trang
+    for (let i = 1; i <= count / cats.length + 10; i++) {
       const rawPrice = (Math.floor(Math.random() * 200) + 10) * 1000;
       arr.push({
         catId: c.id,
@@ -157,10 +210,13 @@ window.changeCat = (id) => {
   currentFilter.catId = id;
   currentFilter.searchMain = "";
   document.getElementById("prodSearch").value = "";
+  currentPage = 1; // Reset trang khi đổi danh mục
   applyFilters();
 };
+
 document.getElementById("sidebarSearch").oninput = (e) => {
   currentFilter.searchSidebar = e.target.value.trim();
+  currentPage = 1;
   applyFilters();
 };
 
