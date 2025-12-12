@@ -69,7 +69,7 @@ const navbarHTML = `
                     <a href="../role-permission" class="nb-admin-only"><i class="fa-solid fa-user-shield"></i> Quản lý quyền hạn</a>
                     <a href="../users" class="nb-admin-only"><i class="fa-solid fa-users-gear"></i> Danh sách người dùng</a>
                     <a href="../catalog-management" class="nb-admin-only"><i class="fa-solid fa-list-check"></i> Quản lý danh mục</a>
-                    <a href="../Thanh/Category/index.html" class="nb-admin-only"><i class="fa-solid fa-folder-tree"></i> Quản lý Category (Thành)</a>
+                    <a href="../Thanh/Category/index.html" class="nb-admin-only"><i class="fa-solid fa-folder-tree"></i> Quản lý Category</a>
                     
                     <button id="nbLogout" style="color:red; border-top: 1px solid #eee; margin-top:5px;">
                         <i class="fa-solid fa-right-from-bracket"></i> Đăng xuất
@@ -82,8 +82,8 @@ const navbarHTML = `
 const data = {
   imageUrl: sessionStorage.getItem("imageUrl"),
   username: sessionStorage.getItem("username"),
-  roleName: sessionStorage.getItem("roleName")
-}
+  roleName: sessionStorage.getItem("roleName"),
+};
 export async function loadNavbar(options = {}) {
   const div = document.createElement("div");
   div.innerHTML = navbarHTML;
@@ -95,9 +95,9 @@ export async function loadNavbar(options = {}) {
     document.getElementById("nbRightSlot").innerHTML = options.rightHTML;
 
   try {
-    if(!data.username || !data.roleName){
+    if (!data.username || !data.roleName) {
       const profile = await callAPI("/profile");
-      if(profile && profile.success){
+      if (profile && profile.success) {
         const user = profile.data;
         sessionStorage.setItem("imageUrl", user.imageUrl);
         data.imageUrl = user.imageUrl ? user.imageUrl : noImage;
@@ -107,19 +107,18 @@ export async function loadNavbar(options = {}) {
         data.roleName = user.roleName;
       }
     }
-    if (data.imageUrl)
-        document.getElementById("nbAvatar").src = data.imageUrl;
-      if (data.username)
-        document.getElementById("nbUsername").textContent = data.username;
-      if (data.roleName)
-        document.getElementById("nbRole").textContent = data.roleName;
+    if (data.imageUrl) document.getElementById("nbAvatar").src = data.imageUrl;
+    if (data.username)
+      document.getElementById("nbUsername").textContent = data.username;
+    if (data.roleName)
+      document.getElementById("nbRole").textContent = data.roleName;
 
-      // --- FIX LỖI Ở ĐÂY: Dùng setProperty để đè lên !important ---
-      if (data.roleName === "ADMIN" || data.role === "ADMIN") {
-        document.querySelectorAll(".nb-admin-only").forEach((el) => {
-          el.style.setProperty("display", "flex", "important");
-        });
-      }
+    // --- FIX LỖI Ở ĐÂY: Dùng setProperty để đè lên !important ---
+    if (data.roleName === "ADMIN" || data.role === "ADMIN") {
+      document.querySelectorAll(".nb-admin-only").forEach((el) => {
+        el.style.setProperty("display", "flex", "important");
+      });
+    }
   } catch (e) {
     console.log("Lỗi navbar:", e);
   }
