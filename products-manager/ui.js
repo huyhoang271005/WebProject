@@ -105,7 +105,10 @@ export const UI = {
         const selectEl = div.querySelector(".inp-attr-select");
         const inputEl = div.querySelector(".inp-attr-vals");
         
-        if (nameVal) inputEl.readOnly = false;
+        // Nếu đang edit và có nameVal thì mở khóa input
+        if (nameVal && valuesVal) {
+            inputEl.readOnly = false;
+        }
 
         selectEl.addEventListener("change", (e) => {
             const selectedAttrId = e.target.value;
@@ -175,15 +178,15 @@ export const UI = {
                 <div class="v-inputs">
                     <div class="grp">
                         <label>Giá gốc</label>
-                        <input type="number" value="${v.priceOriginal || v.price}" onchange="window.updateVarOriginalPrice(${i}, this.value)">
+                        <input type="number" value="${v.priceOriginal || v.price || 0}" onchange="window.updateVarOriginalPrice(${i}, this.value)">
                     </div>
                     <div class="grp">
                         <label>Giá bán</label>
-                        <input type="number" value="${v.price}" onchange="window.updateVar(${i},'price',this.value)">
+                        <input type="number" value="${v.price || 0}" onchange="window.updateVar(${i},'price',this.value)">
                     </div>
                     <div class="grp">
                         <label>Kho</label>
-                        <input type="number" value="${v.stock}" onchange="window.updateVar(${i},'stock',this.value)">
+                        <input type="number" value="${v.stock || 0}" onchange="window.updateVar(${i},'stock',this.value)">
                     </div>
                     <button type="button" class="btn-icon delete" onclick="window.removeVariant(${i})" title="Xóa">
                         <i class="fa-solid fa-trash"></i>
