@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Tạp Hóa Xanh - Sản phẩm</title>
+    <title>Tạp Hóa Xanh - Trang chủ</title>
 
     <link rel="stylesheet" href="../dialog/index.css" />
     <link rel="stylesheet" href="../public/public.css" />
@@ -13,295 +13,185 @@
     ></script>
 
     <style>
-      /* 1. RESET LAYOUT (Full Screen App Style) */
+      /* RESET CSS */
       html,
       body {
         margin: 0 !important;
         padding: 0 !important;
         width: 100% !important;
-        height: 100vh !important;
+        min-height: 100vh;
         background-color: #f3f4f6 !important;
         font-family: "Segoe UI", sans-serif;
-        overflow: hidden; /* Khóa cuộn body để sidebar đứng yên */
-        display: flex;
-        flex-direction: column;
+        display: block !important;
       }
 
-      /* 2. CONTAINER CHÍNH (Nằm dưới Navbar 70px) */
+      /* Đẩy nội dung xuống sau navbar */
       .main-container {
-        margin-top: 70px; /* Chừa chỗ cho Navbar */
-        height: calc(100vh - 70px); /* Chiếm phần còn lại */
-        width: 100%;
-        display: flex;
-        align-items: flex-start;
-      }
-
-      /* --- CỘT TRÁI: SIDEBAR --- */
-      .sidebar {
-        width: 280px;
-        flex-shrink: 0;
-        background: white;
-        border-right: 1px solid #e5e7eb;
-        padding: 20px;
-        height: 100%;
-        overflow-y: auto; /* Cuộn riêng */
-      }
-      .sidebar::-webkit-scrollbar {
-        width: 5px;
-      }
-      .sidebar::-webkit-scrollbar-thumb {
-        background: #ddd;
-        border-radius: 4px;
-      }
-
-      .filter-group {
-        margin-bottom: 25px;
-        padding-bottom: 20px;
-        border-bottom: 1px solid #f3f4f6;
-      }
-      .filter-title {
-        font-weight: 700;
-        margin-bottom: 12px;
-        color: #111;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-      }
-
-      .cat-list {
-        list-style: none;
-        padding: 0;
-        margin: 0;
-      }
-      .cat-item {
-        padding: 10px;
-        border-radius: 6px;
-        cursor: pointer;
-        color: #555;
-        transition: 0.2s;
-        display: flex;
-        justify-content: space-between;
-        font-size: 0.95rem;
-      }
-      .cat-item:hover {
-        background: #f3f4f6;
-        color: #10b981;
-      }
-      .cat-item.active {
-        background: #ecfdf5;
-        color: #10b981;
-        font-weight: bold;
-      }
-
-      .mini-search {
-        width: 100%;
-        padding: 10px;
-        border: 1px solid #ddd;
-        border-radius: 6px;
-        outline: none;
-        background: #f9fafb;
-      }
-      .mini-search:focus {
-        border-color: #10b981;
-        background: white;
-      }
-      .price-range {
-        display: flex;
-        gap: 5px;
-        margin-bottom: 10px;
-      }
-      .price-input {
-        width: 100%;
-        padding: 8px;
-        border: 1px solid #ddd;
-        border-radius: 4px;
-        font-size: 0.9rem;
-      }
-      .btn-filter {
-        width: 100%;
-        background: #10b981;
-        color: white;
-        border: none;
-        padding: 10px;
-        border-radius: 6px;
-        cursor: pointer;
-        font-weight: 600;
-      }
-
-      /* --- CỘT PHẢI: NỘI DUNG --- */
-      .content-area {
-        flex: 1;
-        padding: 20px 30px;
-        background: #f3f4f6;
-        height: 100%;
-        overflow-y: auto;
-        scroll-behavior: smooth;
-      }
-
-      /* Banner nhỏ đầu trang Shop */
-      .shop-banner {
-        width: 100%;
-        height: 200px;
-        border-radius: 12px;
-        overflow: hidden;
-        margin-bottom: 25px;
-        position: relative;
-        background: linear-gradient(135deg, #10b981, #3b82f6);
-        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-        display: flex;
-        align-items: center;
-        padding: 0 40px;
-        color: white;
-      }
-      .shop-banner h2 {
-        font-size: 2rem;
-        margin: 0 0 5px 0;
-      }
-
-      .page-header {
-        background: white;
-        padding: 15px 20px;
-        border-radius: 8px;
-        margin-bottom: 20px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        border: 1px solid #e5e7eb;
-      }
-      .page-title {
-        font-size: 1.2rem;
-        font-weight: 800;
-        color: #111;
-        text-transform: uppercase;
-      }
-
-      /* GRID SẢN PHẨM */
-      .product-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-        gap: 20px;
+        margin-top: 70px;
         padding-bottom: 50px;
       }
 
+      /* Banner */
+      .hero {
+        margin: 20px 30px;
+        border-radius: 16px;
+        overflow: hidden;
+        height: 350px;
+        position: relative;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+      }
+      .hero img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        filter: brightness(0.7);
+      }
+      .hero-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        padding-left: 60px;
+        color: white;
+      }
+      .hero h1 {
+        font-size: 3rem;
+        margin-bottom: 10px;
+        text-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+      }
+      .hero button {
+        padding: 12px 35px;
+        background: #10b981;
+        color: white;
+        border: none;
+        border-radius: 30px;
+        font-weight: bold;
+        cursor: pointer;
+        font-size: 1.1rem;
+      }
+
+      /* Product Section (Từng tầng) */
+      .category-section {
+        background: white;
+        margin: 30px 30px;
+        padding: 25px;
+        border-radius: 16px;
+        border: 1px solid #e5e7eb;
+      }
+      .section-header {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+        border-bottom: 2px solid #f3f4f6;
+      }
+      .section-title {
+        font-size: 1.4rem;
+        font-weight: 800;
+        color: #1f2937;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .btn-see-more {
+        text-decoration: none;
+        color: #10b981;
+        border: 2px solid #10b981;
+        padding: 6px 20px;
+        border-radius: 20px;
+        font-weight: 700;
+        font-size: 0.9rem;
+        transition: 0.2s;
+      }
+      .btn-see-more:hover {
+        background: #10b981;
+        color: white;
+      }
+
+      .product-grid-5 {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 20px;
+      }
       .product-card {
         background: white;
-        border-radius: 8px;
+        border-radius: 12px;
         overflow: hidden;
         border: 1px solid #e5e7eb;
         transition: 0.2s;
         cursor: pointer;
         display: flex;
         flex-direction: column;
-        position: relative;
-        height: 100%;
       }
       .product-card:hover {
         transform: translateY(-5px);
         box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
         border-color: #10b981;
       }
-
       .p-img {
         width: 100%;
-        height: 180px;
+        height: 160px;
         background: #f9fafb;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 2rem;
+        font-size: 2.5rem;
         color: #ccc;
       }
-      .p-body {
+      .p-info {
         padding: 12px;
-        flex: 1;
-        display: flex;
-        flex-direction: column;
       }
       .p-name {
         font-weight: 600;
+        color: #374151;
         font-size: 0.95rem;
-        margin-bottom: 4px;
+        margin-bottom: 5px;
         height: 40px;
         overflow: hidden;
-        display: -webkit-box;
-        -webkit-line-clamp: 2;
-        -webkit-box-orient: vertical;
-        line-height: 1.4;
-        color: #374151;
       }
       .p-price {
         color: #ef4444;
-        font-weight: 800;
+        font-weight: bold;
         font-size: 1.1rem;
-        margin-bottom: 5px;
-      }
-      .p-sold {
-        font-size: 0.75rem;
-        color: #6b7280;
-        margin-bottom: 12px;
       }
 
-      .p-actions {
-        margin-top: auto;
+      /* Admin Toolbar */
+      .admin-toolbar {
+        background: white;
+        margin: 20px 30px;
+        padding: 15px;
+        border-radius: 12px;
+        border-left: 5px solid #f59e0b;
         display: flex;
-        gap: 8px;
+        gap: 15px;
+        align-items: center;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
       }
-      .btn-buy-now {
+      .admin-input {
         flex: 1;
-        background: #10b981;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        outline: none;
+      }
+      .admin-btn {
+        background: #f59e0b;
         color: white;
         border: none;
-        border-radius: 4px;
-        padding: 8px;
-        font-weight: 600;
+        padding: 10px 20px;
+        border-radius: 6px;
         cursor: pointer;
-        transition: 0.2s;
+        font-weight: bold;
       }
-      .btn-buy-now:hover {
-        background: #059669;
-      }
-      .btn-cart-add {
-        width: 36px;
-        background: #ecfdf5;
-        color: #10b981;
-        border: 1px solid #10b981;
-        border-radius: 4px;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        transition: 0.2s;
-      }
-      .btn-cart-add:hover {
-        background: #10b981;
-        color: white;
+      .admin-only {
+        display: none !important;
       }
 
-      /* Floating Chat Btn */
-      .chat-btn {
-        position: fixed;
-        bottom: 30px;
-        right: 30px;
-        width: 60px;
-        height: 60px;
-        background: #3b82f6;
-        color: white;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 1.8rem;
-        cursor: pointer;
-        z-index: 9999;
-        box-shadow: 0 5px 20px rgba(59, 130, 246, 0.4);
-        border: 3px solid white;
-        transition: 0.2s;
-      }
-      .chat-btn:hover {
-        transform: scale(1.1);
-      }
-
-      /* Custom Style cho các thành phần nhét vào Navbar */
+      /* Custom Style cho các thành phần nhét vào Navbar (Search, Cart...) */
       .nav-cat-btn {
         background: white;
         border: 1px solid #e5e7eb;
@@ -315,6 +205,37 @@
         gap: 8px;
         position: relative;
       }
+      .cat-dropdown {
+        position: absolute;
+        top: 110%;
+        left: 0;
+        background: white;
+        width: 220px;
+        border-radius: 12px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+        display: none;
+        flex-direction: column;
+        overflow: hidden;
+        border: 1px solid #eee;
+      }
+      .cat-dropdown.show {
+        display: flex;
+      }
+      .cat-dropdown a {
+        padding: 12px 15px;
+        text-decoration: none;
+        color: #333;
+        border-bottom: 1px solid #f9f9f9;
+        display: flex;
+        gap: 10px;
+        align-items: center;
+      }
+      .cat-dropdown a:hover {
+        background: #ecfdf5;
+        color: #10b981;
+        padding-left: 20px;
+      }
+
       .nav-search-input {
         width: 400px;
         padding: 10px 40px 10px 20px;
@@ -346,83 +267,110 @@
         border-radius: 10px;
         border: 2px solid white;
       }
+
+      /* Chat & Toast */
+      .chat-btn {
+        position: fixed;
+        bottom: 30px;
+        right: 30px;
+        width: 60px;
+        height: 60px;
+        background: #3b82f6;
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.8rem;
+        cursor: pointer;
+        z-index: 9999;
+        box-shadow: 0 5px 20px rgba(59, 130, 246, 0.4);
+        border: 3px solid white;
+        transition: 0.2s;
+      }
+      .chat-btn:hover {
+        transform: scale(1.1);
+      }
+      #toast-container {
+        position: fixed;
+        bottom: 30px;
+        right: 30px;
+        z-index: 9999;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        pointer-events: none;
+      }
+      .toast {
+        pointer-events: auto;
+        background: white;
+        padding: 15px 20px;
+        border-radius: 8px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+        border-left: 4px solid #10b981;
+        animation: slideIn 0.3s;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      @keyframes slideIn {
+        from {
+          transform: translateX(100%);
+        }
+        to {
+          transform: translateX(0);
+        }
+      }
+
+      @media (max-width: 1200px) {
+        .product-grid-5 {
+          grid-template-columns: repeat(4, 1fr);
+        }
+      }
+      @media (max-width: 992px) {
+        .product-grid-5 {
+          grid-template-columns: repeat(3, 1fr);
+        }
+      }
     </style>
   </head>
   <body>
     <div class="main-container">
-      <aside class="sidebar">
-        <div class="filter-group">
-          <div class="filter-title">
-            <i class="fa-solid fa-filter"></i> Tìm nhanh
-          </div>
-          <input
-            type="text"
-            id="sidebarSearch"
-            class="mini-search"
-            placeholder="Lọc tên trong danh sách..."
-          />
-        </div>
+      <div class="admin-toolbar admin-only">
+        <strong style="color: #b45309"
+          ><i class="fa-solid fa-bullhorn"></i> Admin Broadcast:</strong
+        >
+        <input
+          type="text"
+          id="message"
+          class="admin-input"
+          placeholder="Nhập thông báo gửi toàn hệ thống..."
+        />
+        <button id="sendAll" class="admin-btn">Gửi</button>
+      </div>
 
-        <div class="filter-group">
-          <div class="filter-title">
-            <i class="fa-solid fa-layer-group"></i> Danh mục
-          </div>
-          <ul class="cat-list" id="catFilterList"></ul>
-        </div>
-
-        <div class="filter-group">
-          <div class="filter-title">
-            <i class="fa-solid fa-money-bill-wave"></i> Khoảng giá
-          </div>
-          <div class="price-range">
-            <input
-              type="number"
-              id="priceFrom"
-              class="price-input"
-              placeholder="Từ (đ)"
-            />
-            <input
-              type="number"
-              id="priceTo"
-              class="price-input"
-              placeholder="Đến (đ)"
-            />
-          </div>
-          <button class="btn-filter" id="btnFilterPrice">Áp dụng</button>
-        </div>
-      </aside>
-
-      <main class="content-area">
-        <div class="shop-banner">
-          <div>
-            <h2>Thế Giới Đồ Ăn Vặt 🍟</h2>
-            <p>Khám phá hàng ngàn món ngon giá rẻ bất ngờ!</p>
-          </div>
-        </div>
-
-        <div class="page-header">
-          <div class="page-title" id="pageTitle">Tất cả sản phẩm</div>
-          <select
-            style="
-              padding: 6px;
-              border: 1px solid #ddd;
-              border-radius: 4px;
-              outline: none;
-            "
+      <div class="hero">
+        <img
+          src="https://img.freepik.com/free-photo/assortment-various-barbecue-food-grill_23-2148243673.jpg?w=1380"
+        />
+        <div class="hero-overlay">
+          <h1>Siêu Sale Tạp Hóa 🍡</h1>
+          <p>Giảm giá 50% tất cả các loại đồ ăn vặt!</p>
+          <button
+            onclick="window.location.href='../products/index.html?cat=an-vat'"
           >
-            <option>Mới nhất</option>
-            <option>Bán chạy</option>
-            <option>Giá thấp -> Cao</option>
-          </select>
+            Mua Ngay
+          </button>
         </div>
+      </div>
 
-        <div class="product-grid" id="productGrid"></div>
-      </main>
+      <div id="homeContainer"></div>
     </div>
 
     <div class="chat-btn" onclick="alert('Chat support!')">
       <i class="fa-solid fa-comments"></i>
     </div>
+    <div id="toast-container"></div>
 
     <script type="module" src="index.js"></script>
   </body>
