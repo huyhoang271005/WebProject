@@ -48,12 +48,14 @@ async function handleSave(e) {
         variantValues: []
     };
 
-    // 3. Xử lý ảnh chính
+    // 3. Xử lý ảnh chính - CHỈ LẤY TÊN FILE KHÔNG CÓ EXTENSION
     if (state.mainImageFile) {
         const fName = state.mainImageFile.name;
-        // Lấy tên file không có extension
+        // Loại bỏ extension: "product.png" -> "product"
         const nameWithoutExt = fName.substring(0, fName.lastIndexOf('.')) || fName;
         payload.productDetailDTO.imageName = nameWithoutExt;
+        
+        // Append file ảnh vào FormData
         formData.append("images", state.mainImageFile);
     }
 
@@ -79,20 +81,24 @@ async function handleSave(e) {
         const tempVariantId = `variant_${idx}`;
         
         let finalImageName = null;
+        
+        // Xử lý ảnh variant - CHỈ LẤY TÊN KHÔNG CÓ EXTENSION
         if (v.rawFile) {
             const fName = v.rawFile.name;
             finalImageName = fName.substring(0, fName.lastIndexOf('.')) || fName;
+            
+            // Append file ảnh variant vào FormData
             formData.append("images", v.rawFile);
         }
 
         payload.variants.push({
             variantId: tempVariantId,
             imageName: finalImageName,
+            imageUrl: null, // Backend tự map từ imageName
             price: parseFloat(v.price) || price,
             priceOriginal: parseFloat(v.priceOriginal) || parseFloat(v.price) || price,
             stock: parseInt(v.stock) || 0,
             sold: 0,
-            imageUrl: null,
             active: true
         });
 
@@ -111,30 +117,28 @@ async function handleSave(e) {
         }
     });
 
-    // 6. ĐÂY LÀ CÁCH ĐÚNG: Append JSON như một field trong FormData
-    // Có 3 cách phổ biến, thử từng cách:
-    
-    // CÁCH 1: Gửi JSON string trực tiếp (phổ biến nhất)
+    // 6. Append JSON vào FormData - DÙNG TÊN FIELD "productDTO"
     formData.append("productDTO", JSON.stringify(payload));
-    
-    // NẾU CÁCH 1 KHÔNG WORK, thử CÁCH 2: Gửi như Blob
-    // const jsonBlob = new Blob([JSON.stringify(payload)], { type: "application/json" });
-    // formData.append("productDTO", jsonBlob);
-    
-    // NẾU CÁCH 2 KHÔNG WORK, thử CÁCH 3: Gửi như File
-    // const jsonFile = new File([JSON.stringify(payload)], "productDTO.json", { type: "application/json" });
-    // formData.append("productDTO", jsonFile);
 
     // Debug log
-    console.log("Payload JSON:", payload);
-    console.log("FormData entries:");
+    console.log("=== PAYLOAD JSON ===");
+    console.log(JSON.stringify(payload, null, 2));
+    console.log("\n=== FORMDATA ENTRIES ===");
     for (let [key, value] of formData.entries()) {
-        console.log(key, value);
+        if (value instanceof File) {
+            console.log(`${key}: File(${value.name}, ${value.size} bytes)`);
+        } else {
+            console.log(`${key}:`, value);
+        }
     }
 
     // 7. Gửi Request
     try {
         const res = await ProductService.create(formData);
+        
+        console.log("=== SERVER RESPONSE ===");
+        console.log(res);
+        
         if (res && res.success) {
             await showDialog("success", "Tạo sản phẩm thành công!");
             UI.switchView('list');
@@ -142,7 +146,7 @@ async function handleSave(e) {
             resetForm();
         } else {
             await showDialog("error", res?.message || "Có lỗi xảy ra khi lưu.");
-            console.error("Server response:", res);
+            console.error("Error details:", res?.data);
         }
     } catch (error) {
         console.error("Save error:", error);
