@@ -61,8 +61,6 @@ async function loadAddresses() {
 
     const result = await callAPI("/contacts", "GET");
 
-    currentAddresses = [];
-
     if (result.success && result.data?.listData) {
         currentAddresses = result.data.listData;
         renderAddressList();
@@ -76,6 +74,8 @@ function renderAddressList() {
         showEmptyState();
         return;
     }
+
+    currentAddresses.sort((a, b) => a.contactId.localeCompare(b.contactId));
 
     updateAddressCount(currentAddresses.length);
 
@@ -130,7 +130,9 @@ async function addNewAddress(data) {
     if (result.success) {
         showNotification("Thêm địa chỉ mới thành công!");
         resetForm();
-        await loadAddresses();
+        const newAddress = { contactId: result.data.contactId, ...data };
+        currentAddresses.push(newAddress);
+        renderAddressList();
     } else {
         showNotification(`Lỗi khi thêm: ${result.message || 'Không rõ'}`, 'error');
     }
@@ -147,7 +149,11 @@ async function updateAddress(id, data) {
     if (result.success) {
         showNotification("Cập nhật địa chỉ thành công!");
         resetForm();
-        await loadAddresses();
+        const index = currentAddresses.findIndex(addr => addr.contactId === id);
+        if (index !== -1) {
+            currentAddresses[index] = { ...currentAddresses[index], ...data };
+        }
+        renderAddressList();
     } else {
         showNotification(`Lỗi khi cập nhật: ${result.message || 'Không rõ'}`, 'error');
     }
@@ -168,7 +174,9 @@ async function deleteAddress(id) {
             resetForm();
         }
 
-        await loadAddresses();
+        currentAddresses = currentAddresses.filter(addr => addr.contactId !== id);
+
+        renderAddressList();;
     } else {
         showNotification(`Lỗi xóa: ${result.message || 'Không rõ'}`, 'error');
     }
