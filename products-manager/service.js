@@ -9,25 +9,21 @@ export const ProductService = {
     },
 
     getCategories: async () => {
-        const res = await callAPI(`/categories`, "GET");
+        const res = await callAPI(`auth/categories`, "GET");
         return res?.data?.listData || [];
     },
 
     getBrands: async () => {
-        const res = await callAPI(`/brands`, "GET");
+        const res = await callAPI(`auth/brands`, "GET");
         return res?.data?.listData || [];
     },
 
     getAttributes: async () => {
-        const res = await callAPI(`/attributes`, "GET");
+        const res = await callAPI(`auth/attributes`, "GET");
         return res?.data?.listData || [];
     },
 
     save: async (formData) => {
         return await callAPI("/products", "POST", formData, true);
     },
-
-    delete: async (id) => {
-        return await callAPI(`/products/${id}`, "DELETE");
-    }
 };
