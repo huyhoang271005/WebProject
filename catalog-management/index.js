@@ -12,19 +12,19 @@ const config = {
     category: {
         name: 'Danh mục',
         getList: '/auth/categories',
-        crud: '/auth/category',
+        crud: '/auth/categories',
         hasDesc: true
     },
     brand: {
         name: 'Thương hiệu',
         getList: '/auth/brands',
-        crud: '/auth/brand',
+        crud: '/auth/brands',
         hasDesc: true
     },
     attribute: {
         name: 'Thuộc tính',
         getList: '/auth/attributes',
-        crud: '/auth/attribute',
+        crud: '/auth/attributes',
         hasDesc: false
     }
 };

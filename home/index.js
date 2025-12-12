@@ -10,66 +10,58 @@ const CATEGORIES = [
   { id: "gia-dung", name: "Gia dụng", icon: "fa-pump-soap" },
 ];
 
+// Hàm bật tắt Loading
+const toggleLoading = (show) => {
+  const el = document.getElementById("loadingOverlay");
+  if (el) el.style.display = show ? "flex" : "none";
+};
+
 document.addEventListener("DOMContentLoaded", async () => {
-  // 1. GỌI NAVBAR CUSTOM CHO HOME
-  await loadNavbar({
-    centerHTML: `
-            <div class="nav-cat-btn" id="catBtn">
-                <i class="fa-solid fa-bars"></i> <span>Danh mục</span>
-                <div class="cat-dropdown" id="catDropdown"></div>
-            </div>
-            <div style="position:relative;">
-                <input type="text" class="nav-search-input" id="homeSearch" placeholder="Tìm sản phẩm...">
-                <i class="fa-solid fa-magnifying-glass" style="position:absolute; right:15px; top:50%; transform:translateY(-50%); color:#10B981; cursor:pointer;" id="homeSearchBtn"></i>
-            </div>
-        `,
-    rightHTML: `
-            <a href="#" class="nav-icon-link" title="Thông báo">
-                <i class="fa-regular fa-bell"></i><span class="badge">2</span>
-            </a>
-            <a href="../cart" class="nav-icon-link" title="Giỏ hàng">
-                <i class="fa-solid fa-cart-shopping"></i><span class="badge">3</span>
-            </a>
-        `,
-  });
+  toggleLoading(true); // Bật loading ngay khi vào trang
 
-  // 2. LOGIC SAU KHI NAVBAR ĐÃ LOAD
-  renderNavCategories();
-  setupNavbarEvents();
-  checkAdminDisplay();
-
-  // 3. Render nội dung chính
-  renderHomeSections();
-
-  // 4. SSE
   try {
-    connectSse("/connect", (data) => {
-      if (data.success) showToast("Thông báo", data.message);
+    // 1. GỌI NAVBAR CUSTOM CHO HOME
+    await loadNavbar({
+      centerHTML: `
+                <div class="nav-cat-btn" id="catBtn">
+                    <i class="fa-solid fa-bars"></i> <span>Danh mục</span>
+                    <div class="cat-dropdown" id="catDropdown"></div>
+                </div>
+                <div style="position:relative;">
+                    <input type="text" class="nav-search-input" id="homeSearch" placeholder="Tìm sản phẩm...">
+                    <i class="fa-solid fa-magnifying-glass" style="position:absolute; right:15px; top:50%; transform:translateY(-50%); color:#10B981; cursor:pointer;" id="homeSearchBtn"></i>
+                </div>
+            `,
+      rightHTML: `
+                <a href="#" class="nav-icon-link" title="Thông báo"><i class="fa-regular fa-bell"></i><span class="badge">2</span></a>
+                <a href="../cart" class="nav-icon-link" title="Giỏ hàng"><i class="fa-solid fa-cart-shopping"></i><span class="badge">3</span></a>
+            `,
     });
-  } catch (e) {}
+
+    // 2. LOGIC UI
+    renderNavCategories();
+    setupNavbarEvents();
+
+    // 3. Render nội dung
+    renderHomeSections();
+
+    // 4. SSE
+    try {
+      connectSse("/connect", (data) => {
+        if (data.success) showToast("Thông báo", data.message);
+      });
+    } catch (e) {}
+  } catch (e) {
+    console.error(e);
+  } finally {
+    // Tắt loading sau khi mọi thứ đã xong (giả vờ delay 0.5s cho mượt)
+    setTimeout(() => toggleLoading(false), 500);
+  }
 });
 
 // --- HELPER FUNCTIONS ---
 
-async function checkAdminDisplay() {
-  try {
-    const profile = await callAPI("/profile");
-    if (profile.success) {
-      const user = profile.data;
-      if (user.roleName === "ADMIN" || user.role === "ADMIN") {
-        // Hiện thanh Admin Toolbar ở body
-        document
-          .querySelectorAll(".admin-only")
-          .forEach((el) => (el.style.display = "flex"));
-      }
-    } else {
-      window.location.replace("../auth/login");
-    }
-  } catch (e) {}
-}
-
 function setupNavbarEvents() {
-  // Dropdown Danh mục
   const catBtn = document.getElementById("catBtn");
   const catDropdown = document.getElementById("catDropdown");
   if (catBtn) {
@@ -77,12 +69,11 @@ function setupNavbarEvents() {
       e.stopPropagation();
       catDropdown.classList.toggle("show");
     };
-    document.addEventListener("click", () =>
-      catDropdown.classList.remove("show")
-    );
+    document.addEventListener("click", () => {
+      if (catDropdown) catDropdown.classList.remove("show");
+    });
   }
 
-  // Search
   const searchInput = document.getElementById("homeSearch");
   const searchBtn = document.getElementById("homeSearchBtn");
   const doSearch = () => {
@@ -165,7 +156,6 @@ function generateMockProducts() {
   return arr;
 }
 
-// Logic Gửi thông báo
 const sendAllBtn = document.getElementById("sendAll");
 if (sendAllBtn) {
   sendAllBtn.onclick = async () => {

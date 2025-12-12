@@ -5,7 +5,7 @@ import { loadPage, convertToVNTime } from "../public/public.js";
 // --- CẤU HÌNH API ---
 const API_GET_SESSION = "/sessions?page=0&size=20";
 const API_LOGOUT_ONE = "/logout";
-const API_REVOKE_ONE = "/session";
+const API_REVOKE_ONE = "/sessions";
 const API_LOGOUT_OTHERS = "/logout-all";
 
 const currentListEl = document.getElementById("currentDeviceList");

@@ -132,7 +132,7 @@ function openForm(product = null) {
                 price: v.price, 
                 priceOriginal: v.priceOriginal || v.price,
                 stock: v.stock,
-                imageName: v.imageName // Giữ tên ảnh cũ
+                imageName: v.imageName
             }));
             handleCalcVariants();
         }
@@ -145,7 +145,7 @@ function openForm(product = null) {
 function handleCalcVariants() {
     const attrs = VariantLogic.parseAttributesFromDOM();
     state.currentAttributes = attrs;
-    const basePrice = document.getElementById("prodPrice").value || 0;
+    const basePrice = parseFloat(document.getElementById("prodPrice").value) || 0;
     state.variants = VariantLogic.generateVariants(attrs, basePrice, state.variants);
     UI.renderVariants(state.variants);
 }
@@ -163,6 +163,11 @@ function handleSelectVariantImage(index, input) {
 async function handleSave(e) {
     e.preventDefault();
     
+    console.log("🔍 DEBUG - State before save:", {
+        variants: state.variants,
+        currentAttributes: state.currentAttributes
+    });
+    
     const formData = new FormData();
 
     const payload = {
@@ -170,11 +175,10 @@ async function handleSave(e) {
             productId: state.isEdit ? state.currentId : null,
             productName: document.getElementById("prodName").value,
             description: document.getElementById("prodDesc").value,
-            price: document.getElementById("prodPrice").value,
-            priceOriginal: document.getElementById("prodOriginalPrice").value || "0",
+            price: parseFloat(document.getElementById("prodPrice").value) || 0,
+            priceOriginal: parseFloat(document.getElementById("prodOriginalPrice").value) || 0,
             categoryId: document.getElementById("prodCate").value,
             brandId: document.getElementById("prodBrand").value,
-            // Nếu không chọn ảnh mới thì giữ tên ảnh cũ
             imageName: state.currentMainImageName || "" 
         },
         attributes: [],
@@ -182,16 +186,21 @@ async function handleSave(e) {
         variantValues: []
     };
 
+    // Upload main image
     if (state.mainImageFile) {
-        payload.productDetailDTO.imageName = state.mainImageFile.name;
+        // Bỏ extension khỏi tên file
+        const fileName = state.mainImageFile.name;
+        const nameWithoutExt = fileName.substring(0, fileName.lastIndexOf('.')) || fileName;
+        payload.productDetailDTO.imageName = nameWithoutExt;
         formData.append("images", state.mainImageFile);
     }
 
+    // Map Attributes
     state.currentAttributes.forEach((attr, attrIndex) => {
         const attrId = attr.id || `attr_${Date.now()}_${attrIndex}`;
         
         const attributeValues = attr.values.map((valName, valIndex) => {
-            const valueId = attr.valueIdMap[valName] || `val_${Date.now()}_${attrIndex}_${valIndex}`;
+            const valueId = attr.valueIdMap?.[valName] || `val_${Date.now()}_${attrIndex}_${valIndex}`;
             if (!attr.valueIdMap) attr.valueIdMap = {};
             attr.valueIdMap[valName] = valueId;
             
@@ -207,28 +216,36 @@ async function handleSave(e) {
         });
     });
 
+    // Map Variants
     state.variants.forEach((v, vIndex) => {
         const varId = (v.id && !v.id.toString().startsWith("new_")) 
             ? v.id 
             : `var_${Date.now()}_${vIndex}`;
         
-        // Logic map ảnh biến thể
         let finalImageName = v.imageName || ""; 
 
         if (v.rawFile) {
-            finalImageName = v.rawFile.name; 
+            // Bỏ extension khỏi tên file variant
+            const fileName = v.rawFile.name;
+            const nameWithoutExt = fileName.substring(0, fileName.lastIndexOf('.')) || fileName;
+            finalImageName = nameWithoutExt;
             formData.append("images", v.rawFile); 
         }
+        
+        // Đảm bảo price là số hợp lệ
+        const varPrice = parseFloat(v.price) || 0;
+        const varPriceOriginal = parseFloat(v.priceOriginal) || varPrice;
         
         payload.variants.push({
             variantId: varId,
             imageName: finalImageName, 
-            price: v.price,
-            priceOriginal: v.priceOriginal || v.price,
-            stock: v.stock
+            price: varPrice,
+            priceOriginal: varPriceOriginal,
+            stock: parseInt(v.stock) || 0
         });
         
-        if (v.comboValues) {
+        // Map variantValues - đảm bảo có đủ cho tất cả attributes
+        if (v.comboValues && v.comboValues.length > 0) {
             v.comboValues.forEach((valName) => {
                 const attr = state.currentAttributes.find(a => a.values.includes(valName));
                 if (attr && attr.valueIdMap && attr.valueIdMap[valName]) {
@@ -241,19 +258,25 @@ async function handleSave(e) {
         }
     });
 
+    console.log("📤 Payload to send:", JSON.stringify(payload, null, 2));
+    console.log("📦 FormData images:", [...formData.keys()]);
+    
     formData.append("data", new Blob([JSON.stringify(payload)], { type: "application/json" }));
-
-    console.log("Payload sent:", payload);
     
-    // 4. Gửi đi (Service đã sửa để nhận FormData)
-    const res = await ProductService.save(formData);
-    
-    if (res && res.success) {
-        await showDialog("success", "Lưu thành công!");
-        UI.switchView('list');
-        reloadData();
-    } else {
-        await showDialog("error", res?.message || "Có lỗi xảy ra");
+    try {
+        const res = await ProductService.save(formData);
+        console.log("📥 Response from server:", res);
+        
+        if (res && res.success) {
+            await showDialog("success", "Lưu thành công!");
+            UI.switchView('list');
+            reloadData();
+        } else {
+            await showDialog("error", res?.message || "Có lỗi xảy ra");
+        }
+    } catch (error) {
+        console.error("❌ Save error:", error);
+        await showDialog("error", "Lỗi kết nối server: " + error.message);
     }
 }
 

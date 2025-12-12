@@ -14,7 +14,6 @@ const createdAt = document.getElementById('createdAt');
 const updatedAt = document.getElementById('updatedAt');
 const avatarInput = document.getElementById('avatar');
 const avatarPreview = document.getElementById('avatarPreview');
-loadNavbar({});
 async function loadProfile() {
     const result = await callAPI('/profile');
     if(!result.success){
@@ -26,7 +25,7 @@ async function loadProfile() {
     usernameInput.value = profile.username;
     fullNameInput.value = profile.fullName;
     birthdayInput.value = profile.birthday;
-    genderInput.value = profile.genderName;
+    genderInput.value = profile.gender;
     role.value = profile.roleName;
     createdAt.textContent = convertToVNTime(profile.createdAt);
     updatedAt.textContent = convertToVNTime(profile.updatedAt);
@@ -36,6 +35,7 @@ async function loadProfile() {
     initEmailList(profile.emails);
 }
 await loadPage(async()=> {
+    await loadNavbar();
     await loadProfile();
 });
 avatarInput.addEventListener('change', (e) => {
@@ -51,7 +51,7 @@ saveBtn.addEventListener('click', async()=> {
             username: usernameInput.value,
             fullName: fullNameInput.value,
             birthday: birthdayInput.value,
-            genderName: genderInput.value,
+            gender: genderInput.value,
             roleName: role.value
         })],
         {type: 'application/json'}
