@@ -75,8 +75,6 @@ function renderAddressList() {
         return;
     }
 
-    currentAddresses.sort((a, b) => a.contactId.localeCompare(b.contactId));
-
     updateAddressCount(currentAddresses.length);
 
     const html = currentAddresses.map(address => createAddressItemHTML(address)).join('');
