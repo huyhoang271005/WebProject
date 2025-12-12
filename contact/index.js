@@ -1,5 +1,6 @@
 import { callAPI } from "../public/api.js";
 
+
 // DOM Elements
 const addressForm = document.getElementById('addressForm');
 const addressListEl = document.getElementById('addressList');
@@ -267,13 +268,19 @@ function updateAddressCount(count) {
 }
 
 function showNotification(message, type = 'success') {
-    Toastify({
-        text: message,
-        duration: 3000,
-        gravity: "top",
-        position: "right",
-        backgroundColor: type === "success" ? "green" : "red"
-    }).showToast();
+    const noti = document.getElementById('notification');
+
+    noti.innerText = message;
+    noti.className = type + " show";
+
+    // Hiện
+    noti.classList.remove("hidden");
+
+    // 3 giây sau tự biến mất
+    setTimeout(() => {
+        noti.classList.remove("show");
+        setTimeout(() => noti.classList.add("hidden"), 500);
+    }, 3000);
 }
 
 // Utility Functions

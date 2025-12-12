@@ -423,3 +423,29 @@ button.loading {
         gap: 8px;
     }
 }
+
+#notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 15px 20px;
+    border-radius: 8px;
+    color: white;
+    font-size: 16px;
+    opacity: 0;
+    transition: opacity 0.5s ease;
+    z-index: 9999;
+}
+
+#notification.success {
+    background-color: #4CAF50; /* xanh */
+}
+#notification.error {
+    background-color: #f44336; /* đỏ */
+}
+#notification.show {
+    opacity: 1;
+}
+.hidden {
+    display: none;
+}
