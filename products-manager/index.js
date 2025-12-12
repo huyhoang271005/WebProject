@@ -39,20 +39,30 @@ async function handleDelete(id) {
 async function handleSave(e) {
     e.preventDefault();
 
+    // Validation cơ bản
+    const productName = document.getElementById("prodName").value.trim();
+    const price = parseFloat(document.getElementById("prodPrice").value);
+    const categoryId = document.getElementById("prodCate").value;
+    const brandId = document.getElementById("prodBrand").value;
+
+    if (!productName || !categoryId || !brandId || !price) {
+        await showDialog("error", "Vui lòng điền đầy đủ thông tin bắt buộc!");
+        return;
+    }
+
     // 1. Chuẩn bị FormData
     const formData = new FormData();
     
     // 2. Chuẩn bị JSON Payload
     const payload = {
         productDetailDTO: {
-            productId: state.isEdit ? state.currentId : null,
-            productName: document.getElementById("prodName").value.trim(),
+            productName: productName,
             description: document.getElementById("prodDesc").value.trim(),
-            price: parseFloat(document.getElementById("prodPrice").value) || 0,
-            priceOriginal: parseFloat(document.getElementById("prodOriginalPrice").value) || 0,
-            categoryId: document.getElementById("prodCate").value,
-            brandId: document.getElementById("prodBrand").value,
-            imageName: state.currentMainImageName
+            price: price,
+            priceOriginal: parseFloat(document.getElementById("prodOriginalPrice").value) || price,
+            categoryId: categoryId,
+            brandId: brandId,
+            imageName: state.currentMainImageName || null
         },
         attributes: [],
         variants: [],
@@ -68,25 +78,32 @@ async function handleSave(e) {
 
     // 3. Xử lý Attributes
     state.currentAttributes.forEach((attr) => {
-        const attrId = attr.id && !attr.id.toString().startsWith("attr_") ? attr.id : null;
         const attributeValues = attr.values.map((valName) => {
             const existingId = attr.valueIdMap?.[valName];
-            const validValId = (existingId && !existingId.toString().startsWith("val_")) ? existingId : null;
-            return { attributeValueId: validValId, attributeValueName: valName };
+            return { 
+                attributeValueId: existingId || null, 
+                attributeValueName: valName 
+            };
         });
 
         payload.attributes.push({
-            attributeId: attrId,
+            attributeId: attr.id || null,
             attributeName: attr.name,
             attributeValues: attributeValues
         });
     });
 
-    // 4. Xử lý Variants
-    state.variants.forEach((v) => {
-        const varId = (v.id && !v.id.toString().startsWith("new_") && !v.id.toString().startsWith("var_")) ? v.id : null;
-        let finalImageName = v.imageName || "";
-
+    // 4. Xử lý Variants và variantValues
+    const variantIdCounter = {}; // Map tạm để track variant IDs
+    
+    state.variants.forEach((v, idx) => {
+        const tempVariantId = state.isEdit && v.id && !v.id.toString().startsWith("new_") 
+            ? v.id 
+            : `temp_variant_${idx}`;
+        
+        variantIdCounter[idx] = tempVariantId;
+        
+        let finalImageName = v.imageName || null;
         if (v.rawFile) {
             const fName = v.rawFile.name;
             finalImageName = fName.substring(0, fName.lastIndexOf('.')) || fName;
@@ -94,20 +111,26 @@ async function handleSave(e) {
         }
 
         payload.variants.push({
-            variantId: varId,
+            variantId: tempVariantId,
             imageName: finalImageName,
-            price: parseFloat(v.price) || 0,
-            priceOriginal: parseFloat(v.priceOriginal) || parseFloat(v.price) || 0,
-            stock: parseInt(v.stock) || 0
+            price: parseFloat(v.price) || price,
+            priceOriginal: parseFloat(v.priceOriginal) || parseFloat(v.price) || price,
+            stock: parseInt(v.stock) || 0,
+            sold: 0,
+            imageUrl: null,
+            active: true
         });
 
-        // Map Values cho Variant
+        // Map variantValues
         if (v.comboValues && v.comboValues.length > 0) {
             v.comboValues.forEach((valName) => {
                 const parentAttr = state.currentAttributes.find(a => a.values.includes(valName));
-                const valId = parentAttr?.valueIdMap?.[valName];
-                if (valId && !valId.toString().startsWith("val_")) {
-                    payload.variantValues.push({ variantId: varId, attributeValueId: valId });
+                if (parentAttr) {
+                    const valId = parentAttr.valueIdMap?.[valName];
+                    payload.variantValues.push({ 
+                        variantId: tempVariantId,
+                        attributeValueId: valId || null 
+                    });
                 }
             });
         }
@@ -117,18 +140,21 @@ async function handleSave(e) {
     const jsonBlob = new Blob([JSON.stringify(payload)], { type: "application/json" });
     formData.append("productDTO", jsonBlob, "productDTO.json");
 
+    // Debug log
+    console.log("Payload:", payload);
+
     // 6. Gửi Request
     try {
-        const res = await ProductService.save(formData);
+        const res = await ProductService.save(formData, state.isEdit ? state.currentId : null);
         if (res && res.success) {
-            await showDialog("success", "Lưu sản phẩm thành công!");
+            await showDialog("success", state.isEdit ? "Cập nhật thành công!" : "Tạo sản phẩm thành công!");
             UI.switchView('list');
             reloadData();
         } else {
             await showDialog("error", res?.message || "Có lỗi xảy ra khi lưu.");
         }
     } catch (error) {
-        console.error(error);
+        console.error("Save error:", error);
         await showDialog("error", "Lỗi kết nối: " + error.message);
     }
 }

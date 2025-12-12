@@ -1,7 +1,5 @@
 import { callAPI } from "../public/api.js";
 
-const PAGE_SIZE = 100;
-
 export const ProductService = {
     getAll: async () => {
         const res = await callAPI(`/auth/products`, "POST");
@@ -23,7 +21,8 @@ export const ProductService = {
         return res?.data?.listData || [];
     },
 
-    save: async (formData) => {
-        return await callAPI("/auth/products", "POST", formData, true);
-    },
+    // CHỈ CÓ THÊM MỚI - METHOD POST
+    create: async (formData) => {
+        return await callAPI("/products", "POST", formData, true);
+    }
 };
