@@ -47,7 +47,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     // 4. SSE
     try {
-      connectSse("/connect", (data) => {
+      connectSse("/sse", (data) => {
         if (data.success) showToast("Thông báo", data.message);
       });
     } catch (e) {}
@@ -162,7 +162,7 @@ if (sendAllBtn) {
     const msg = document.getElementById("message").value.trim();
     if (!msg) return;
     await getLoader("sendAll", async () => {
-      const res = await callAPI("/push", "POST", {
+      const res = await callAPI("/sse/broadcast", "POST", {
         success: true,
         message: msg,
         data: null,
