@@ -155,12 +155,24 @@ function setupEventListeners() {
             return;
         }
 
-        // Filter brands by category
-        const filteredBrands = state.brands.filter(b => b.categoryId === categoryId);
+        // Filter brands by category (nếu có categoryId trong brand object)
+        // Nếu không có categoryId, hiển thị tất cả brands
+        let filteredBrands = state.brands;
+        if (state.brands.length > 0 && state.brands[0].categoryId !== undefined) {
+            filteredBrands = state.brands.filter(b => b.categoryId === categoryId);
+        }
+
         brandSelect.innerHTML = '<option value="">-- Chọn thương hiệu --</option>';
-        filteredBrands.forEach(brand => {
-            brandSelect.innerHTML += `<option value="${brand.brandId}">${brand.brandName}</option>`;
-        });
+        
+        if (filteredBrands.length === 0) {
+            brandSelect.innerHTML += '<option value="" disabled>Không có thương hiệu nào</option>';
+        } else {
+            filteredBrands.forEach(brand => {
+                brandSelect.innerHTML += `<option value="${brand.brandId}">${brand.brandName}</option>`;
+            });
+        }
+
+        console.log('Filtered brands:', filteredBrands);
     };
 }
 
@@ -181,6 +193,16 @@ async function loadInitialData() {
         ProductUI.state.brands = state.brands;
         ProductUI.state.attributes = state.attributes;
 
+        // DEBUG: Log để kiểm tra data structure
+        console.log('=== LOADED DATA ===');
+        console.log('Categories:', state.categories);
+        console.log('Brands:', state.brands);
+        console.log('Attributes:', state.attributes);
+        
+        if (state.brands.length > 0) {
+            console.log('Brand structure example:', state.brands[0]);
+        }
+
         // Populate category dropdown
         const categorySelect = document.getElementById("categoryId");
         categorySelect.innerHTML = '<option value="">-- Chọn danh mục --</option>';
@@ -188,9 +210,22 @@ async function loadInitialData() {
             categorySelect.innerHTML += `<option value="${c.categoryId}">${c.categoryName}</option>`;
         });
 
-        // Initialize brand dropdown (empty until category selected)
+        // Initialize brand dropdown
         const brandSelect = document.getElementById("brandId");
-        brandSelect.innerHTML = '<option value="">-- Chọn danh mục trước --</option>';
+        
+        // OPTION 1: Nếu brands không phụ thuộc vào category, hiển thị tất cả
+        if (state.brands.length > 0 && state.brands[0].categoryId === undefined) {
+            console.log('Brands không có categoryId, hiển thị tất cả');
+            brandSelect.innerHTML = '<option value="">-- Chọn thương hiệu --</option>';
+            state.brands.forEach(brand => {
+                brandSelect.innerHTML += `<option value="${brand.brandId}">${brand.brandName}</option>`;
+            });
+        } 
+        // OPTION 2: Nếu brands phụ thuộc vào category, yêu cầu chọn category trước
+        else {
+            console.log('Brands có categoryId, cần chọn category trước');
+            brandSelect.innerHTML = '<option value="">-- Chọn danh mục trước --</option>';
+        }
 
         // Render attribute selector
         ProductUI.renderAttributeSelector();
