@@ -56,34 +56,61 @@ async function handleSave(e) {
         ProductUI.state.variants
     );
 
-    // Set main image name nếu có
-    if (state.mainImageFile) {
-        const fileName = state.mainImageFile.name;
-        payload.productDetailDTO.imageName = fileName.includes('.')
-            ? fileName.substring(0, fileName.lastIndexOf('.'))
-            : fileName;
-    }
-
     // BUILD FORMDATA
     const formData = new FormData();
-    formData.append("productDTO", JSON.stringify(payload));
     
-    // Add main image
+    // Tạo mảng chứa tất cả các file sẽ upload theo thứ tự
+    const imageFiles = [];
+    const imageNames = []; // Để debug
+    
+    // 1. Main image (nếu có)
     if (state.mainImageFile) {
-        formData.append("images", state.mainImageFile);
+        const fileName = state.mainImageFile.name;
+        const nameWithoutExt = fileName.includes('.')
+            ? fileName.substring(0, fileName.lastIndexOf('.'))
+            : fileName;
+        
+        payload.productDetailDTO.imageName = nameWithoutExt;
+        imageFiles.push(state.mainImageFile);
+        imageNames.push(nameWithoutExt);
     }
     
-    // Add variant images - QUAN TRỌNG: thứ tự phải khớp với thứ tự trong variants array
-    ProductUI.state.variants.forEach((v) => {
+    // 2. Variant images (theo thứ tự trong variants array)
+    ProductUI.state.variants.forEach((v, index) => {
         if (v.imageFile) {
-            formData.append("images", v.imageFile);
+            const fileName = v.imageFile.name;
+            const nameWithoutExt = fileName.includes('.')
+                ? fileName.substring(0, fileName.lastIndexOf('.'))
+                : fileName;
+            
+            // Đảm bảo imageName trong variant đã được set đúng
+            payload.variants[index].imageName = nameWithoutExt;
+            imageFiles.push(v.imageFile);
+            imageNames.push(nameWithoutExt);
         }
+    });
+    
+    // Append JSON trước
+    formData.append("productDTO", JSON.stringify(payload));
+    
+    // Append images theo đúng thứ tự
+    imageFiles.forEach(file => {
+        formData.append("images", file);
     });
 
     // DEBUG LOG
     console.log("=== PAYLOAD ===");
     console.log(JSON.stringify(payload, null, 2));
-    console.log("\n=== FORMDATA ===");
+    console.log("\n=== IMAGE MAPPING ===");
+    console.log("Main image:", payload.productDetailDTO.imageName || "không có");
+    payload.variants.forEach((v, i) => {
+        console.log(`Variant ${i}:`, v.imageName || "không có ảnh");
+    });
+    console.log("\n=== FILES IN FORMDATA ===");
+    imageNames.forEach((name, i) => {
+        console.log(`${i + 1}. ${name}`);
+    });
+    console.log("\n=== FORMDATA ENTRIES ===");
     for (let [key, value] of formData.entries()) {
         console.log(key, value instanceof File ? `File(${value.name})` : value);
     }
