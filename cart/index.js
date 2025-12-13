@@ -1,85 +1,100 @@
-// Import các hàm dùng chung (Đảm bảo đường dẫn đúng với dự án của bạn)
 import { callAPI } from '../public/api.js'; 
 import { showDialog } from '../dialog/index.js';
 
 // Định dạng tiền tệ VNĐ
 const moneyFormat = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' });
 
-// Biến toàn cục lưu dữ liệu giỏ hàng để xử lý
+// Biến toàn cục lưu dữ liệu
 let cartDataGlobal = [];
+// Cờ chặn spam click
+let isUpdating = false;
 
 document.addEventListener("DOMContentLoaded", async () => {
     await loadCart();
+    setupCheckoutEvent();
 });
 
+// === 1. HÀM TẢI DỮ LIỆU GIỎ HÀNG (GET) ===
 async function loadCart() {
-  const res = await callAPI('/auth/carts', 'GET'); 
+    // Gọi API lấy danh sách: GET /auth/carts
+    const res = await callAPI('/auth/carts', 'GET'); 
 
-    // console.log(res); // Mở cái này ra để soi dữ liệu nếu cần
-    
-    // Nếu gọi thành công thì nạp dữ liệu vào biến toàn cục và vẽ giao diện
     if (res.success) {
-        cartDataGlobal = res.data; // Gán dữ liệu thật server trả về
+        cartDataGlobal = res.data;
         renderCartUI(cartDataGlobal);
     } else {
-        // Nếu lỗi hoặc chưa có gì thì báo trống
+        // Xử lý khi lỗi hoặc rỗng
         document.getElementById("cartList").innerHTML = `
-            <div style="text-align: center; margin-top: 50px;">
-                <p>Giỏ hàng đang trống hoặc lỗi tải dữ liệu</p>
-                <p style="color: red">${res.message || ''}</p>
+            <div style="text-align: center; margin-top: 50px; color: #666;">
+                <i class="fa-solid fa-cart-arrow-down" style="font-size: 3rem; margin-bottom: 10px;"></i>
+                <p>Giỏ hàng trống hoặc chưa đăng nhập</p>
+                <p style="font-size: 0.8rem; color: red">${res.message || ''}</p>
             </div>`;
-        updateSummary(0, 0); // Reset tiền về 0
+        updateSummary(0, 0);
     }
 }
 
+// === 2. HÀM VẼ GIAO DIỆN (RENDER) ===
 function renderCartUI(products) {
     const container = document.getElementById("cartList");
-    container.innerHTML = ""; // Xóa nội dung loading
+    container.innerHTML = ""; 
 
     let totalBill = 0;
     let totalItems = 0;
 
+    // Kiểm tra giỏ rỗng
+    if (!products || products.length === 0) {
+        container.innerHTML = "<p style='text-align:center; padding: 20px;'>Chưa có sản phẩm nào trong giỏ</p>";
+        updateSummary(0, 0);
+        return;
+    }
+
     products.forEach((product, pIndex) => {
+        // Duyệt qua từng item trong cartItemDTOList
         product.cartItemDTOList.forEach((cartItem, cIndex) => {
             
-            // Tìm biến thể hiện tại trong danh sách variants của sản phẩm
+            // Tìm biến thể khớp với variantId trong giỏ
             const currentVariant = product.productVariantsDTOList.find(v => v.variantId === cartItem.variantId);
+            
+            // Nếu dữ liệu lỗi (không tìm thấy variant), bỏ qua để tránh crash web
             if(!currentVariant) return;
 
-            // Cộng dồn tổng tiền
+            // Tính toán tổng tiền
             totalBill += Number(currentVariant.price) * cartItem.quantity;
             totalItems += cartItem.quantity;
 
-            // === TẠO GIAO DIỆN DÒNG SẢN PHẨM ===
+            // Tạo thẻ div cho dòng sản phẩm
             const itemRow = document.createElement("div");
             itemRow.className = "cart-item";
-            
-            // Gắn index vào dataset để hàm handleVariantChange biết đang sửa dòng nào
+            // Lưu index để dùng cho hàm đổi biến thể
             itemRow.dataset.pIndex = pIndex; 
             itemRow.dataset.cIndex = cIndex;
 
-            // Xử lý Dropdown thuộc tính
+            // --- Xử lý Dropdown thuộc tính (Shopee Style) ---
             let attributeHTML = `<div class="variant-box">`;
             product.attributes.forEach(attr => {
                 attributeHTML += `<select class="variant-select" onchange="handleVariantChange(this)">`;
                 attr.attributeValues.forEach(val => {
+                    // Kiểm tra xem variant hiện tại có chứa thuộc tính này không để set 'selected'
                     const isSelected = currentVariant.attributeValueIdList.includes(val.attributeValueId);
                     attributeHTML += `<option value="${val.attributeValueId}" ${isSelected ? 'selected' : ''}>${val.attributeValueName}</option>`;
                 });
                 attributeHTML += `</select>`;
             });
             attributeHTML += `</div>`;
+            // ------------------------------------------------
 
+            // Chèn HTML vào dòng
             itemRow.innerHTML = `
-                <i class="fa-solid fa-trash-can delete-btn" onclick="removeItem('${cartItem.cartItemId}')"></i>
+                <i class="fa-solid fa-trash-can delete-btn" onclick="removeItem('${cartItem.cartItemId}')" title="Xóa sản phẩm"></i>
                 
-                <img src="${currentVariant.imageUrl || 'https://via.placeholder.com/80'}" class="item-img">
+                <img src="${currentVariant.imageUrl || 'https://via.placeholder.com/100'}" class="item-img">
                 
                 <div class="item-info">
                     <div class="item-name">${product.productName}</div>
                     ${attributeHTML}
                     <div class="item-price">${moneyFormat.format(currentVariant.price)}</div>
-                    <div class="item-unit">Kho: ${currentVariant.stock}</div>
+                    <div class="item-unit">Kho: <span class="stock-val">${currentVariant.stock}</span></div>
                 </div>
 
                 <div class="qty-control">
@@ -92,20 +107,41 @@ function renderCartUI(products) {
         });
     });
 
-    // Cập nhật tổng tiền ra ngoài giao diện
     updateSummary(totalBill, totalItems);
 }
 
+// Hàm cập nhật phần tổng tiền bên phải
 function updateSummary(total, items) {
     const totalEls = document.querySelectorAll(".total-price");
     totalEls.forEach(el => el.innerText = moneyFormat.format(total));
-    document.querySelector(".checkout-btn").innerText = `MUA HÀNG (${items})`;
+    
+    const checkoutBtn = document.querySelector(".checkout-btn");
+    checkoutBtn.innerText = `MUA HÀNG (${items})`;
+    
+    // Disable nút mua nếu không có hàng
+    if(items === 0) {
+        checkoutBtn.disabled = true;
+        checkoutBtn.style.opacity = "0.6";
+        checkoutBtn.style.cursor = "not-allowed";
+    } else {
+        checkoutBtn.disabled = false;
+        checkoutBtn.style.opacity = "1";
+        checkoutBtn.style.cursor = "pointer";
+    }
 }
 
-// === XỬ LÝ SỰ KIỆN GLOBAL ===
+// Chuyển trang khi bấm Mua hàng
+function setupCheckoutEvent() {
+    const btn = document.querySelector(".checkout-btn");
+    btn.onclick = () => {
+        if(!btn.disabled) {
+            window.location.href = '../checkout/index.html'; // Sửa đường dẫn nếu cần
+        }
+    };
+}
 
-// 1. Hàm xử lý khi đổi Dropdown
-window.handleVariantChange = (selectElement) => {
+// === 3. XỬ LÝ SỰ KIỆN: ĐỔI BIẾN THỂ (DROPDOWN) ===
+window.handleVariantChange = async (selectElement) => {
     const itemRow = selectElement.closest(".cart-item");
     const pIndex = itemRow.dataset.pIndex;
     const cIndex = itemRow.dataset.cIndex;
@@ -117,53 +153,97 @@ window.handleVariantChange = (selectElement) => {
     const allSelects = itemRow.querySelectorAll(".variant-select");
     const selectedIds = Array.from(allSelects).map(s => s.value);
 
-    // Tìm biến thể khớp với bộ ID vừa chọn
+    // Logic: Tìm variant nào trong danh sách mà chứa ĐỦ tất cả các ID thuộc tính đang chọn
     const newVariant = product.productVariantsDTOList.find(variant => {
-        // Kiểm tra xem variant có chứa ĐỦ tất cả các ID đang chọn không
-        // (Lưu ý: Logic này giả định variant.attributeValueIdList chứa đủ id của các thuộc tính)
         return selectedIds.every(id => variant.attributeValueIdList.includes(id));
     });
 
     if (newVariant) {
-        // Cập nhật giao diện ngay lập tức
-        itemRow.querySelector(".item-img").src = newVariant.imageUrl || 'https://via.placeholder.com/80';
+        // Cập nhật giao diện ngay lập tức (Ảnh, Giá, Tồn kho)
+        itemRow.querySelector(".item-img").src = newVariant.imageUrl || 'https://via.placeholder.com/100';
         itemRow.querySelector(".item-price").innerText = moneyFormat.format(newVariant.price);
-        itemRow.querySelector(".item-unit").innerText = `Kho: ${newVariant.stock}`;
+        itemRow.querySelector(".item-unit").innerHTML = `Kho: <span class="stock-val">${newVariant.stock}</span>`;
 
-        // Cập nhật dữ liệu gốc (để khi bấm Mua hàng gửi đúng ID)
+        // Cập nhật ID biến thể vào cartItem trong bộ nhớ tạm
         cartItem.variantId = newVariant.variantId;
-
-        // Tính lại tổng tiền
-        recalculateTotal();
+        
+        // Lưu ý: Hiện tại Backend chưa cung cấp API đổi variant, nên đây chỉ là đổi trên giao diện.
+        // Khi F5 lại trang nó sẽ về như cũ. Nếu muốn lưu, cần hỏi thêm API Update Variant.
+        
     } else {
-        // alert("Biến thể này không tồn tại!");
-        showDialog("error", "Phiên bản này không có sẵn!");
+        await showDialog("error", "Phiên bản này không có sẵn hoặc hết hàng!");
+        // (Có thể thêm code reset lại dropdown nếu muốn)
     }
 };
 
-function recalculateTotal() {
-    let total = 0;
-    let count = 0;
-    cartDataGlobal.forEach(p => {
-        p.cartItemDTOList.forEach(item => {
-            const variant = p.productVariantsDTOList.find(v => v.variantId === item.variantId);
-            if(variant) {
-                total += Number(variant.price) * item.quantity;
-                count += item.quantity;
-            }
-        });
-    });
-    updateSummary(total, count);
-}
+// === 4. XỬ LÝ SỰ KIỆN: TĂNG GIẢM SỐ LƯỢNG (PUT) ===
+window.updateQty = async (cartItemId, delta) => {
+    if (isUpdating) return; // Chặn click liên tục
+    isUpdating = true;
 
-// 2. Hàm tăng giảm số lượng
-window.updateQty = (id, delta) => {
-    console.log("Update Qty", id, delta);
-    // Code gọi API update số lượng ở đây...
+    try {
+        // Tìm thông tin sản phẩm trong dữ liệu global để check tồn kho
+        let foundItem = null;
+        let foundVariant = null;
+
+        for (const p of cartDataGlobal) {
+            const item = p.cartItemDTOList.find(i => i.cartItemId === cartItemId);
+            if (item) {
+                foundItem = item;
+                foundVariant = p.productVariantsDTOList.find(v => v.variantId === item.variantId);
+                break;
+            }
+        }
+
+        if (!foundItem || !foundVariant) { isUpdating = false; return; }
+
+        const newQty = foundItem.quantity + delta;
+
+        // Validate
+        if (newQty < 1) {
+            await removeItem(cartItemId); // Giảm về 0 thì hỏi xóa
+            isUpdating = false;
+            return;
+        }
+
+        if (newQty > foundVariant.stock) {
+            await showDialog("error", `Trong kho chỉ còn ${foundVariant.stock} sản phẩm!`);
+            isUpdating = false;
+            return;
+        }
+
+        // Gọi API Cập nhật: PUT /auth/carts
+        const payload = {
+            cartItemId: cartItemId,
+            quantity: newQty
+        };
+
+        const res = await callAPI('/auth/carts', 'PUT', payload);
+
+        if (res.success) {
+            await loadCart(); // Load lại để cập nhật tổng tiền chuẩn xác từ server
+        } else {
+            await showDialog("error", res.message || "Lỗi cập nhật số lượng");
+        }
+
+    } catch (e) {
+        console.error(e);
+    } finally {
+        isUpdating = false;
+    }
 };
 
-// 3. Hàm xóa
-window.removeItem = (id) => {
-    console.log("Remove", id);
-    // Code gọi API xóa ở đây...
+// === 5. XỬ LÝ SỰ KIỆN: XÓA SẢN PHẨM (DELETE) ===
+window.removeItem = async (cartItemId) => {
+    if (!confirm("Bạn có chắc chắn muốn xóa sản phẩm này?")) return;
+
+    // Gọi API Xóa: DELETE /auth/carts/{id}
+    const res = await callAPI(`/auth/carts/${cartItemId}`, 'DELETE');
+
+    if (res.success) {
+        // await showDialog("success", "Đã xóa sản phẩm"); // Tắt thông báo cho thao tác nhanh
+        await loadCart(); 
+    } else {
+        await showDialog("error", res.message || "Lỗi khi xóa sản phẩm");
+    }
 };
