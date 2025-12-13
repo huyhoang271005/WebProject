@@ -83,7 +83,6 @@ export const UI = {
         if (valueIds.length) div.dataset.valueIds = JSON.stringify(valueIds);
         if (Object.keys(valueIdMap).length) div.dataset.valueIdMap = JSON.stringify(valueIdMap);
         
-        // Tạo options cho dropdown attributes
         const attrOptions = allAttributes.map(attr => 
             `<option value="${attr.attributeId}" ${attrId === attr.attributeId ? 'selected' : ''}>${attr.attributeName}</option>`
         ).join('');
@@ -103,37 +102,45 @@ export const UI = {
             </button>
         `;
         
-
-    const selectEl = div.querySelector(".inp-attr-select");
-    const inputEl = div.querySelector(".inp-attr-vals");
-    
-    selectEl.addEventListener("change", (e) => {
-        const selectedAttrId = e.target.value;
-        if (selectedAttrId) {
-            const selectedAttr = allAttributes.find(a => a.attributeId === selectedAttrId);
-            if (selectedAttr && selectedAttr.attributeValues) {
-
-                div.dataset.attrId = selectedAttrId;
-                
-                const values = selectedAttr.attributeValues.map(v => v.attributeValueName).join(", ");
-                inputEl.value = values; 
-                inputEl.readOnly = false;
-
-                const newValueIdMap = {};
-                selectedAttr.attributeValues.forEach(v => {
-                    newValueIdMap[v.attributeValueName] = v.attributeValueId;
-                });
-                div.dataset.valueIdMap = JSON.stringify(newValueIdMap);
-            }
-        } else {
-            inputEl.value = "";
-            inputEl.placeholder = "Nhập các giá trị ngăn cách bởi dấu phẩy...";
+        const selectEl = div.querySelector(".inp-attr-select");
+        const inputEl = div.querySelector(".inp-attr-vals");
+        
+        // Nếu đang edit và có nameVal thì mở khóa input
+        if (nameVal && valuesVal) {
             inputEl.readOnly = false;
-            delete div.dataset.attrId;
-            delete div.dataset.valueIdMap;
         }
-        onInputCallback();
-    });
+
+        selectEl.addEventListener("change", (e) => {
+            const selectedAttrId = e.target.value;
+            if (selectedAttrId) {
+                const selectedAttr = allAttributes.find(a => a.attributeId === selectedAttrId);
+                if (selectedAttr && selectedAttr.attributeValues && selectedAttr.attributeValues.length > 0) {
+                    // Có sẵn values -> điền và readonly
+                    div.dataset.attrId = selectedAttrId;
+                    const values = selectedAttr.attributeValues.map(v => v.attributeValueName).join(", ");
+                    inputEl.value = values;
+                    inputEl.readOnly = true;
+                    inputEl.placeholder = "Giá trị thuộc tính";
+                    
+                    const newValueIdMap = {};
+                    selectedAttr.attributeValues.forEach(v => {
+                        newValueIdMap[v.attributeValueName] = v.attributeValueId;
+                    });
+                    div.dataset.valueIdMap = JSON.stringify(newValueIdMap);
+                } else {
+                    // Không có values -> cho phép nhập
+                    div.dataset.attrId = selectedAttrId;
+                    inputEl.value = "";
+                    inputEl.readOnly = false;
+                    inputEl.placeholder = "Nhập giá trị (ngăn cách bằng dấu phẩy)...";
+                }
+            } else {
+                inputEl.value = "";
+                inputEl.readOnly = true;
+                inputEl.placeholder = "Chọn thuộc tính trước";
+            }
+            onInputCallback();
+        });
         
         inputEl.addEventListener("input", onInputCallback);
         
@@ -171,15 +178,15 @@ export const UI = {
                 <div class="v-inputs">
                     <div class="grp">
                         <label>Giá gốc</label>
-                        <input type="number" value="${v.priceOriginal || v.price}" onchange="window.updateVarOriginalPrice(${i}, this.value)">
+                        <input type="number" value="${v.priceOriginal || v.price || 0}" onchange="window.updateVarOriginalPrice(${i}, this.value)">
                     </div>
                     <div class="grp">
                         <label>Giá bán</label>
-                        <input type="number" value="${v.price}" onchange="window.updateVar(${i},'price',this.value)">
+                        <input type="number" value="${v.price || 0}" onchange="window.updateVar(${i},'price',this.value)">
                     </div>
                     <div class="grp">
                         <label>Kho</label>
-                        <input type="number" value="${v.stock}" onchange="window.updateVar(${i},'stock',this.value)">
+                        <input type="number" value="${v.stock || 0}" onchange="window.updateVar(${i},'stock',this.value)">
                     </div>
                     <button type="button" class="btn-icon delete" onclick="window.removeVariant(${i})" title="Xóa">
                         <i class="fa-solid fa-trash"></i>

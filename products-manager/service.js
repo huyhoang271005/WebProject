@@ -1,10 +1,8 @@
 import { callAPI } from "../public/api.js";
 
-const PAGE_SIZE = 100;
-
 export const ProductService = {
     getAll: async () => {
-        const res = await callAPI(`/auth/products`, "GET");
+        const res = await callAPI(`/auth/products`, "POST");
         return res?.data?.listData || [];
     },
 
@@ -23,11 +21,8 @@ export const ProductService = {
         return res?.data?.listData || [];
     },
 
-    save: async (formData) => {
-        return await callAPI("/auth/products", "POST", formData, true);
-    },
-
-    delete: async (id) => {
-        return await callAPI(`/auth/products/${id}`, "DELETE");
+    // GỬI FORMDATA - isMultipart = true
+    create: async (formData) => {
+        return await callAPI("/products", "POST", formData, true);
     }
 };

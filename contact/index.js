@@ -1,194 +1,297 @@
-// index.js (Phiên bản chỉ dùng api.js)
-
 import { callAPI } from "../public/api.js";
 
-// --- Khai báo các phần tử DOM ---
+
+// DOM Elements
 const addressForm = document.getElementById('addressForm');
 const addressListEl = document.getElementById('addressList');
 const saveBtn = document.getElementById('saveAddressBtn');
+const saveBtnText = document.getElementById('saveBtnText');
 const cancelBtn = document.getElementById('cancelEditBtn');
 const contactIdInput = document.getElementById('contactId');
+const formTitle = document.getElementById('formTitle');
+const addressCount = document.getElementById('addressCount');
 
-// Lưu trữ danh sách địa chỉ đã tải để dễ dàng tìm kiếm khi sửa
+// State
 let currentAddresses = [];
+let isEditMode = false;
 
-// --- Khởi tạo và Thiết lập ---
-
+// Initialize
 window.addEventListener('DOMContentLoaded', async () => {
-    // 1. Ẩn loader (thủ công)
     const loadPageEl = document.getElementById('loadPage');
-    if (loadPageEl) loadPageEl.style.display = 'none';
-
-    // 2. Hiện nội dung chính (thủ công)
     const infoEl = document.getElementById('info');
-    if (infoEl) infoEl.style.display = 'block';
 
     console.log("Trang Quản lý Địa chỉ đã sẵn sàng.");
 
     await loadAddresses();
-    attachFormSubmitHandler();
-    attachCancelHandler();
+    attachEventHandlers();
+
+    if (loadPageEl) loadPageEl.style.display = 'none';
+    if (infoEl) infoEl.style.display = 'block';
 });
 
-// --- LOGIC TẢI VÀ HIỂN THỊ ĐỊA CHỈ ---
+// Event Handlers
+function attachEventHandlers() {
+    addressForm.addEventListener('submit', handleFormSubmit);
+    cancelBtn.addEventListener('click', resetForm);
+}
 
-async function loadAddresses() {
-    if (!addressListEl) return;
+async function handleFormSubmit(event) {
+    event.preventDefault();
 
-    addressListEl.innerHTML = '<p class="loading-message"><i class="fa fa-spinner fa-spin"></i> Đang tải danh sách địa chỉ...</p>';
+    const data = {
+        contactName: document.getElementById('contact_name').value.trim(),
+        phone: document.getElementById('phone').value.trim(),
+        address: document.getElementById('address').value.trim()
+    };
 
-    // Sử dụng endpoint GET /contacts
-    const result = await callAPI("/contacts", "GET");
+    const contactId = contactIdInput.value;
 
-    addressListEl.innerHTML = '';
-    currentAddresses = []; // Reset danh sách
-
-    if (result.success && result.data && result.data.listData.length > 0) {
-        currentAddresses = result.data.listData; // Lưu trữ dữ liệu
-        result.data.listData.forEach(address => {
-            const addressItem = createAddressItem(address);
-            addressListEl.appendChild(addressItem);
-        });
+    if (contactId) {
+        await updateAddress(contactId, data);
     } else {
-        const message = `Lỗi khi tải địa chỉ: ${result.message}`;
-        addressListEl.innerHTML = `<p class="no-address-message">${message}</p>`;
+        await addNewAddress(data);
     }
 }
 
-function createAddressItem(address) {
-    const item = document.createElement('div');
-    // DB không có isDefault, nên ta bỏ class 'default'
-    item.className = 'address-item';
-    item.setAttribute('data-id', address.contactId);
+// Load and Display Addresses
+async function loadAddresses() {
+    if (!addressListEl) return;
 
-    // Hiển thị dữ liệu theo cấu trúc DB
-    item.innerHTML = `
-        <h4>${address.address} - ${address.phone}</h4>
-        <p>${address.address}</p>
-        <div class="address-actions">
-            <button class="edit-btn">Sửa</button> | 
-            <button class="delete-btn">Xóa</button>
-        </div>
-    `;
+    showLoading();
 
-    // Gắn sự kiện cho các nút hành động
-    item.querySelector('.edit-btn').addEventListener('click', () => editAddress(address.contactId));
-    item.querySelector('.delete-btn').addEventListener('click', () => deleteAddress(address.contactId));
+    const result = await callAPI("/contacts", "GET");
 
-    return item;
+    if (result.success && result.data?.listData) {
+        currentAddresses = result.data.listData;
+        renderAddressList();
+    } else {
+        showError(`Lỗi khi tải địa chỉ: ${result.message || 'Không rõ'}`);
+    }
 }
 
-// --- LOGIC FORM VÀ HÀNH ĐỘNG ---
+function renderAddressList() {
+    if (currentAddresses.length === 0) {
+        showEmptyState();
+        return;
+    }
 
-function attachFormSubmitHandler() {
-    addressForm.addEventListener('submit', (event) => {
-        event.preventDefault();
+    updateAddressCount(currentAddresses.length);
 
-        const data = {
-            contactName: document.getElementById('contact_name').value, // contact_name
-            phone: document.getElementById('phone').value,
-            address: document.getElementById('address').value
-        };
+    const html = currentAddresses.map(address => createAddressItemHTML(address)).join('');
+    addressListEl.innerHTML = html;
 
-        const contactId = contactIdInput.value;
-
-        if (contactId) {
-            // Trường hợp sửa
-            updateAddress(contactId, data);
-        } else {
-            // Trường hợp thêm mới
-            addNewAddress(data);
+    // Attach event listeners
+    currentAddresses.forEach(address => {
+        const item = addressListEl.querySelector(`[data-id="${address.contactId}"]`);
+        if (item) {
+            item.querySelector('.edit-btn').addEventListener('click', () => editAddress(address.contactId));
+            item.querySelector('.delete-btn').addEventListener('click', () => deleteAddress(address.contactId));
         }
     });
 }
 
-function attachCancelHandler() {
-    cancelBtn.addEventListener('click', resetForm);
+function createAddressItemHTML(address) {
+    const isEditing = isEditMode && contactIdInput.value === address.contactId;
+
+    return `
+        <div class="address-item ${isEditing ? 'editing' : ''}" data-id="${address.contactId}">
+            <h4>
+                <i class="fa fa-map-pin"></i>
+                ${escapeHtml(address.contactName)}
+            </h4>
+            <p>
+                <i class="fa fa-phone"></i>
+                ${escapeHtml(address.phone)}
+            </p>
+            <p>
+                <i class="fa fa-map-marker-alt"></i>
+                ${escapeHtml(address.address)}
+            </p>
+            <div class="address-actions">
+                <button type="button" class="edit-btn">
+                    <i class="fa fa-edit"></i> Sửa
+                </button>
+                <button type="button" class="delete-btn">
+                    <i class="fa fa-trash"></i> Xóa
+                </button>
+            </div>
+        </div>
+    `;
 }
 
-// Hàm quản lý Loader thủ công (thay thế cho getLoader)
-function startLoading(btn, text) {
-    btn.disabled = true;
-    btn.classList.add('loading');
-    btn.innerHTML = `<i class="fa fa-spinner fa-spin"></i> ${text}...`;
-}
-
-function stopLoading(btn, originalText = 'Lưu Địa Chỉ') {
-    btn.disabled = false;
-    btn.classList.remove('loading');
-    btn.innerHTML = originalText;
-}
-
-function resetForm() {
-    addressForm.reset();
-    contactIdInput.value = '';
-    saveBtn.innerHTML = 'Lưu Địa Chỉ';
-    cancelBtn.style.display = 'none';
-}
-
+// CRUD Operations
 async function addNewAddress(data) {
-    startLoading(saveBtn, 'Đang thêm');
+    startButtonLoading('Đang thêm...');
 
-    // Sử dụng endpoint POST /contact
     const result = await callAPI("/contacts", "POST", data);
 
     if (result.success) {
-        alert("Thêm địa chỉ mới thành công!");
+        showNotification("Thêm địa chỉ mới thành công!");
         resetForm();
-        await loadAddresses(); // Tải lại danh sách
+        const newAddress = { contactId: result.data.contactId, ...data };
+        currentAddresses.unshift(newAddress);
+        renderAddressList();
     } else {
-        alert(`Lỗi khi thêm: ${result.message || 'Không rõ'}`);
+        showNotification(`Lỗi khi thêm: ${result.message || 'Không rõ'}`, 'error');
     }
 
-    stopLoading(saveBtn);
+    stopButtonLoading();
 }
 
 async function updateAddress(id, data) {
-    startLoading(saveBtn, 'Đang cập nhật');
+    startButtonLoading('Đang cập nhật...');
 
-    // Gửi cả contactId và các trường dữ liệu. Endpoint PUT /contact
     const updateData = { contactId: id, ...data };
     const result = await callAPI("/contacts", "PUT", updateData);
 
     if (result.success) {
-        alert("Cập nhật địa chỉ thành công!");
+        showNotification("Cập nhật địa chỉ thành công!");
         resetForm();
-        await loadAddresses(); // Tải lại danh sách
+        const index = currentAddresses.findIndex(addr => addr.contactId === id);
+        if (index !== -1) {
+            currentAddresses[index] = { ...currentAddresses[index], ...data };
+        }
+        renderAddressList();
     } else {
-        alert(`Lỗi khi cập nhật: ${result.message || 'Không rõ'}`);
+        showNotification(`Lỗi khi cập nhật: ${result.message || 'Không rõ'}`, 'error');
     }
 
-    stopLoading(saveBtn, 'Lưu Địa Chỉ');
+    stopButtonLoading();
 }
 
 async function deleteAddress(id) {
     if (!confirm("Bạn có chắc chắn muốn xóa địa chỉ này?")) return;
 
-    // Sử dụng endpoint DELETE /contact/{contactId}
     const result = await callAPI(`/contacts/${id}`, "DELETE");
 
     if (result.success) {
-        alert("Xóa địa chỉ thành công!");
-        await loadAddresses();
+        showNotification("Xóa địa chỉ thành công!");
+
+        // If deleting the address being edited, reset form
+        if (contactIdInput.value === id) {
+            resetForm();
+        }
+
+        currentAddresses = currentAddresses.filter(addr => addr.contactId !== id);
+
+        renderAddressList();;
     } else {
-        alert(`Lỗi xóa: ${result.message || 'Không rõ'}`);
+        showNotification(`Lỗi xóa: ${result.message || 'Không rõ'}`, 'error');
     }
 }
 
 function editAddress(id) {
     const addressToEdit = currentAddresses.find(addr => addr.contactId === id);
+
     if (!addressToEdit) {
-        alert("Không tìm thấy địa chỉ để sửa.");
+        showNotification("Không tìm thấy địa chỉ để sửa.", 'error');
         return;
     }
 
-    // Load dữ liệu lên form
+    // Populate form
     contactIdInput.value = addressToEdit.contactId;
     document.getElementById('contact_name').value = addressToEdit.contactName;
     document.getElementById('phone').value = addressToEdit.phone;
     document.getElementById('address').value = addressToEdit.address;
 
-    // Thay đổi trạng thái nút
-    saveBtn.innerHTML = 'Cập Nhật Địa Chỉ';
+    // Update UI
+    isEditMode = true;
+    formTitle.innerHTML = '<i class="fa fa-edit"></i> Sửa Địa chỉ';
+    saveBtnText.textContent = 'Cập nhật Địa chỉ';
+    saveBtn.style.backgroundColor = 'var(--primary-color)';
     cancelBtn.style.display = 'block';
+
+    // Re-render to highlight editing item
+    renderAddressList();
+
+    // Focus on first input
+    document.getElementById('contact_name').focus();
+}
+
+// Form Management
+function resetForm() {
+    addressForm.reset();
+    contactIdInput.value = '';
+    isEditMode = false;
+
+    formTitle.innerHTML = '<i class="fa fa-plus-circle"></i> Thêm Địa chỉ Mới';
+    saveBtnText.textContent = 'Lưu Địa chỉ';
+    saveBtn.style.backgroundColor = '';
+    cancelBtn.style.display = 'none';
+
+    // Re-render to remove editing highlight
+    renderAddressList();
+}
+
+// UI Helper Functions
+function startButtonLoading(text) {
+    saveBtn.disabled = true;
+    saveBtn.classList.add('loading');
+    saveBtnText.innerHTML = `<i class="fa fa-spinner fa-spin"></i> ${text}`;
+}
+
+function stopButtonLoading() {
+    saveBtn.disabled = false;
+    saveBtn.classList.remove('loading');
+    saveBtnText.innerHTML = isEditMode ? 'Cập nhật Địa chỉ' : 'Lưu Địa chỉ';
+}
+
+function showLoading() {
+    addressListEl.innerHTML = `
+        <p class="loading-message">
+            <i class="fa fa-spinner fa-spin"></i> Đang tải danh sách địa chỉ...
+        </p>
+    `;
+    updateAddressCount(0);
+}
+
+function showEmptyState() {
+    addressListEl.innerHTML = `
+        <div class="empty-state">
+            <i class="fa fa-map-marked-alt"></i>
+            <h3>Chưa có địa chỉ nào</h3>
+            <p>Hãy thêm địa chỉ giao hàng đầu tiên của bạn!</p>
+        </div>
+    `;
+    updateAddressCount(0);
+}
+
+function showError(message) {
+    addressListEl.innerHTML = `
+        <div class="empty-state">
+            <i class="fa fa-exclamation-circle"></i>
+            <h3>Lỗi tải dữ liệu</h3>
+            <p>${escapeHtml(message)}</p>
+        </div>
+    `;
+    updateAddressCount(0);
+}
+
+function updateAddressCount(count) {
+    if (addressCount) {
+        addressCount.textContent = count > 0 ? `(${count})` : '';
+    }
+}
+
+function showNotification(message, type = 'success') {
+    const noti = document.getElementById('notification');
+
+    noti.innerText = message;
+    noti.className = type + " show";
+
+    // Hiện
+    noti.classList.remove("hidden");
+
+    // 3 giây sau tự biến mất
+    setTimeout(() => {
+        noti.classList.remove("show");
+        setTimeout(() => noti.classList.add("hidden"), 500);
+    }, 3000);
+}
+
+// Utility Functions
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
 }

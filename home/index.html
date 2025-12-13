@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Tạp Hóa Xanh - Trang chủ</title>
+    <title>Tạp Hóa Xanh</title>
 
     <link rel="stylesheet" href="../dialog/index.css" />
     <link rel="stylesheet" href="../public/public.css" />
@@ -24,14 +24,12 @@
         font-family: "Segoe UI", sans-serif;
         display: block !important;
       }
-
-      /* Đẩy nội dung xuống sau navbar */
       .main-container {
         margin-top: 70px;
         padding-bottom: 50px;
       }
 
-      /* Banner */
+      /* BANNER */
       .hero {
         margin: 20px 30px;
         border-radius: 16px;
@@ -72,9 +70,14 @@
         font-weight: bold;
         cursor: pointer;
         font-size: 1.1rem;
+        transition: 0.2s;
+      }
+      .hero button:hover {
+        transform: translateY(-3px);
+        background: #059669;
       }
 
-      /* Product Section (Từng tầng) */
+      /* PRODUCT GRID */
       .category-section {
         background: white;
         margin: 30px 30px;
@@ -152,6 +155,10 @@
         margin-bottom: 5px;
         height: 40px;
         overflow: hidden;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        line-height: 1.4;
       }
       .p-price {
         color: #ef4444;
@@ -159,39 +166,7 @@
         font-size: 1.1rem;
       }
 
-      /* Admin Toolbar */
-      .admin-toolbar {
-        background: white;
-        margin: 20px 30px;
-        padding: 15px;
-        border-radius: 12px;
-        border-left: 5px solid #f59e0b;
-        display: flex;
-        gap: 15px;
-        align-items: center;
-        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
-      }
-      .admin-input {
-        flex: 1;
-        padding: 10px;
-        border: 1px solid #ddd;
-        border-radius: 6px;
-        outline: none;
-      }
-      .admin-btn {
-        background: #f59e0b;
-        color: white;
-        border: none;
-        padding: 10px 20px;
-        border-radius: 6px;
-        cursor: pointer;
-        font-weight: bold;
-      }
-      .admin-only {
-        display: none !important;
-      }
-
-      /* Custom Style cho các thành phần nhét vào Navbar (Search, Cart...) */
+      /* Custom Navbar Items */
       .nav-cat-btn {
         background: white;
         border: 1px solid #e5e7eb;
@@ -251,10 +226,6 @@
         font-size: 1.4rem;
         position: relative;
         margin-left: 10px;
-        text-decoration: none;
-      }
-      .nav-icon-link:hover {
-        color: #10b981;
       }
       .badge {
         position: absolute;
@@ -266,6 +237,69 @@
         padding: 2px 6px;
         border-radius: 10px;
         border: 2px solid white;
+      }
+
+      /* Admin Toolbar */
+      .admin-toolbar {
+        background: white;
+        margin: 20px 30px;
+        padding: 15px;
+        border-radius: 12px;
+        border-left: 5px solid #f59e0b;
+        display: flex;
+        gap: 15px;
+        align-items: center;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+      }
+      .admin-input {
+        flex: 1;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        outline: none;
+      }
+      .admin-btn {
+        background: #f59e0b;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-weight: bold;
+      }
+      .admin-only {
+        display: none !important;
+      }
+
+      /* >>> LOADING SPINNER (NEW) <<< */
+      #loadingOverlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(255, 255, 255, 0.8);
+        z-index: 9999;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        backdrop-filter: blur(2px);
+      }
+      .spinner {
+        width: 50px;
+        height: 50px;
+        border: 5px solid #ecfdf5;
+        border-top: 5px solid #10b981;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+      }
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
       }
 
       /* Chat & Toast */
@@ -299,19 +333,17 @@
         display: flex;
         flex-direction: column;
         gap: 10px;
-        pointer-events: none;
       }
       .toast {
-        pointer-events: auto;
         background: white;
         padding: 15px 20px;
         border-radius: 8px;
         box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
         border-left: 4px solid #10b981;
-        animation: slideIn 0.3s;
         display: flex;
         align-items: center;
         gap: 10px;
+        animation: slideIn 0.3s;
       }
       @keyframes slideIn {
         from {
@@ -335,6 +367,8 @@
     </style>
   </head>
   <body>
+    <div id="loadingOverlay"><div class="spinner"></div></div>
+
     <div class="main-container">
       <div class="admin-toolbar admin-only">
         <strong style="color: #b45309"
@@ -369,7 +403,7 @@
     <button id = "test">Xem cách sử dụng API</button>
     <button><a href="../Thanh/Category/index.html">Quản lý Category (Thành)</a></button>
 
-    <div class="chat-btn" onclick="alert('Chat support!')">
+    <div class="chat-btn" onclick="alert('Chat với nhân viên!')">
       <i class="fa-solid fa-comments"></i>
     </div>
     <div id="toast-container"></div>
