@@ -1,11 +1,11 @@
 export const ProductLogic = {
-    // Tạo tất cả combinations của variants từ attributes
+    // Generate all variant combinations from attributes
     generateVariants: (selectedAttributes) => {
         if (!selectedAttributes || selectedAttributes.length === 0) {
             return [];
         }
 
-        // Lọc bỏ attributes không có values
+        // Filter out attributes without values
         const validAttributes = selectedAttributes.filter(attr => 
             attr.values && attr.values.length > 0
         );
@@ -14,7 +14,7 @@ export const ProductLogic = {
             return [];
         }
 
-        // Tạo cartesian product
+        // Create cartesian product
         const combinations = validAttributes.reduce((acc, attribute) => {
             if (acc.length === 0) {
                 return attribute.values.map(value => [{
@@ -39,14 +39,15 @@ export const ProductLogic = {
             return newCombinations;
         }, []);
 
-        // Chuyển đổi sang format variants
+        // Convert to variant format
         return combinations.map((combo, index) => ({
             id: `variant_${Date.now()}_${index}`,
-            variantId: null, // sẽ được tạo bởi backend
+            variantId: null,
             combination: combo,
             displayName: combo.map(c => c.valueName).join(' - '),
             imageName: null,
             imageUrl: null,
+            imageFile: null,
             priceOriginal: 0,
             price: 0,
             stock: 0,
@@ -55,24 +56,7 @@ export const ProductLogic = {
         }));
     },
 
-    // Parse attribute values từ string (ngăn cách bởi dấu phẩy)
-    parseAttributeValues: (inputString) => {
-        if (!inputString || typeof inputString !== 'string') {
-            return [];
-        }
-        
-        return inputString
-            .split(',')
-            .map(v => v.trim())
-            .filter(v => v.length > 0)
-            .map((name, index) => ({
-                id: `temp_${Date.now()}_${index}`,
-                attributeValueId: null,
-                name: name
-            }));
-    },
-
-    // Validate dữ liệu sản phẩm trước khi gửi
+    // Validate product data before submission
     validateProduct: (productData) => {
         const errors = [];
 
@@ -92,17 +76,17 @@ export const ProductLogic = {
             errors.push('Giá bán không được lớn hơn giá gốc');
         }
 
-        // Validate variants nếu có
+        // Validate variants if present
         if (productData.variants && productData.variants.length > 0) {
             productData.variants.forEach((variant, index) => {
                 if (!variant.price || variant.price <= 0) {
-                    errors.push(`Biến thể ${index + 1}: Giá bán phải lớn hơn 0`);
+                    errors.push(`Biến thể ${index + 1} (${variant.displayName}): Giá bán phải lớn hơn 0`);
                 }
                 if (!variant.priceOriginal || variant.priceOriginal <= 0) {
-                    errors.push(`Biến thể ${index + 1}: Giá gốc phải lớn hơn 0`);
+                    errors.push(`Biến thể ${index + 1} (${variant.displayName}): Giá gốc phải lớn hơn 0`);
                 }
                 if (variant.price > variant.priceOriginal) {
-                    errors.push(`Biến thể ${index + 1}: Giá bán không được lớn hơn giá gốc`);
+                    errors.push(`Biến thể ${index + 1} (${variant.displayName}): Giá bán không được lớn hơn giá gốc`);
                 }
             });
         }
@@ -113,12 +97,13 @@ export const ProductLogic = {
         };
     },
 
-    // Format dữ liệu để gửi lên server
+    // Format product data to send to server
     formatProductData: (formData, selectedAttributes, variants) => {
         const productDetailDTO = {
             productId: null,
             productName: formData.productName,
-            description: formData.description,
+            description: formData.description || "",
+            imageName: null,
             imageUrl: null,
             priceOriginal: parseFloat(formData.priceOriginal),
             price: parseFloat(formData.price),
@@ -142,24 +127,34 @@ export const ProductLogic = {
         }));
 
         // Format variants
-        const formattedVariants = variants.map(variant => ({
-            variantId: variant.variantId,
-            imageName: variant.imageName,
-            priceOriginal: parseFloat(variant.priceOriginal),
-            price: parseFloat(variant.price),
-            stock: parseInt(variant.stock) || 0,
-            sold: 0,
-            imageUrl: variant.imageUrl,
-            active: variant.active
-        }));
+        const formattedVariants = variants.map((variant, index) => {
+            let variantImageName = null;
+            if (variant.imageFile) {
+                const fileName = variant.imageFile.name;
+                variantImageName = fileName.includes('.')
+                    ? fileName.substring(0, fileName.lastIndexOf('.'))
+                    : fileName;
+            }
 
-        // Format variantValues (mapping giữa attributeValue và variant)
+            return {
+                variantId: `variant_${index}`,
+                imageName: variantImageName,
+                imageUrl: null,
+                priceOriginal: parseFloat(variant.priceOriginal) || 0,
+                price: parseFloat(variant.price) || 0,
+                stock: parseInt(variant.stock) || 0,
+                sold: 0,
+                active: variant.active
+            };
+        });
+
+        // Format variantValues (mapping between attributeValue and variant)
         const variantValues = [];
-        variants.forEach(variant => {
+        variants.forEach((variant, variantIndex) => {
             variant.combination.forEach(combo => {
                 variantValues.push({
-                    attributeValueId: combo.valueId,
-                    variantId: variant.variantId
+                    variantId: `variant_${variantIndex}`,
+                    attributeValueId: combo.valueId
                 });
             });
         });
