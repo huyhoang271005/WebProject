@@ -21,6 +21,7 @@ export const ProductService = {
         return res?.data?.listData || [];
     },
 
+    // GỬI FORMDATA - isMultipart = true
     create: async (formData) => {
         return await callAPI("/products", "POST", formData, true);
     }
