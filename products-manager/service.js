@@ -1,11 +1,6 @@
-import { callAPI } from "../public/api.js";
+import { callAPI } from '../public/api.js';
 
 export const ProductService = {
-    getAll: async () => {
-        const res = await callAPI(`/auth/products`, "POST");
-        return res?.data?.listData || [];
-    },
-
     getCategories: async () => {
         const res = await callAPI(`/auth/categories`, "GET");
         return res?.data?.listData || [];
@@ -21,8 +16,8 @@ export const ProductService = {
         return res?.data?.listData || [];
     },
 
-    // GỬI FORMDATA - isMultipart = true
-    create: async (formData) => {
-        return await callAPI("/products", "POST", formData, true);
+    createProduct: async (productData) => {
+        const res = await callAPI(`/products`, "POST", productData);
+        return res;
     }
 };
