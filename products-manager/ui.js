@@ -119,10 +119,11 @@ export const ProductUI = {
                 </div>
                 <div class="col-md-6">
                     <label class="form-label">Giá trị thuộc tính</label>
-                    <select class="form-select attribute-values-select" multiple disabled size="4">
-                        <option value="">Vui lòng chọn thuộc tính trước</option>
-                    </select>
-                    <small class="text-muted">Chọn một hoặc nhiều giá trị (giữ Ctrl/Cmd để chọn nhiều)</small>
+                    <textarea class="form-control attribute-values-input" 
+                              rows="2"
+                              placeholder="VD: Đỏ, Xanh, Vàng" 
+                              disabled></textarea>
+                    <small class="text-muted">Nhập các giá trị ngăn cách bởi dấu phẩy. Nhấn Enter để xuống hàng nếu cần.</small>
                 </div>
                 <div class="col-md-1">
                     <button type="button" class="btn btn-danger btn-sm w-100 remove-attr-btn">Xóa</button>
@@ -133,34 +134,26 @@ export const ProductUI = {
         list.appendChild(row);
 
         const attrSelect = row.querySelector('.attribute-select');
-        const valuesSelect = row.querySelector('.attribute-values-select');
+        const valuesInput = row.querySelector('.attribute-values-input');
 
         // Event: Khi chọn attribute
         attrSelect.addEventListener('change', (e) => {
             const selectedAttrId = e.target.value;
             
             if (selectedAttrId) {
-                const attribute = ProductUI.state.attributes.find(a => a.attributeId === selectedAttrId);
-                
-                if (attribute && attribute.attributeValues && attribute.attributeValues.length > 0) {
-                    valuesSelect.disabled = false;
-                    valuesSelect.innerHTML = attribute.attributeValues.map(val => 
-                        `<option value="${val.attributeValueId}">${val.attributeValueName}</option>`
-                    ).join('');
-                } else {
-                    valuesSelect.disabled = true;
-                    valuesSelect.innerHTML = '<option value="">Thuộc tính này chưa có giá trị</option>';
-                }
+                valuesInput.disabled = false;
+                valuesInput.placeholder = 'VD: Đỏ, Xanh, Vàng';
             } else {
-                valuesSelect.disabled = true;
-                valuesSelect.innerHTML = '<option value="">Vui lòng chọn thuộc tính trước</option>';
+                valuesInput.disabled = true;
+                valuesInput.value = '';
+                valuesInput.placeholder = 'Vui lòng chọn thuộc tính trước';
             }
             
             ProductUI.updateSelectedAttributes();
         });
 
-        // Event: Khi chọn values
-        valuesSelect.addEventListener('change', () => {
+        // Event: Khi nhập values
+        valuesInput.addEventListener('input', () => {
             ProductUI.updateSelectedAttributes();
         });
 
@@ -178,26 +171,32 @@ export const ProductUI = {
 
         rows.forEach(row => {
             const attrSelect = row.querySelector('.attribute-select');
-            const valuesSelect = row.querySelector('.attribute-values-select');
+            const valuesInput = row.querySelector('.attribute-values-input');
             
             const attributeId = attrSelect.value;
-            const selectedOptions = Array.from(valuesSelect.selectedOptions);
+            const valuesString = valuesInput.value;
 
-            if (attributeId && selectedOptions.length > 0) {
+            if (attributeId && valuesString.trim()) {
                 const attribute = ProductUI.state.attributes.find(a => a.attributeId === attributeId);
                 
                 if (attribute) {
-                    const values = selectedOptions.map(option => ({
-                        id: option.value,
-                        attributeValueId: option.value,
-                        name: option.textContent
-                    }));
+                    const values = valuesString
+                        .split(',')
+                        .map(v => v.trim())
+                        .filter(v => v.length > 0)
+                        .map((name, index) => ({
+                            id: `${attributeId}_${index}_${Date.now()}`,
+                            attributeValueId: null,
+                            name: name
+                        }));
 
-                    selectedAttributes.push({
-                        attributeId: attribute.attributeId,
-                        attributeName: attribute.attributeName,
-                        values: values
-                    });
+                    if (values.length > 0) {
+                        selectedAttributes.push({
+                            attributeId: attribute.attributeId,
+                            attributeName: attribute.attributeName,
+                            values: values
+                        });
+                    }
                 }
             }
         });
