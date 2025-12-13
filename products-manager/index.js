@@ -138,7 +138,7 @@ async function handleSave(e) {
     spinner.classList.remove("d-none");
 
     try {
-        // Send request
+        // QUAN TRỌNG: Gửi FormData, KHÔNG phải JSON
         const res = await ProductService.createProduct(formData);
         console.log("=== RESPONSE ===", res);
         
@@ -146,11 +146,13 @@ async function handleSave(e) {
             await showDialog("success", "Tạo sản phẩm thành công!");
             resetForm();
         } else {
-            await showDialog("error", res?.message || "Có lỗi xảy ra");
+            const errorMsg = res?.data?.[0]?.error || res?.message || "Có lỗi xảy ra";
+            await showDialog("error", errorMsg);
+            console.error("Error details:", res);
         }
     } catch (error) {
         console.error("Error:", error);
-        await showDialog("error", "Có lỗi xảy ra khi tạo sản phẩm");
+        await showDialog("error", "Có lỗi xảy ra khi tạo sản phẩm: " + error.message);
     } finally {
         // Re-enable submit button
         submitBtn.disabled = false;
