@@ -5,7 +5,6 @@ export const ProductLogic = {
             return [];
         }
 
-        // Lọc bỏ attributes không có values
         const validAttributes = selectedAttributes.filter(attr => 
             attr.values && attr.values.length > 0
         );
@@ -14,7 +13,6 @@ export const ProductLogic = {
             return [];
         }
 
-        // Tạo cartesian product
         const combinations = validAttributes.reduce((acc, attribute) => {
             if (acc.length === 0) {
                 return attribute.values.map(value => [{
@@ -39,7 +37,6 @@ export const ProductLogic = {
             return newCombinations;
         }, []);
 
-        // Chuyển đổi sang format variants
         return combinations.map((combo, index) => ({
             id: `variant_${Date.now()}_${index}`,
             variantId: null,
@@ -56,7 +53,6 @@ export const ProductLogic = {
         }));
     },
 
-    // Validate dữ liệu sản phẩm trước khi gửi
     validateProduct: (productData) => {
         const errors = [];
 
@@ -76,7 +72,6 @@ export const ProductLogic = {
             errors.push('Giá bán không được lớn hơn giá gốc');
         }
 
-        // Validate variants nếu có
         if (productData.variants && productData.variants.length > 0) {
             productData.variants.forEach((variant, index) => {
                 if (!variant.price || variant.price <= 0) {
@@ -97,11 +92,10 @@ export const ProductLogic = {
         };
     },
 
-    // Format dữ liệu để gửi lên server (FormData)
     formatProductData: (formData, selectedAttributes, variants, mainImageFile) => {
         const formDataToSend = new FormData();
 
-        // 1. Thêm productDetailDTO
+        // 1. Tạo productDetailDTO object
         const productDetailDTO = {
             productId: null,
             productName: formData.productName,
@@ -117,14 +111,8 @@ export const ProductLogic = {
             createdAt: null,
             updatedAt: null
         };
-        formDataToSend.append('productDetailDTO', JSON.stringify(productDetailDTO));
 
-        // 2. Thêm ảnh chính (nếu có)
-        if (mainImageFile) {
-            formDataToSend.append('mainImage', mainImageFile);
-        }
-
-        // 3. Thêm attributes
+        // 2. Tạo attributes array
         const attributes = selectedAttributes.map(attr => ({
             attributeId: attr.attributeId,
             attributeName: attr.attributeName,
@@ -133,9 +121,8 @@ export const ProductLogic = {
                 attributeValueName: v.name
             }))
         }));
-        formDataToSend.append('attributes', JSON.stringify(attributes));
 
-        // 4. Thêm variants
+        // 3. Tạo variants array
         const formattedVariants = variants.map(variant => ({
             variantId: variant.variantId,
             imageName: variant.imageName,
@@ -146,16 +133,8 @@ export const ProductLogic = {
             imageUrl: variant.imageUrl,
             active: variant.active
         }));
-        formDataToSend.append('variants', JSON.stringify(formattedVariants));
 
-        // 5. Thêm ảnh của từng variant
-        variants.forEach((variant, index) => {
-            if (variant.imageFile) {
-                formDataToSend.append(`variantImages`, variant.imageFile);
-            }
-        });
-
-        // 6. Thêm variantValues (mapping giữa attributeValue và variant)
+        // 4. Tạo variantValues array
         const variantValues = [];
         variants.forEach(variant => {
             variant.combination.forEach(combo => {
@@ -165,7 +144,30 @@ export const ProductLogic = {
                 });
             });
         });
-        formDataToSend.append('variantValues', JSON.stringify(variantValues));
+
+        // 5. Append JSON data như một Blob với content-type application/json
+        const jsonData = {
+            productDetailDTO,
+            attributes,
+            variants: formattedVariants,
+            variantValues
+        };
+        
+        const jsonBlob = new Blob([JSON.stringify(jsonData)], {
+            type: 'application/json'
+        });
+        formDataToSend.append('data', jsonBlob);
+
+        // 6. Append files
+        if (mainImageFile) {
+            formDataToSend.append('mainImage', mainImageFile);
+        }
+
+        variants.forEach((variant, index) => {
+            if (variant.imageFile) {
+                formDataToSend.append('variantImages', variant.imageFile);
+            }
+        });
 
         return formDataToSend;
     }
