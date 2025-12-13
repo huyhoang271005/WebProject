@@ -178,11 +178,11 @@ window.handleVariantChange = async (selectElement) => {
 
 // === 4. XỬ LÝ SỰ KIỆN: TĂNG GIẢM SỐ LƯỢNG (PUT) ===
 window.updateQty = async (cartItemId, delta) => {
-    if (isUpdating) return; // Chặn click liên tục
+   if (isUpdating) return;
     isUpdating = true;
 
     try {
-        // Tìm thông tin sản phẩm trong dữ liệu global để check tồn kho
+        // 1. Tìm thông tin sản phẩm
         let foundItem = null;
         let foundVariant = null;
 
@@ -190,6 +190,7 @@ window.updateQty = async (cartItemId, delta) => {
             const item = p.cartItemDTOList.find(i => i.cartItemId === cartItemId);
             if (item) {
                 foundItem = item;
+                // Tìm variant tương ứng
                 foundVariant = p.productVariantsDTOList.find(v => v.variantId === item.variantId);
                 break;
             }
@@ -199,9 +200,9 @@ window.updateQty = async (cartItemId, delta) => {
 
         const newQty = foundItem.quantity + delta;
 
-        // Validate
+        // 2. Validate
         if (newQty < 1) {
-            await removeItem(cartItemId); // Giảm về 0 thì hỏi xóa
+            await removeItem(cartItemId);
             isUpdating = false;
             return;
         }
@@ -212,22 +213,25 @@ window.updateQty = async (cartItemId, delta) => {
             return;
         }
 
-        // Gọi API Cập nhật: PUT /auth/carts
+        // 3. Chuẩn bị dữ liệu gửi đi (Đã bổ sung variantId)
         const payload = {
             cartItemId: cartItemId,
+            variantId: foundItem.variantId, // <--- THÊM DÒNG QUAN TRỌNG NÀY
             quantity: newQty
         };
 
+        // 4. Gọi API
         const res = await callAPI('/auth/carts', 'PUT', payload);
 
         if (res.success) {
-            await loadCart(); // Load lại để cập nhật tổng tiền chuẩn xác từ server
+            await loadCart();
         } else {
             await showDialog("error", res.message || "Lỗi cập nhật số lượng");
         }
 
     } catch (e) {
         console.error(e);
+        await showDialog("error", "Có lỗi xảy ra");
     } finally {
         isUpdating = false;
     }
