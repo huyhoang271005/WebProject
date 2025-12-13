@@ -58,7 +58,7 @@ function setupEventListeners() {
                 form.reset();
                 ProductUI.state.selectedAttributes = [];
                 ProductUI.state.variants = [];
-                ProductUI.state.mainImageName = null;
+                ProductUI.state.mainImageFile = null;
                 document.getElementById('mainImagePreview').innerHTML = '';
                 document.getElementById('selectedAttributesList').innerHTML = '';
                 document.getElementById('variantsContainer').innerHTML = '';
@@ -82,7 +82,6 @@ async function handleFormSubmit(e) {
         const formData = {
             productName: document.getElementById('productName').value.trim(),
             description: document.getElementById('description').value.trim(),
-            imageName: ProductUI.state.mainImageName,
             priceOriginal: document.getElementById('priceOriginal').value,
             price: document.getElementById('price').value,
             categoryId: document.getElementById('categoryId').value || null,
@@ -100,14 +99,18 @@ async function handleFormSubmit(e) {
             return;
         }
 
-        // Format data
+        // Format data thành FormData
         const productData = ProductLogic.formatProductData(
             formData,
             ProductUI.state.selectedAttributes,
-            ProductUI.state.variants
+            ProductUI.state.variants,
+            ProductUI.state.mainImageFile
         );
 
-        console.log('Dữ liệu gửi đi:', productData);
+        console.log('Dữ liệu gửi đi (FormData):');
+        for (let pair of productData.entries()) {
+            console.log(pair[0], pair[1]);
+        }
 
         // Call API
         const response = await ProductService.createProduct(productData);

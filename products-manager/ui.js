@@ -5,7 +5,7 @@ export const ProductUI = {
         attributes: [],
         selectedAttributes: [],
         variants: [],
-        mainImageName: null
+        mainImageFile: null
     },
 
     // Initialize dropdowns với search
