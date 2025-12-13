@@ -23,20 +23,54 @@ export const ProductUI = {
             select.appendChild(option);
         });
 
-        // Add search functionality
+        // Add search functionality với datalist
         const wrapper = select.parentElement;
         const searchInput = document.createElement('input');
         searchInput.type = 'text';
         searchInput.className = 'form-control mb-2';
-        searchInput.placeholder = 'Tìm kiếm...';
+        searchInput.placeholder = `Tìm kiếm...`;
+        searchInput.setAttribute('list', `${selectId}-datalist`);
         
+        // Tạo datalist cho autocomplete
+        const datalist = document.createElement('datalist');
+        datalist.id = `${selectId}-datalist`;
+        items.forEach(item => {
+            const option = document.createElement('option');
+            option.value = item[displayField];
+            option.setAttribute('data-id', item[valueField]);
+            datalist.appendChild(option);
+        });
+        wrapper.appendChild(datalist);
+
+        // Event khi nhập search
         searchInput.addEventListener('input', (e) => {
             const searchTerm = e.target.value.toLowerCase();
+            
+            // Filter options trong select
             Array.from(select.options).forEach(option => {
                 if (option.value === '') return;
                 const text = option.textContent.toLowerCase();
                 option.style.display = text.includes(searchTerm) ? '' : 'none';
             });
+
+            // Tự động chọn nếu match chính xác
+            const exactMatch = items.find(item => 
+                item[displayField].toLowerCase() === searchTerm
+            );
+            if (exactMatch) {
+                select.value = exactMatch[valueField];
+                select.dispatchEvent(new Event('change'));
+            }
+        });
+
+        // Event khi chọn từ datalist
+        searchInput.addEventListener('change', (e) => {
+            const selectedText = e.target.value;
+            const matchedItem = items.find(item => item[displayField] === selectedText);
+            if (matchedItem) {
+                select.value = matchedItem[valueField];
+                select.dispatchEvent(new Event('change'));
+            }
         });
 
         wrapper.insertBefore(searchInput, select);
@@ -60,7 +94,7 @@ export const ProductUI = {
         `;
 
         document.getElementById('addAttributeBtn').addEventListener('click', () => {
-            this.addAttributeRow();
+            ProductUI.addAttributeRow();
         });
     },
 
@@ -76,6 +110,14 @@ export const ProductUI = {
             <div class="row align-items-end">
                 <div class="col-md-5">
                     <label class="form-label">Chọn thuộc tính</label>
+                    <input type="text" class="form-control mb-2 attribute-search" 
+                           placeholder="Tìm kiếm thuộc tính..." 
+                           list="${rowId}-attr-list">
+                    <datalist id="${rowId}-attr-list">
+                        ${ProductUI.state.attributes.map(attr => 
+                            `<option value="${attr.attributeName}" data-id="${attr.attributeId}"></option>`
+                        ).join('')}
+                    </datalist>
                     <select class="form-select attribute-select">
                         <option value="">-- Chọn thuộc tính --</option>
                         ${ProductUI.state.attributes.map(attr => 
@@ -98,15 +140,41 @@ export const ProductUI = {
 
         list.appendChild(row);
 
+        const attrSearch = row.querySelector('.attribute-search');
         const attrSelect = row.querySelector('.attribute-select');
         const valuesSelect = row.querySelector('.attribute-values-select');
 
-        // Event: Khi chọn attribute
+        // Event: Search attribute
+        attrSearch.addEventListener('input', (e) => {
+            const searchTerm = e.target.value.toLowerCase();
+            Array.from(attrSelect.options).forEach(option => {
+                if (option.value === '') return;
+                const text = option.textContent.toLowerCase();
+                option.style.display = text.includes(searchTerm) ? '' : 'none';
+            });
+        });
+
+        // Event: Chọn từ datalist autocomplete
+        attrSearch.addEventListener('change', (e) => {
+            const selectedName = e.target.value;
+            const matchedAttr = ProductUI.state.attributes.find(a => a.attributeName === selectedName);
+            if (matchedAttr) {
+                attrSelect.value = matchedAttr.attributeId;
+                attrSelect.dispatchEvent(new Event('change'));
+            }
+        });
+
+        // Event: Khi chọn attribute từ select
         attrSelect.addEventListener('change', (e) => {
             const selectedAttrId = e.target.value;
             
             if (selectedAttrId) {
                 const attribute = ProductUI.state.attributes.find(a => a.attributeId === selectedAttrId);
+                
+                // Update search input
+                if (attribute) {
+                    attrSearch.value = attribute.attributeName;
+                }
                 
                 if (attribute && attribute.attributeValues && attribute.attributeValues.length > 0) {
                     valuesSelect.disabled = false;
@@ -118,6 +186,7 @@ export const ProductUI = {
                     valuesSelect.innerHTML = '<option value="">Thuộc tính này chưa có giá trị</option>';
                 }
             } else {
+                attrSearch.value = '';
                 valuesSelect.disabled = true;
                 valuesSelect.innerHTML = '<option value="">Vui lòng chọn thuộc tính trước</option>';
             }
