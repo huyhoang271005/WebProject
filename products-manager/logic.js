@@ -42,34 +42,18 @@ export const ProductLogic = {
         // Chuyển đổi sang format variants
         return combinations.map((combo, index) => ({
             id: `variant_${Date.now()}_${index}`,
-            variantId: null, // sẽ được tạo bởi backend
+            variantId: null,
             combination: combo,
             displayName: combo.map(c => c.valueName).join(' - '),
             imageName: null,
             imageUrl: null,
+            imageFile: null,
             priceOriginal: 0,
             price: 0,
             stock: 0,
             sold: 0,
             active: true
         }));
-    },
-
-    // Parse attribute values từ string (ngăn cách bởi dấu phẩy)
-    parseAttributeValues: (inputString) => {
-        if (!inputString || typeof inputString !== 'string') {
-            return [];
-        }
-        
-        return inputString
-            .split(',')
-            .map(v => v.trim())
-            .filter(v => v.length > 0)
-            .map((name, index) => ({
-                id: `temp_${Date.now()}_${index}`,
-                attributeValueId: null,
-                name: name
-            }));
     },
 
     // Validate dữ liệu sản phẩm trước khi gửi
@@ -113,8 +97,11 @@ export const ProductLogic = {
         };
     },
 
-    // Format dữ liệu để gửi lên server
-    formatProductData: (formData, selectedAttributes, variants) => {
+    // Format dữ liệu để gửi lên server (FormData)
+    formatProductData: (formData, selectedAttributes, variants, mainImageFile) => {
+        const formDataToSend = new FormData();
+
+        // 1. Thêm productDetailDTO
         const productDetailDTO = {
             productId: null,
             productName: formData.productName,
@@ -130,8 +117,14 @@ export const ProductLogic = {
             createdAt: null,
             updatedAt: null
         };
+        formDataToSend.append('productDetailDTO', JSON.stringify(productDetailDTO));
 
-        // Format attributes
+        // 2. Thêm ảnh chính (nếu có)
+        if (mainImageFile) {
+            formDataToSend.append('mainImage', mainImageFile);
+        }
+
+        // 3. Thêm attributes
         const attributes = selectedAttributes.map(attr => ({
             attributeId: attr.attributeId,
             attributeName: attr.attributeName,
@@ -140,8 +133,9 @@ export const ProductLogic = {
                 attributeValueName: v.name
             }))
         }));
+        formDataToSend.append('attributes', JSON.stringify(attributes));
 
-        // Format variants
+        // 4. Thêm variants
         const formattedVariants = variants.map(variant => ({
             variantId: variant.variantId,
             imageName: variant.imageName,
@@ -152,8 +146,16 @@ export const ProductLogic = {
             imageUrl: variant.imageUrl,
             active: variant.active
         }));
+        formDataToSend.append('variants', JSON.stringify(formattedVariants));
 
-        // Format variantValues (mapping giữa attributeValue và variant)
+        // 5. Thêm ảnh của từng variant
+        variants.forEach((variant, index) => {
+            if (variant.imageFile) {
+                formDataToSend.append(`variantImages`, variant.imageFile);
+            }
+        });
+
+        // 6. Thêm variantValues (mapping giữa attributeValue và variant)
         const variantValues = [];
         variants.forEach(variant => {
             variant.combination.forEach(combo => {
@@ -163,12 +165,8 @@ export const ProductLogic = {
                 });
             });
         });
+        formDataToSend.append('variantValues', JSON.stringify(variantValues));
 
-        return {
-            productDetailDTO,
-            attributes,
-            variants: formattedVariants,
-            variantValues
-        };
+        return formDataToSend;
     }
 };

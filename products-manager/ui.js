@@ -13,7 +13,6 @@ export const ProductUI = {
         const select = document.getElementById(selectId);
         if (!select) return;
 
-        // Clear options
         select.innerHTML = '<option value="">-- Chọn --</option>';
         
         items.forEach(item => {
@@ -23,7 +22,6 @@ export const ProductUI = {
             select.appendChild(option);
         });
 
-        // Add search functionality với datalist
         const wrapper = select.parentElement;
         const searchInput = document.createElement('input');
         searchInput.type = 'text';
@@ -31,7 +29,6 @@ export const ProductUI = {
         searchInput.placeholder = `Tìm kiếm...`;
         searchInput.setAttribute('list', `${selectId}-datalist`);
         
-        // Tạo datalist cho autocomplete
         const datalist = document.createElement('datalist');
         datalist.id = `${selectId}-datalist`;
         items.forEach(item => {
@@ -42,18 +39,15 @@ export const ProductUI = {
         });
         wrapper.appendChild(datalist);
 
-        // Event khi nhập search
         searchInput.addEventListener('input', (e) => {
             const searchTerm = e.target.value.toLowerCase();
             
-            // Filter options trong select
             Array.from(select.options).forEach(option => {
                 if (option.value === '') return;
                 const text = option.textContent.toLowerCase();
                 option.style.display = text.includes(searchTerm) ? '' : 'none';
             });
 
-            // Tự động chọn nếu match chính xác
             const exactMatch = items.find(item => 
                 item[displayField].toLowerCase() === searchTerm
             );
@@ -63,7 +57,6 @@ export const ProductUI = {
             }
         });
 
-        // Event khi chọn từ datalist
         searchInput.addEventListener('change', (e) => {
             const selectedText = e.target.value;
             const matchedItem = items.find(item => item[displayField] === selectedText);
@@ -76,7 +69,6 @@ export const ProductUI = {
         wrapper.insertBefore(searchInput, select);
     },
 
-    // Render attribute selector
     renderAttributeSelector: () => {
         const container = document.getElementById('attributesContainer');
         if (!container) return;
@@ -98,7 +90,6 @@ export const ProductUI = {
         });
     },
 
-    // Thêm một hàng attribute
     addAttributeRow: () => {
         const list = document.getElementById('selectedAttributesList');
         const rowId = `attr_row_${Date.now()}`;
@@ -123,7 +114,7 @@ export const ProductUI = {
                               rows="2"
                               placeholder="VD: Đỏ, Xanh, Vàng" 
                               disabled></textarea>
-                    <small class="text-muted">Nhập các giá trị ngăn cách bởi dấu phẩy. Nhấn Enter để xuống hàng nếu cần.</small>
+                    <small class="text-muted">Nhập các giá trị ngăn cách bởi dấu phẩy.</small>
                 </div>
                 <div class="col-md-1">
                     <button type="button" class="btn btn-danger btn-sm w-100 remove-attr-btn">Xóa</button>
@@ -136,7 +127,6 @@ export const ProductUI = {
         const attrSelect = row.querySelector('.attribute-select');
         const valuesInput = row.querySelector('.attribute-values-input');
 
-        // Event: Khi chọn attribute
         attrSelect.addEventListener('change', (e) => {
             const selectedAttrId = e.target.value;
             
@@ -152,19 +142,16 @@ export const ProductUI = {
             ProductUI.updateSelectedAttributes();
         });
 
-        // Event: Khi nhập values
         valuesInput.addEventListener('input', () => {
             ProductUI.updateSelectedAttributes();
         });
 
-        // Event: Xóa row
         row.querySelector('.remove-attr-btn').addEventListener('click', () => {
             row.remove();
             ProductUI.updateSelectedAttributes();
         });
     },
 
-    // Update danh sách attributes đã chọn
     updateSelectedAttributes: () => {
         const rows = document.querySelectorAll('.attribute-row');
         const selectedAttributes = [];
@@ -205,9 +192,7 @@ export const ProductUI = {
         ProductUI.updateVariantsFromAttributes();
     },
 
-    // Tạo variants từ attributes và render
     updateVariantsFromAttributes: () => {
-        // Import logic từ logic.js
         import('./logic.js').then(({ ProductLogic }) => {
             const variants = ProductLogic.generateVariants(ProductUI.state.selectedAttributes);
             ProductUI.state.variants = variants;
@@ -215,7 +200,6 @@ export const ProductUI = {
         });
     },
 
-    // Render bảng variants
     renderVariantsTable: () => {
         const container = document.getElementById('variantsContainer');
         if (!container) return;
@@ -300,9 +284,10 @@ export const ProductUI = {
                 const index = parseInt(e.target.dataset.index);
                 const file = e.target.files[0];
                 if (file) {
-                    // Lấy tên file không có extension
+                    // Lưu file object và tên file
                     const fileName = file.name.replace(/\.[^/.]+$/, '');
                     ProductUI.state.variants[index].imageName = fileName;
+                    ProductUI.state.variants[index].imageFile = file; // Lưu file thực tế
                     ProductUI.state.variants[index].imageUrl = null;
                     ProductUI.renderVariantsTable();
                 }
@@ -310,12 +295,11 @@ export const ProductUI = {
         });
     },
 
-    // Handle main image upload
     handleMainImageUpload: (file) => {
         if (file) {
-            // Lấy tên file không có extension
+            // Lưu file object
+            ProductUI.state.mainImageFile = file;
             const fileName = file.name.replace(/\.[^/.]+$/, '');
-            ProductUI.state.mainImageName = fileName;
             
             // Preview ảnh
             const reader = new FileReader();
@@ -332,7 +316,6 @@ export const ProductUI = {
         }
     },
 
-    // Show notification
     showNotification: (message, type = 'success') => {
         const alertDiv = document.createElement('div');
         alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed top-0 start-50 translate-middle-x mt-3`;
