@@ -73,41 +73,66 @@ export const ProductUI = {
         row.className = 'attribute-row mb-3 p-3 border rounded';
         row.id = rowId;
         row.innerHTML = `
-            <div class="row">
-                <div class="col-md-4">
+            <div class="row align-items-end">
+                <div class="col-md-5">
                     <label class="form-label">Chọn thuộc tính</label>
                     <select class="form-select attribute-select">
                         <option value="">-- Chọn thuộc tính --</option>
                         ${ProductUI.state.attributes.map(attr => 
-                            `<option value="${attr.attributeId}">${attr.attributeName}</option>`
+                            `<option value="${attr.attributeId}" data-name="${attr.attributeName}">${attr.attributeName}</option>`
                         ).join('')}
                     </select>
                 </div>
-                <div class="col-md-7">
-                    <label class="form-label">Giá trị (ngăn cách bởi dấu phẩy)</label>
-                    <input type="text" class="form-control attribute-values" 
-                           placeholder="VD: Đỏ, Xanh, Vàng">
-                    <small class="text-muted">Nhập các giá trị và ngăn cách bởi dấu phẩy</small>
+                <div class="col-md-6">
+                    <label class="form-label">Giá trị thuộc tính</label>
+                    <select class="form-select attribute-values-select" multiple disabled>
+                        <option value="">Vui lòng chọn thuộc tính trước</option>
+                    </select>
+                    <small class="text-muted">Chọn một hoặc nhiều giá trị (giữ Ctrl/Cmd để chọn nhiều)</small>
                 </div>
-                <div class="col-md-1 d-flex align-items-end">
-                    <button type="button" class="btn btn-danger btn-sm remove-attr-btn">Xóa</button>
+                <div class="col-md-1">
+                    <button type="button" class="btn btn-danger btn-sm w-100 remove-attr-btn">Xóa</button>
                 </div>
             </div>
         `;
 
         list.appendChild(row);
 
-        // Event listeners
+        const attrSelect = row.querySelector('.attribute-select');
+        const valuesSelect = row.querySelector('.attribute-values-select');
+
+        // Event: Khi chọn attribute
+        attrSelect.addEventListener('change', (e) => {
+            const selectedAttrId = e.target.value;
+            
+            if (selectedAttrId) {
+                const attribute = ProductUI.state.attributes.find(a => a.attributeId === selectedAttrId);
+                
+                if (attribute && attribute.attributeValues && attribute.attributeValues.length > 0) {
+                    valuesSelect.disabled = false;
+                    valuesSelect.innerHTML = attribute.attributeValues.map(val => 
+                        `<option value="${val.attributeValueId}">${val.attributeValueName}</option>`
+                    ).join('');
+                } else {
+                    valuesSelect.disabled = true;
+                    valuesSelect.innerHTML = '<option value="">Thuộc tính này chưa có giá trị</option>';
+                }
+            } else {
+                valuesSelect.disabled = true;
+                valuesSelect.innerHTML = '<option value="">Vui lòng chọn thuộc tính trước</option>';
+            }
+            
+            ProductUI.updateSelectedAttributes();
+        });
+
+        // Event: Khi chọn values
+        valuesSelect.addEventListener('change', () => {
+            ProductUI.updateSelectedAttributes();
+        });
+
+        // Event: Xóa row
         row.querySelector('.remove-attr-btn').addEventListener('click', () => {
             row.remove();
-            ProductUI.updateSelectedAttributes();
-        });
-
-        row.querySelector('.attribute-select').addEventListener('change', () => {
-            ProductUI.updateSelectedAttributes();
-        });
-
-        row.querySelector('.attribute-values').addEventListener('input', () => {
             ProductUI.updateSelectedAttributes();
         });
     },
@@ -118,24 +143,21 @@ export const ProductUI = {
         const selectedAttributes = [];
 
         rows.forEach(row => {
-            const select = row.querySelector('.attribute-select');
-            const valuesInput = row.querySelector('.attribute-values');
+            const attrSelect = row.querySelector('.attribute-select');
+            const valuesSelect = row.querySelector('.attribute-values-select');
             
-            const attributeId = select.value;
-            const valuesString = valuesInput.value;
+            const attributeId = attrSelect.value;
+            const selectedOptions = Array.from(valuesSelect.selectedOptions);
 
-            if (attributeId && valuesString.trim()) {
+            if (attributeId && selectedOptions.length > 0) {
                 const attribute = ProductUI.state.attributes.find(a => a.attributeId === attributeId);
+                
                 if (attribute) {
-                    const values = valuesString
-                        .split(',')
-                        .map(v => v.trim())
-                        .filter(v => v.length > 0)
-                        .map((name, index) => ({
-                            id: `${attributeId}_${index}`,
-                            attributeValueId: null,
-                            name: name
-                        }));
+                    const values = selectedOptions.map(option => ({
+                        id: option.value,
+                        attributeValueId: option.value,
+                        name: option.textContent
+                    }));
 
                     selectedAttributes.push({
                         attributeId: attribute.attributeId,
