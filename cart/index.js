@@ -140,7 +140,6 @@ function setupCheckoutEvent() {
     };
 }
 
-// === 3. XỬ LÝ SỰ KIỆN: ĐỔI BIẾN THỂ (DROPDOWN) ===
 window.handleVariantChange = async (selectElement) => {
     const itemRow = selectElement.closest(".cart-item");
     const pIndex = itemRow.dataset.pIndex;
@@ -149,40 +148,62 @@ window.handleVariantChange = async (selectElement) => {
     const product = cartDataGlobal[pIndex];
     const cartItem = product.cartItemDTOList[cIndex];
 
-    // Lấy tất cả giá trị đang chọn trong các thẻ select
+    // 1. Lấy giá trị từ dropdown
     const allSelects = itemRow.querySelectorAll(".variant-select");
     const selectedIds = Array.from(allSelects).map(s => s.value);
 
-    // Logic: Tìm variant nào trong danh sách mà chứa ĐỦ tất cả các ID thuộc tính đang chọn
+    // 2. Tìm biến thể khớp
     const newVariant = product.productVariantsDTOList.find(variant => {
         return selectedIds.every(id => variant.attributeValueIdList.includes(id));
     });
 
     if (newVariant) {
-        // Cập nhật giao diện ngay lập tức (Ảnh, Giá, Tồn kho)
+        // === CẬP NHẬT GIAO DIỆN TẠM THỜI (Cho mượt) ===
         itemRow.querySelector(".item-img").src = newVariant.imageUrl || 'https://via.placeholder.com/100';
         itemRow.querySelector(".item-price").innerText = moneyFormat.format(newVariant.price);
         itemRow.querySelector(".item-unit").innerHTML = `Kho: <span class="stock-val">${newVariant.stock}</span>`;
 
-        // Cập nhật ID biến thể vào cartItem trong bộ nhớ tạm
-        cartItem.variantId = newVariant.variantId;
-        
-        // Lưu ý: Hiện tại Backend chưa cung cấp API đổi variant, nên đây chỉ là đổi trên giao diện.
-        // Khi F5 lại trang nó sẽ về như cũ. Nếu muốn lưu, cần hỏi thêm API Update Variant.
-        
+        // === QUAN TRỌNG: GỌI API ĐỂ LƯU XUỐNG SERVER ===
+        // Ta dùng API PUT giống hệt như lúc cập nhật số lượng
+        const payload = {
+            cartItemId: cartItem.cartItemId,
+            variantId: newVariant.variantId, // <--- Gửi ID biến thể MỚI
+            quantity: cartItem.quantity      // Giữ nguyên số lượng cũ
+        };
+
+        // Gọi API cập nhật
+        const res = await callAPI('/auth/carts', 'PUT', payload);
+
+        if (res.success) {
+            console.log("Đã đổi biến thể thành công trên server");
+            // Cập nhật lại dữ liệu trong bộ nhớ client để đồng bộ
+            cartItem.variantId = newVariant.variantId;
+            // Nếu muốn chắc ăn nhất thì load lại cả giỏ hàng (tùy chọn)
+            // await loadCart(); 
+        } else {
+            await showDialog("error", res.message || "Lỗi khi đổi phân loại hàng");
+            // Nếu lỗi thì nên reload lại để reset giao diện về cũ
+            await loadCart();
+        }
+
     } else {
         await showDialog("error", "Phiên bản này không có sẵn hoặc hết hàng!");
-        // (Có thể thêm code reset lại dropdown nếu muốn)
+        // Reset lại dropdown về giá trị cũ (để người dùng không bị kẹt ở option lỗi)
+        const oldVariant = product.productVariantsDTOList.find(v => v.variantId === cartItem.variantId);
+        if(oldVariant){
+             // Logic reset dropdown hơi phức tạp, tạm thời load lại trang cho nhanh
+             await loadCart();
+        }
     }
 };
 
 // === 4. XỬ LÝ SỰ KIỆN: TĂNG GIẢM SỐ LƯỢNG (PUT) ===
 window.updateQty = async (cartItemId, delta) => {
-   if (isUpdating) return;
+    if (isUpdating) return;
     isUpdating = true;
 
     try {
-        // 1. Tìm thông tin sản phẩm
+        // 1. Tìm thông tin sản phẩm trong dữ liệu global
         let foundItem = null;
         let foundVariant = null;
 
@@ -190,17 +211,22 @@ window.updateQty = async (cartItemId, delta) => {
             const item = p.cartItemDTOList.find(i => i.cartItemId === cartItemId);
             if (item) {
                 foundItem = item;
-                // Tìm variant tương ứng
+                // Tìm thông tin kho của variant này
                 foundVariant = p.productVariantsDTOList.find(v => v.variantId === item.variantId);
                 break;
             }
         }
 
-        if (!foundItem || !foundVariant) { isUpdating = false; return; }
+        if (!foundItem || !foundVariant) {
+            console.error("❌ Không tìm thấy sản phẩm trong bộ nhớ đệm!", cartItemId);
+            isUpdating = false; 
+            return; 
+        }
 
-        const newQty = foundItem.quantity + delta;
+        // Tính số lượng mới
+        const newQty = Number(foundItem.quantity) + Number(delta); // Ép kiểu Number cho chắc chắn
 
-        // 2. Validate
+        // 2. Validate phía Client
         if (newQty < 1) {
             await removeItem(cartItemId);
             isUpdating = false;
@@ -208,30 +234,45 @@ window.updateQty = async (cartItemId, delta) => {
         }
 
         if (newQty > foundVariant.stock) {
-            await showDialog("error", `Trong kho chỉ còn ${foundVariant.stock} sản phẩm!`);
+            await showDialog("error", `Kho chỉ còn ${foundVariant.stock} sản phẩm!`);
             isUpdating = false;
             return;
         }
 
-        // 3. Chuẩn bị dữ liệu gửi đi (Đã bổ sung variantId)
+        // 3. Chuẩn bị dữ liệu gửi đi (Payload)
         const payload = {
-            cartItemId: cartItemId,
-            variantId: foundItem.variantId, // <--- THÊM DÒNG QUAN TRỌNG NÀY
-            quantity: newQty
+            cartItemId: cartItemId,          // ID dòng giỏ hàng
+            variantId: foundItem.variantId,  // ID biến thể (QUAN TRỌNG)
+            quantity: newQty                 // Số lượng mới
         };
 
+        // === 🔍 LOG SOI LỖI (Mở F12 -> Console để xem dòng này) ===
+        console.log("🚀 ĐANG GỬI API PUT:", payload); 
+        
+        // Kiểm tra nhanh xem có trường nào bị undefined không
+        if (!payload.variantId) {
+            alert("Lỗi: Không tìm thấy variantId! Hãy chụp màn hình Console gửi cho dev.");
+            console.error("Dữ liệu variantId bị thiếu:", foundItem);
+            isUpdating = false;
+            return;
+        }
+        // ==========================================================
+
         // 4. Gọi API
+        // Đường dẫn dựa trên ảnh Postman: PUT /auth/carts
         const res = await callAPI('/auth/carts', 'PUT', payload);
 
         if (res.success) {
-            await loadCart();
+            console.log("✅ Cập nhật thành công!");
+            await loadCart(); // Load lại dữ liệu mới nhất
         } else {
-            await showDialog("error", res.message || "Lỗi cập nhật số lượng");
+            console.error("❌ Backend trả về lỗi:", res);
+            await showDialog("error", res.message || "Dữ liệu đầu vào không hợp lệ");
         }
 
     } catch (e) {
-        console.error(e);
-        await showDialog("error", "Có lỗi xảy ra");
+        console.error("Lỗi JS:", e);
+        await showDialog("error", "Có lỗi xảy ra trong quá trình xử lý");
     } finally {
         isUpdating = false;
     }
