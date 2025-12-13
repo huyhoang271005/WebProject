@@ -1,6 +1,6 @@
 export const API_BASE = "https://uncoagulative-tyrannisingly-eddie.ngrok-free.dev";
 
-let accessToken = null;
+export let accessToken = null;
 /**
  * endpoint là bắt buộc, isMultipart: true nếu gửi FormData
  */
@@ -50,7 +50,7 @@ async function callAPIWithRetry(endpoint, method, data, isMultipart, alreadyRefr
     }
 }
 
-async function refreshAccessToken() {
+export async function refreshAccessToken() {
     const res = await fetch(`${API_BASE}/auth/refresh-token`, {
         method: "POST",
         credentials: "include",

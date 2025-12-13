@@ -1,5 +1,6 @@
 import { EventSourcePlus } from "https://cdn.jsdelivr.net/npm/event-source-plus/+esm";
 import { API_BASE } from "./api.js";
+import { accessToken, refreshAccessToken } from "./api.js";
 
 let es = null;
 const topicHandlers = {};
