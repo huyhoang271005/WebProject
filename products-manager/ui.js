@@ -13,6 +13,7 @@ export const ProductUI = {
         const select = document.getElementById(selectId);
         if (!select) return;
 
+        // Clear options
         select.innerHTML = '<option value="">-- Chọn --</option>';
         
         items.forEach(item => {
@@ -22,6 +23,7 @@ export const ProductUI = {
             select.appendChild(option);
         });
 
+        // Add search functionality với datalist
         const wrapper = select.parentElement;
         const searchInput = document.createElement('input');
         searchInput.type = 'text';
@@ -29,6 +31,7 @@ export const ProductUI = {
         searchInput.placeholder = `Tìm kiếm...`;
         searchInput.setAttribute('list', `${selectId}-datalist`);
         
+        // Tạo datalist cho autocomplete
         const datalist = document.createElement('datalist');
         datalist.id = `${selectId}-datalist`;
         items.forEach(item => {
@@ -39,15 +42,18 @@ export const ProductUI = {
         });
         wrapper.appendChild(datalist);
 
+        // Event khi nhập search
         searchInput.addEventListener('input', (e) => {
             const searchTerm = e.target.value.toLowerCase();
             
+            // Filter options trong select
             Array.from(select.options).forEach(option => {
                 if (option.value === '') return;
                 const text = option.textContent.toLowerCase();
                 option.style.display = text.includes(searchTerm) ? '' : 'none';
             });
 
+            // Tự động chọn nếu match chính xác
             const exactMatch = items.find(item => 
                 item[displayField].toLowerCase() === searchTerm
             );
@@ -57,6 +63,7 @@ export const ProductUI = {
             }
         });
 
+        // Event khi chọn từ datalist
         searchInput.addEventListener('change', (e) => {
             const selectedText = e.target.value;
             const matchedItem = items.find(item => item[displayField] === selectedText);
@@ -69,6 +76,7 @@ export const ProductUI = {
         wrapper.insertBefore(searchInput, select);
     },
 
+    // Render attribute selector
     renderAttributeSelector: () => {
         const container = document.getElementById('attributesContainer');
         if (!container) return;
@@ -90,6 +98,7 @@ export const ProductUI = {
         });
     },
 
+    // Thêm một hàng attribute
     addAttributeRow: () => {
         const list = document.getElementById('selectedAttributesList');
         const rowId = `attr_row_${Date.now()}`;
@@ -127,6 +136,7 @@ export const ProductUI = {
         const attrSelect = row.querySelector('.attribute-select');
         const valuesInput = row.querySelector('.attribute-values-input');
 
+        // Event: Khi chọn attribute
         attrSelect.addEventListener('change', (e) => {
             const selectedAttrId = e.target.value;
             
@@ -142,16 +152,19 @@ export const ProductUI = {
             ProductUI.updateSelectedAttributes();
         });
 
+        // Event: Khi nhập values
         valuesInput.addEventListener('input', () => {
             ProductUI.updateSelectedAttributes();
         });
 
+        // Event: Xóa row
         row.querySelector('.remove-attr-btn').addEventListener('click', () => {
             row.remove();
             ProductUI.updateSelectedAttributes();
         });
     },
 
+    // Update danh sách attributes đã chọn
     updateSelectedAttributes: () => {
         const rows = document.querySelectorAll('.attribute-row');
         const selectedAttributes = [];
@@ -192,6 +205,7 @@ export const ProductUI = {
         ProductUI.updateVariantsFromAttributes();
     },
 
+    // Tạo variants từ attributes và render
     updateVariantsFromAttributes: () => {
         import('./logic.js').then(({ ProductLogic }) => {
             const variants = ProductLogic.generateVariants(ProductUI.state.selectedAttributes);
@@ -200,6 +214,7 @@ export const ProductUI = {
         });
     },
 
+    // Render bảng variants
     renderVariantsTable: () => {
         const container = document.getElementById('variantsContainer');
         if (!container) return;
@@ -239,7 +254,7 @@ export const ProductUI = {
                 <td>
                     <input type="file" class="form-control form-control-sm variant-image" 
                            data-index="${index}" accept="image/*">
-                    ${variant.imageName ? `<p class="text-muted mt-1 mb-0 small">Ảnh: ${variant.imageName}</p>` : ''}
+                    ${variant.imageFile ? `<p class="text-muted mt-1 mb-0 small">Đã chọn: ${variant.imageFile.name}</p>` : ''}
                 </td>
                 <td>
                     <input type="number" class="form-control form-control-sm variant-price-original" 
@@ -280,26 +295,24 @@ export const ProductUI = {
         });
 
         document.querySelectorAll('.variant-image').forEach(input => {
-            input.addEventListener('change', async (e) => {
+            input.addEventListener('change', (e) => {
                 const index = parseInt(e.target.dataset.index);
                 const file = e.target.files[0];
                 if (file) {
-                    // Lưu file object và tên file
-                    const fileName = file.name.replace(/\.[^/.]+$/, '');
-                    ProductUI.state.variants[index].imageName = fileName;
-                    ProductUI.state.variants[index].imageFile = file; // Lưu file thực tế
-                    ProductUI.state.variants[index].imageUrl = null;
-                    ProductUI.renderVariantsTable();
+                    // Lưu file object vào state
+                    ProductUI.state.variants[index].imageFile = file;
+                    ProductUI.renderVariantsTable(); // Re-render để hiện tên file
                 }
             });
         });
     },
 
+    // Handle main image upload
     handleMainImageUpload: (file) => {
         if (file) {
             // Lưu file object
             ProductUI.state.mainImageFile = file;
-            const fileName = file.name.replace(/\.[^/.]+$/, '');
+            const fileName = file.name;
             
             // Preview ảnh
             const reader = new FileReader();
@@ -316,6 +329,7 @@ export const ProductUI = {
         }
     },
 
+    // Show notification
     showNotification: (message, type = 'success') => {
         const alertDiv = document.createElement('div');
         alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed top-0 start-50 translate-middle-x mt-3`;

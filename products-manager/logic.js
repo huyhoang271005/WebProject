@@ -5,6 +5,7 @@ export const ProductLogic = {
             return [];
         }
 
+        // Lọc bỏ attributes không có values
         const validAttributes = selectedAttributes.filter(attr => 
             attr.values && attr.values.length > 0
         );
@@ -13,6 +14,7 @@ export const ProductLogic = {
             return [];
         }
 
+        // Tạo cartesian product
         const combinations = validAttributes.reduce((acc, attribute) => {
             if (acc.length === 0) {
                 return attribute.values.map(value => [{
@@ -37,14 +39,14 @@ export const ProductLogic = {
             return newCombinations;
         }, []);
 
+        // Chuyển đổi sang format variants
         return combinations.map((combo, index) => ({
             id: `variant_${Date.now()}_${index}`,
-            variantId: null,
+            variantId: null, // sẽ được tạo bởi backend
             combination: combo,
             displayName: combo.map(c => c.valueName).join(' - '),
             imageName: null,
             imageUrl: null,
-            imageFile: null,
             priceOriginal: 0,
             price: 0,
             stock: 0,
@@ -53,6 +55,24 @@ export const ProductLogic = {
         }));
     },
 
+    // Parse attribute values từ string (ngăn cách bởi dấu phẩy)
+    parseAttributeValues: (inputString) => {
+        if (!inputString || typeof inputString !== 'string') {
+            return [];
+        }
+        
+        return inputString
+            .split(',')
+            .map(v => v.trim())
+            .filter(v => v.length > 0)
+            .map((name, index) => ({
+                id: `temp_${Date.now()}_${index}`,
+                attributeValueId: null,
+                name: name
+            }));
+    },
+
+    // Validate dữ liệu sản phẩm trước khi gửi
     validateProduct: (productData) => {
         const errors = [];
 
@@ -72,6 +92,7 @@ export const ProductLogic = {
             errors.push('Giá bán không được lớn hơn giá gốc');
         }
 
+        // Validate variants nếu có
         if (productData.variants && productData.variants.length > 0) {
             productData.variants.forEach((variant, index) => {
                 if (!variant.price || variant.price <= 0) {
@@ -92,10 +113,8 @@ export const ProductLogic = {
         };
     },
 
-    formatProductData: (formData, selectedAttributes, variants, mainImageFile) => {
-        const formDataToSend = new FormData();
-
-        // 1. Tạo productDetailDTO object
+    // Format dữ liệu để gửi lên server
+    formatProductData: (formData, selectedAttributes, variants) => {
         const productDetailDTO = {
             productId: null,
             productName: formData.productName,
@@ -112,7 +131,7 @@ export const ProductLogic = {
             updatedAt: null
         };
 
-        // 2. Tạo attributes array
+        // Format attributes
         const attributes = selectedAttributes.map(attr => ({
             attributeId: attr.attributeId,
             attributeName: attr.attributeName,
@@ -122,7 +141,7 @@ export const ProductLogic = {
             }))
         }));
 
-        // 3. Tạo variants array
+        // Format variants
         const formattedVariants = variants.map(variant => ({
             variantId: variant.variantId,
             imageName: variant.imageName,
@@ -134,7 +153,7 @@ export const ProductLogic = {
             active: variant.active
         }));
 
-        // 4. Tạo variantValues array
+        // Format variantValues (mapping giữa attributeValue và variant)
         const variantValues = [];
         variants.forEach(variant => {
             variant.combination.forEach(combo => {
@@ -145,30 +164,11 @@ export const ProductLogic = {
             });
         });
 
-        // 5. Append JSON data như một Blob với content-type application/json
-        const jsonData = {
+        return {
             productDetailDTO,
             attributes,
             variants: formattedVariants,
             variantValues
         };
-        
-        const jsonBlob = new Blob([JSON.stringify(jsonData)], {
-            type: 'application/json'
-        });
-        formDataToSend.append('data', jsonBlob);
-
-        // 6. Append files
-        if (mainImageFile) {
-            formDataToSend.append('mainImage', mainImageFile);
-        }
-
-        variants.forEach((variant, index) => {
-            if (variant.imageFile) {
-                formDataToSend.append('variantImages', variant.imageFile);
-            }
-        });
-
-        return formDataToSend;
     }
 };
