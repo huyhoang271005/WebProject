@@ -24,7 +24,7 @@ async function handleSave(e) {
     const categoryId = document.getElementById("categoryId").value;
     const brandId = document.getElementById("brandId").value;
 
-    if (!productName || !categoryId || !brandId || !price) {
+    if (!productName || !categoryId || !brandId || !price || !priceOriginal) {
         await showDialog("error", "Vui lòng điền đầy đủ thông tin bắt buộc!");
         return;
     }
@@ -34,7 +34,7 @@ async function handleSave(e) {
         productName,
         price,
         priceOriginal,
-        variants: state.variants
+        variants: ProductUI.state.variants
     });
 
     if (!validation.isValid) {
@@ -52,9 +52,17 @@ async function handleSave(e) {
             categoryId,
             brandId
         },
-        state.selectedAttributes,
-        state.variants
+        ProductUI.state.selectedAttributes,
+        ProductUI.state.variants
     );
+
+    // Set main image name nếu có
+    if (state.mainImageFile) {
+        const fileName = state.mainImageFile.name;
+        payload.productDetailDTO.imageName = fileName.includes('.')
+            ? fileName.substring(0, fileName.lastIndexOf('.'))
+            : fileName;
+    }
 
     // BUILD FORMDATA
     const formData = new FormData();
@@ -65,8 +73,8 @@ async function handleSave(e) {
         formData.append("images", state.mainImageFile);
     }
     
-    // Add variant images
-    state.variants.forEach((v) => {
+    // Add variant images - QUAN TRỌNG: thứ tự phải khớp với thứ tự trong variants array
+    ProductUI.state.variants.forEach((v) => {
         if (v.imageFile) {
             formData.append("images", v.imageFile);
         }
@@ -75,16 +83,35 @@ async function handleSave(e) {
     // DEBUG LOG
     console.log("=== PAYLOAD ===");
     console.log(JSON.stringify(payload, null, 2));
+    console.log("\n=== FORMDATA ===");
+    for (let [key, value] of formData.entries()) {
+        console.log(key, value instanceof File ? `File(${value.name})` : value);
+    }
 
-    // Send request
-    const res = await ProductService.createProduct(formData);
-    console.log("=== RESPONSE ===", res);
-    
-    if (res && res.success) {
-        await showDialog("success", "Tạo sản phẩm thành công!");
-        resetForm();
-    } else {
-        await showDialog("error", res?.message || "Có lỗi xảy ra");
+    // Disable submit button
+    const submitBtn = document.getElementById("submitBtn");
+    const spinner = document.getElementById("submitSpinner");
+    submitBtn.disabled = true;
+    spinner.classList.remove("d-none");
+
+    try {
+        // Send request
+        const res = await ProductService.createProduct(formData);
+        console.log("=== RESPONSE ===", res);
+        
+        if (res && res.success) {
+            await showDialog("success", "Tạo sản phẩm thành công!");
+            resetForm();
+        } else {
+            await showDialog("error", res?.message || "Có lỗi xảy ra");
+        }
+    } catch (error) {
+        console.error("Error:", error);
+        await showDialog("error", "Có lỗi xảy ra khi tạo sản phẩm");
+    } finally {
+        // Re-enable submit button
+        submitBtn.disabled = false;
+        spinner.classList.add("d-none");
     }
 }
 

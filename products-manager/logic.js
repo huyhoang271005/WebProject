@@ -20,7 +20,7 @@ export const ProductLogic = {
                 return attribute.values.map(value => [{
                     attributeId: attribute.attributeId,
                     attributeName: attribute.attributeName,
-                    valueId: value.id,
+                    valueId: value.id, // ID tạm để map
                     valueName: value.name
                 }]);
             }
@@ -31,7 +31,7 @@ export const ProductLogic = {
                     newCombinations.push([...combo, {
                         attributeId: attribute.attributeId,
                         attributeName: attribute.attributeName,
-                        valueId: value.id,
+                        valueId: value.id, // ID tạm để map
                         valueName: value.name
                     }]);
                 });
@@ -116,12 +116,12 @@ export const ProductLogic = {
             updatedAt: null
         };
 
-        // Format attributes
+        // Format attributes - chỉ gửi attributeId nếu đã tồn tại
         const attributes = selectedAttributes.map(attr => ({
-            attributeId: attr.attributeId,
+            attributeId: attr.attributeId || null,
             attributeName: attr.attributeName,
             attributeValues: attr.values.map(v => ({
-                attributeValueId: v.attributeValueId || null,
+                attributeValueId: null, // Luôn null để backend tạo mới
                 attributeValueName: v.name
             }))
         }));
@@ -131,32 +131,43 @@ export const ProductLogic = {
             let variantImageName = null;
             if (variant.imageFile) {
                 const fileName = variant.imageFile.name;
+                // Lấy tên file không có extension
                 variantImageName = fileName.includes('.')
                     ? fileName.substring(0, fileName.lastIndexOf('.'))
                     : fileName;
             }
 
             return {
-                variantId: `variant_${index}`,
+                variantId: `variant_${index}`, // ID tạm để map với variantValues
                 imageName: variantImageName,
                 imageUrl: null,
-                priceOriginal: parseFloat(variant.priceOriginal) || 0,
-                price: parseFloat(variant.price) || 0,
+                priceOriginal: parseFloat(variant.priceOriginal) || parseFloat(formData.priceOriginal),
+                price: parseFloat(variant.price) || parseFloat(formData.price),
                 stock: parseInt(variant.stock) || 0,
                 sold: 0,
-                active: variant.active
+                active: true
             };
         });
 
-        // Format variantValues (mapping between attributeValue and variant)
+        // Format variantValues - QUAN TRỌNG: phải map đúng
+        // attributeValueId ở đây là ID tạm từ UI (value.id), backend sẽ xử lý mapping
         const variantValues = [];
         variants.forEach((variant, variantIndex) => {
-            variant.combination.forEach(combo => {
-                variantValues.push({
-                    variantId: `variant_${variantIndex}`,
-                    attributeValueId: combo.valueId
+            if (variant.combination && variant.combination.length > 0) {
+                variant.combination.forEach(combo => {
+                    // Tìm attribute value tương ứng trong attributes array
+                    const attr = attributes.find(a => a.attributeId === combo.attributeId || a.attributeName === combo.attributeName);
+                    if (attr) {
+                        const attrValue = attr.attributeValues.find(av => av.attributeValueName === combo.valueName);
+                        if (attrValue) {
+                            variantValues.push({
+                                variantId: `variant_${variantIndex}`,
+                                attributeValueId: combo.valueId // Sử dụng ID tạm từ combo
+                            });
+                        }
+                    }
                 });
-            });
+            }
         });
 
         return {
