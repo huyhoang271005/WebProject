@@ -110,24 +110,16 @@ export const ProductUI = {
             <div class="row align-items-end">
                 <div class="col-md-5">
                     <label class="form-label">Chọn thuộc tính</label>
-                    <input type="text" class="form-control mb-2 attribute-search" 
-                           placeholder="Tìm kiếm thuộc tính..." 
-                           list="${rowId}-attr-list">
-                    <datalist id="${rowId}-attr-list">
-                        ${ProductUI.state.attributes.map(attr => 
-                            `<option value="${attr.attributeName}" data-id="${attr.attributeId}"></option>`
-                        ).join('')}
-                    </datalist>
                     <select class="form-select attribute-select">
                         <option value="">-- Chọn thuộc tính --</option>
                         ${ProductUI.state.attributes.map(attr => 
-                            `<option value="${attr.attributeId}" data-name="${attr.attributeName}">${attr.attributeName}</option>`
+                            `<option value="${attr.attributeId}">${attr.attributeName}</option>`
                         ).join('')}
                     </select>
                 </div>
                 <div class="col-md-6">
                     <label class="form-label">Giá trị thuộc tính</label>
-                    <select class="form-select attribute-values-select" multiple disabled>
+                    <select class="form-select attribute-values-select" multiple disabled size="4">
                         <option value="">Vui lòng chọn thuộc tính trước</option>
                     </select>
                     <small class="text-muted">Chọn một hoặc nhiều giá trị (giữ Ctrl/Cmd để chọn nhiều)</small>
@@ -140,41 +132,15 @@ export const ProductUI = {
 
         list.appendChild(row);
 
-        const attrSearch = row.querySelector('.attribute-search');
         const attrSelect = row.querySelector('.attribute-select');
         const valuesSelect = row.querySelector('.attribute-values-select');
 
-        // Event: Search attribute
-        attrSearch.addEventListener('input', (e) => {
-            const searchTerm = e.target.value.toLowerCase();
-            Array.from(attrSelect.options).forEach(option => {
-                if (option.value === '') return;
-                const text = option.textContent.toLowerCase();
-                option.style.display = text.includes(searchTerm) ? '' : 'none';
-            });
-        });
-
-        // Event: Chọn từ datalist autocomplete
-        attrSearch.addEventListener('change', (e) => {
-            const selectedName = e.target.value;
-            const matchedAttr = ProductUI.state.attributes.find(a => a.attributeName === selectedName);
-            if (matchedAttr) {
-                attrSelect.value = matchedAttr.attributeId;
-                attrSelect.dispatchEvent(new Event('change'));
-            }
-        });
-
-        // Event: Khi chọn attribute từ select
+        // Event: Khi chọn attribute
         attrSelect.addEventListener('change', (e) => {
             const selectedAttrId = e.target.value;
             
             if (selectedAttrId) {
                 const attribute = ProductUI.state.attributes.find(a => a.attributeId === selectedAttrId);
-                
-                // Update search input
-                if (attribute) {
-                    attrSearch.value = attribute.attributeName;
-                }
                 
                 if (attribute && attribute.attributeValues && attribute.attributeValues.length > 0) {
                     valuesSelect.disabled = false;
@@ -186,7 +152,6 @@ export const ProductUI = {
                     valuesSelect.innerHTML = '<option value="">Thuộc tính này chưa có giá trị</option>';
                 }
             } else {
-                attrSearch.value = '';
                 valuesSelect.disabled = true;
                 valuesSelect.innerHTML = '<option value="">Vui lòng chọn thuộc tính trước</option>';
             }
