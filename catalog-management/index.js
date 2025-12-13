@@ -169,10 +169,7 @@ saveBtn.addEventListener("click", async () => {
 
             if (result.success) {
                 resetForm();
-                //Đợi 300ms (0.3 giây) cho Server kịp lưu rồi mới load lại
-                setTimeout(async () => {
-                    await loadData();
-                }, 300);
+                await loadData(); 
             }
         } catch (err) {
             console.error(err);
