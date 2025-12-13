@@ -7,9 +7,9 @@
     
     <link rel="stylesheet" href="../dialog/index.css"/>
     <link rel="stylesheet" href="../public/public.css"/>
-    <link rel="stylesheet" href="../cart/cart.css">
+    <link rel="stylesheet" href="cart.css">
+    
     <script src="https://kit.fontawesome.com/e9c281dd3f.js" crossorigin="anonymous"></script>
-
 </head>
 <body>
     <div class="breadcrumb">
@@ -24,34 +24,8 @@
             </div>
 
             <div id="cartList">
-                <div class="cart-item">
-                    <i class="fa-solid fa-trash-can delete-btn"></i>
-                    <img src="https://img.tgdd.vn/imgt/f_webp,fit_outside,quality_100/https://cdn.tgdd.vn/Products/Images/2372/292854/bhx/dau-goi-tresemme-bond-repair-toc-bong-muot-640g-202302211333333333.jpg" class="item-img">
-                    <div class="item-info">
-                        <div class="item-name">Dầu gội Tresemme Bond Repair 640g</div>
-                        <div class="item-price">165.000₫</div>
-                        <div class="item-unit">Đơn vị: Chai</div>
-                    </div>
-                    <div class="qty-control">
-                        <button class="qty-btn">-</button>
-                        <input type="text" value="1" class="qty-input" readonly>
-                        <button class="qty-btn">+</button>
-                    </div>
-                </div>
-
-                <div class="cart-item">
-                    <i class="fa-solid fa-trash-can delete-btn"></i>
-                    <img src="https://assets.unileversolutions.com/v1/31969376.png" class="item-img">
-                    <div class="item-info">
-                        <div class="item-name">Nước xả vải Comfort đậm đặc 1.8L</div>
-                        <div class="item-price">120.000₫</div>
-                        <div class="item-unit">Đơn vị: Túi</div>
-                    </div>
-                    <div class="qty-control">
-                        <button class="qty-btn">-</button>
-                        <input type="text" value="2" class="qty-input" readonly>
-                        <button class="qty-btn">+</button>
-                    </div>
+                <div style="text-align: center; padding: 20px; color: #666;">
+                    <i class="fas fa-spinner fa-spin"></i> Đang tải giỏ hàng...
                 </div>
             </div>
         </div>
@@ -63,23 +37,24 @@
 
             <div class="summary-row">
                 <span>Tổng giá trị sản phẩm:</span>
-                <span style="font-weight: 500;">405.000₫</span>
+                <span class="total-price" style="font-weight: 500;">0₫</span>
             </div>
             
             <div class="summary-total">
                 <span>Tổng thanh toán:</span>
-                <span class="total-price">405.000₫</span>
+                <span class="total-price">0₫</span>
             </div>
 
-            <button class="checkout-btn">Mua hàng (2)</button>
+            <button class="checkout-btn">Mua hàng (0)</button>
         </div>
 
     </div>
 
     <script type="module" src="index.js"></script>
     <script type="module">
-        import{loadNavbar} from '../navbar/navbar.js';
-        loadNavbar({});
+        // Giả lập load Navbar nếu dự án bạn có
+        import { loadNavbar } from '../navbar/navbar.js';
+        try { loadNavbar({}); } catch(e) { console.log("Chưa có navbar"); }
     </script>
 </body>
 </html>
