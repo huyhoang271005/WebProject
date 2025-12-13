@@ -116,15 +116,23 @@ export const ProductLogic = {
             updatedAt: null
         };
 
-        // Format attributes - chỉ gửi attributeId nếu đã tồn tại
-        const attributes = selectedAttributes.map(attr => ({
-            attributeId: attr.attributeId || null,
-            attributeName: attr.attributeName,
-            attributeValues: attr.values.map(v => ({
-                attributeValueId: null, // Luôn null để backend tạo mới
-                attributeValueName: v.name
-            }))
-        }));
+        // Format attributes - QUAN TRỌNG: Phải có attributeValues
+        const attributes = selectedAttributes.map(attr => {
+            // Kiểm tra attr.values có tồn tại và không rỗng
+            if (!attr.values || attr.values.length === 0) {
+                console.warn('Attribute không có values:', attr);
+                return null;
+            }
+
+            return {
+                attributeId: attr.attributeId || null,
+                attributeName: attr.attributeName,
+                attributeValues: attr.values.map(v => ({
+                    attributeValueId: null, // Luôn null để backend tạo mới
+                    attributeValueName: v.name || v.valueName || v // Xử lý nhiều format
+                }))
+            };
+        }).filter(a => a !== null); // Loại bỏ attributes không hợp lệ
 
         // Format variants
         const formattedVariants = variants.map((variant, index) => {
@@ -150,25 +158,27 @@ export const ProductLogic = {
         });
 
         // Format variantValues - QUAN TRỌNG: phải map đúng
-        // attributeValueId ở đây là ID tạm từ UI (value.id), backend sẽ xử lý mapping
         const variantValues = [];
+        
         variants.forEach((variant, variantIndex) => {
             if (variant.combination && variant.combination.length > 0) {
                 variant.combination.forEach(combo => {
-                    // Tìm attribute value tương ứng trong attributes array
-                    const attr = attributes.find(a => a.attributeId === combo.attributeId || a.attributeName === combo.attributeName);
-                    if (attr) {
-                        const attrValue = attr.attributeValues.find(av => av.attributeValueName === combo.valueName);
-                        if (attrValue) {
-                            variantValues.push({
-                                variantId: `variant_${variantIndex}`,
-                                attributeValueId: combo.valueId // Sử dụng ID tạm từ combo
-                            });
-                        }
-                    }
+                    // Tạo một ID tạm duy nhất cho attributeValueId
+                    // Backend sẽ dùng attributeValueName để tìm hoặc tạo mới
+                    variantValues.push({
+                        variantId: `variant_${variantIndex}`,
+                        attributeValueId: combo.valueId || `temp_${combo.attributeId}_${combo.valueName}`
+                    });
                 });
             }
         });
+
+        console.log('=== FORMAT DATA DEBUG ===');
+        console.log('Selected Attributes:', selectedAttributes);
+        console.log('Formatted Attributes:', attributes);
+        console.log('Variants:', variants);
+        console.log('Formatted Variants:', formattedVariants);
+        console.log('Variant Values:', variantValues);
 
         return {
             productDetailDTO,

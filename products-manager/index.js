@@ -29,6 +29,22 @@ async function handleSave(e) {
         return;
     }
 
+    // DEBUG: Kiểm tra state trước khi submit
+    console.log('=== STATE BEFORE SUBMIT ===');
+    console.log('Selected Attributes:', ProductUI.state.selectedAttributes);
+    console.log('Variants:', ProductUI.state.variants);
+
+    // Validate: Phải có attributes và variants nếu tạo sản phẩm có biến thể
+    if (ProductUI.state.selectedAttributes.length === 0 && ProductUI.state.variants.length > 0) {
+        await showDialog("error", "Lỗi: Có variants nhưng không có attributes!");
+        return;
+    }
+
+    if (ProductUI.state.selectedAttributes.length > 0 && ProductUI.state.variants.length === 0) {
+        await showDialog("error", "Vui lòng tạo variants từ attributes!");
+        return;
+    }
+
     // Validate prices
     const validation = ProductLogic.validateProduct({
         productName,
