@@ -2,98 +2,86 @@ import { callAPI } from '../public/api.js';
 import { showDialog } from '../dialog/index.js';
 
 // Định dạng tiền tệ VNĐ
-const moneyFormat = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' });
+const money = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' });
 
-// Biến toàn cục lưu dữ liệu
-let cartDataGlobal = [];
-// Cờ chặn spam click
+// Dữ liệu trong RAM (Single Source of Truth)
+// Mọi thao tác sửa/xóa sẽ cập nhật trực tiếp vào biến này
+let cartDataGlobal = []; 
 let isUpdating = false;
 
 document.addEventListener("DOMContentLoaded", async () => {
+    // CHỈ GỌI API LOAD CART ĐÚNG 1 LẦN DUY NHẤT Ở ĐÂY
     await loadCart();
     setupCheckoutEvent();
 });
 
-// === 1. HÀM TẢI DỮ LIỆU GIỎ HÀNG (GET) ===
+// === 1. HÀM TẢI DỮ LIỆU (Chỉ gọi lần đầu) ===
 async function loadCart() {
-    // Gọi API lấy danh sách: GET /auth/carts
     const res = await callAPI('/auth/carts', 'GET'); 
 
     if (res.success) {
         cartDataGlobal = res.data;
-        renderCartUI(cartDataGlobal);
+        renderCartUI(); // Vẽ giao diện từ RAM
     } else {
-        // Xử lý khi lỗi hoặc rỗng
         document.getElementById("cartList").innerHTML = `
             <div style="text-align: center; margin-top: 50px; color: #666;">
-                <i class="fa-solid fa-cart-arrow-down" style="font-size: 3rem; margin-bottom: 10px;"></i>
-                <p>Giỏ hàng trống hoặc chưa đăng nhập</p>
+                <p>Giỏ hàng trống hoặc lỗi tải</p>
                 <p style="font-size: 0.8rem; color: red">${res.message || ''}</p>
             </div>`;
         updateSummary(0, 0);
     }
 }
 
-// === 2. HÀM VẼ GIAO DIỆN (RENDER) ===
-function renderCartUI(products) {
+// === 2. HÀM VẼ GIAO DIỆN (Từ RAM - Không gọi API) ===
+function renderCartUI() {
     const container = document.getElementById("cartList");
     container.innerHTML = ""; 
 
     let totalBill = 0;
     let totalItems = 0;
 
-    // Kiểm tra giỏ rỗng
-    if (!products || products.length === 0) {
-        container.innerHTML = "<p style='text-align:center; padding: 20px;'>Chưa có sản phẩm nào trong giỏ</p>";
+    // Kiểm tra nếu RAM trống
+    if (!cartDataGlobal || cartDataGlobal.length === 0) {
+        container.innerHTML = "<p style='text-align:center; padding: 20px;'>Giỏ hàng trống</p>";
         updateSummary(0, 0);
         return;
     }
 
-    products.forEach((product, pIndex) => {
-        // Duyệt qua từng item trong cartItemDTOList
+    cartDataGlobal.forEach((product, pIndex) => {
         product.cartItemDTOList.forEach((cartItem, cIndex) => {
-            
-            // Tìm biến thể khớp với variantId trong giỏ
             const currentVariant = product.productVariantsDTOList.find(v => v.variantId === cartItem.variantId);
-            
-            // Nếu dữ liệu lỗi (không tìm thấy variant), bỏ qua để tránh crash web
             if(!currentVariant) return;
 
-            // Tính toán tổng tiền
             totalBill += Number(currentVariant.price) * cartItem.quantity;
             totalItems += cartItem.quantity;
 
-            // Tạo thẻ div cho dòng sản phẩm
             const itemRow = document.createElement("div");
             itemRow.className = "cart-item";
-            // Lưu index để dùng cho hàm đổi biến thể
+            // Lưu index để truy xuất nhanh vào RAM
             itemRow.dataset.pIndex = pIndex; 
             itemRow.dataset.cIndex = cIndex;
 
-            // --- Xử lý Dropdown thuộc tính (Shopee Style) ---
+            // Render Dropdown
             let attributeHTML = `<div class="variant-box">`;
             product.attributes.forEach(attr => {
                 attributeHTML += `<select class="variant-select" onchange="handleVariantChange(this)">`;
                 attr.attributeValues.forEach(val => {
-                    // Kiểm tra xem variant hiện tại có chứa thuộc tính này không để set 'selected'
                     const isSelected = currentVariant.attributeValueIdList.includes(val.attributeValueId);
                     attributeHTML += `<option value="${val.attributeValueId}" ${isSelected ? 'selected' : ''}>${val.attributeValueName}</option>`;
                 });
                 attributeHTML += `</select>`;
             });
             attributeHTML += `</div>`;
-            // ------------------------------------------------
 
-            // Chèn HTML vào dòng
             itemRow.innerHTML = `
-                <i class="fa-solid fa-trash-can delete-btn" onclick="removeItem('${cartItem.cartItemId}')" title="Xóa sản phẩm"></i>
+                <i class="fa-solid fa-trash-can delete-btn" onclick="removeItem('${cartItem.cartItemId}')"></i>
                 
                 <img src="${currentVariant.imageUrl || 'https://via.placeholder.com/100'}" class="item-img">
                 
                 <div class="item-info">
                     <div class="item-name">${product.productName}</div>
                     ${attributeHTML}
-                    <div class="item-price">${moneyFormat.format(currentVariant.price)}</div>
+                    <div class="item-price">${money.format(currentVariant.price)}</div>
                     <div class="item-unit">Kho: <span class="stock-val">${currentVariant.stock}</span></div>
                 </div>
 
@@ -110,100 +98,30 @@ function renderCartUI(products) {
     updateSummary(totalBill, totalItems);
 }
 
-// Hàm cập nhật phần tổng tiền bên phải
 function updateSummary(total, items) {
     const totalEls = document.querySelectorAll(".total-price");
-    totalEls.forEach(el => el.innerText = moneyFormat.format(total));
-    
-    const checkoutBtn = document.querySelector(".checkout-btn");
-    checkoutBtn.innerText = `MUA HÀNG (${items})`;
-    
-    // Disable nút mua nếu không có hàng
-    if(items === 0) {
-        checkoutBtn.disabled = true;
-        checkoutBtn.style.opacity = "0.6";
-        checkoutBtn.style.cursor = "not-allowed";
-    } else {
-        checkoutBtn.disabled = false;
-        checkoutBtn.style.opacity = "1";
-        checkoutBtn.style.cursor = "pointer";
-    }
-}
-
-// Chuyển trang khi bấm Mua hàng
-function setupCheckoutEvent() {
+    totalEls.forEach(el => el.innerText = money.format(total));
     const btn = document.querySelector(".checkout-btn");
-    btn.onclick = () => {
-        if(!btn.disabled) {
-            window.location.href = '../checkout/index.html'; // Sửa đường dẫn nếu cần
-        }
-    };
+    btn.innerText = `MUA HÀNG (${items})`;
+    
+    if(items === 0) {
+        btn.disabled = true;
+        btn.style.opacity = "0.6";
+    } else {
+        btn.disabled = false;
+        btn.style.opacity = "1";
+    }
 }
 
-window.handleVariantChange = async (selectElement) => {
-    const itemRow = selectElement.closest(".cart-item");
-    const pIndex = itemRow.dataset.pIndex;
-    const cIndex = itemRow.dataset.cIndex;
+// === 3. CÁC HÀM XỬ LÝ (Tối ưu: Update RAM -> Render) ===
 
-    const product = cartDataGlobal[pIndex];
-    const cartItem = product.cartItemDTOList[cIndex];
-
-    // 1. Lấy giá trị từ dropdown
-    const allSelects = itemRow.querySelectorAll(".variant-select");
-    const selectedIds = Array.from(allSelects).map(s => s.value);
-
-    // 2. Tìm biến thể khớp
-    const newVariant = product.productVariantsDTOList.find(variant => {
-        return selectedIds.every(id => variant.attributeValueIdList.includes(id));
-    });
-
-    if (newVariant) {
-        // === CẬP NHẬT GIAO DIỆN TẠM THỜI (Cho mượt) ===
-        itemRow.querySelector(".item-img").src = newVariant.imageUrl || 'https://via.placeholder.com/100';
-        itemRow.querySelector(".item-price").innerText = moneyFormat.format(newVariant.price);
-        itemRow.querySelector(".item-unit").innerHTML = `Kho: <span class="stock-val">${newVariant.stock}</span>`;
-
-        // === QUAN TRỌNG: GỌI API ĐỂ LƯU XUỐNG SERVER ===
-        // Ta dùng API PUT giống hệt như lúc cập nhật số lượng
-        const payload = {
-            cartItemId: cartItem.cartItemId,
-            variantId: newVariant.variantId, // <--- Gửi ID biến thể MỚI
-            quantity: cartItem.quantity      // Giữ nguyên số lượng cũ
-        };
-
-        // Gọi API cập nhật
-        const res = await callAPI('/auth/carts', 'PUT', payload);
-
-        if (res.success) {
-            console.log("Đã đổi biến thể thành công trên server");
-            // Cập nhật lại dữ liệu trong bộ nhớ client để đồng bộ
-            cartItem.variantId = newVariant.variantId;
-            // Nếu muốn chắc ăn nhất thì load lại cả giỏ hàng (tùy chọn)
-            // await loadCart(); 
-        } else {
-            await showDialog("error", res.message || "Lỗi khi đổi phân loại hàng");
-            // Nếu lỗi thì nên reload lại để reset giao diện về cũ
-            await loadCart();
-        }
-
-    } else {
-        await showDialog("error", "Phiên bản này không có sẵn hoặc hết hàng!");
-        // Reset lại dropdown về giá trị cũ (để người dùng không bị kẹt ở option lỗi)
-        const oldVariant = product.productVariantsDTOList.find(v => v.variantId === cartItem.variantId);
-        if(oldVariant){
-             // Logic reset dropdown hơi phức tạp, tạm thời load lại trang cho nhanh
-             await loadCart();
-        }
-    }
-};
-
-// === 4. XỬ LÝ SỰ KIỆN: TĂNG GIẢM SỐ LƯỢNG (PUT) ===
+// Tăng/Giảm số lượng
 window.updateQty = async (cartItemId, delta) => {
     if (isUpdating) return;
     isUpdating = true;
 
     try {
-        // 1. Tìm thông tin sản phẩm trong dữ liệu global
+        // 1. Tìm object trong RAM (Không gọi API)
         let foundItem = null;
         let foundVariant = null;
 
@@ -211,22 +129,15 @@ window.updateQty = async (cartItemId, delta) => {
             const item = p.cartItemDTOList.find(i => i.cartItemId === cartItemId);
             if (item) {
                 foundItem = item;
-                // Tìm thông tin kho của variant này
                 foundVariant = p.productVariantsDTOList.find(v => v.variantId === item.variantId);
                 break;
             }
         }
 
-        if (!foundItem || !foundVariant) {
-            console.error("❌ Không tìm thấy sản phẩm trong bộ nhớ đệm!", cartItemId);
-            isUpdating = false; 
-            return; 
-        }
+        if (!foundItem) { isUpdating = false; return; }
 
-        // Tính số lượng mới
-        const newQty = Number(foundItem.quantity) + Number(delta); // Ép kiểu Number cho chắc chắn
+        const newQty = Number(foundItem.quantity) + Number(delta);
 
-        // 2. Validate phía Client
         if (newQty < 1) {
             await removeItem(cartItemId);
             isUpdating = false;
@@ -234,61 +145,107 @@ window.updateQty = async (cartItemId, delta) => {
         }
 
         if (newQty > foundVariant.stock) {
-            await showDialog("error", `Kho chỉ còn ${foundVariant.stock} sản phẩm!`);
+            await showDialog("error", `Kho chỉ còn ${foundVariant.stock}`);
+            renderCartUI(); // Reset lại số cũ trên UI
             isUpdating = false;
             return;
         }
 
-        // 3. Chuẩn bị dữ liệu gửi đi (Payload)
+        // 2. Gọi API Update
         const payload = {
-            cartItemId: cartItemId,          // ID dòng giỏ hàng
-            variantId: foundItem.variantId,  // ID biến thể (QUAN TRỌNG)
-            quantity: newQty                 // Số lượng mới
+            cartItemId: cartItemId,
+            variantId: foundItem.variantId,
+            quantity: newQty
         };
 
-        // === 🔍 LOG SOI LỖI (Mở F12 -> Console để xem dòng này) ===
-        console.log("🚀 ĐANG GỬI API PUT:", payload); 
-        
-        // Kiểm tra nhanh xem có trường nào bị undefined không
-        if (!payload.variantId) {
-            alert("Lỗi: Không tìm thấy variantId! Hãy chụp màn hình Console gửi cho dev.");
-            console.error("Dữ liệu variantId bị thiếu:", foundItem);
-            isUpdating = false;
-            return;
-        }
-        // ==========================================================
-
-        // 4. Gọi API
-        // Đường dẫn dựa trên ảnh Postman: PUT /auth/carts
         const res = await callAPI('/auth/carts', 'PUT', payload);
 
         if (res.success) {
-            console.log("✅ Cập nhật thành công!");
-            await loadCart(); // Load lại dữ liệu mới nhất
+            // === KEY POINT: Cập nhật RAM & Render ===
+            // Sửa trực tiếp số lượng trong biến cartDataGlobal
+            foundItem.quantity = newQty; 
+            
+            console.log("Update thành công -> Vẽ lại UI từ RAM (Không load lại API)");
+            renderCartUI(); // Vẽ lại giao diện ngay lập tức
         } else {
-            console.error("❌ Backend trả về lỗi:", res);
-            await showDialog("error", res.message || "Dữ liệu đầu vào không hợp lệ");
+            await showDialog("error", res.message || "Lỗi cập nhật");
+            renderCartUI(); // Reset về cũ nếu lỗi
         }
 
     } catch (e) {
-        console.error("Lỗi JS:", e);
-        await showDialog("error", "Có lỗi xảy ra trong quá trình xử lý");
+        console.error(e);
+        await showDialog("error", "Lỗi xử lý");
     } finally {
         isUpdating = false;
     }
 };
 
-// === 5. XỬ LÝ SỰ KIỆN: XÓA SẢN PHẨM (DELETE) ===
-window.removeItem = async (cartItemId) => {
-    if (!confirm("Bạn có chắc chắn muốn xóa sản phẩm này?")) return;
+// Đổi biến thể (Màu/Size)
+window.handleVariantChange = async (selectElement) => {
+    const itemRow = selectElement.closest(".cart-item");
+    // Lấy index để truy xuất nhanh vào RAM
+    const pIndex = itemRow.dataset.pIndex;
+    const cIndex = itemRow.dataset.cIndex;
 
-    // Gọi API Xóa: DELETE /auth/carts/{id}
+    const product = cartDataGlobal[pIndex];
+    const cartItem = product.cartItemDTOList[cIndex];
+
+    const allSelects = itemRow.querySelectorAll(".variant-select");
+    const selectedIds = Array.from(allSelects).map(s => s.value);
+
+    // Tìm variant mới trong RAM
+    const newVariant = product.productVariantsDTOList.find(v => 
+        selectedIds.every(id => v.attributeValueIdList.includes(id))
+    );
+
+    if (newVariant) {
+        const payload = {
+            cartItemId: cartItem.cartItemId,
+            variantId: newVariant.variantId,
+            quantity: cartItem.quantity
+        };
+
+        const res = await callAPI('/auth/carts', 'PUT', payload);
+
+        if (res.success) {
+            // === KEY POINT: Cập nhật RAM & Render ===
+            cartItem.variantId = newVariant.variantId; 
+            renderCartUI(); 
+        } else {
+            await showDialog("error", res.message || "Lỗi đổi biến thể");
+            renderCartUI();
+        }
+    } else {
+        await showDialog("error", "Phiên bản này không có sẵn!");
+        renderCartUI();
+    }
+};
+
+// Xóa sản phẩm
+window.removeItem = async (cartItemId) => {
+    if (!confirm("Bạn có chắc chắn muốn xóa?")) return;
+
     const res = await callAPI(`/auth/carts/${cartItemId}`, 'DELETE');
 
     if (res.success) {
-        // await showDialog("success", "Đã xóa sản phẩm"); // Tắt thông báo cho thao tác nhanh
-        await loadCart(); 
+        // === KEY POINT: Cập nhật RAM & Render ===
+        // Lọc bỏ item đã xóa khỏi mảng cartDataGlobal
+        cartDataGlobal.forEach(p => {
+            p.cartItemDTOList = p.cartItemDTOList.filter(i => i.cartItemId !== cartItemId);
+        });
+        
+        console.log("Xóa thành công -> Vẽ lại UI từ RAM");
+        renderCartUI(); 
     } else {
-        await showDialog("error", res.message || "Lỗi khi xóa sản phẩm");
+        await showDialog("error", res.message || "Lỗi xóa");
     }
 };
+
+function setupCheckoutEvent() {
+    const btn = document.querySelector(".checkout-btn");
+    btn.onclick = () => {
+        if(!btn.disabled) {
+            window.location.href = '../checkout/index.html'; 
+        }
+    };
+}
