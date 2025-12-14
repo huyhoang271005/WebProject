@@ -8,7 +8,6 @@ let isUpdating = false;
 
 document.addEventListener("DOMContentLoaded", async () => {
     await loadCart();
-    // Xử lý nút thanh toán
     document.querySelector(".checkout-btn").onclick = (e) => {
         if(!e.target.disabled) {
             localStorage.setItem("checkoutItems", JSON.stringify([...checkedItems]));
@@ -17,7 +16,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     };
 });
 
-// === 1. LOGIC TẢI & VẼ GIAO DIỆN ===
+// === 1. LOAD DATA ===
 async function loadCart() {
     const res = await callAPI('/auth/carts', 'GET'); 
     if (res.success) {
@@ -29,6 +28,7 @@ async function loadCart() {
     }
 }
 
+// === 2. UI RENDER ===
 function renderCartUI() {
     const container = document.getElementById("cartList");
     container.innerHTML = ""; 
@@ -39,7 +39,6 @@ function renderCartUI() {
         product.cartItemDTOList.forEach((cartItem, cIndex) => {
             const variant = product.productVariantsDTOList.find(v => v.variantId === cartItem.variantId);
             if(variant) {
-                // Gọi hàm tạo HTML riêng cho gọn code chính
                 container.appendChild(createItemRow(product, cartItem, variant, pIndex, cIndex));
             }
         });
@@ -47,11 +46,10 @@ function renderCartUI() {
     updateSummary();
 }
 
-// === 2. HÀM TẠO HTML (Tách ra đây cho đỡ rối mắt) ===
+// === HÀM TẠO HTML (CẤU TRÚC MỚI) ===
 function createItemRow(product, item, variant, pIndex, cIndex) {
     const row = document.createElement("div");
     row.className = "cart-item";
-    // Lưu dữ liệu vào DOM để dùng lại
     row.dataset.pIndex = pIndex; row.dataset.cIndex = cIndex;
 
     // Dropdown thuộc tính
@@ -66,29 +64,37 @@ function createItemRow(product, item, variant, pIndex, cIndex) {
         <div class="checkbox-wrapper">
             <input type="checkbox" class="item-checkbox" onchange="toggleCheck('${item.cartItemId}')" ${checkedItems.has(item.cartItemId) ? 'checked' : ''}>
         </div>
+
         <img src="${variant.imageUrl || 'https://via.placeholder.com/80'}" class="item-img">
+        
         <div class="item-info">
             <div class="item-name">${product.productName}</div>
             ${dropdowns}
         </div>
-        <div class="item-meta">
-            <div class="item-price">${money.format(variant.price)}</div>
-            <div class="item-unit">Kho: ${variant.stock}</div>
+
+        <div class="item-actions">
+            <div class="qty-control">
+                <button class="qty-btn" onclick="updateQty('${item.cartItemId}', -1)">-</button>
+                <input type="number" value="${item.quantity}" class="qty-input" 
+                       onchange="manualQty(this, '${item.cartItemId}')"
+                       onkeypress="if(event.key==='Enter') manualQty(this,'${item.cartItemId}')">
+                <button class="qty-btn" onclick="updateQty('${item.cartItemId}', 1)">+</button>
+            </div>
+            
+            <div class="item-meta">
+                <div class="item-price">${money.format(variant.price)}</div>
+                <div class="item-unit">Kho: ${variant.stock}</div>
+            </div>
         </div>
-        <div class="qty-control">
-            <button class="qty-btn" onclick="updateQty('${item.cartItemId}', -1)">-</button>
-            <input type="number" value="${item.quantity}" class="qty-input" 
-                   onchange="manualQty(this, '${item.cartItemId}')"
-                   onkeypress="if(event.key==='Enter') manualQty(this,'${item.cartItemId}')">
-            <button class="qty-btn" onclick="updateQty('${item.cartItemId}', 1)">+</button>
+        
+        <div class="delete-btn-wrapper">
+            <i class="fa-solid fa-trash-can delete-btn" onclick="removeItem('${item.cartItemId}')" title="Xóa"></i>
         </div>
-        <i class="fa-solid fa-trash-can delete-btn" onclick="removeItem('${item.cartItemId}')"></i>
     `;
     return row;
 }
 
-// === 3. LOGIC XỬ LÝ (Tối ưu RAM - Không reload API) ===
-
+// === 3. LOGIC (Tối ưu RAM) ===
 function updateSummary() {
     let total = 0, count = 0;
     cartDataGlobal.forEach(p => p.cartItemDTOList.forEach(i => {
@@ -108,12 +114,10 @@ window.toggleCheck = (id) => {
     updateSummary();
 };
 
-// Hàm update chung cho cả nút bấm và nhập tay
 async function executeUpdate(cartItemId, newQty) {
     if (isUpdating) return; isUpdating = true;
     try {
         let foundItem, foundVariant;
-        // Tìm nhanh trong RAM
         for (const p of cartDataGlobal) {
             const i = p.cartItemDTOList.find(x => x.cartItemId === cartItemId);
             if (i) { foundItem = i; foundVariant = p.productVariantsDTOList.find(v => v.variantId === i.variantId); break; }
@@ -128,8 +132,8 @@ async function executeUpdate(cartItemId, newQty) {
 
         const res = await callAPI('/auth/carts', 'PUT', { cartItemId, variantId: foundItem.variantId, quantity: newQty });
         if (res.success) {
-            foundItem.quantity = newQty; // Sửa RAM
-            renderCartUI(); // Vẽ lại
+            foundItem.quantity = newQty; 
+            renderCartUI(); 
         } else {
             await showDialog("error", res.message);
             renderCartUI();
@@ -160,7 +164,7 @@ window.handleVariantChange = async (select) => {
     if (newVar) {
         const res = await callAPI('/auth/carts', 'PUT', { cartItemId: item.cartItemId, variantId: newVar.variantId, quantity: item.quantity });
         if (res.success) {
-            item.variantId = newVar.variantId; // Sửa RAM
+            item.variantId = newVar.variantId;
             renderCartUI(); 
         } else await showDialog("error", res.message);
     } else {
