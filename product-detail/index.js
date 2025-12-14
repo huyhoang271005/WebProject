@@ -248,10 +248,15 @@ function setupEventListeners() {
         if (val > max) input.value = max;
     });
 
-    document.getElementById('btnAddToCart').addEventListener('click', () => {
+    document.getElementById('btnAddToCart').addEventListener('click', async() => {
         if (!validateSelection()) return;
         // Gọi API thêm vào giỏ hàng tại đây
-        alert(`Đã thêm vào giỏ: ${currentVariant.variantId} - SL: ${input.value}`);
+        const data = {
+            variantId: currentVariant.variantId,
+            quantity: input.value
+        }
+        const result = await callAPI("/auth/carts", "POST", data);
+        alert(result.message);
     });
 
     document.getElementById('btnBuyNow').addEventListener('click', () => {
