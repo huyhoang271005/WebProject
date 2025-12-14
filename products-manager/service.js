@@ -1,37 +1,26 @@
-import { callAPI } from "../public/api.js";
-
-const PAGE_SIZE = 100;
+import { callAPI } from '../public/api.js';
 
 export const ProductService = {
-    getAll: async () => {
-        const res = await callAPI(`/products`, "GET");
-        return res?.data?.listData || [];
-    },
-
+    // Lấy danh sách categories
     getCategories: async () => {
         const res = await callAPI(`/categories`, "GET");
         return res?.data?.listData || [];
     },
 
+    // Lấy danh sách brands
     getBrands: async () => {
         const res = await callAPI(`/brands`, "GET");
         return res?.data?.listData || [];
     },
 
+    // Lấy danh sách attributes
     getAttributes: async () => {
         const res = await callAPI(`/attributes`, "GET");
         return res?.data?.listData || [];
     },
 
-    save: async (formData) => {
-        const response = await fetch("https://uncoagulative-tyrannisingly-eddie.ngrok-free.dev/auth/products", {
-            method: "POST",
-            body: formData
-        });
-        return await response.json();
-    },
-
-    delete: async (id) => {
-        return await callAPI(`/products/${id}`, "DELETE");
+    createProduct: async (productData) => {
+        const res = await callAPI(`/auth/products`, "POST", productData, true);
+        return res;
     }
 };

@@ -1,232 +1,348 @@
-export const UI = {
-    els: {
-        list: document.getElementById("view-list"),
-        form: document.getElementById("view-form"),
-        tableBody: document.querySelector("#productTable tbody"),
-        cateSelect: document.getElementById("prodCate"),
-        brandSelect: document.getElementById("prodBrand"),
-        attrContainer: document.getElementById("attributes-container"),
-        variantWrapper: document.getElementById("variants-wrapper"),
-        variantList: document.getElementById("variant-list"),
-        formTitle: document.getElementById("formTitle"),
-        mainImgPreview: document.getElementById("mainImgPreview"),
-        mainImgPlaceholder: document.getElementById("mainImgPlaceholder"),
-        mainImgInput: document.getElementById("mainImgInput")
+export const ProductUI = {
+    state: {
+        categories: [],
+        brands: [],
+        attributes: [],
+        selectedAttributes: [],
+        variants: [],
+        mainImageFile: null
     },
 
-    switchView: (viewName) => {
-        if (viewName === 'list') {
-            UI.els.list.classList.remove('hidden');
-            UI.els.form.classList.add('hidden');
-        } else {
-            UI.els.list.classList.add('hidden');
-            UI.els.form.classList.remove('hidden');
-        }
+    // Initialize dropdowns với search
+    initSearchableDropdown: (selectId, items, displayField = 'name', valueField = 'id') => {
+        const select = document.getElementById(selectId);
+        if (!select) return;
+
+        // Clear options
+        select.innerHTML = '<option value="">-- Chọn --</option>';
+        
+        items.forEach(item => {
+            const option = document.createElement('option');
+            option.value = item[valueField];
+            option.textContent = item[displayField];
+            select.appendChild(option);
+        });
+
+        // Add search functionality với datalist
+        const wrapper = select.parentElement;
+        const searchInput = document.createElement('input');
+        searchInput.type = 'text';
+        searchInput.className = 'form-control mb-2';
+        searchInput.placeholder = `Tìm kiếm...`;
+        searchInput.setAttribute('list', `${selectId}-datalist`);
+        
+        // Tạo datalist cho autocomplete
+        const datalist = document.createElement('datalist');
+        datalist.id = `${selectId}-datalist`;
+        items.forEach(item => {
+            const option = document.createElement('option');
+            option.value = item[displayField];
+            option.setAttribute('data-id', item[valueField]);
+            datalist.appendChild(option);
+        });
+        wrapper.appendChild(datalist);
+
+        // Event khi nhập search
+        searchInput.addEventListener('input', (e) => {
+            const searchTerm = e.target.value.toLowerCase();
+            
+            // Filter options trong select
+            Array.from(select.options).forEach(option => {
+                if (option.value === '') return;
+                const text = option.textContent.toLowerCase();
+                option.style.display = text.includes(searchTerm) ? '' : 'none';
+            });
+
+            // Tự động chọn nếu match chính xác
+            const exactMatch = items.find(item => 
+                item[displayField].toLowerCase() === searchTerm
+            );
+            if (exactMatch) {
+                select.value = exactMatch[valueField];
+                select.dispatchEvent(new Event('change'));
+            }
+        });
+
+        // Event khi chọn từ datalist
+        searchInput.addEventListener('change', (e) => {
+            const selectedText = e.target.value;
+            const matchedItem = items.find(item => item[displayField] === selectedText);
+            if (matchedItem) {
+                select.value = matchedItem[valueField];
+                select.dispatchEvent(new Event('change'));
+            }
+        });
+
+        wrapper.insertBefore(searchInput, select);
     },
 
-    renderTable: (products) => {
-        if (!products.length) {
-            UI.els.tableBody.innerHTML = `
-                <tr>
-                    <td colspan="5" class="empty-state">
-                        <i class="fa-solid fa-box-open"></i>
-                        <p>Không có dữ liệu</p>
-                    </td>
-                </tr>`;
+    // Render attribute selector
+    renderAttributeSelector: () => {
+        const container = document.getElementById('attributesContainer');
+        if (!container) return;
+
+        container.innerHTML = `
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Thêm thuộc tính biến thể</h5>
+                    <button type="button" class="btn btn-sm btn-primary mb-3" id="addAttributeBtn">
+                        + Thêm thuộc tính
+                    </button>
+                    <div id="selectedAttributesList"></div>
+                </div>
+            </div>
+        `;
+
+        document.getElementById('addAttributeBtn').addEventListener('click', () => {
+            ProductUI.addAttributeRow();
+        });
+    },
+
+    // Thêm một hàng attribute
+    addAttributeRow: () => {
+        const list = document.getElementById('selectedAttributesList');
+        const rowId = `attr_row_${Date.now()}`;
+
+        const row = document.createElement('div');
+        row.className = 'attribute-row mb-3 p-3 border rounded';
+        row.id = rowId;
+        row.innerHTML = `
+            <div class="row align-items-end">
+                <div class="col-md-5">
+                    <label class="form-label">Chọn thuộc tính</label>
+                    <select class="form-select attribute-select">
+                        <option value="">-- Chọn thuộc tính --</option>
+                        ${ProductUI.state.attributes.map(attr => 
+                            `<option value="${attr.attributeId}">${attr.attributeName}</option>`
+                        ).join('')}
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Giá trị thuộc tính</label>
+                    <textarea class="form-control attribute-values-input" 
+                              rows="2"
+                              placeholder="VD: Đỏ, Xanh, Vàng" 
+                              disabled></textarea>
+                    <small class="text-muted">Nhập các giá trị ngăn cách bởi dấu phẩy.</small>
+                </div>
+                <div class="col-md-1">
+                    <button type="button" class="btn btn-danger btn-sm w-100 remove-attr-btn">Xóa</button>
+                </div>
+            </div>
+        `;
+
+        list.appendChild(row);
+
+        const attrSelect = row.querySelector('.attribute-select');
+        const valuesInput = row.querySelector('.attribute-values-input');
+
+        // Event: Khi chọn attribute
+        attrSelect.addEventListener('change', (e) => {
+            const selectedAttrId = e.target.value;
+            
+            if (selectedAttrId) {
+                valuesInput.disabled = false;
+                valuesInput.placeholder = 'VD: Đỏ, Xanh, Vàng';
+            } else {
+                valuesInput.disabled = true;
+                valuesInput.value = '';
+                valuesInput.placeholder = 'Vui lòng chọn thuộc tính trước';
+            }
+            
+            ProductUI.updateSelectedAttributes();
+        });
+
+        // Event: Khi nhập values
+        valuesInput.addEventListener('input', () => {
+            ProductUI.updateSelectedAttributes();
+        });
+
+        // Event: Xóa row
+        row.querySelector('.remove-attr-btn').addEventListener('click', () => {
+            row.remove();
+            ProductUI.updateSelectedAttributes();
+        });
+    },
+
+    // Update danh sách attributes đã chọn
+    updateSelectedAttributes: () => {
+        const rows = document.querySelectorAll('.attribute-row');
+        const selectedAttributes = [];
+
+        rows.forEach(row => {
+            const attrSelect = row.querySelector('.attribute-select');
+            const valuesInput = row.querySelector('.attribute-values-input');
+            
+            const attributeId = attrSelect.value;
+            const valuesString = valuesInput.value;
+
+            if (attributeId && valuesString.trim()) {
+                const attribute = ProductUI.state.attributes.find(a => a.attributeId === attributeId);
+                
+                if (attribute) {
+                    const values = valuesString
+                        .split(',')
+                        .map(v => v.trim())
+                        .filter(v => v.length > 0)
+                        .map((name, index) => ({
+                            id: `${attributeId}_${index}_${Date.now()}`,
+                            attributeValueId: null,
+                            name: name
+                        }));
+
+                    if (values.length > 0) {
+                        selectedAttributes.push({
+                            attributeId: attribute.attributeId,
+                            attributeName: attribute.attributeName,
+                            values: values
+                        });
+                    }
+                }
+            }
+        });
+
+        ProductUI.state.selectedAttributes = selectedAttributes;
+        ProductUI.updateVariantsFromAttributes();
+    },
+
+    // Tạo variants từ attributes và render
+    updateVariantsFromAttributes: () => {
+        import('./logic.js').then(({ ProductLogic }) => {
+            const variants = ProductLogic.generateVariants(ProductUI.state.selectedAttributes);
+            ProductUI.state.variants = variants;
+            ProductUI.renderVariantsTable();
+        });
+    },
+
+    // Render bảng variants
+    renderVariantsTable: () => {
+        const container = document.getElementById('variantsContainer');
+        if (!container) return;
+
+        if (ProductUI.state.variants.length === 0) {
+            container.innerHTML = '<p class="text-muted">Chưa có biến thể nào. Thêm thuộc tính để tạo biến thể.</p>';
             return;
         }
-        UI.els.tableBody.innerHTML = products.map(p => `
-            <tr>
-                <td>
-                    <div class="product-name">${p.productName}</div>
-                </td>
-                <td>
-                    <div class="category-info">
-                        <span class="category-name">${p.categoryName || '-'}</span>
-                        <span class="brand-name">${p.brandName || '-'}</span>
-                    </div>
-                </td>
-                <td>
-                    <span class="price">${new Intl.NumberFormat('vi-VN').format(p.price)}đ</span>
-                </td>
-                <td>
-                    <span class="badge">${p.variants?.length || 0} loại</span>
-                </td>
-                <td>
-                    <div class="actions">
-                        <button class="btn-icon edit" onclick="window.editProduct('${p.productId}')" title="Chỉnh sửa">
-                            <i class="fa-solid fa-pen"></i>
-                        </button>
-                        <button class="btn-icon delete" onclick="window.deleteProduct('${p.productId}')" title="Xóa">
-                            <i class="fa-solid fa-trash"></i>
-                        </button>
-                    </div>
-                </td>
-            </tr>
-        `).join('');
-    },
 
-    renderBrands: (brands, cateId, selectedBrandId = null) => {
-        UI.els.brandSelect.innerHTML = `<option value="">-- Chọn thương hiệu --</option>`;
-        if (!cateId) return;
-        const filtered = brands.filter(b => b.categoryId == cateId);
-        (filtered.length ? filtered : brands).forEach(b => {
-            UI.els.brandSelect.innerHTML += `<option value="${b.brandId}">${b.brandName}</option>`;
+        container.innerHTML = `
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Danh sách biến thể (${ProductUI.state.variants.length})</h5>
+                    <div class="table-responsive">
+                        <table class="table table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>Biến thể</th>
+                                    <th>Ảnh</th>
+                                    <th>Giá gốc</th>
+                                    <th>Giá bán</th>
+                                    <th>Tồn kho</th>
+                                </tr>
+                            </thead>
+                            <tbody id="variantsTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        const tbody = document.getElementById('variantsTableBody');
+        ProductUI.state.variants.forEach((variant, index) => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td><strong>${variant.displayName}</strong></td>
+                <td>
+                    <input type="file" class="form-control form-control-sm variant-image" 
+                           data-index="${index}" accept="image/*">
+                    ${variant.imageFile ? `<p class="text-muted mt-1 mb-0 small">Đã chọn: ${variant.imageFile.name}</p>` : ''}
+                </td>
+                <td>
+                    <input type="number" class="form-control form-control-sm variant-price-original" 
+                           data-index="${index}" value="${variant.priceOriginal}" min="0" step="1000">
+                </td>
+                <td>
+                    <input type="number" class="form-control form-control-sm variant-price" 
+                           data-index="${index}" value="${variant.price}" min="0" step="1000">
+                </td>
+                <td>
+                    <input type="number" class="form-control form-control-sm variant-stock" 
+                           data-index="${index}" value="${variant.stock}" min="0">
+                </td>
+            `;
+            tbody.appendChild(row);
         });
-        if (selectedBrandId) UI.els.brandSelect.value = selectedBrandId;
+
+        // Add event listeners
+        document.querySelectorAll('.variant-price-original').forEach(input => {
+            input.addEventListener('change', (e) => {
+                const index = parseInt(e.target.dataset.index);
+                ProductUI.state.variants[index].priceOriginal = parseFloat(e.target.value) || 0;
+            });
+        });
+
+        document.querySelectorAll('.variant-price').forEach(input => {
+            input.addEventListener('change', (e) => {
+                const index = parseInt(e.target.dataset.index);
+                ProductUI.state.variants[index].price = parseFloat(e.target.value) || 0;
+            });
+        });
+
+        document.querySelectorAll('.variant-stock').forEach(input => {
+            input.addEventListener('change', (e) => {
+                const index = parseInt(e.target.dataset.index);
+                ProductUI.state.variants[index].stock = parseInt(e.target.value) || 0;
+            });
+        });
+
+        document.querySelectorAll('.variant-image').forEach(input => {
+            input.addEventListener('change', (e) => {
+                const index = parseInt(e.target.dataset.index);
+                const file = e.target.files[0];
+                if (file) {
+                    // Lưu file object vào state
+                    ProductUI.state.variants[index].imageFile = file;
+                    ProductUI.renderVariantsTable(); // Re-render để hiện tên file
+                }
+            });
+        });
     },
 
-    addAttrRow: (nameVal = "", valuesVal = "", onInputCallback, attrId = null, valueIds = [], valueIdMap = {}, allAttributes = []) => {
-        const div = document.createElement("div");
-        div.className = "attr-row";
-        if (attrId) div.dataset.attrId = attrId;
-        if (valueIds.length) div.dataset.valueIds = JSON.stringify(valueIds);
-        if (Object.keys(valueIdMap).length) div.dataset.valueIdMap = JSON.stringify(valueIdMap);
-        
-        const attrOptions = allAttributes.map(attr => 
-            `<option value="${attr.attributeId}" ${attrId === attr.attributeId ? 'selected' : ''}>${attr.attributeName}</option>`
-        ).join('');
-        
-        div.innerHTML = `
-            <div style="flex: 0 0 200px;">
-                <select class="inp-attr-select" style="width:100%; padding: 14px 18px; border: 2px solid #E5E7EB; border-radius: 10px; font-size: 14px;">
-                    <option value="">-- Chọn thuộc tính --</option>
-                    ${attrOptions}
-                </select>
-            </div>
-            <div style="flex: 1;">
-                <input type="text" class="inp-attr-vals" placeholder="Chọn thuộc tính trước" value="${valuesVal}" style="width:100%" readonly>
-            </div>
-            <button type="button" class="btn-remove" title="Xóa dòng này">
-                <i class="fa-solid fa-xmark"></i>
-            </button>
+    // Handle main image upload
+    handleMainImageUpload: (file) => {
+        if (file) {
+            // Lưu file object
+            ProductUI.state.mainImageFile = file;
+            const fileName = file.name;
+            
+            // Preview ảnh
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const preview = document.getElementById('mainImagePreview');
+                if (preview) {
+                    preview.innerHTML = `
+                        <img src="${e.target.result}" class="img-thumbnail" style="max-width: 200px;">
+                        <p class="text-muted mt-2">Tên ảnh: <strong>${fileName}</strong></p>
+                    `;
+                }
+            };
+            reader.readAsDataURL(file);
+        }
+    },
+
+    // Show notification
+    showNotification: (message, type = 'success') => {
+        const alertDiv = document.createElement('div');
+        alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed top-0 start-50 translate-middle-x mt-3`;
+        alertDiv.style.zIndex = '9999';
+        alertDiv.innerHTML = `
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         `;
         
-        const selectEl = div.querySelector(".inp-attr-select");
-        const inputEl = div.querySelector(".inp-attr-vals");
+        document.body.appendChild(alertDiv);
         
-        // Nếu đang edit và có nameVal thì mở khóa input
-        if (nameVal && valuesVal) {
-            inputEl.readOnly = false;
-        }
-
-        selectEl.addEventListener("change", (e) => {
-            const selectedAttrId = e.target.value;
-            if (selectedAttrId) {
-                const selectedAttr = allAttributes.find(a => a.attributeId === selectedAttrId);
-                if (selectedAttr && selectedAttr.attributeValues && selectedAttr.attributeValues.length > 0) {
-                    // Có sẵn values -> điền và readonly
-                    div.dataset.attrId = selectedAttrId;
-                    const values = selectedAttr.attributeValues.map(v => v.attributeValueName).join(", ");
-                    inputEl.value = values;
-                    inputEl.readOnly = true;
-                    inputEl.placeholder = "Giá trị thuộc tính";
-                    
-                    const newValueIdMap = {};
-                    selectedAttr.attributeValues.forEach(v => {
-                        newValueIdMap[v.attributeValueName] = v.attributeValueId;
-                    });
-                    div.dataset.valueIdMap = JSON.stringify(newValueIdMap);
-                } else {
-                    // Không có values -> cho phép nhập
-                    div.dataset.attrId = selectedAttrId;
-                    inputEl.value = "";
-                    inputEl.readOnly = false;
-                    inputEl.placeholder = "Nhập giá trị (ngăn cách bằng dấu phẩy)...";
-                }
-            } else {
-                inputEl.value = "";
-                inputEl.readOnly = true;
-                inputEl.placeholder = "Chọn thuộc tính trước";
-            }
-            onInputCallback();
-        });
-        
-        inputEl.addEventListener("input", onInputCallback);
-        
-        div.querySelector(".btn-remove").onclick = () => { 
-            div.remove(); 
-            onInputCallback(); 
-        };
-        UI.els.attrContainer.appendChild(div);
-    },
-
-    renderVariants: (variants) => {
-        if (!variants.length) {
-            UI.els.variantWrapper.classList.add("hidden");
-            return;
-        }
-        UI.els.variantWrapper.classList.remove("hidden");
-        
-        UI.els.variantList.innerHTML = variants.map((v, i) => {
-            const imgSrc = v.previewUrl ? v.previewUrl : (v.imageName ? v.imageName : "");
-            const hasImg = !!imgSrc;
-
-            return `
-            <div class="variant-item">
-                <div class="v-img-box" onclick="document.getElementById('v_file_${i}').click()" title="Chọn ảnh">
-                    ${hasImg 
-                        ? `<img src="${imgSrc}" class="img-preview" alt="Variant image" />` 
-                        : `<div class="img-placeholder"><i class="fa-solid fa-camera"></i></div>`
-                    }
-                    <input type="file" id="v_file_${i}" accept="image/*" style="display: none;" 
-                           onchange="window.handleSelectVariantImage(${i}, this)">
-                </div>
-
-                <div class="v-name"><strong>${v.name}</strong></div>
-                
-                <div class="v-inputs">
-                    <div class="grp">
-                        <label>Giá gốc</label>
-                        <input type="number" value="${v.priceOriginal || v.price || 0}" onchange="window.updateVarOriginalPrice(${i}, this.value)">
-                    </div>
-                    <div class="grp">
-                        <label>Giá bán</label>
-                        <input type="number" value="${v.price || 0}" onchange="window.updateVar(${i},'price',this.value)">
-                    </div>
-                    <div class="grp">
-                        <label>Kho</label>
-                        <input type="number" value="${v.stock || 0}" onchange="window.updateVar(${i},'stock',this.value)">
-                    </div>
-                    <button type="button" class="btn-icon delete" onclick="window.removeVariant(${i})" title="Xóa">
-                        <i class="fa-solid fa-trash"></i>
-                    </button>
-                </div>
-            </div>
-            `;
-        }).join('');
-    },
-    
-    renderMainImage: (previewUrl) => {
-        if (previewUrl) {
-            UI.els.mainImgPreview.src = previewUrl;
-            UI.els.mainImgPreview.classList.remove("hidden");
-            UI.els.mainImgPlaceholder.classList.add("hidden");
-        } else {
-            UI.els.mainImgPreview.src = "";
-            UI.els.mainImgPreview.classList.add("hidden");
-            UI.els.mainImgPlaceholder.classList.remove("hidden");
-        }
-    },
-
-    fillForm: (p) => {
-        document.getElementById("prodName").value = p.productName;
-        document.getElementById("prodDesc").value = p.description || "";
-        document.getElementById("prodPrice").value = p.price;
-        document.getElementById("prodOriginalPrice").value = p.priceOriginal || "";
-        UI.els.cateSelect.value = p.categoryId;
-        
-        if (p.imageName) UI.renderMainImage(p.imageName); 
-    },
-    
-    resetForm: (isEdit) => {
-        document.getElementById("productForm").reset();
-        UI.els.attrContainer.innerHTML = "";
-        UI.els.variantWrapper.classList.add("hidden");
-        UI.els.brandSelect.innerHTML = `<option value="">-- Chọn danh mục trước --</option>`;
-        UI.els.formTitle.innerText = isEdit ? "Cập nhật sản phẩm" : "Thêm sản phẩm mới";
-        
-        UI.renderMainImage(null);
-        UI.els.mainImgInput.value = "";
+        setTimeout(() => {
+            alertDiv.remove();
+        }, 5000);
     }
 };
