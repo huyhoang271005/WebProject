@@ -108,6 +108,8 @@ html, body {
     outline: none;
     cursor: pointer;
     transition: 0.2s;
+    width: auto !important;
+    max-width: 150px;
 }
 .variant-select:hover { border-color: #10B981; }
 /* ----------------------------------------- */
