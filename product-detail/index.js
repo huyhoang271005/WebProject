@@ -1,4 +1,4 @@
-import { callAPI } from '/../public/api.js';
+import { callAPI } from "../public/api.js";
 import { loadPage, noImage } from '../public/public.js';
 
 // --- Global Variables ---
