@@ -1,7 +1,6 @@
-const API_BASE = "https://uncoagulative-tyrannisingly-eddie.ngrok-free.dev";
-import { EventSourcePlus } from "https://cdn.jsdelivr.net/npm/event-source-plus/+esm";
+export const API_BASE = "https://uncoagulative-tyrannisingly-eddie.ngrok-free.dev";
 
-let accessToken = null;
+export let accessToken = null;
 /**
  * endpoint là bắt buộc, isMultipart: true nếu gửi FormData
  */
@@ -51,7 +50,7 @@ async function callAPIWithRetry(endpoint, method, data, isMultipart, alreadyRefr
     }
 }
 
-async function refreshAccessToken() {
+export async function refreshAccessToken() {
     const res = await fetch(`${API_BASE}/auth/refresh-token`, {
         method: "POST",
         credentials: "include",
@@ -77,49 +76,4 @@ async function refreshAccessToken() {
         }
     }
     return body;
-}
-
-/*enpoint connect sse, bên trong hàm callback có data trả về*/
-export async function connectSse(endpoint, callback) {
-
-    async function start() {
-        if(!accessToken){
-            const result = await refreshAccessToken();
-            if(!result.success){
-                await callback(result);
-                return;
-            }
-        }
-        const es = new EventSourcePlus(`${API_BASE}${endpoint}`, {
-            headers: {
-                'Authorization': `Bearer ${accessToken}`,
-                'ngrok-skip-browser-warning': '2710'
-            }
-        });
-        if(es.status === 401){
-            const result = await refreshAccessToken()
-            if(!result.success){
-                await callback(result);
-                return;
-            }
-            await start();
-            return;
-        }
-        es.listen({
-            async onMessage(e) {
-                try {
-                    const obj = JSON.parse(e.data);
-                    await callback(obj);
-                } catch(err) {
-                    console.error(err);
-                }
-            },
-            async onError(e) {
-                await start();
-                return;
-            }
-        });
-    }
-
-    await start();
 }

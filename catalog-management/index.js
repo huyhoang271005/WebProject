@@ -11,20 +11,20 @@ let isEditing = false;
 const config = {
     category: {
         name: 'Danh mục',
-        getList: '/auth/categories',
-        crud: '/auth/categories',
+        getList: '/categories',
+        crud: '/categories',
         hasDesc: true
     },
     brand: {
         name: 'Thương hiệu',
-        getList: '/auth/brands',
-        crud: '/auth/brands',
+        getList: '/brands',
+        crud: '/brands',
         hasDesc: true
     },
     attribute: {
         name: 'Thuộc tính',
-        getList: '/auth/attributes',
-        crud: '/auth/attributes',
+        getList: '/attributes',
+        crud: '/attributes',
         hasDesc: false
     }
 };

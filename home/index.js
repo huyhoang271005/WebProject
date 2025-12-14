@@ -1,6 +1,7 @@
 import { loadNavbar } from "../navbar/navbar.js";
-import { callAPI, connectSse } from "../public/api.js";
+import { callAPI } from "../public/api.js";
 import { getLoader } from "../public/public.js";
+import { connectSse, subscribeTopic } from "../public/Sse.js";
 
 const CATEGORIES = [
   { id: "an-vat", name: "Đồ ăn vặt", icon: "fa-cookie-bite" },
@@ -46,11 +47,11 @@ document.addEventListener("DOMContentLoaded", async () => {
     renderHomeSections();
 
     // 4. SSE
-    try {
-      connectSse("/sse", (data) => {
-        if (data.success) showToast("Thông báo", data.message);
-      });
-    } catch (e) {}
+    await connectSse("/sse");
+    subscribeTopic("notification", data => {
+      let result = data.data;
+      showToast(result.title, result.message);
+    });
   } catch (e) {
     console.error(e);
   } finally {
