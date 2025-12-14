@@ -24,7 +24,7 @@ loadPage(async () => {
 
 // --- API Functions ---
 async function getProductDetail(id) {
-    const endpoint = `/auth/product-detail?id=${id}`;
+    const endpoint = `/auth/product-detail/{id}`;
     const res = await callAPI(endpoint, "GET");
 
     if (res.success && res.data) {
