@@ -1,31 +1,13 @@
+import { callAPI } from '../public/api.js'; // <--- Quay lại dùng hàng chính chủ
 import { showDialog } from '../dialog/index.js';
-import { callAPI } from '../public/api.js'; 
 
 const money = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' });
 
-let cartData = [];       // Dữ liệu RAM (Quan trọng để không phải load lại API)
+let cartData = [];       // Dữ liệu RAM
 let checkedItems = new Set(); // Lưu các món được tick
 let isBusy = false;      // Chặn spam click
 
-// === 1. HÀM API (Gọn nhẹ & Tự xử lý Token/FormData) ===
-async function api(path, method = 'GET', body = null) {
-    try {
-        const opts = {
-            method,
-            headers: { "Authorization": `Bearer ${MY_TOKEN}`, "ngrok-skip-browser-warning": "1" }
-        };
-        if (body) {
-            // Tự chuyển JSON -> Form Data (để tránh lỗi 415/422 Backend)
-            opts.body = new URLSearchParams(body);
-            opts.headers["Content-Type"] = "application/x-www-form-urlencoded";
-        }
-        const res = await fetch(API_BASE + path, opts);
-        if (res.status === 401) return { success: false, message: "Hết hạn đăng nhập" };
-        return await res.json();
-    } catch (e) { return { success: false, message: "Lỗi kết nối" }; }
-}
-
-// === 2. HÀM TIỆN ÍCH (Tìm nhanh item trong RAM) ===
+// === 1. HÀM TIỆN ÍCH (Tìm nhanh item trong RAM) ===
 const findItem = (id) => {
     for (const p of cartData) {
         const item = p.cartItemDTOList.find(i => i.cartItemId === id);
@@ -38,15 +20,16 @@ const findItem = (id) => {
     return null;
 };
 
-// === 3. KHỞI TẠO ===
+// === 2. KHỞI TẠO ===
 document.addEventListener("DOMContentLoaded", async () => {
-    // CHỈ GỌI API LOAD CART ĐÚNG 1 LẦN DUY NHẤT Ở ĐÂY
-    const res = await api('/auth/carts');
+    // Gọi API gốc của nhóm
+    const res = await callAPI('/auth/carts', 'GET');
+    
     if (res.success) {
         cartData = res.data;
         render();
     } else {
-        document.getElementById("cartList").innerHTML = `<p class="text-center p-5 text-red-500">${res.message}</p>`;
+        document.getElementById("cartList").innerHTML = `<p class="text-center p-5 text-red-500">${res.message || 'Lỗi tải dữ liệu'}</p>`;
     }
     
     // Sự kiện nút Mua hàng
@@ -58,7 +41,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     };
 });
 
-// === 4. RENDER GIAO DIỆN (Hoàn toàn từ RAM) ===
+// === 3. RENDER GIAO DIỆN (Từ RAM) ===
 function render() {
     const container = document.getElementById("cartList");
     container.innerHTML = "";
@@ -70,7 +53,7 @@ function render() {
             const variant = p.productVariantsDTOList.find(v => v.variantId === item.variantId);
             if (!variant) return;
 
-            // Dropdown chọn màu/size
+            // Dropdown
             let selects = `<div class="variant-box">` + p.attributes.map(attr => `
                 <select class="variant-select" onchange="changeVar(this)">
                     ${attr.attributeValues.map(v => 
@@ -81,7 +64,7 @@ function render() {
 
             const row = document.createElement("div");
             row.className = "cart-item";
-            row.dataset.id = item.cartItemId; // Gắn ID để truy xuất
+            row.dataset.id = item.cartItemId; 
 
             row.innerHTML = `
                 <div class="checkbox-wrapper">
@@ -110,7 +93,6 @@ function render() {
 
 function updateTotal() {
     let total = 0, count = 0;
-    // Chỉ tính tiền những món được TICK
     cartData.forEach(p => p.cartItemDTOList.forEach(i => {
         if (checkedItems.has(i.cartItemId)) {
             const v = p.productVariantsDTOList.find(v => v.variantId === i.variantId);
@@ -124,29 +106,29 @@ function updateTotal() {
     btn.disabled = count === 0;
 }
 
-// === 5. CÁC HÀM XỬ LÝ (Tối ưu: Update RAM -> Render) ===
+// === 4. CÁC HÀM XỬ LÝ (Tối ưu: Update RAM -> Render) ===
 
-// Tick chọn mua
 window.toggle = (id) => {
     checkedItems.has(id) ? checkedItems.delete(id) : checkedItems.add(id);
     updateTotal();
 };
 
-// Xóa sản phẩm
 window.remove = async (id) => {
     if (!confirm("Bạn muốn xóa sản phẩm này?")) return;
-    const res = await api(`/auth/carts/${id}`, 'DELETE');
+    
+    // Gọi API Delete gốc
+    const res = await callAPI(`/auth/carts/${id}`, 'DELETE');
+    
     if (res.success) {
-        // Update RAM: Lọc bỏ item đã xóa
+        // Xóa khỏi RAM & Render lại
         cartData.forEach(p => p.cartItemDTOList = p.cartItemDTOList.filter(i => i.cartItemId !== id));
         checkedItems.delete(id);
-        render(); // Vẽ lại ngay lập tức
+        render(); 
     } else {
-        await showDialog("error", res.message);
+        await showDialog("error", res.message || "Lỗi xóa");
     }
 };
 
-// Tăng/Giảm/Nhập số lượng
 window.modifyQty = async (id, delta, manualVal = null) => {
     if (isBusy) return; isBusy = true;
     try {
@@ -158,28 +140,30 @@ window.modifyQty = async (id, delta, manualVal = null) => {
         if (isNaN(newQ) || newQ < 1) return window.remove(id); 
         if (newQ > data.variant.stock) {
             await showDialog("error", `Kho chỉ còn ${data.variant.stock}`);
-            render(); // Reset lại số cũ
+            render(); 
             return;
         }
 
-        const res = await api('/auth/carts', 'PUT', { 
+        const payload = { 
             cartItemId: id, 
             variantId: data.item.variantId, 
             quantity: newQ 
-        });
+        };
+
+        // Gọi API PUT gốc (Giả sử api.js đã fix lỗi JSON/Form Data)
+        const res = await callAPI('/auth/carts', 'PUT', payload);
 
         if (res.success) {
-            // === KEY POINT: Cập nhật RAM & Render ===
+            // Update RAM & Render lại
             data.item.quantity = newQ; 
             render(); 
         } else {
-            await showDialog("error", res.message);
-            render(); // Reset nếu lỗi
+            await showDialog("error", res.message || "Lỗi cập nhật");
+            render(); // Reset về cũ
         }
     } finally { isBusy = false; }
 };
 
-// Đổi biến thể (Màu/Size)
 window.changeVar = async (el) => {
     const row = el.closest(".cart-item");
     const { item, product } = findItem(row.dataset.id);
@@ -188,22 +172,25 @@ window.changeVar = async (el) => {
     const newVar = product.productVariantsDTOList.find(v => selectedIds.every(id => v.attributeValueIdList.includes(id)));
 
     if (newVar) {
-        const res = await api('/auth/carts', 'PUT', { 
+        const payload = { 
             cartItemId: item.cartItemId, 
             variantId: newVar.variantId, 
             quantity: item.quantity 
-        });
+        };
+
+        // Gọi API PUT gốc
+        const res = await callAPI('/auth/carts', 'PUT', payload);
 
         if (res.success) {
-            // === KEY POINT: Cập nhật RAM & Render ===
+            // Update RAM & Render lại
             item.variantId = newVar.variantId; 
             render(); 
         } else { 
-            await showDialog("error", res.message); 
+            await showDialog("error", res.message || "Lỗi đổi biến thể"); 
             render();
         }
     } else {
         await showDialog("error", "Hết hàng hoặc không tồn tại!");
-        render(); // Reset dropdown về cũ
+        render();
     }
 };
