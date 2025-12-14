@@ -20,7 +20,7 @@ export const ProductLogic = {
                 return attribute.values.map(value => [{
                     attributeId: attribute.attributeId,
                     attributeName: attribute.attributeName,
-                    valueId: value.id, // ID tạm để map
+                    valueId: value.id, // ID tạm từ UI
                     valueName: value.name
                 }]);
             }
@@ -31,7 +31,7 @@ export const ProductLogic = {
                     newCombinations.push([...combo, {
                         attributeId: attribute.attributeId,
                         attributeName: attribute.attributeName,
-                        valueId: value.id, // ID tạm để map
+                        valueId: value.id, // ID tạm từ UI
                         valueName: value.name
                     }]);
                 });
@@ -116,11 +116,9 @@ export const ProductLogic = {
             updatedAt: null
         };
 
-        // Format attributes - QUAN TRỌNG: Phải có attributeValues
+        // Format attributes
         const attributes = selectedAttributes.map(attr => {
-            // Kiểm tra attr.values có tồn tại và không rỗng
             if (!attr.values || attr.values.length === 0) {
-                console.warn('Attribute không có values:', attr);
                 return null;
             }
 
@@ -128,26 +126,19 @@ export const ProductLogic = {
                 attributeId: attr.attributeId || null,
                 attributeName: attr.attributeName,
                 attributeValues: attr.values.map(v => ({
-                    attributeValueId: null, // Luôn null để backend tạo mới
-                    attributeValueName: v.name || v.valueName || v // Xử lý nhiều format
+                    // FIX: Gửi luôn ID tạm (v.id) thay vì null
+                    // Để backend có thể khớp nó với ID trong bảng variantValues
+                    attributeValueId: v.id, 
+                    attributeValueName: v.name || v.valueName || v
                 }))
             };
-        }).filter(a => a !== null); // Loại bỏ attributes không hợp lệ
+        }).filter(a => a !== null);
 
         // Format variants
         const formattedVariants = variants.map((variant, index) => {
-            let variantImageName = null;
-            if (variant.imageFile) {
-                const fileName = variant.imageFile.name;
-                // Lấy tên file không có extension
-                variantImageName = fileName.includes('.')
-                    ? fileName.substring(0, fileName.lastIndexOf('.'))
-                    : fileName;
-            }
-
             return {
-                variantId: `variant_${index}`, // ID tạm để map với variantValues
-                imageName: variantImageName,
+                variantId: `variant_${index}`, // ID string để map
+                imageName: variant.imageName, // Đã được set bên index.js
                 imageUrl: null,
                 priceOriginal: parseFloat(variant.priceOriginal) || parseFloat(formData.priceOriginal),
                 price: parseFloat(variant.price) || parseFloat(formData.price),
@@ -157,26 +148,23 @@ export const ProductLogic = {
             };
         });
 
-        // Format variantValues - QUAN TRỌNG: phải map đúng
+        // Format variantValues
         const variantValues = [];
         
         variants.forEach((variant, variantIndex) => {
             if (variant.combination && variant.combination.length > 0) {
                 variant.combination.forEach(combo => {
-                    // Tạo một ID tạm duy nhất cho attributeValueId
-                    // Backend sẽ dùng attributeValueName để tìm hoặc tạo mới
                     variantValues.push({
                         variantId: `variant_${variantIndex}`,
-                        attributeValueId: combo.valueId || `temp_${combo.attributeId}_${combo.valueName}`
+                        // ID này sẽ khớp với attributeValueId ở mảng attributes phía trên
+                        attributeValueId: combo.valueId 
                     });
                 });
             }
         });
 
         console.log('=== FORMAT DATA DEBUG ===');
-        console.log('Selected Attributes:', selectedAttributes);
         console.log('Formatted Attributes:', attributes);
-        console.log('Variants:', variants);
         console.log('Formatted Variants:', formattedVariants);
         console.log('Variant Values:', variantValues);
 
