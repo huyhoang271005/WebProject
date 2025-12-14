@@ -127,10 +127,10 @@ async function addNewAddress(data) {
 
     if (result.success) {
         showNotification("Thêm địa chỉ mới thành công!");
-        resetForm();
         const newAddress = { contactId: result.data.contactId, ...data };
         currentAddresses.unshift(newAddress);
         renderAddressList();
+        resetForm();
     } else {
         showNotification(`Lỗi khi thêm: ${result.message || 'Không rõ'}`, 'error');
     }
@@ -146,12 +146,12 @@ async function updateAddress(id, data) {
 
     if (result.success) {
         showNotification("Cập nhật địa chỉ thành công!");
-        resetForm();
         const index = currentAddresses.findIndex(addr => addr.contactId === id);
         if (index !== -1) {
             currentAddresses[index] = { ...currentAddresses[index], ...data };
         }
         renderAddressList();
+        resetForm();
     } else {
         showNotification(`Lỗi khi cập nhật: ${result.message || 'Không rõ'}`, 'error');
     }
