@@ -140,7 +140,7 @@ export const ProductLogic = {
                 variantId: `variant_${index}`, // ID string để map
                 imageName: variant.imageName, // Đã được set bên index.js
                 imageUrl: null,
-                priceOriginal: parseFloat(variant.priceOriginal) || parseFloat(formData.priceOriginal),
+                originalPrice: parseFloat(variant.priceOriginal) || parseFloat(formData.priceOriginal),
                 price: parseFloat(variant.price) || parseFloat(formData.price),
                 stock: parseInt(variant.stock) || 0,
                 sold: 0,
