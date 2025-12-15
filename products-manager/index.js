@@ -66,36 +66,38 @@ async function handleSave(e) {
     );
 
     const formData = new FormData();
-    
-    // 1. Main Image Handling
+    const timestamp = Date.now(); // Lấy thời gian hiện tại làm mã định danh
+
+    // 1. Xử lý Main Image (Dùng ID tự sinh để tránh lỗi tên file)
     if (state.mainImageFile) {
-        const fileName = state.mainImageFile.name;
-        const nameWithoutExt = fileName.includes('.') 
-            ? fileName.substring(0, fileName.lastIndexOf('.')) 
-            : fileName;
+        // Tạo một cái tên an toàn: main_img_170123456789
+        const safeImageKey = `main_img_${timestamp}`;
         
-        // Map imageName in JSON matches FormData Key
-        payload.productDetailDTO.imageName = nameWithoutExt;
-        formData.append(nameWithoutExt, state.mainImageFile);
+        // Map key này vào JSON
+        payload.productDetailDTO.imageName = safeImageKey;
+        
+        // Append file vào FormData với key y hệt
+        formData.append(safeImageKey, state.mainImageFile);
     } else {
         await showDialog("error", "Vui lòng chọn ảnh chính cho sản phẩm!");
         return;
     }
     
-    // 2. Variant Images Handling
+    // 2. Xử lý Variant Images (Dùng ID tự sinh)
     ProductUI.state.variants.forEach((v, index) => {
         if (v.imageFile) {
-            const fileName = v.imageFile.name;
-            const nameWithoutExt = fileName.includes('.')
-                ? fileName.substring(0, fileName.lastIndexOf('.'))
-                : fileName;
+            // Tạo tên an toàn: var_0_170123456789
+            const safeVariantKey = `var_${index}_${timestamp}`;
             
-            payload.variants[index].imageName = nameWithoutExt;
-            formData.append(nameWithoutExt, v.imageFile);
+            // Set vào JSON
+            payload.variants[index].imageName = safeVariantKey;
+            
+            // Append vào FormData
+            formData.append(safeVariantKey, v.imageFile);
         }
     });
     
-    // 3. Append JSON as Blob (Fix Content-Type error)
+    // 3. Append JSON as Blob (Giữ nguyên fix Content-Type)
     const jsonBlob = new Blob([JSON.stringify(payload)], { type: "application/json" });
     formData.append("productDTO", jsonBlob);
 
