@@ -3,33 +3,41 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Tạp Hóa Xanh</title>
+    <title>Tạp Hóa Xanh - Trang Chủ</title>
 
     <link rel="stylesheet" href="../dialog/index.css" />
     <link rel="stylesheet" href="../public/public.css" />
+
     <script
       src="https://kit.fontawesome.com/e9c281dd3f.js"
       crossorigin="anonymous"
     ></script>
 
     <style>
-      /* RESET CSS */
+      /* --- [QUAN TRỌNG] FIX LỖI VỠ GIAO DIỆN --- */
+      /* Đoạn này ghi đè lên public.css để web không bị co rúm vào giữa */
       html,
       body {
+        display: block !important; /* Trả lại bố cục dòng bình thường */
+        width: 100% !important;
+        height: auto !important; /* Cho phép chiều cao tự động để cuộn */
+        min-height: 100vh;
+        overflow-y: auto !important; /* Bắt buộc bật thanh cuộn dọc */
+        background-color: #f3f4f6 !important; /* Màu nền xám nhẹ dịu mắt */
         margin: 0 !important;
         padding: 0 !important;
-        width: 100% !important;
-        min-height: 100vh;
-        background-color: #f3f4f6 !important;
         font-family: "Segoe UI", sans-serif;
-        display: block !important;
-      }
-      .main-container {
-        margin-top: 70px;
-        padding-bottom: 50px;
       }
 
-      /* BANNER */
+      /* Đẩy nội dung xuống để không bị Navbar che mất (Navbar cao 70px) */
+      .main-container {
+        padding-top: 80px;
+        padding-bottom: 50px;
+        max-width: 1400px; /* Giới hạn chiều rộng cho đẹp trên màn hình to */
+        margin: 0 auto; /* Căn giữa khung nội dung */
+      }
+
+      /* --- BANNER --- */
       .hero {
         margin: 20px 30px;
         border-radius: 16px;
@@ -71,13 +79,14 @@
         cursor: pointer;
         font-size: 1.1rem;
         transition: 0.2s;
+        width: fit-content;
       }
       .hero button:hover {
         transform: translateY(-3px);
         background: #059669;
       }
 
-      /* PRODUCT GRID */
+      /* --- PRODUCT GRID --- */
       .category-section {
         background: white;
         margin: 30px 30px;
@@ -91,6 +100,7 @@
         margin-bottom: 20px;
         padding-bottom: 10px;
         border-bottom: 2px solid #f3f4f6;
+        align-items: center;
       }
       .section-title {
         font-size: 1.4rem;
@@ -120,6 +130,23 @@
         grid-template-columns: repeat(5, 1fr);
         gap: 20px;
       }
+      /* Responsive cho Grid */
+      @media (max-width: 1200px) {
+        .product-grid-5 {
+          grid-template-columns: repeat(4, 1fr);
+        }
+      }
+      @media (max-width: 992px) {
+        .product-grid-5 {
+          grid-template-columns: repeat(3, 1fr);
+        }
+      }
+      @media (max-width: 768px) {
+        .product-grid-5 {
+          grid-template-columns: repeat(2, 1fr);
+        }
+      }
+
       .product-card {
         background: white;
         border-radius: 12px;
@@ -166,7 +193,7 @@
         font-size: 1.1rem;
       }
 
-      /* Custom Navbar Items */
+      /* --- NAV SEARCH & DROPDOWN (Cho phần HTML Inject từ JS) --- */
       .nav-cat-btn {
         background: white;
         border: 1px solid #e5e7eb;
@@ -192,6 +219,7 @@
         flex-direction: column;
         overflow: hidden;
         border: 1px solid #eee;
+        z-index: 1001;
       }
       .cat-dropdown.show {
         display: flex;
@@ -221,25 +249,8 @@
       .nav-search-input:focus {
         border-color: #10b981;
       }
-      .nav-icon-link {
-        color: #4b5563;
-        font-size: 1.4rem;
-        position: relative;
-        margin-left: 10px;
-      }
-      .badge {
-        position: absolute;
-        top: -5px;
-        right: -5px;
-        background: #ef4444;
-        color: white;
-        font-size: 0.65rem;
-        padding: 2px 6px;
-        border-radius: 10px;
-        border: 2px solid white;
-      }
 
-      /* Admin Toolbar */
+      /* --- ADMIN TOOLBAR --- */
       .admin-toolbar {
         background: white;
         margin: 20px 30px;
@@ -271,7 +282,7 @@
         display: none !important;
       }
 
-      /* >>> LOADING SPINNER (NEW) <<< */
+      /* --- LOADING SPINNER --- */
       #loadingOverlay {
         position: fixed;
         top: 0;
@@ -302,7 +313,7 @@
         }
       }
 
-      /* Chat & Toast */
+      /* --- CHAT & TOAST --- */
       .chat-btn {
         position: fixed;
         bottom: 30px;
@@ -325,52 +336,24 @@
       .chat-btn:hover {
         transform: scale(1.1);
       }
+
       #toast-container {
         position: fixed;
-        bottom: 30px;
-        right: 30px;
-        z-index: 9999;
+        top: 20px;
+        right: 20px;
+        z-index: 9999; /* Đưa lên top để dễ nhìn */
         display: flex;
         flex-direction: column;
         gap: 10px;
       }
-      .toast {
-        background: white;
-        padding: 15px 20px;
-        border-radius: 8px;
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
-        border-left: 4px solid #10b981;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        animation: slideIn 0.3s;
-      }
-      @keyframes slideIn {
-        from {
-          transform: translateX(100%);
-        }
-        to {
-          transform: translateX(0);
-        }
-      }
-
-      @media (max-width: 1200px) {
-        .product-grid-5 {
-          grid-template-columns: repeat(4, 1fr);
-        }
-      }
-      @media (max-width: 992px) {
-        .product-grid-5 {
-          grid-template-columns: repeat(3, 1fr);
-        }
-      }
     </style>
   </head>
+
   <body>
     <div id="loadingOverlay"><div class="spinner"></div></div>
 
     <div class="main-container">
-      <div class="admin-toolbar admin-only">
+      <div class="admin-toolbar admin-only" id="adminTool">
         <strong style="color: #b45309"
           ><i class="fa-solid fa-bullhorn"></i> Admin Broadcast:</strong
         >
@@ -386,6 +369,7 @@
       <div class="hero">
         <img
           src="https://img.freepik.com/free-photo/assortment-various-barbecue-food-grill_23-2148243673.jpg?w=1380"
+          alt="Banner"
         />
         <div class="hero-overlay">
           <h1>Siêu Sale Tạp Hóa 🍡</h1>
@@ -401,9 +385,10 @@
       <div id="homeContainer"></div>
     </div>
 
-    <div class="chat-btn" onclick="alert('Chat với nhân viên!')">
+    <div class="chat-btn" onclick="alert('Tính năng Chat đang phát triển!')">
       <i class="fa-solid fa-comments"></i>
     </div>
+
     <div id="toast-container"></div>
 
     <script type="module" src="index.js"></script>
