@@ -71,7 +71,7 @@ async function handleSave(e) {
     // --- XỬ LÝ ẢNH CHÍNH (MAIN IMAGE) ---
     if (state.mainImageFile) {
         // [QUAN TRỌNG]: Dùng tên Key đơn giản, không dấu, không ký tự lạ
-        const mainImageKey = "image_main_product"; 
+        const mainImageKey = "productImage"; 
         
         // Map vào JSON
         payload.productDetailDTO.imageName = mainImageKey;
