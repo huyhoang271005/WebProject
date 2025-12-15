@@ -48,7 +48,7 @@ function renderBasicInfo() {
 
     // Tên & Giá gốc
     document.getElementById('productName').innerText = productDetail.productName;
-    updatePriceDisplay(productDetail.price, productDetail.priceOriginal);
+    updatePriceDisplay(productDetail.price, productDetail.originalPrice);
 
     // Rating & Sales
     document.getElementById('ratingScore').innerText = productDetail.ratingAvg.toFixed(1);
@@ -146,7 +146,7 @@ function findMatchingVariant() {
     // Tìm variant có chứa TẤT CẢ các valueId đã chọn
     const found = variants.find(v => {
         // v.attributeValueIdList là mảng ID của variant đó
-        // Kiểm tra xem mọi ID user chọn có nằm trong list của variant ko
+        // Kiểm tra xem mỗi ID user chọn có nằm trong list của variant ko
         return currentSelectedValues.every(selectedId => v.attributeValueIdList.includes(selectedId));
     });
 
@@ -164,12 +164,16 @@ function findMatchingVariant() {
 }
 
 function updateUIForVariant(variant) {
-    // 1. Giá
-    updatePriceDisplay(variant.price, null); // Variant thường không có giá gốc riêng, hoặc backend ko trả về
+    // 1. Giá - Variant có cả price và originalPrice
+    updatePriceDisplay(variant.price, variant.originalPrice);
 
     // 2. Ảnh (Nếu variant có ảnh riêng thì đổi)
     if (variant.imageUrl) {
         document.getElementById('mainImage').src = variant.imageUrl;
+    } else {
+        // Nếu variant không có ảnh, giữ ảnh gốc của sản phẩm
+        const imgEl = document.getElementById('mainImage');
+        imgEl.src = productDetail.imageUrl ? productDetail.imageUrl : noImage;
     }
 
     // 3. Kho & Button state
@@ -208,10 +212,15 @@ function updateStockDisplay(stock) {
     if (stock === null) {
         // Chưa chọn variant
         stockEl.innerText = "";
+        btnBuy.disabled = true;
+        btnBuy.classList.add('disabled');
+        btnCart.disabled = true;
+        btnCart.classList.add('disabled');
         return;
     }
 
     stockEl.innerText = `${stock} sản phẩm có sẵn`;
+    stockEl.style.color = ""; // Reset color
 
     if (stock > 0) {
         btnBuy.disabled = false;
@@ -222,7 +231,9 @@ function updateStockDisplay(stock) {
         stockEl.innerText = "Hết hàng";
         stockEl.style.color = "red";
         btnBuy.disabled = true;
+        btnBuy.classList.add('disabled');
         btnCart.disabled = true;
+        btnCart.classList.add('disabled');
     }
 }
 
@@ -253,7 +264,7 @@ function setupEventListeners() {
         // Gọi API thêm vào giỏ hàng tại đây
         const data = {
             variantId: currentVariant.variantId,
-            quantity: input.value
+            quantity: parseInt(input.value)
         }
         const result = await callAPI("/auth/carts", "POST", data);
         alert(result.message);
