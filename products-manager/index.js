@@ -75,10 +75,8 @@ async function handleSave(e) {
     // BUILD FORMDATA
     const formData = new FormData();
     
-    // Tạo mảng chứa tất cả các file sẽ upload theo thứ tự
-    const imageFiles = [];
-    const imageNames = []; // Để debug
-    
+    // --- SỬA ĐỔI: Append ảnh trực tiếp với key là tên file (không đuôi) ---
+
     // 1. Main image (nếu có)
     if (state.mainImageFile) {
         const fileName = state.mainImageFile.name;
@@ -86,12 +84,13 @@ async function handleSave(e) {
             ? fileName.substring(0, fileName.lastIndexOf('.'))
             : fileName;
         
+        // Set imageName trong payload
         payload.productDetailDTO.imageName = nameWithoutExt;
-        imageFiles.push(state.mainImageFile);
-        imageNames.push(nameWithoutExt);
+        // Append file vào formData với key là nameWithoutExt
+        formData.append(nameWithoutExt, state.mainImageFile);
     }
     
-    // 2. Variant images (theo thứ tự trong variants array)
+    // 2. Variant images
     ProductUI.state.variants.forEach((v, index) => {
         if (v.imageFile) {
             const fileName = v.imageFile.name;
@@ -99,36 +98,23 @@ async function handleSave(e) {
                 ? fileName.substring(0, fileName.lastIndexOf('.'))
                 : fileName;
             
-            // Đảm bảo imageName trong variant đã được set đúng
+            // Set imageName trong variant payload
             payload.variants[index].imageName = nameWithoutExt;
-            imageFiles.push(v.imageFile);
-            imageNames.push(nameWithoutExt);
+            // Append file vào formData với key là nameWithoutExt
+            formData.append(nameWithoutExt, v.imageFile);
         }
     });
     
-    // Append JSON trước
-    formData.append("productDTO", JSON.stringify(payload));
-    
-    // Append images theo đúng thứ tự
-    imageFiles.forEach(file => {
-        formData.append("images", file);
-    });
+    // Append JSON payload (vẫn giữ nguyên fix Blob)
+    const jsonBlob = new Blob([JSON.stringify(payload)], { type: "application/json" });
+    formData.append("productDTO", jsonBlob);
 
     // DEBUG LOG
     console.log("=== PAYLOAD ===");
     console.log(JSON.stringify(payload, null, 2));
-    console.log("\n=== IMAGE MAPPING ===");
-    console.log("Main image:", payload.productDetailDTO.imageName || "không có");
-    payload.variants.forEach((v, i) => {
-        console.log(`Variant ${i}:`, v.imageName || "không có ảnh");
-    });
-    console.log("\n=== FILES IN FORMDATA ===");
-    imageNames.forEach((name, i) => {
-        console.log(`${i + 1}. ${name}`);
-    });
-    console.log("\n=== FORMDATA ENTRIES ===");
+    console.log("\n=== FORMDATA ENTRIES (Kiểm tra tên key của file) ===");
     for (let [key, value] of formData.entries()) {
-        console.log(key, value instanceof File ? `File(${value.name})` : value);
+        console.log(`${key}:`, value instanceof File ? `File(${value.name})` : value);
     }
 
     // Disable submit button
@@ -138,7 +124,7 @@ async function handleSave(e) {
     spinner.classList.remove("d-none");
 
     try {
-        // QUAN TRỌNG: Gửi FormData, KHÔNG phải JSON
+        // QUAN TRỌNG: Gửi FormData
         const res = await ProductService.createProduct(formData);
         console.log("=== RESPONSE ===", res);
         
@@ -200,8 +186,7 @@ function setupEventListeners() {
             return;
         }
 
-        // Filter brands by category (nếu có categoryId trong brand object)
-        // Nếu không có categoryId, hiển thị tất cả brands
+        // Filter brands by category
         let filteredBrands = state.brands;
         if (state.brands.length > 0 && state.brands[0].categoryId !== undefined) {
             filteredBrands = state.brands.filter(b => b.categoryId === categoryId);
@@ -216,8 +201,6 @@ function setupEventListeners() {
                 brandSelect.innerHTML += `<option value="${brand.brandId}">${brand.brandName}</option>`;
             });
         }
-
-        console.log('Filtered brands:', filteredBrands);
     };
 }
 
@@ -238,16 +221,6 @@ async function loadInitialData() {
         ProductUI.state.brands = state.brands;
         ProductUI.state.attributes = state.attributes;
 
-        // DEBUG: Log để kiểm tra data structure
-        console.log('=== LOADED DATA ===');
-        console.log('Categories:', state.categories);
-        console.log('Brands:', state.brands);
-        console.log('Attributes:', state.attributes);
-        
-        if (state.brands.length > 0) {
-            console.log('Brand structure example:', state.brands[0]);
-        }
-
         // Populate category dropdown
         const categorySelect = document.getElementById("categoryId");
         categorySelect.innerHTML = '<option value="">-- Chọn danh mục --</option>';
@@ -257,18 +230,12 @@ async function loadInitialData() {
 
         // Initialize brand dropdown
         const brandSelect = document.getElementById("brandId");
-        
-        // OPTION 1: Nếu brands không phụ thuộc vào category, hiển thị tất cả
         if (state.brands.length > 0 && state.brands[0].categoryId === undefined) {
-            console.log('Brands không có categoryId, hiển thị tất cả');
             brandSelect.innerHTML = '<option value="">-- Chọn thương hiệu --</option>';
             state.brands.forEach(brand => {
                 brandSelect.innerHTML += `<option value="${brand.brandId}">${brand.brandName}</option>`;
             });
-        } 
-        // OPTION 2: Nếu brands phụ thuộc vào category, yêu cầu chọn category trước
-        else {
-            console.log('Brands có categoryId, cần chọn category trước');
+        } else {
             brandSelect.innerHTML = '<option value="">-- Chọn danh mục trước --</option>';
         }
 
