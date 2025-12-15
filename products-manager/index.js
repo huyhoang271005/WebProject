@@ -70,13 +70,10 @@ async function handleSave(e) {
     
     // --- XỬ LÝ ẢNH CHÍNH (MAIN IMAGE) ---
     if (state.mainImageFile) {
-        // [QUAN TRỌNG]: Dùng tên Key đơn giản, không dấu, không ký tự lạ
         const mainImageKey = "productImage"; 
         
-        // Map vào JSON
         payload.productDetailDTO.imageName = mainImageKey;
         
-        // Append vào FormData đúng Key đó
         formData.append(mainImageKey, state.mainImageFile);
         
         console.log(`✅ Main Image: Key="${mainImageKey}" | Filename="${state.mainImageFile.name}"`);
@@ -88,7 +85,6 @@ async function handleSave(e) {
     // --- XỬ LÝ ẢNH BIẾN THỂ (VARIANT IMAGES) ---
     ProductUI.state.variants.forEach((v, index) => {
         if (v.imageFile) {
-            // [QUAN TRỌNG]: Key đơn giản theo index
             const variantKey = `image_variant_${index}`;
             
             // Map vào JSON của variant đó
@@ -101,11 +97,9 @@ async function handleSave(e) {
         }
     });
     
-    // --- DEBUG PAYLOAD TRƯỚC KHI GỬI ---
     console.log("=== FINAL PAYLOAD (Check imageName matches keys above) ===");
     console.log(JSON.stringify(payload, null, 2));
 
-    // 4. APPEND JSON VÀO FORMDATA (Giữ fix Blob application/json)
     const jsonBlob = new Blob([JSON.stringify(payload)], { type: "application/json" });
     formData.append("productDTO", jsonBlob);
 
@@ -126,10 +120,10 @@ async function handleSave(e) {
             // Lấy lỗi chi tiết
             const errorMsg = res?.data?.[0]?.error || res?.message || "Có lỗi xảy ra";
             await showDialog("error", errorMsg);
-            console.error("❌ Server Error Details:", res);
+            console.error(" Server Error Details:", res);
         }
     } catch (error) {
-        console.error("❌ Network/Client Error:", error);
+        console.error(" Network/Client Error:", error);
         await showDialog("error", "Có lỗi xảy ra: " + error.message);
     } finally {
         submitBtn.disabled = false;
