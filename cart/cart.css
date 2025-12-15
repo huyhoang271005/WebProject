@@ -5,9 +5,30 @@ html, body {
 }
 
 .breadcrumb {
-    margin-top: 80px; padding: 0 5%; color: #6B7280; font-size: 0.95rem; margin-bottom: 20px;
+    margin-top: 20px; 
+    padding: 0 5%;
+    color: #6B7280;
+    font-size: 0.95rem;
+    margin-bottom: 20px;
+    width: 100%;
+    box-sizing: border-box;
 }
-.breadcrumb a { text-decoration: none; color: #6B7280; }
+
+.breadcrumb a {
+    text-decoration: none;color: #6B7280;transition: color 0.2s;
+}
+
+.breadcrumb a:hover {
+    color: #10B981; /* Màu xanh khi hover */
+}
+
+.breadcrumb span {
+    margin: 0 8px;color: #9CA3AF;
+}
+
+.breadcrumb strong {
+    color: #1F2937;font-weight: 600;
+}
 
 /* === 2. LAYOUT CHÍNH === */
 .cart-container {
