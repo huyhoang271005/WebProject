@@ -105,7 +105,7 @@ export const ProductLogic = {
             description: formData.description || "",
             imageName: null,
             imageUrl: null,
-            priceOriginal: parseFloat(formData.priceOriginal),
+            originalPrice: parseFloat(formData.priceOriginal),
             price: parseFloat(formData.price),
             categoryId: formData.categoryId,
             brandId: formData.brandId,

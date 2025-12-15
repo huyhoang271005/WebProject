@@ -20,7 +20,7 @@ export const ProductService = {
     },
 
     createProduct: async (productData) => {
-        const res = await callAPI(`/auth/products`, "POST", productData, true);
+        const res = await callAPI(`/auth/admin/products`, "POST", productData, true);
         return res;
     }
 };
