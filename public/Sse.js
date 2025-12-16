@@ -21,8 +21,26 @@ export async function connectSse(endpoint) {
     });
 
     es.listen({
-        onError(e) {
-            console.error("SSE error", e);
+        async onEvent(e) {
+            try {
+                const topic = e.event;
+                const data = JSON.parse(e.data);
+
+                const handler = topicHandlers[topic];
+                if (handler) {
+                    await handler(data);
+                }
+            } catch (err) {
+                console.error(err);
+            }
+        },
+
+        async onMessage(e) {
+            return e.data;
+        },
+
+        async onError(e) {
+            throw new Error(e);
         }
     });
 
@@ -30,20 +48,8 @@ export async function connectSse(endpoint) {
 }
 
 export function subscribeTopic(topicName, callback) {
-    if (!es) {
-        console.warn("SSE not connected yet");
-        return;
-    }
-
-    es.addEventListener(topicName, e => {
-        try {
-            callback(JSON.parse(e.data));
-        } catch (err) {
-            console.error(err);
-        }
-    });
+    topicHandlers[topicName] = callback;
 }
-
 
 export function unsubscribeTopic(topicName) {
     delete topicHandlers[topicName];
