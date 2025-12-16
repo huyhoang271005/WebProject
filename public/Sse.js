@@ -1,6 +1,5 @@
 import { EventSourcePlus } from "https://cdn.jsdelivr.net/npm/event-source-plus/+esm";
-import { API_BASE } from "./api.js";
-import { accessToken, refreshAccessToken } from "./api.js";
+import { API_BASE, accessToken, refreshAccessToken } from "./api.js";
 
 let es = null;
 const topicHandlers = {};
@@ -15,7 +14,7 @@ export async function connectSse(endpoint) {
 
     es = new EventSourcePlus(`${API_BASE}${endpoint}`, {
         headers: {
-            Authorization: `Bearer ${accessToken}`,
+            'Authorization': `Bearer ${accessToken}`,
             'ngrok-skip-browser-warning': '2710'
         }
     });
@@ -40,6 +39,7 @@ export async function connectSse(endpoint) {
         },
 
         async onError(e) {
+            accessToken = null;
             throw new Error(e);
         }
     });
