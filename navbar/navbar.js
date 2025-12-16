@@ -166,7 +166,7 @@ async function initNotificationSystem() {
     }
     await connectSse("/sse");
     subscribeTopic("notifications", (data) => {
-      const newNoti = data.data || data;
+      const newNoti = data;
       prependNotification(newNoti);
       const badge = document.getElementById("nbBadge");
       let count = parseInt(badge.textContent) || 0;
