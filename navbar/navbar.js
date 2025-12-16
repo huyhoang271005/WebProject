@@ -157,7 +157,7 @@ export async function loadNavbar(options = {}) {
 async function initNotificationSystem() {
   try {
     const notiList = document.getElementById("nbNotiList");
-    const res = await callAPI("/notification", "GET");
+    const res = await callAPI("/auth/notifications", "GET");
     if (res && res.success && res.data && res.data.listData) {
       renderNotiList(res.data.listData);
     } else {
@@ -165,7 +165,7 @@ async function initNotificationSystem() {
         '<div class="empty-noti">Không có thông báo nào</div>';
     }
     await connectSse("/sse");
-    subscribeTopic("notification", (data) => {
+    subscribeTopic("notifications", (data) => {
       const newNoti = data.data || data;
       prependNotification(newNoti);
       const badge = document.getElementById("nbBadge");
