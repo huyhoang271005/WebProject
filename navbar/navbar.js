@@ -165,7 +165,7 @@ async function initNotificationSystem() {
         '<div class="empty-noti">Không có thông báo nào</div>';
     }
     await connectSse("/sse");
-    subscribeTopic("notifications", (data) => {
+    subscribeTopic("notifications", data => {
       const newNoti = data;
       prependNotification(newNoti);
       const badge = document.getElementById("nbBadge");
