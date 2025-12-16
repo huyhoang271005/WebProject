@@ -1,6 +1,5 @@
 import { loadNavbar } from "../navbar/navbar.js";
-import { callAPI } from "../public/api.js";
-import { getLoader } from "../public/public.js";
+import { toggleLoading } from "../public/loader.js"; // Import Loader dùng chung
 
 const CATEGORIES = [
   { id: "an-vat", name: "Đồ ăn vặt", icon: "fa-cookie-bite" },
@@ -10,16 +9,11 @@ const CATEGORIES = [
   { id: "gia-dung", name: "Gia dụng", icon: "fa-pump-soap" },
 ];
 
-const toggleLoading = (show) => {
-  const el = document.getElementById("loadingOverlay");
-  if (el) el.style.display = show ? "flex" : "none";
-};
-
 document.addEventListener("DOMContentLoaded", async () => {
-  toggleLoading(true);
+  toggleLoading(true); // Bật Loader xịn
 
-  // 1. Load Navbar
   try {
+    // Navbar giờ tự có giỏ hàng, chỉ cần truyền cái thanh Search vào giữa thôi
     await loadNavbar({
       centerHTML: `
         <div class="nav-cat-btn" id="catBtn">
@@ -31,26 +25,22 @@ document.addEventListener("DOMContentLoaded", async () => {
             <i class="fa-solid fa-magnifying-glass" style="position:absolute; right:15px; top:50%; transform:translateY(-50%); color:#10B981; cursor:pointer;" id="homeSearchBtn"></i>
         </div>
       `,
-      rightHTML: `<a href="../cart" class="nav-icon-link" title="Giỏ hàng"><i class="fa-solid fa-cart-shopping"></i><span class="badge">0</span></a>`,
+      // KHÔNG CẦN rightHTML nữa, vì Navbar tự có Giỏ hàng rồi
     });
 
     renderNavCategories();
     setupNavbarEvents();
-  } catch (e) {
-    console.error("Lỗi Navbar:", e);
-  }
-
-  // 2. Render Home (Không đợi Navbar)
-  try {
     renderHomeSections();
   } catch (e) {
-    console.error("Lỗi Home:", e);
+    console.error(e);
+  } finally {
+    // Tắt loading sau 0.5s cho mượt
+    setTimeout(() => toggleLoading(false), 500);
   }
-
-  setTimeout(() => toggleLoading(false), 500);
 });
 
-// --- HELPERS ---
+// ... (Giữ nguyên các hàm helper bên dưới: renderNavCategories, renderHomeSections...)
+// Copy nốt các hàm helper từ code cũ vào đây
 function setupNavbarEvents() {
   const catBtn = document.getElementById("catBtn");
   const catDropdown = document.getElementById("catDropdown");
@@ -64,60 +54,57 @@ function setupNavbarEvents() {
     });
   }
 }
-
 function renderNavCategories() {
   const el = document.getElementById("catDropdown");
-  if (el) {
+  if (el)
     el.innerHTML = CATEGORIES.map(
       (c) =>
         `<a href="../products/index.html?cat=${c.id}"><i class="fa-solid ${c.icon}"></i> ${c.name}</a>`
     ).join("");
-  }
 }
-
 function renderHomeSections() {
   const container = document.getElementById("homeContainer");
   if (!container) return;
   const products = generateMockProducts();
   container.innerHTML = "";
-
   CATEGORIES.forEach((cat) => {
     const list = products.filter((p) => p.catId === cat.id).slice(0, 5);
     if (list.length > 0) {
       container.insertAdjacentHTML(
         "beforeend",
         `
-        <div class="category-section">
-            <div class="section-header">
-                <div class="section-title"><i class="fa-solid ${
-                  cat.icon
-                }" style="color:#10B981"></i> ${cat.name}</div>
-                <a href="../products/index.html?cat=${
-                  cat.id
-                }" class="btn-see-more">Xem thêm <i class="fa-solid fa-arrow-right"></i></a>
-            </div>
-            <div class="product-grid-5">
-                ${list
-                  .map(
-                    (p) => `
-                    <div class="product-card" onclick="alert('Xem: ${p.name}')">
-                        <div class="p-img">${p.name.charAt(0)}</div>
-                        <div class="p-info">
-                            <div class="p-name">${p.name}</div>
-                            <div class="p-price">${p.price}</div>
-                        </div>
+                <div class="category-section">
+                    <div class="section-header">
+                        <div class="section-title"><i class="fa-solid ${
+                          cat.icon
+                        }" style="color:#10B981"></i> ${cat.name}</div>
+                        <a href="../products/index.html?cat=${
+                          cat.id
+                        }" class="btn-see-more">Xem thêm <i class="fa-solid fa-arrow-right"></i></a>
                     </div>
-                `
-                  )
-                  .join("")}
-            </div>
-        </div>
-      `
+                    <div class="product-grid-5">
+                        ${list
+                          .map(
+                            (p) => `
+                            <div class="product-card" onclick="alert('Xem: ${
+                              p.name
+                            }')">
+                                <div class="p-img">${p.name.charAt(0)}</div>
+                                <div class="p-info">
+                                    <div class="p-name">${p.name}</div>
+                                    <div class="p-price">${p.price}</div>
+                                </div>
+                            </div>
+                        `
+                          )
+                          .join("")}
+                    </div>
+                </div>
+            `
       );
     }
   });
 }
-
 function generateMockProducts() {
   let arr = [];
   CATEGORIES.forEach((c) => {

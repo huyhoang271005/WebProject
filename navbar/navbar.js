@@ -14,36 +14,36 @@ const navbarHTML = `
             box-sizing: border-box; font-family: 'Segoe UI', sans-serif;
         }
         .nb-brand { font-size: 1.6rem; font-weight: 800; color: #10B981; text-decoration: none; display: flex; align-items: center; gap: 10px; min-width: 180px; }
-        
         #nbCenterSlot { flex: 1; display: flex; align-items: center; justify-content: center; margin: 0 20px; gap: 15px; }
-        #nbRightSlot { display: flex; align-items: center; gap: 20px; }
+        
+        /* Chỉnh lại slot bên phải để chứa Giỏ hàng + Thông báo + User */
+        #nbRightSlot { display: flex; align-items: center; gap: 20px; } 
 
-        .nb-user-menu { position: relative; cursor: pointer; padding-left: 15px; border-left: 1px solid #eee; display: flex; align-items: center; gap: 10px; }
+        .nb-icon-btn { position: relative; cursor: pointer; font-size: 1.2rem; color: #555; transition: 0.2s; display: flex; align-items: center; justify-content: center; text-decoration: none; }
+        .nb-icon-btn:hover { color: #10B981; transform: translateY(-2px); }
+        
+        .nb-badge { 
+            position: absolute; top: -8px; right: -8px; 
+            background: #EF4444; color: white; 
+            font-size: 0.7rem; padding: 2px 5px; min-width: 18px; text-align: center;
+            border-radius: 10px; font-weight: bold; border: 2px solid white;
+        }
+
+        /* ... (Giữ nguyên CSS User Menu & Dropdown cũ ...) */
+        .nb-user-menu { position: relative; cursor: pointer; padding-left: 15px; border-left: 1px solid #eee; display: flex; align-items: center; gap: 10px; margin-left: 15px; }
         .nb-avatar { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; border: 2px solid #E5E7EB; transition: 0.2s; }
-        .nb-avatar:hover { border-color: #10B981; }
-
-        /* Notification Badge */
-        .nb-noti-wrapper { position: relative; cursor: pointer; font-size: 1.2rem; color: #555; transition: 0.2s; }
-        .nb-noti-wrapper:hover { color: #10B981; }
-        .nb-badge { position: absolute; top: -5px; right: -8px; background: #EF4444; color: white; font-size: 0.7rem; padding: 2px 5px; border-radius: 10px; font-weight: bold; display: none; }
-
-        /* Dropdown */
-        .nb-dropdown { position: absolute; right: 0; top: 60px; background: white; width: 260px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); display: none; flex-direction: column; overflow: hidden; border: 1px solid #eee; animation: slideDown 0.2s ease; }
+        .nb-dropdown { position: absolute; right: 0; top: 60px; background: white; width: 260px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); display: none; flex-direction: column; overflow: hidden; border: 1px solid #eee; animation: slideDown 0.2s ease; z-index: 1100; }
         .nb-noti-dropdown { width: 350px; right: -60px; }
         @keyframes slideDown { from{opacity:0; transform:translateY(10px)} to{opacity:1; transform:translateY(0)} }
         .nb-dropdown.show { display: flex; }
-
         .nb-dropdown a, .nb-dropdown button { padding: 12px 20px; text-decoration: none; color: #333; text-align: left; background: none; border: none; cursor: pointer; border-bottom: 1px solid #f9f9f9; display:flex; align-items:center; gap:10px; font-size:0.95rem; transition: 0.2s; }
         .nb-dropdown a:hover, .nb-dropdown button:hover { background: #ECFDF5; color: #10B981; padding-left: 25px; }
-        
-        /* Noti List */
         .noti-header { padding: 15px; font-weight: bold; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; }
         .noti-list { max-height: 400px; overflow-y: auto; }
         .noti-item { padding: 15px; border-bottom: 1px solid #eee; transition: 0.2s; display: flex; flex-direction: column; gap: 5px; }
         .noti-item:hover { background: #f9f9f9; }
         .noti-item.unread { background: #ECFDF5; }
         .empty-noti { padding: 20px; text-align: center; color: #999; font-style: italic; }
-
         .nb-admin-only { display: none !important; }
     </style>
 
@@ -51,14 +51,21 @@ const navbarHTML = `
         <a href="../home/index.html" class="nb-brand"><i class="fa-solid fa-leaf"></i> Tạp Hóa Xanh</a>
         <div id="nbCenterSlot"></div>
         <div style="display:flex; align-items:center;">
-            <div id="nbRightSlot"></div>
+            
+            <div id="nbRightSlot">
+                <a href="../cart/index.html" class="nb-icon-btn" title="Giỏ hàng">
+                    <i class="fa-solid fa-cart-shopping"></i>
+                    <span class="nb-badge" id="cartBadge" style="display:none">0</span>
+                </a>
 
-            <div class="nb-noti-wrapper" id="nbNotiBtn" style="margin-left: 20px;">
-                <i class="fa-regular fa-bell"></i>
-                <span class="nb-badge" id="nbBadge">0</span>
-                <div class="nb-dropdown nb-noti-dropdown" id="nbNotiDropdown">
-                    <div class="noti-header"><span>Thông báo</span></div>
-                    <div class="noti-list" id="nbNotiList"><div class="empty-noti">Đang tải...</div></div>
+                <div class="nb-icon-btn" id="nbNotiBtn">
+                    <i class="fa-regular fa-bell"></i>
+                    <span class="nb-badge" id="nbBadge" style="display:none">0</span>
+                    
+                    <div class="nb-dropdown nb-noti-dropdown" id="nbNotiDropdown">
+                        <div class="noti-header"><span>Thông báo</span></div>
+                        <div class="noti-list" id="nbNotiList"><div class="empty-noti">Đang tải...</div></div>
+                    </div>
                 </div>
             </div>
 
@@ -87,6 +94,10 @@ const navbarHTML = `
     </nav>
 `;
 
+// ... (Phần còn lại của file navbar.js giữ nguyên logic loadNavbar, initNotificationSystem...)
+// CHỈ LƯU Ý: Trong hàm loadNavbar, không cần check `options.rightHTML` nữa hoặc chỉ append thêm vào nếu cần.
+// Nhưng tốt nhất bro xoá dòng `if (options.rightHTML)...` đi vì giờ ta hardcode giỏ hàng rồi.
+
 const userData = {
   imageUrl: sessionStorage.getItem("imageUrl"),
   username: sessionStorage.getItem("username"),
@@ -94,18 +105,15 @@ const userData = {
 };
 
 export async function loadNavbar(options = {}) {
-  // 1. Render khung HTML ngay lập tức (Chống trắng trang)
   const div = document.createElement("div");
   div.innerHTML = navbarHTML;
   document.body.prepend(div);
 
   if (options.centerHTML)
     document.getElementById("nbCenterSlot").innerHTML = options.centerHTML;
-  if (options.rightHTML)
-    document.getElementById("nbRightSlot").innerHTML = options.rightHTML;
 
+  // ... Logic load user, sse, events giữ nguyên như cũ ...
   try {
-    // 2. Lấy thông tin User
     if (!userData.username) {
       const profile = await callAPI("/profile");
       if (profile && profile.success) {
@@ -123,8 +131,6 @@ export async function loadNavbar(options = {}) {
         userData.roleName = "GUEST";
       }
     }
-
-    // 3. Update UI
     if (userData.imageUrl)
       document.getElementById("nbAvatar").src = userData.imageUrl;
     if (userData.username)
@@ -137,27 +143,20 @@ export async function loadNavbar(options = {}) {
         .querySelectorAll(".nb-admin-only")
         .forEach((el) => el.style.setProperty("display", "flex", "important"));
     }
-
-    // 4. Kích hoạt Notification & SSE (Chỉ chạy khi đã login)
     if (userData.username && userData.username !== "Khách") {
       await initNotificationSystem();
-    } else {
-      document.getElementById("nbNotiList").innerHTML =
-        '<div class="empty-noti">Vui lòng đăng nhập</div>';
     }
   } catch (e) {
     console.error("Navbar Error:", e);
   }
-
-  // 5. Setup Events
   setupEvents();
 }
 
+// ... Copy nốt các hàm initNotificationSystem, setupEvents, ... từ file cũ vào đây
+// Đảm bảo import ConnectSse từ "../public/Sse.js" là được.
 async function initNotificationSystem() {
   try {
     const notiList = document.getElementById("nbNotiList");
-
-    // A. Lấy danh sách cũ
     const res = await callAPI("/notification", "GET");
     if (res && res.success && res.data && res.data.listData) {
       renderNotiList(res.data.listData);
@@ -165,21 +164,16 @@ async function initNotificationSystem() {
       notiList.innerHTML =
         '<div class="empty-noti">Không có thông báo nào</div>';
     }
-
-    // B. KẾT NỐI SSE
     await connectSse("/sse");
-
-    // C. LẮNG NGHE TOPIC
     subscribeTopic("notification", (data) => {
       const newNoti = data.data || data;
       prependNotification(newNoti);
-
       const badge = document.getElementById("nbBadge");
       let count = parseInt(badge.textContent) || 0;
       updateBadge(count + 1);
     });
   } catch (err) {
-    console.warn("Lỗi SSE/Noti:", err);
+    console.warn("Lỗi SSE:", err);
   }
 }
 
@@ -188,7 +182,6 @@ function setupEvents() {
   const notiBtn = document.getElementById("nbNotiBtn");
   const userDropdown = document.getElementById("nbUserDropdown");
   const notiDropdown = document.getElementById("nbNotiDropdown");
-
   if (userBtn)
     userBtn.onclick = (e) => {
       e.stopPropagation();
@@ -201,12 +194,10 @@ function setupEvents() {
       notiDropdown.classList.toggle("show");
       userDropdown.classList.remove("show");
     };
-
   document.addEventListener("click", () => {
     if (userDropdown) userDropdown.classList.remove("show");
     if (notiDropdown) notiDropdown.classList.remove("show");
   });
-
   const logoutBtn = document.getElementById("nbLogout");
   if (logoutBtn) {
     logoutBtn.onclick = async () => {
@@ -218,7 +209,6 @@ function setupEvents() {
     };
   }
 }
-
 function renderNotiList(list) {
   const notiList = document.getElementById("nbNotiList");
   if (!list.length) return;
@@ -239,7 +229,6 @@ function renderNotiList(list) {
   const unread = list.filter((i) => !i.isRead).length;
   updateBadge(unread);
 }
-
 function prependNotification(item) {
   const notiList = document.getElementById("nbNotiList");
   if (notiList.querySelector(".empty-noti")) notiList.innerHTML = "";
@@ -253,7 +242,6 @@ function prependNotification(item) {
     `
   );
 }
-
 function updateBadge(count) {
   const badge = document.getElementById("nbBadge");
   badge.textContent = count;

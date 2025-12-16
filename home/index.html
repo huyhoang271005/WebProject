@@ -4,21 +4,18 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Tạp Hóa Xanh - Trang Chủ</title>
-
     <link rel="stylesheet" href="../dialog/index.css" />
     <link rel="stylesheet" href="../public/public.css" />
-
     <script
       src="https://kit.fontawesome.com/e9c281dd3f.js"
       crossorigin="anonymous"
     ></script>
 
     <style>
-      /* --- FIX LỖI VỠ GIAO DIỆN & MÀU NỀN --- */
+      /* --- GLOBAL STYLE --- */
       * {
-        box-sizing: border-box; /* Quan trọng: Giúp padding không làm vỡ khung */
+        box-sizing: border-box;
       }
-
       html,
       body {
         display: block !important;
@@ -26,44 +23,38 @@
         height: auto !important;
         min-height: 100vh;
         overflow-y: auto !important;
-
-        /* --- THAY MÀU NỀN TẠI ĐÂY --- */
-        /* Cách 1: Dùng ảnh mây trời (giống Tempest) */
-        background: url("https://img.freepik.com/free-vector/blue-sky-with-clouds-background_1017-26302.jpg")
-          no-repeat center center fixed !important;
-        background-size: cover !important;
-        /* Cách 2: Hoặc dùng Gradient Xanh Ngọc (Nếu sợ ảnh load chậm) - Bro thích cái nào thì bỏ comment cái đó */
-        /* background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%) !important; */
-
         margin: 0 !important;
         padding: 0 !important;
         font-family: "Segoe UI", sans-serif;
+
+        /* NỀN MÂY TRỜI ĐỒNG BỘ */
+        background: url("https://img.freepik.com/free-vector/blue-sky-with-clouds-background_1017-26302.jpg")
+          no-repeat center center fixed !important;
+        background-size: cover !important;
       }
 
-      /* Đẩy nội dung xuống để không bị Navbar che mất */
       .main-container {
-        padding-top: 90px; /* Tăng lên chút cho thoáng (Navbar 70px + 20px hở) */
+        padding-top: 90px;
         padding-bottom: 50px;
-        max-width: 1200px; /* Co lại 1200px nhìn cho sang, 1400px hơi loãng */
+        max-width: 1200px;
         margin: 0 auto;
       }
 
-      /* --- BANNER (Đã chỉnh lại ảnh) --- */
+      /* BANNER */
       .hero {
-        margin: 0 20px 30px 20px; /* Cách lề 2 bên 20px */
+        margin: 0 20px 30px 20px;
         border-radius: 20px;
         overflow: hidden;
-        height: 380px; /* Tăng chiều cao xíu cho đẹp */
+        height: 380px;
         position: relative;
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1); /* Bóng đổ xịn hơn */
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
       }
       .hero img {
         width: 100%;
         height: 100%;
         object-fit: cover;
-        /* [QUAN TRỌNG] Căn chỉnh ảnh để không bị cắt mất đầu ông người mẫu */
         object-position: center 25%;
-        filter: brightness(0.8); /* Tăng tối lên chút để chữ nổi hơn */
+        filter: brightness(0.8);
       }
       .hero-overlay {
         position: absolute;
@@ -74,25 +65,19 @@
         display: flex;
         flex-direction: column;
         justify-content: center;
-        padding-left: 80px; /* Đẩy chữ vào sâu hơn tí */
+        padding-left: 80px;
         color: white;
         background: linear-gradient(
           90deg,
           rgba(0, 0, 0, 0.6) 0%,
           rgba(0, 0, 0, 0) 60%
-        ); /* Làm nền chữ rõ hơn */
+        );
       }
       .hero h1 {
         font-size: 3.5rem;
         margin-bottom: 15px;
         font-weight: 800;
         text-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
-        line-height: 1.2;
-      }
-      .hero p {
-        font-size: 1.2rem;
-        margin-bottom: 25px;
-        opacity: 0.9;
       }
       .hero button {
         padding: 15px 40px;
@@ -110,17 +95,16 @@
       .hero button:hover {
         transform: translateY(-3px);
         background: #059669;
-        box-shadow: 0 8px 20px rgba(16, 185, 129, 0.6);
       }
 
-      /* --- PRODUCT GRID --- */
+      /* PRODUCT GRID */
       .category-section {
         background: white;
         margin: 0 20px 40px 20px;
         padding: 30px;
         border-radius: 20px;
         border: 1px solid #f0f0f0;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02); /* Bóng nhẹ tinh tế */
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02);
       }
       .section-header {
         display: flex;
@@ -158,8 +142,6 @@
         grid-template-columns: repeat(5, 1fr);
         gap: 25px;
       }
-
-      /* Responsive */
       @media (max-width: 1200px) {
         .product-grid-5 {
           grid-template-columns: repeat(4, 1fr);
@@ -191,7 +173,6 @@
         cursor: pointer;
         display: flex;
         flex-direction: column;
-        position: relative;
       }
       .product-card:hover {
         transform: translateY(-8px);
@@ -213,7 +194,6 @@
         background: #f0fdf4;
         color: #10b981;
       }
-
       .p-info {
         padding: 15px;
         flex: 1;
@@ -226,11 +206,11 @@
         font-size: 1rem;
         margin-bottom: 8px;
         line-height: 1.4;
+        overflow: hidden;
+        height: 44px;
         display: -webkit-box;
         -webkit-line-clamp: 2;
         -webkit-box-orient: vertical;
-        overflow: hidden;
-        height: 44px;
       }
       .p-price {
         color: #ef4444;
@@ -239,7 +219,7 @@
         margin-top: auto;
       }
 
-      /* --- NAV SEARCH & DROPDOWN --- */
+      /* Nav Search + Dropdown */
       .nav-cat-btn {
         background: white;
         border: 1px solid #e5e7eb;
@@ -258,7 +238,6 @@
         border-color: #10b981;
         color: #10b981;
       }
-
       .cat-dropdown {
         position: absolute;
         top: 120%;
@@ -284,7 +263,6 @@
           transform: translateY(0);
         }
       }
-
       .cat-dropdown.show {
         display: flex;
       }
@@ -303,7 +281,6 @@
         color: #10b981;
         padding-left: 25px;
       }
-
       .nav-search-input {
         width: 450px;
         padding: 10px 45px 10px 20px;
@@ -319,69 +296,7 @@
         box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.1);
       }
 
-      /* ... (Giữ nguyên phần Admin Toolbar, Spinner, Chat, Toast cũ) ... */
-      /* Copy lại phần Admin Toolbar, Spinner, ChatBtn từ code cũ của bro vào dưới đây nếu muốn giữ */
-      .admin-toolbar {
-        background: white;
-        margin: 0 20px 20px 20px;
-        padding: 15px;
-        border-radius: 12px;
-        border-left: 5px solid #f59e0b;
-        display: flex;
-        gap: 15px;
-        align-items: center;
-        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
-      }
-      .admin-input {
-        flex: 1;
-        padding: 10px;
-        border: 1px solid #ddd;
-        border-radius: 6px;
-        outline: none;
-      }
-      .admin-btn {
-        background: #f59e0b;
-        color: white;
-        border: none;
-        padding: 10px 20px;
-        border-radius: 6px;
-        cursor: pointer;
-        font-weight: bold;
-      }
-      .admin-only {
-        display: none !important;
-      }
-
-      #loadingOverlay {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(255, 255, 255, 0.8);
-        z-index: 9999;
-        display: none;
-        align-items: center;
-        justify-content: center;
-        backdrop-filter: blur(2px);
-      }
-      .spinner {
-        width: 50px;
-        height: 50px;
-        border: 5px solid #ecfdf5;
-        border-top: 5px solid #10b981;
-        border-radius: 50%;
-        animation: spin 1s linear infinite;
-      }
-      @keyframes spin {
-        0% {
-          transform: rotate(0deg);
-        }
-        100% {
-          transform: rotate(360deg);
-        }
-      }
-
+      /* Chat Btn */
       .chat-btn {
         position: fixed;
         bottom: 30px;
@@ -415,24 +330,8 @@
       }
     </style>
   </head>
-
   <body>
-    <div id="loadingOverlay"><div class="spinner"></div></div>
-
     <div class="main-container">
-      <div class="admin-toolbar admin-only" id="adminTool">
-        <strong style="color: #b45309"
-          ><i class="fa-solid fa-bullhorn"></i> Admin Broadcast:</strong
-        >
-        <input
-          type="text"
-          id="message"
-          class="admin-input"
-          placeholder="Nhập thông báo gửi toàn hệ thống..."
-        />
-        <button id="sendAll" class="admin-btn">Gửi</button>
-      </div>
-
       <div class="hero">
         <img
           src="https://img.freepik.com/free-photo/assortment-various-barbecue-food-grill_23-2148243673.jpg?w=1380"
@@ -448,16 +347,12 @@
           </button>
         </div>
       </div>
-
       <div id="homeContainer"></div>
     </div>
-
     <div class="chat-btn" onclick="alert('Tính năng Chat đang phát triển!')">
       <i class="fa-solid fa-comments"></i>
     </div>
-
     <div id="toast-container"></div>
-
     <script type="module" src="index.js"></script>
   </body>
 </html>
