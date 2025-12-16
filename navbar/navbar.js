@@ -1,8 +1,6 @@
 import { callAPI } from "../public/api.js";
 import { showDialog } from "../dialog/index.js";
-
-// ❌ XÓA DÒNG NÀY ĐI (Thủ phạm gây sập web nếu thiếu file)
-// import { connectSse, subscribeTopic } from "../public/sse.js";
+import { connectSse, subscribeTopic } from "../public/Sse.js";
 
 const noImage = "https://cdn-icons-png.flaticon.com/512/847/847969.png";
 
@@ -16,25 +14,36 @@ const navbarHTML = `
             box-sizing: border-box; font-family: 'Segoe UI', sans-serif;
         }
         .nb-brand { font-size: 1.6rem; font-weight: 800; color: #10B981; text-decoration: none; display: flex; align-items: center; gap: 10px; min-width: 180px; }
+        
         #nbCenterSlot { flex: 1; display: flex; align-items: center; justify-content: center; margin: 0 20px; gap: 15px; }
         #nbRightSlot { display: flex; align-items: center; gap: 20px; }
+
         .nb-user-menu { position: relative; cursor: pointer; padding-left: 15px; border-left: 1px solid #eee; display: flex; align-items: center; gap: 10px; }
         .nb-avatar { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; border: 2px solid #E5E7EB; transition: 0.2s; }
+        .nb-avatar:hover { border-color: #10B981; }
+
+        /* Notification Badge */
         .nb-noti-wrapper { position: relative; cursor: pointer; font-size: 1.2rem; color: #555; transition: 0.2s; }
         .nb-noti-wrapper:hover { color: #10B981; }
         .nb-badge { position: absolute; top: -5px; right: -8px; background: #EF4444; color: white; font-size: 0.7rem; padding: 2px 5px; border-radius: 10px; font-weight: bold; display: none; }
+
+        /* Dropdown */
         .nb-dropdown { position: absolute; right: 0; top: 60px; background: white; width: 260px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); display: none; flex-direction: column; overflow: hidden; border: 1px solid #eee; animation: slideDown 0.2s ease; }
         .nb-noti-dropdown { width: 350px; right: -60px; }
         @keyframes slideDown { from{opacity:0; transform:translateY(10px)} to{opacity:1; transform:translateY(0)} }
         .nb-dropdown.show { display: flex; }
+
         .nb-dropdown a, .nb-dropdown button { padding: 12px 20px; text-decoration: none; color: #333; text-align: left; background: none; border: none; cursor: pointer; border-bottom: 1px solid #f9f9f9; display:flex; align-items:center; gap:10px; font-size:0.95rem; transition: 0.2s; }
         .nb-dropdown a:hover, .nb-dropdown button:hover { background: #ECFDF5; color: #10B981; padding-left: 25px; }
+        
+        /* Noti List */
         .noti-header { padding: 15px; font-weight: bold; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; }
         .noti-list { max-height: 400px; overflow-y: auto; }
         .noti-item { padding: 15px; border-bottom: 1px solid #eee; transition: 0.2s; display: flex; flex-direction: column; gap: 5px; }
         .noti-item:hover { background: #f9f9f9; }
         .noti-item.unread { background: #ECFDF5; }
         .empty-noti { padding: 20px; text-align: center; color: #999; font-style: italic; }
+
         .nb-admin-only { display: none !important; }
     </style>
 
@@ -85,7 +94,7 @@ const userData = {
 };
 
 export async function loadNavbar(options = {}) {
-  // 1. Render khung HTML ngay lập tức (Để dù JS có lỗi cũng hiện Navbar)
+  // 1. Render khung HTML ngay lập tức (Chống trắng trang)
   const div = document.createElement("div");
   div.innerHTML = navbarHTML;
   document.body.prepend(div);
@@ -97,7 +106,6 @@ export async function loadNavbar(options = {}) {
 
   try {
     // 2. Lấy thông tin User
-    // Nếu bro đã login thì callAPI("/profile") sẽ trả về data ngon
     if (!userData.username) {
       const profile = await callAPI("/profile");
       if (profile && profile.success) {
@@ -110,8 +118,10 @@ export async function loadNavbar(options = {}) {
           username: user.username,
           roleName: user.roleName,
         });
+      } else {
+        userData.username = "Khách";
+        userData.roleName = "GUEST";
       }
-      // Nếu không success thì cứ để im, api.js sẽ tự xử lý (redirect) nếu cần
     }
 
     // 3. Update UI
@@ -122,22 +132,24 @@ export async function loadNavbar(options = {}) {
     if (userData.roleName)
       document.getElementById("nbRole").textContent = userData.roleName;
 
-    // Hiện menu Admin
     if (userData.roleName === "ADMIN") {
       document
         .querySelectorAll(".nb-admin-only")
         .forEach((el) => el.style.setProperty("display", "flex", "important"));
     }
 
-    // 4. Kích hoạt Notification & SSE (Dùng Dynamic Import để chống crash 404)
+    // 4. Kích hoạt Notification & SSE (Chỉ chạy khi đã login)
     if (userData.username && userData.username !== "Khách") {
       await initNotificationSystem();
+    } else {
+      document.getElementById("nbNotiList").innerHTML =
+        '<div class="empty-noti">Vui lòng đăng nhập</div>';
     }
   } catch (e) {
-    console.error("Navbar Logic Error:", e);
+    console.error("Navbar Error:", e);
   }
 
-  // 5. Setup Events Click
+  // 5. Setup Events
   setupEvents();
 }
 
@@ -145,7 +157,7 @@ async function initNotificationSystem() {
   try {
     const notiList = document.getElementById("nbNotiList");
 
-    // Gọi API lấy list cũ
+    // A. Lấy danh sách cũ
     const res = await callAPI("/notification", "GET");
     if (res && res.success && res.data && res.data.listData) {
       renderNotiList(res.data.listData);
@@ -154,28 +166,20 @@ async function initNotificationSystem() {
         '<div class="empty-noti">Không có thông báo nào</div>';
     }
 
-    // [QUAN TRỌNG] Dynamic Import: Chống lỗi 404 làm sập web
-    // Nó sẽ cố load file sse.js, nếu không thấy thì bỏ qua chứ không crash
-    try {
-      const sseModule = await import("../public/sse.js");
+    // B. KẾT NỐI SSE
+    await connectSse("/sse");
 
-      await sseModule.connectSse("/sse");
-      sseModule.subscribeTopic("notification", (data) => {
-        const newNoti = data.data || data;
-        prependNotification(newNoti);
+    // C. LẮNG NGHE TOPIC
+    subscribeTopic("notification", (data) => {
+      const newNoti = data.data || data;
+      prependNotification(newNoti);
 
-        // Update badge
-        const badge = document.getElementById("nbBadge");
-        let count = parseInt(badge.textContent) || 0;
-        updateBadge(count + 1);
-      });
-    } catch (importErr) {
-      console.warn(
-        "⚠️ Không tìm thấy file sse.js hoặc lỗi kết nối SSE. Bỏ qua tính năng realtime."
-      );
-    }
+      const badge = document.getElementById("nbBadge");
+      let count = parseInt(badge.textContent) || 0;
+      updateBadge(count + 1);
+    });
   } catch (err) {
-    console.warn("Lỗi Notification System:", err);
+    console.warn("Lỗi SSE/Noti:", err);
   }
 }
 
@@ -215,7 +219,6 @@ function setupEvents() {
   }
 }
 
-// Các hàm render phụ trợ
 function renderNotiList(list) {
   const notiList = document.getElementById("nbNotiList");
   if (!list.length) return;
