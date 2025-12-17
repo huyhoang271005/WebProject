@@ -192,4 +192,9 @@ window.changeVar = async (el) => {
         await showDialog("error", "Phân loại này hiện đang hết hàng hoặc không tồn tại");
         render(); // Reset lại select cũ
     }
+    console.log("Đang gửi đi:", { 
+    cartItemId: item.cartItemId, 
+    variantId: newV.variantId, 
+    quantity: item.quantity 
+    });
 };
