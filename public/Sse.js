@@ -20,7 +20,8 @@ export async function connectSse(endpoint) {
     });
 
     es.listen({
-        async onEvent(e) {
+        async onMessage(e) {
+            console.warn(e);
             try {
                 const topic = e.event;
                 const data = JSON.parse(e.data);
@@ -34,11 +35,6 @@ export async function connectSse(endpoint) {
             } catch (err) {
                 console.error(err);
             }
-        },
-
-        async onMessage(e) {
-            console.warn(e);
-            return e.data;
         },
 
         async onError(e) {
