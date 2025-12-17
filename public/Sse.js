@@ -21,7 +21,6 @@ export async function connectSse(endpoint) {
 
     es.listen({
         async onMessage(e) {
-            console.warn(e);
             try {
                 const topic = e.event;
                 const data = JSON.parse(e.data);
