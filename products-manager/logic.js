@@ -105,7 +105,7 @@ export const ProductLogic = {
             description: formData.description || "",
             imageName: null,
             imageUrl: null,
-            originalPrice: parseFloat(formData.priceOriginal),
+            originalPrice: parseFloat(formData.priceOriginal), 
             price: parseFloat(formData.price),
             categoryId: formData.categoryId,
             brandId: formData.brandId,
@@ -126,9 +126,7 @@ export const ProductLogic = {
                 attributeId: attr.attributeId || null,
                 attributeName: attr.attributeName,
                 attributeValues: attr.values.map(v => ({
-                    // FIX: Gửi luôn ID tạm (v.id) thay vì null
-                    // Để backend có thể khớp nó với ID trong bảng variantValues
-                    attributeValueId: v.id, 
+                    attributeValueId: v.id, // ID tạm để map
                     attributeValueName: v.name || v.valueName || v
                 }))
             };
@@ -137,8 +135,8 @@ export const ProductLogic = {
         // Format variants
         const formattedVariants = variants.map((variant, index) => {
             return {
-                variantId: `variant_${index}`, // ID string để map
-                imageName: variant.imageName, // Đã được set bên index.js
+                variantId: `variant_${index}`,
+                imageName: variant.imageName,
                 imageUrl: null,
                 originalPrice: parseFloat(variant.priceOriginal) || parseFloat(formData.priceOriginal),
                 price: parseFloat(variant.price) || parseFloat(formData.price),
@@ -156,7 +154,6 @@ export const ProductLogic = {
                 variant.combination.forEach(combo => {
                     variantValues.push({
                         variantId: `variant_${variantIndex}`,
-                        // ID này sẽ khớp với attributeValueId ở mảng attributes phía trên
                         attributeValueId: combo.valueId 
                     });
                 });
@@ -164,9 +161,8 @@ export const ProductLogic = {
         });
 
         console.log('=== FORMAT DATA DEBUG ===');
-        console.log('Formatted Attributes:', attributes);
-        console.log('Formatted Variants:', formattedVariants);
-        console.log('Variant Values:', variantValues);
+        console.log('Product DTO:', productDetailDTO); 
+        console.log('Formatted Variants:', formattedVariants); // Check log variant
 
         return {
             productDetailDTO,

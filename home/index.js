@@ -1,7 +1,5 @@
 import { loadNavbar } from "../navbar/navbar.js";
-import { callAPI } from "../public/api.js";
-import { getLoader } from "../public/public.js";
-import { connectSse, subscribeTopic } from "../public/Sse.js";
+import { toggleLoading } from "../public/loader.js"; // Import Loader dùng chung
 
 const CATEGORIES = [
   { id: "an-vat", name: "Đồ ăn vặt", icon: "fa-cookie-bite" },
@@ -11,57 +9,38 @@ const CATEGORIES = [
   { id: "gia-dung", name: "Gia dụng", icon: "fa-pump-soap" },
 ];
 
-// Hàm bật tắt Loading
-const toggleLoading = (show) => {
-  const el = document.getElementById("loadingOverlay");
-  if (el) el.style.display = show ? "flex" : "none";
-};
-
 document.addEventListener("DOMContentLoaded", async () => {
-  toggleLoading(true); // Bật loading ngay khi vào trang
+  toggleLoading(true); // Bật Loader xịn
 
   try {
-    // 1. GỌI NAVBAR CUSTOM CHO HOME
+    // Navbar giờ tự có giỏ hàng, chỉ cần truyền cái thanh Search vào giữa thôi
     await loadNavbar({
       centerHTML: `
-                <div class="nav-cat-btn" id="catBtn">
-                    <i class="fa-solid fa-bars"></i> <span>Danh mục</span>
-                    <div class="cat-dropdown" id="catDropdown"></div>
-                </div>
-                <div style="position:relative;">
-                    <input type="text" class="nav-search-input" id="homeSearch" placeholder="Tìm sản phẩm...">
-                    <i class="fa-solid fa-magnifying-glass" style="position:absolute; right:15px; top:50%; transform:translateY(-50%); color:#10B981; cursor:pointer;" id="homeSearchBtn"></i>
-                </div>
-            `,
-      rightHTML: `
-                <a href="#" class="nav-icon-link" title="Thông báo"><i class="fa-regular fa-bell"></i><span class="badge">2</span></a>
-                <a href="../cart" class="nav-icon-link" title="Giỏ hàng"><i class="fa-solid fa-cart-shopping"></i><span class="badge">3</span></a>
-            `,
+        <div class="nav-cat-btn" id="catBtn">
+            <i class="fa-solid fa-bars"></i> <span>Danh mục</span>
+            <div class="cat-dropdown" id="catDropdown"></div>
+        </div>
+        <div style="position:relative;">
+            <input type="text" class="nav-search-input" id="homeSearch" placeholder="Tìm sản phẩm...">
+            <i class="fa-solid fa-magnifying-glass" style="position:absolute; right:15px; top:50%; transform:translateY(-50%); color:#10B981; cursor:pointer;" id="homeSearchBtn"></i>
+        </div>
+      `,
+      // KHÔNG CẦN rightHTML nữa, vì Navbar tự có Giỏ hàng rồi
     });
 
-    // 2. LOGIC UI
     renderNavCategories();
     setupNavbarEvents();
-
-    // 3. Render nội dung
     renderHomeSections();
-
-    // 4. SSE
-    await connectSse("/sse");
-    subscribeTopic("notification", data => {
-      let result = data.data;
-      showToast(result.title, result.message);
-    });
   } catch (e) {
     console.error(e);
   } finally {
-    // Tắt loading sau khi mọi thứ đã xong (giả vờ delay 0.5s cho mượt)
+    // Tắt loading sau 0.5s cho mượt
     setTimeout(() => toggleLoading(false), 500);
   }
 });
 
-// --- HELPER FUNCTIONS ---
-
+// ... (Giữ nguyên các hàm helper bên dưới: renderNavCategories, renderHomeSections...)
+// Copy nốt các hàm helper từ code cũ vào đây
 function setupNavbarEvents() {
   const catBtn = document.getElementById("catBtn");
   const catDropdown = document.getElementById("catDropdown");
@@ -74,23 +53,7 @@ function setupNavbarEvents() {
       if (catDropdown) catDropdown.classList.remove("show");
     });
   }
-
-  const searchInput = document.getElementById("homeSearch");
-  const searchBtn = document.getElementById("homeSearchBtn");
-  const doSearch = () => {
-    const q = searchInput.value.trim();
-    if (q)
-      window.location.href = `../products/index.html?search=${encodeURIComponent(
-        q
-      )}`;
-  };
-  if (searchBtn) searchBtn.onclick = doSearch;
-  if (searchInput)
-    searchInput.addEventListener("keypress", (e) => {
-      if (e.key === "Enter") doSearch();
-    });
 }
-
 function renderNavCategories() {
   const el = document.getElementById("catDropdown");
   if (el)
@@ -99,9 +62,9 @@ function renderNavCategories() {
         `<a href="../products/index.html?cat=${c.id}"><i class="fa-solid ${c.icon}"></i> ${c.name}</a>`
     ).join("");
 }
-
 function renderHomeSections() {
   const container = document.getElementById("homeContainer");
+  if (!container) return;
   const products = generateMockProducts();
   container.innerHTML = "";
   CATEGORIES.forEach((cat) => {
@@ -110,76 +73,48 @@ function renderHomeSections() {
       container.insertAdjacentHTML(
         "beforeend",
         `
-            <div class="category-section">
-                <div class="section-header">
-                    <div class="section-title"><i class="fa-solid ${
-                      cat.icon
-                    }" style="color:#10B981"></i> ${cat.name}</div>
-                    <a href="../products/index.html?cat=${
-                      cat.id
-                    }" class="btn-see-more">Xem thêm <i class="fa-solid fa-arrow-right"></i></a>
-                </div>
-                <div class="product-grid-5">
-                    ${list
-                      .map(
-                        (p) => `
-                        <div class="product-card" onclick="alert('Chi tiết: ${
-                          p.name
-                        }')">
-                            <div class="p-img">${p.name.charAt(0)}</div>
-                            <div class="p-info">
-                                <div class="p-name" title="${p.name}">${
-                          p.name
-                        }</div>
-                                <div class="p-price">${p.price}</div>
+                <div class="category-section">
+                    <div class="section-header">
+                        <div class="section-title"><i class="fa-solid ${
+                          cat.icon
+                        }" style="color:#10B981"></i> ${cat.name}</div>
+                        <a href="../products/index.html?cat=${
+                          cat.id
+                        }" class="btn-see-more">Xem thêm <i class="fa-solid fa-arrow-right"></i></a>
+                    </div>
+                    <div class="product-grid-5">
+                        ${list
+                          .map(
+                            (p) => `
+                            <div class="product-card" onclick="alert('Xem: ${
+                              p.name
+                            }')">
+                                <div class="p-img">${p.name.charAt(0)}</div>
+                                <div class="p-info">
+                                    <div class="p-name">${p.name}</div>
+                                    <div class="p-price">${p.price}</div>
+                                </div>
                             </div>
-                        </div>
-                    `
-                      )
-                      .join("")}
+                        `
+                          )
+                          .join("")}
+                    </div>
                 </div>
-            </div>`
+            `
       );
     }
   });
 }
-
 function generateMockProducts() {
   let arr = [];
   CATEGORIES.forEach((c) => {
-    for (let i = 1; i <= 10; i++)
+    for (let i = 1; i <= 10; i++) {
       arr.push({
         catId: c.id,
         name: `${c.name} - Món số ${i}`,
         price: Math.floor(Math.random() * 200) + 10 + ".000đ",
       });
+    }
   });
   return arr;
-}
-
-const sendAllBtn = document.getElementById("sendAll");
-if (sendAllBtn) {
-  sendAllBtn.onclick = async () => {
-    const msg = document.getElementById("message").value.trim();
-    if (!msg) return;
-    await getLoader("sendAll", async () => {
-      const res = await callAPI("/sse/broadcast", "POST", {
-        success: true,
-        message: msg,
-        data: null,
-      });
-      if (res.success) {
-        document.getElementById("message").value = "";
-        showToast("Thành công", "Đã gửi!");
-      } else showToast("Lỗi", res.message);
-    });
-  };
-}
-
-function showToast(title, msg) {
-  const div = document.createElement("div");
-  div.className = "toast";
-  div.innerHTML = `<i class="fa-solid fa-bell" style="color:#10B981; font-size:1.2rem;"></i> <div><b>${title}</b><div>${msg}</div></div>`;
-  document.getElementById("toast-container").appendChild(div);
-  setTimeout(() => div.remove(), 5000);
 }
