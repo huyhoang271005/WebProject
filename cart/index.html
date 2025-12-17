@@ -12,39 +12,44 @@
     <script src="https://kit.fontawesome.com/e9c281dd3f.js" crossorigin="anonymous"></script>
 </head>
 <body>
-   
+    
     <div class="cart-container">
         <div class="section-box cart-items-section">
             <div class="cart-header">
                 <i class="fa-solid fa-bag-shopping" style="color: #10B981;"></i> Thông tin đơn hàng
             </div>
+
             <div id="cartList">
                 <div style="text-align: center; padding: 20px; color: #666;">
-                    <i class="fas fa-spinner fa-spin"></i> Đang tải...
+                    <i class="fas fa-spinner fa-spin"></i> Đang tải giỏ hàng...
                 </div>
             </div>
         </div>
 
         <div class="summary-box">
             <div class="cart-header">
-                <i class="fa-solid fa-receipt" style="color: #10B981;"></i> Chi tiết thanh toán
+                <i class="fa-solid fa-receipt" style="color: #10B981;"></i> Chi tiết đơn hàng
             </div>
+
             <div class="summary-row">
-                <span>Tổng tiền hàng:</span>
-                <span class="total-price" style="font-weight: 500; font-size: 1rem; color: #333;">0₫</span>
+                <span>Tổng giá trị sản phẩm:</span>
+                <span class="total-price" style="font-weight: 500;">0₫</span>
             </div>
+            
             <div class="summary-total">
                 <span>Tổng thanh toán:</span>
                 <span class="total-price">0₫</span>
             </div>
-            <button class="checkout-btn" disabled>MUA HÀNG (0)</button>
+
+            <button class="checkout-btn">Mua hàng (0)</button>
         </div>
     </div>
 
     <script type="module" src="index.js"></script>
     <script type="module">
+        // Giả lập load Navbar nếu dự án bạn có
         import { loadNavbar } from '../navbar/navbar.js';
-        try { loadNavbar({}); } catch(e) { console.log("No Navbar"); }
+        try { loadNavbar({}); } catch(e) { console.log("Chưa có navbar"); }
     </script>
 </body>
 </html>
