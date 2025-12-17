@@ -9,28 +9,6 @@ html, body {
     display: block !important;
 }
 
-/* === BREADCRUMB === */
-.breadcrumb {
-    margin-top: 90px;
-    padding: 0 5%;
-    color: #6B7280;
-    font-size: 0.95rem;
-    margin-bottom: 20px;
-}
-
-.breadcrumb a {
-    text-decoration: none;
-    color: #6B7280;
-}
-
-.breadcrumb a:hover {
-    color: #10B981;
-}
-
-.breadcrumb span {
-    margin: 0 5px;
-}
-
 /* === LAYOUT === */
 .cart-container {
     display: grid;
