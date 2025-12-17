@@ -25,9 +25,11 @@ export async function connectSse(endpoint) {
                 const topic = e.event;
                 const data = JSON.parse(e.data);
 
-                const handler = topicHandlers[topic];
-                if (handler) {
-                    await handler(data);
+                const handlers = topicHandlers[topic];
+                if (handlers) {
+                    for(const h of handlers){
+                        await h(data);
+                    }
                 }
             } catch (err) {
                 console.error(err);
@@ -39,18 +41,28 @@ export async function connectSse(endpoint) {
         },
 
         async onError(e) {
+            es?.close();
             accessToken = null;
-            throw new Error(e);
+            console.warn("SSE error", e);
         }
     });
 
     return es;
 }
 
-export function subscribeTopic(topicName, callback) {
-    topicHandlers[topicName] = callback;
+export function subscribeTopic(topic, callback) {
+    if(!topicHandlers[topic]){
+        topicHandlers[topic] = [];
+    }
+    topicHandlers[topic].push(callback);
 }
 
-export function unsubscribeTopic(topicName) {
-    delete topicHandlers[topicName];
+export function unsubscribeTopic(topic, callback) {
+    if (!topicHandlers[topic]) return;
+
+    topicHandlers[topic] = topicHandlers[topic].filter(cb => cb !== callback);
+
+    if (topicHandlers[topic].length === 0) {
+        delete topicHandlers[topic];
+    }
 }
