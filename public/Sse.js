@@ -37,6 +37,7 @@ export async function connectSse(endpoint) {
         },
 
         async onMessage(e) {
+            console.warn(e);
             return e.data;
         },
 
