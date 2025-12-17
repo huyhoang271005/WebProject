@@ -9,7 +9,7 @@ let busy = false;
 document.addEventListener("DOMContentLoaded", async () => {
     const res = await callAPI('/auth/carts', 'GET');
     if (res.success) {
-        cartData = res.data;
+        cartData = res.data.listData;
         render();
     } else {
         document.getElementById("cartList").innerHTML = `<p class="text-center p-5">${res.message}</p>`;
