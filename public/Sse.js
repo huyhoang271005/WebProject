@@ -9,7 +9,7 @@ export async function connectSse(endpoint) {
 
     if (!accessToken) {
         const result = await refreshAccessToken();
-        if (!result.success) throw new Error("Auth failed");
+        if (!result.success) throw new Error(result.message);
     }
 
     es = new EventSourcePlus(`${API_BASE}${endpoint}`, {
@@ -39,8 +39,10 @@ export async function connectSse(endpoint) {
 
         async onError(e) {
             es?.close();
-            accessToken = null;
-            console.warn("SSE error", e);
+            const result = await refreshAccessToken();
+            if (!result.success) {
+                throw new Error(result.message);
+            }
         }
     });
 
