@@ -267,8 +267,23 @@ function setupEventListeners() {
             quantity: parseInt(input.value)
         }
         const result = await callAPI("/auth/carts", "POST", data);
-        alert(result.message);
+        showNotification(result.message);
     });
+    function showNotification(message, type = 'success') {
+        const noti = document.getElementById('notification');
+
+        noti.innerText = message;
+        noti.className = type + " show";
+
+        // Hiện
+        noti.classList.remove("hidden");
+
+        // 3 giây sau tự biến mất
+        setTimeout(() => {
+            noti.classList.remove("show");
+            setTimeout(() => noti.classList.add("hidden"), 500);
+        }, 3000);
+    }
 
     document.getElementById('btnBuyNow').addEventListener('click', () => {
         if (!validateSelection()) return;
