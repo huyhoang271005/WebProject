@@ -3,8 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Tạp Hóa Xanh</title>
-
+    <title>Tạp Hóa Xanh - Trang Chủ</title>
     <link rel="stylesheet" href="../dialog/index.css" />
     <link rel="stylesheet" href="../public/public.css" />
     <script
@@ -13,36 +12,49 @@
     ></script>
 
     <style>
-      /* RESET CSS */
+      /* --- GLOBAL STYLE --- */
+      * {
+        box-sizing: border-box;
+      }
       html,
       body {
+        display: block !important;
+        width: 100% !important;
+        height: auto !important;
+        min-height: 100vh;
+        overflow-y: auto !important;
         margin: 0 !important;
         padding: 0 !important;
-        width: 100% !important;
-        min-height: 100vh;
-        background-color: #f3f4f6 !important;
         font-family: "Segoe UI", sans-serif;
-        display: block !important;
+
+        /* NỀN MÂY TRỜI ĐỒNG BỘ */
+        background: url("https://img.freepik.com/free-vector/blue-sky-with-clouds-background_1017-26302.jpg")
+          no-repeat center center fixed !important;
+        background-size: cover !important;
       }
+
       .main-container {
-        margin-top: 70px;
+        padding-top: 90px;
         padding-bottom: 50px;
+        max-width: 1200px;
+        margin: 0 auto;
       }
 
       /* BANNER */
       .hero {
-        margin: 20px 30px;
-        border-radius: 16px;
+        margin: 0 20px 30px 20px;
+        border-radius: 20px;
         overflow: hidden;
-        height: 350px;
+        height: 380px;
         position: relative;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
       }
       .hero img {
         width: 100%;
         height: 100%;
         object-fit: cover;
-        filter: brightness(0.7);
+        object-position: center 25%;
+        filter: brightness(0.8);
       }
       .hero-overlay {
         position: absolute;
@@ -53,24 +65,32 @@
         display: flex;
         flex-direction: column;
         justify-content: center;
-        padding-left: 60px;
+        padding-left: 80px;
         color: white;
+        background: linear-gradient(
+          90deg,
+          rgba(0, 0, 0, 0.6) 0%,
+          rgba(0, 0, 0, 0) 60%
+        );
       }
       .hero h1 {
-        font-size: 3rem;
-        margin-bottom: 10px;
-        text-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+        font-size: 3.5rem;
+        margin-bottom: 15px;
+        font-weight: 800;
+        text-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
       }
       .hero button {
-        padding: 12px 35px;
+        padding: 15px 40px;
         background: #10b981;
         color: white;
         border: none;
-        border-radius: 30px;
+        border-radius: 50px;
         font-weight: bold;
         cursor: pointer;
         font-size: 1.1rem;
-        transition: 0.2s;
+        transition: 0.3s;
+        width: fit-content;
+        box-shadow: 0 5px 15px rgba(16, 185, 129, 0.4);
       }
       .hero button:hover {
         transform: translateY(-3px);
@@ -80,35 +100,37 @@
       /* PRODUCT GRID */
       .category-section {
         background: white;
-        margin: 30px 30px;
-        padding: 25px;
-        border-radius: 16px;
-        border: 1px solid #e5e7eb;
+        margin: 0 20px 40px 20px;
+        padding: 30px;
+        border-radius: 20px;
+        border: 1px solid #f0f0f0;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02);
       }
       .section-header {
         display: flex;
         justify-content: space-between;
-        margin-bottom: 20px;
-        padding-bottom: 10px;
+        margin-bottom: 25px;
+        padding-bottom: 15px;
         border-bottom: 2px solid #f3f4f6;
+        align-items: center;
       }
       .section-title {
-        font-size: 1.4rem;
+        font-size: 1.5rem;
         font-weight: 800;
-        color: #1f2937;
+        color: #111827;
         display: flex;
         align-items: center;
-        gap: 10px;
+        gap: 12px;
       }
       .btn-see-more {
         text-decoration: none;
         color: #10b981;
-        border: 2px solid #10b981;
-        padding: 6px 20px;
-        border-radius: 20px;
-        font-weight: 700;
-        font-size: 0.9rem;
+        padding: 8px 20px;
+        border-radius: 30px;
+        font-weight: 600;
+        font-size: 0.95rem;
         transition: 0.2s;
+        background: #ecfdf5;
       }
       .btn-see-more:hover {
         background: #10b981;
@@ -118,191 +140,163 @@
       .product-grid-5 {
         display: grid;
         grid-template-columns: repeat(5, 1fr);
-        gap: 20px;
+        gap: 25px;
       }
+      @media (max-width: 1200px) {
+        .product-grid-5 {
+          grid-template-columns: repeat(4, 1fr);
+        }
+      }
+      @media (max-width: 992px) {
+        .product-grid-5 {
+          grid-template-columns: repeat(3, 1fr);
+        }
+      }
+      @media (max-width: 768px) {
+        .product-grid-5 {
+          grid-template-columns: repeat(2, 1fr);
+        }
+        .hero h1 {
+          font-size: 2rem;
+        }
+        .hero {
+          height: 300px;
+        }
+      }
+
       .product-card {
         background: white;
-        border-radius: 12px;
+        border-radius: 16px;
         overflow: hidden;
         border: 1px solid #e5e7eb;
-        transition: 0.2s;
+        transition: 0.3s;
         cursor: pointer;
         display: flex;
         flex-direction: column;
       }
       .product-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        transform: translateY(-8px);
+        box-shadow: 0 15px 30px rgba(0, 0, 0, 0.08);
         border-color: #10b981;
       }
       .p-img {
         width: 100%;
-        height: 160px;
+        height: 180px;
         background: #f9fafb;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 2.5rem;
-        color: #ccc;
+        font-size: 3rem;
+        color: #e5e7eb;
+        transition: 0.3s;
+      }
+      .product-card:hover .p-img {
+        background: #f0fdf4;
+        color: #10b981;
       }
       .p-info {
-        padding: 12px;
+        padding: 15px;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
       }
       .p-name {
         font-weight: 600;
         color: #374151;
-        font-size: 0.95rem;
-        margin-bottom: 5px;
-        height: 40px;
+        font-size: 1rem;
+        margin-bottom: 8px;
+        line-height: 1.4;
         overflow: hidden;
+        height: 44px;
         display: -webkit-box;
         -webkit-line-clamp: 2;
         -webkit-box-orient: vertical;
-        line-height: 1.4;
       }
       .p-price {
         color: #ef4444;
-        font-weight: bold;
+        font-weight: 700;
         font-size: 1.1rem;
+        margin-top: auto;
       }
 
-      /* Custom Navbar Items */
+      /* Nav Search + Dropdown */
       .nav-cat-btn {
         background: white;
         border: 1px solid #e5e7eb;
-        padding: 8px 15px;
-        border-radius: 20px;
+        padding: 8px 18px;
+        border-radius: 50px;
         cursor: pointer;
         font-weight: 600;
         color: #374151;
         display: flex;
         align-items: center;
-        gap: 8px;
+        gap: 10px;
         position: relative;
+        transition: 0.2s;
+      }
+      .nav-cat-btn:hover {
+        border-color: #10b981;
+        color: #10b981;
       }
       .cat-dropdown {
         position: absolute;
-        top: 110%;
+        top: 120%;
         left: 0;
         background: white;
-        width: 220px;
+        width: 240px;
         border-radius: 12px;
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
         display: none;
         flex-direction: column;
         overflow: hidden;
-        border: 1px solid #eee;
+        border: 1px solid #f3f4f6;
+        z-index: 1001;
+        animation: fadeIn 0.2s ease;
+      }
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
       }
       .cat-dropdown.show {
         display: flex;
       }
       .cat-dropdown a {
-        padding: 12px 15px;
+        padding: 14px 20px;
         text-decoration: none;
-        color: #333;
+        color: #4b5563;
         border-bottom: 1px solid #f9f9f9;
         display: flex;
-        gap: 10px;
+        gap: 12px;
         align-items: center;
+        transition: 0.2s;
       }
       .cat-dropdown a:hover {
         background: #ecfdf5;
         color: #10b981;
-        padding-left: 20px;
+        padding-left: 25px;
       }
-
       .nav-search-input {
-        width: 400px;
-        padding: 10px 40px 10px 20px;
-        border: 2px solid #e5e7eb;
-        border-radius: 25px;
+        width: 450px;
+        padding: 10px 45px 10px 20px;
+        border: 1px solid #e5e7eb;
+        border-radius: 50px;
         outline: none;
+        background: #f9fafb;
+        transition: 0.2s;
       }
       .nav-search-input:focus {
         border-color: #10b981;
-      }
-      .nav-icon-link {
-        color: #4b5563;
-        font-size: 1.4rem;
-        position: relative;
-        margin-left: 10px;
-      }
-      .badge {
-        position: absolute;
-        top: -5px;
-        right: -5px;
-        background: #ef4444;
-        color: white;
-        font-size: 0.65rem;
-        padding: 2px 6px;
-        border-radius: 10px;
-        border: 2px solid white;
-      }
-
-      /* Admin Toolbar */
-      .admin-toolbar {
         background: white;
-        margin: 20px 30px;
-        padding: 15px;
-        border-radius: 12px;
-        border-left: 5px solid #f59e0b;
-        display: flex;
-        gap: 15px;
-        align-items: center;
-        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
-      }
-      .admin-input {
-        flex: 1;
-        padding: 10px;
-        border: 1px solid #ddd;
-        border-radius: 6px;
-        outline: none;
-      }
-      .admin-btn {
-        background: #f59e0b;
-        color: white;
-        border: none;
-        padding: 10px 20px;
-        border-radius: 6px;
-        cursor: pointer;
-        font-weight: bold;
-      }
-      .admin-only {
-        display: none !important;
+        box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.1);
       }
 
-      /* >>> LOADING SPINNER (NEW) <<< */
-      #loadingOverlay {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(255, 255, 255, 0.8);
-        z-index: 9999;
-        display: none;
-        align-items: center;
-        justify-content: center;
-        backdrop-filter: blur(2px);
-      }
-      .spinner {
-        width: 50px;
-        height: 50px;
-        border: 5px solid #ecfdf5;
-        border-top: 5px solid #10b981;
-        border-radius: 50%;
-        animation: spin 1s linear infinite;
-      }
-      @keyframes spin {
-        0% {
-          transform: rotate(0deg);
-        }
-        100% {
-          transform: rotate(360deg);
-        }
-      }
-
-      /* Chat & Toast */
+      /* Chat Btn */
       .chat-btn {
         position: fixed;
         bottom: 30px;
@@ -327,65 +321,21 @@
       }
       #toast-container {
         position: fixed;
-        bottom: 30px;
-        right: 30px;
+        top: 20px;
+        right: 20px;
         z-index: 9999;
         display: flex;
         flex-direction: column;
         gap: 10px;
       }
-      .toast {
-        background: white;
-        padding: 15px 20px;
-        border-radius: 8px;
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
-        border-left: 4px solid #10b981;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        animation: slideIn 0.3s;
-      }
-      @keyframes slideIn {
-        from {
-          transform: translateX(100%);
-        }
-        to {
-          transform: translateX(0);
-        }
-      }
-
-      @media (max-width: 1200px) {
-        .product-grid-5 {
-          grid-template-columns: repeat(4, 1fr);
-        }
-      }
-      @media (max-width: 992px) {
-        .product-grid-5 {
-          grid-template-columns: repeat(3, 1fr);
-        }
-      }
     </style>
   </head>
   <body>
-    <div id="loadingOverlay"><div class="spinner"></div></div>
-
     <div class="main-container">
-      <div class="admin-toolbar admin-only">
-        <strong style="color: #b45309"
-          ><i class="fa-solid fa-bullhorn"></i> Admin Broadcast:</strong
-        >
-        <input
-          type="text"
-          id="message"
-          class="admin-input"
-          placeholder="Nhập thông báo gửi toàn hệ thống..."
-        />
-        <button id="sendAll" class="admin-btn">Gửi</button>
-      </div>
-
       <div class="hero">
         <img
           src="https://img.freepik.com/free-photo/assortment-various-barbecue-food-grill_23-2148243673.jpg?w=1380"
+          alt="Banner"
         />
         <div class="hero-overlay">
           <h1>Siêu Sale Tạp Hóa 🍡</h1>
@@ -397,15 +347,12 @@
           </button>
         </div>
       </div>
-
       <div id="homeContainer"></div>
     </div>
-
-    <div class="chat-btn" onclick="alert('Chat với nhân viên!')">
+    <div class="chat-btn" onclick="alert('Tính năng Chat đang phát triển!')">
       <i class="fa-solid fa-comments"></i>
     </div>
     <div id="toast-container"></div>
-
     <script type="module" src="index.js"></script>
   </body>
 </html>

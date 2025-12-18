@@ -1,5 +1,5 @@
 /* === RESET & GLOBAL === */
-html,body {
+html, body {
     margin: 0 !important;
     padding: 0 !important;
     width: 100% !important;
@@ -8,36 +8,17 @@ html,body {
     font-family: 'Segoe UI', sans-serif;
     display: block !important;
 }
-/* === BREADCRUMB === */
-.breadcrumb {
-    margin-top: 90px;
-    padding: 0 5%;
-    color: #6B7280;
-    font-size: 0.95rem;
-    margin-bottom: 20px;
-}
 
-.breadcrumb a {
-    text-decoration: none;
-    color: #6B7280;
-}
-
-.breadcrumb a:hover {
-    color: #10B981;
-}
-
-.breadcrumb span {
-    margin: 0 5px;
-}
 /* === LAYOUT === */
 .cart-container {
     display: grid;
     grid-template-columns: 2.2fr 1fr;
     gap: 25px;
-    padding: 0 5% 50px 5%;
+    padding: 100px 5% 50px 5%;
     max-width: 1400px;
     margin: 0 auto;
 }
+
 /* === LEFT SECTION === */
 .section-box {
     background: white;
@@ -55,11 +36,11 @@ html,body {
     align-items: center;
     gap: 10px;
 }
+
 /* CART ITEM */
 .cart-item {
     display: flex;
     align-items: flex-start;
-    /* Căn lề trên để layout đẹp hơn khi có dropdown */
     padding: 20px 0;
     border-bottom: 1px solid #F3F4F6;
 }
@@ -75,7 +56,6 @@ html,body {
     font-size: 1.1rem;
     transition: 0.2s;
     margin-top: 30px;
-    /* Căn giữa theo chiều dọc tương đối */
 }
 
 .delete-btn:hover {
@@ -106,7 +86,8 @@ html,body {
     -webkit-box-orient: vertical;
     overflow: hidden;
 }
-/* --- STYLE CHO DROPDOWN PHÂN LOẠI (MỚI) --- */
+
+/* --- STYLE CHO DROPDOWN PHÂN LOẠI --- */
 .variant-box {
     margin-bottom: 8px;
     display: flex;
@@ -131,7 +112,7 @@ html,body {
 .variant-select:hover {
     border-color: #10B981;
 }
-/* ----------------------------------------- */
+
 .item-price {
     color: #EF4444;
     font-weight: 700;
@@ -143,6 +124,7 @@ html,body {
     font-size: 0.85rem;
     margin-top: 4px;
 }
+
 /* QUANTITY CONTROL */
 .qty-control {
     display: flex;
@@ -152,7 +134,7 @@ html,body {
     background: white;
     height: 36px !important;
     margin-top: 20px;
-    /* Căn chỉnh vị trí nút số lượng */
+    margin-right: 15px; /* Thêm khoảng cách nhỏ với nút xóa */
 }
 
 .qty-btn {
@@ -168,7 +150,6 @@ html,body {
     align-items: center;
     padding: 0;
     margin: 0;
-
 }
 
 .qty-btn:hover {
@@ -178,7 +159,6 @@ html,body {
 
 .qty-input {
     width: 40px;
-    /* Cố định chiều rộng input */
     height: 100%;
     border: none;
     border-left: 1px solid #E5E7EB;
@@ -189,6 +169,7 @@ html,body {
     outline: none;
     background: transparent;
 }
+
 /* === RIGHT SECTION (SUMMARY) === */
 .summary-box {
     background: white;
@@ -245,6 +226,26 @@ html,body {
     transform: translateY(-2px);
     box-shadow: 0 4px 10px rgba(245, 158, 11, 0.3);
 }
+
+.checkout-btn:disabled {
+    background: #E5E7EB;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+.item-actions {
+    display: flex; 
+    
+    /* ĐÂY LÀ DÒNG QUAN TRỌNG NHẤT: */
+    flex-direction: column;  /* Bắt buộc các phần tử con xếp theo chiều DỌC (cái nào viết trước nằm trên) */
+    
+    align-items: flex-end;   /* Căn tất cả sang lề PHẢI */
+    
+    gap: 5px;                /* Tạo khoảng cách 5px giữa ô số lượng và giá tiền */
+    min-width: 110px;        /* Đảm bảo cụm này luôn đủ rộng, không bị chèn ép */
+}
+
 /* Responsive */
 @media (max-width: 900px) {
     .cart-container {

@@ -5,10 +5,7 @@ const money = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND
 let cartData = [], checked = new Set(), busy = false;
 
 document.addEventListener("DOMContentLoaded", async () => {
-    const res = await callAPI('/auth/carts', 'GET');
-    if (res.success) { cartData = res.data; render(); } 
-    else document.getElementById("cartList").innerHTML = `<p class="text-center p-5">${res.message}</p>`;
-    
+    await loadCart();
     document.querySelector(".checkout-btn").onclick = (e) => {
         if(!e.target.disabled) {
             localStorage.setItem("checkoutItems", JSON.stringify([...checked]));
@@ -17,7 +14,16 @@ document.addEventListener("DOMContentLoaded", async () => {
     };
 });
 
-// === 1. UI RENDER ===
+// === 1. LOAD DATA ===
+async function loadCart() {
+    const res = await callAPI('/auth/carts', 'GET');
+    if (res.success) { 
+        cartData = res.data.listData || []; 
+        render(); 
+    } else document.getElementById("cartList").innerHTML = `<p class="text-center p-5">${res.message}</p>`;
+}
+
+// === 2. UI RENDER ===
 function render() {
     const box = document.getElementById("cartList");
     box.innerHTML = "";
@@ -33,7 +39,7 @@ function render() {
 function createRow(p, item, v, pIdx, cIdx) {
     const row = document.createElement("div");
     row.className = "cart-item";
-    row.dataset.idx = `${pIdx}-${cIdx}`;
+    row.dataset.idx = `${pIdx}-${cIdx}`; // Lưu vị trí để tìm nhanh
 
     const selects = `<div class="variant-box">` + p.attributes.map(a => `
         <select class="variant-select" onchange="changeVar(this)">
@@ -41,16 +47,23 @@ function createRow(p, item, v, pIdx, cIdx) {
         </select>`).join('') + `</div>`;
 
     row.innerHTML = `
-        <div class="checkbox-wrapper"><input type="checkbox" class="item-checkbox" onchange="toggle('${item.cartItemId}')" ${checked.has(item.cartItemId)?'checked':''}></div>
+        <div class="checkbox-wrapper">
+            <input type="checkbox" class="item-checkbox" onchange="toggle('${item.cartItemId}')" ${checked.has(item.cartItemId)?'checked':''}>
+        </div>
         <img src="${v.imageUrl||'https://via.placeholder.com/80'}" class="item-img">
         <div class="item-info"><div class="item-name">${p.productName}</div>${selects}</div>
-        <div class="item-meta"><div class="item-price">${money.format(v.price)}</div><div class="item-unit">Kho: ${v.stock}</div></div>
-        <div class="qty-control">
-            <button class="qty-btn" onclick="modQty('${item.cartItemId}', -1)">-</button>
-            <input type="number" value="${item.quantity}" class="qty-input" onchange="modQty('${item.cartItemId}', 0, this.value)">
-            <button class="qty-btn" onclick="modQty('${item.cartItemId}', 1)">+</button>
+        <div class="item-actions">
+            <div class="qty-control">
+                <button class="qty-btn" onclick="modQty('${item.cartItemId}', -1)">-</button>
+                <input type="number" value="${item.quantity}" class="qty-input" onchange="modQty('${item.cartItemId}', 0, this.value)">
+                <button class="qty-btn" onclick="modQty('${item.cartItemId}', 1)">+</button>
+            </div>
+            <div class="item-meta">
+                <div class="item-price">${money.format(v.price)}</div>
+                <div class="item-unit">Kho: ${v.stock}</div>
+            </div>
         </div>
-        <i class="fa-solid fa-trash-can delete-btn" onclick="del('${item.cartItemId}')"></i>`;
+        <div class="delete-btn-wrapper"><i class="fa-solid fa-trash-can delete-btn" onclick="del('${item.cartItemId}')"></i></div>`;
     return row;
 }
 
@@ -67,12 +80,14 @@ function updateTotal() {
     btn.innerText = `MUA HÀNG (${count})`; btn.disabled = !count;
 }
 
-// === 2. LOGIC ===
+// === 3. LOGIC XỬ LÝ ===
+
 window.toggle = (id) => { checked.has(id) ? checked.delete(id) : checked.add(id); updateTotal(); };
 
 window.del = async (id) => {
     if(!confirm("Xóa nhé?")) return;
     if((await callAPI(`/auth/carts/${id}`, 'DELETE')).success) {
+        // Xóa khỏi RAM
         cartData.forEach(p => p.cartItemDTOList = p.cartItemDTOList.filter(i => i.cartItemId !== id));
         checked.delete(id); render();
     } else await showDialog("error", "Lỗi xóa");
@@ -95,16 +110,80 @@ window.modQty = async (id, delta, manualVal) => {
     } finally { busy = false; }
 };
 
+// --- LOGIC MỚI: ĐỔI BIẾN THỂ & GỘP DÒNG ---
 window.changeVar = async (el) => {
-    const [pIdx, cIdx] = el.closest(".cart-item").dataset.idx.split('-');
-    const item = cartData[pIdx].cartItemDTOList[cIdx];
-    const product = cartData[pIdx];
-    const ids = Array.from(el.parentNode.querySelectorAll("select")).map(s => s.value);
-    const newV = product.productVariantsDTOList.find(v => ids.every(id => v.attributeValueIdList.includes(id)));
+    if(busy) return; busy = true; // Chặn spam click
+    try {
+        const row = el.closest(".cart-item");
+        const [pIdx, cIdx] = row.dataset.idx.split('-');
+        
+        const product = cartData[pIdx];                 // Sản phẩm cha
+        const currentItem = product.cartItemDTOList[cIdx]; // Item đang sửa
+        
+        // 1. Tìm biến thể mới dựa trên dropdown
+        const ids = Array.from(row.querySelectorAll(".variant-select")).map(s => s.value);
+        const newVariant = product.productVariantsDTOList.find(v => ids.every(id => v.attributeValueIdList.includes(id)));
 
-    if(newV) {
-        if((await callAPI('/auth/carts', 'PUT', { cartItemId: item.cartItemId, variantId: newV.variantId, quantity: item.quantity })).success) {
-            item.variantId = newV.variantId; render();
-        } else await showDialog("error", "Lỗi đổi");
-    } else { await showDialog("error", "Hết hàng"); render(); }
+        if (!newVariant) { await showDialog("error", "Hết hàng/Không tồn tại"); render(); return; }
+        if (newVariant.variantId === currentItem.variantId) return; // Chưa đổi gì thì thôi
+
+        // 2. Kiểm tra xem trong giỏ đã có dòng nào trùng với biến thể mới chưa?
+        // (Tìm item khác trong cùng sản phẩm có variantId == newVariant.variantId)
+        const existingItem = product.cartItemDTOList.find(i => 
+            i.variantId === newVariant.variantId && i.cartItemId !== currentItem.cartItemId
+        );
+
+        if (existingItem) {
+            // === TRƯỜNG HỢP GỘP (MERGE) ===
+            const newTotalQty = Number(currentItem.quantity) + Number(existingItem.quantity);
+            
+            // Check tồn kho cho tổng mới
+            if (newTotalQty > newVariant.stock) {
+                await showDialog("error", `Không thể gộp. Tổng số lượng (${newTotalQty}) vượt quá kho (${newVariant.stock})`);
+                render(); return;
+            }
+
+            // Bước A: Cập nhật số lượng cho dòng đích (existingItem)
+            const resUpdate = await callAPI('/auth/carts', 'PUT', { 
+                cartItemId: existingItem.cartItemId, 
+                variantId: existingItem.variantId, 
+                quantity: newTotalQty 
+            });
+
+            // Bước B: Xóa dòng hiện tại (currentItem) vì đã gộp sang kia rồi
+            if (resUpdate.success) {
+                const resDelete = await callAPI(`/auth/carts/${currentItem.cartItemId}`, 'DELETE');
+                
+                if (resDelete.success) {
+                    // Cập nhật RAM: Xóa current, Update existing
+                    product.cartItemDTOList = product.cartItemDTOList.filter(i => i.cartItemId !== currentItem.cartItemId);
+                    existingItem.quantity = newTotalQty;
+                    checked.delete(currentItem.cartItemId); // Bỏ check dòng bị xóa
+                    
+                    await showDialog("success", "Đã gộp sản phẩm thành công!");
+                    render();
+                }
+            } else {
+                await showDialog("error", "Lỗi khi gộp sản phẩm");
+            }
+
+        } else {
+            // === TRƯỜNG HỢP ĐỔI BÌNH THƯỜNG (SWAP) ===
+            const res = await callAPI('/auth/carts', 'PUT', { 
+                cartItemId: currentItem.cartItemId, 
+                variantId: newVariant.variantId, 
+                quantity: currentItem.quantity 
+            });
+
+            if (res.success) {
+                currentItem.variantId = newVariant.variantId; // Update RAM
+                render();
+            } else {
+                await showDialog("error", res.message || "Lỗi đổi loại");
+                render();
+            }
+        }
+    } finally {
+        busy = false;
+    }
 };

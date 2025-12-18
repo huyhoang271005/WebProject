@@ -3,8 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Tạp Hóa Xanh - Sản phẩm</title>
-
+    <title>Danh Sách Sản Phẩm - Tạp Hóa Xanh</title>
     <link rel="stylesheet" href="../dialog/index.css" />
     <link rel="stylesheet" href="../public/public.css" />
     <script
@@ -13,58 +12,78 @@
     ></script>
 
     <style>
-      /* 1. RESET CSS */
+      /* --- GLOBAL & BACKGROUND --- */
+      * {
+        box-sizing: border-box;
+      }
       html,
       body {
+        display: block !important;
+        width: 100% !important;
+        height: auto !important;
+        min-height: 100vh;
+        overflow-y: auto !important;
         margin: 0 !important;
         padding: 0 !important;
-        width: 100% !important;
-        height: 100vh !important;
-        background-color: #f3f4f6 !important;
         font-family: "Segoe UI", sans-serif;
-        overflow: hidden;
-        display: flex;
-        flex-direction: column;
+        /* NỀN MÂY TRỜI */
+        background: url("https://img.freepik.com/free-vector/blue-sky-with-clouds-background_1017-26302.jpg")
+          no-repeat center center fixed !important;
+        background-size: cover !important;
       }
 
-      /* 2. LAYOUT */
       .main-container {
-        margin-top: 70px;
-        height: calc(100vh - 70px);
-        width: 100%;
+        padding-top: 90px;
+        padding-bottom: 50px;
+        max-width: 1200px;
+        margin: 0 auto;
         display: flex;
-        align-items: flex-start;
+        gap: 30px;
+        padding-left: 20px;
+        padding-right: 20px;
       }
 
-      /* 3. SIDEBAR */
+      /* --- SIDEBAR (BỘ LỌC) --- */
       .sidebar {
         width: 280px;
         flex-shrink: 0;
         background: white;
-        border-right: 1px solid #e5e7eb;
+        border-radius: 16px;
         padding: 20px;
-        height: 100%;
-        overflow-y: auto;
+        height: fit-content;
+        position: sticky;
+        top: 90px; /* Trượt theo khi cuộn */
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+        border: 1px solid #f3f4f6;
       }
       .filter-group {
         margin-bottom: 25px;
-        padding-bottom: 20px;
-        border-bottom: 1px solid #f3f4f6;
       }
       .filter-title {
-        font-weight: 700;
-        margin-bottom: 12px;
+        font-weight: 800;
+        font-size: 1.1rem;
+        margin-bottom: 15px;
         display: flex;
-        gap: 8px;
+        align-items: center;
+        gap: 10px;
+        color: #111827;
+      }
+
+      .cat-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
       }
       .cat-item {
-        padding: 10px;
-        border-radius: 6px;
+        padding: 10px 15px;
         cursor: pointer;
-        color: #555;
-        display: flex;
-        justify-content: space-between;
+        border-radius: 8px;
         transition: 0.2s;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        color: #4b5563;
+        font-weight: 500;
       }
       .cat-item:hover {
         background: #f3f4f6;
@@ -73,275 +92,153 @@
       .cat-item.active {
         background: #ecfdf5;
         color: #10b981;
-        font-weight: bold;
+        font-weight: 700;
       }
-      .mini-search,
-      .price-input {
+
+      .price-range input {
         width: 100%;
-        padding: 8px;
-        border: 1px solid #ddd;
-        border-radius: 6px;
+        margin-bottom: 10px;
+        padding: 8px 12px;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
         outline: none;
       }
-      .btn-filter {
+      .btn-apply {
         width: 100%;
         background: #10b981;
         color: white;
         border: none;
         padding: 10px;
-        border-radius: 6px;
-        cursor: pointer;
+        border-radius: 8px;
         font-weight: bold;
-        margin-top: 10px;
+        cursor: pointer;
+        transition: 0.2s;
+      }
+      .btn-apply:hover {
+        background: #059669;
       }
 
-      /* 4. CONTENT AREA */
-      .content-area {
+      /* --- PRODUCT LIST AREA --- */
+      .product-content {
         flex: 1;
-        padding: 20px 30px;
-        background: #f3f4f6;
-        height: 100%;
-        overflow-y: auto;
-        scroll-behavior: smooth;
       }
 
-      /* Banner nhỏ */
-      .shop-banner {
-        width: 100%;
-        height: 180px;
-        border-radius: 12px;
-        overflow: hidden;
-        margin-bottom: 20px;
-        background: linear-gradient(135deg, #10b981, #3b82f6);
-        display: flex;
-        align-items: center;
-        padding: 0 40px;
-        color: white;
-        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-      }
-      .shop-banner h2 {
-        margin: 0 0 5px 0;
-        font-size: 2rem;
-      }
-
-      /* >>> HEADER BLOCK (Sắp xếp + Phân trang) <<< */
-      .header-block {
+      .page-header {
         background: white;
-        border-radius: 12px;
-        margin-bottom: 20px;
-        border: 1px solid #e5e7eb;
-        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.02);
-        padding: 15px 20px;
-      }
-
-      /* Hàng 1: Tiêu đề + Sort */
-      .header-row-top {
+        padding: 20px 30px;
+        border-radius: 16px;
+        margin-bottom: 25px;
         display: flex;
         justify-content: space-between;
         align-items: center;
-        border-bottom: 1px solid #f3f4f6;
-        padding-bottom: 15px;
-        margin-bottom: 15px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+        border: 1px solid #f3f4f6;
       }
-      .page-title {
-        font-size: 1.2rem;
+      .ph-title {
+        font-size: 1.5rem;
         font-weight: 800;
-        text-transform: uppercase;
-        color: #111;
+        color: #111827;
       }
-      .sort-select {
-        padding: 6px 12px;
-        border: 1px solid #ddd;
-        border-radius: 6px;
+      .ph-sort select {
+        padding: 8px 15px;
+        border-radius: 8px;
+        border: 1px solid #e5e7eb;
         outline: none;
         cursor: pointer;
       }
 
-      /* Hàng 2: Phân trang (Top) */
-      .header-row-bottom {
-        display: flex;
-        justify-content: center;
-      }
-
-      /* STYLE NÚT PHÂN TRANG (Vuông vắn) */
-      .pagination {
-        display: flex;
-        gap: 5px;
-      }
-      .page-btn {
-        width: 32px;
-        height: 32px;
-        border: 1px solid #e5e7eb;
-        background: white;
-        border-radius: 4px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-        font-weight: 600;
-        color: #555;
-        transition: 0.2s;
-        user-select: none;
-      }
-      .page-btn:hover {
-        border-color: #10b981;
-        color: #10b981;
-      }
-      .page-btn.active {
-        background: #10b981;
-        color: white;
-        border-color: #10b981;
-      }
-      .page-btn.disabled {
-        opacity: 0.5;
-        pointer-events: none;
-      }
-
-      /* Bottom Pagination (Căn giữa) */
-      .pagination-container-bottom {
-        display: flex;
-        justify-content: center;
-        margin-top: 30px;
-        padding-bottom: 50px;
-      }
-
-      /* GRID SẢN PHẨM */
       .product-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+        grid-template-columns: repeat(3, 1fr);
         gap: 20px;
       }
+
       .product-card {
         background: white;
-        border-radius: 8px;
+        border-radius: 16px;
         overflow: hidden;
         border: 1px solid #e5e7eb;
-        transition: 0.2s;
+        transition: 0.3s;
         cursor: pointer;
         display: flex;
         flex-direction: column;
+        position: relative;
       }
       .product-card:hover {
         transform: translateY(-5px);
-        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        box-shadow: 0 15px 30px rgba(0, 0, 0, 0.08);
         border-color: #10b981;
       }
       .p-img {
         width: 100%;
-        height: 170px;
+        height: 200px;
         background: #f9fafb;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 2rem;
-        color: #ccc;
+        font-size: 3rem;
+        color: #e5e7eb;
+        transition: 0.3s;
       }
-      .p-body {
-        padding: 12px;
+      .product-card:hover .p-img {
+        background: #f0fdf4;
+        color: #10b981;
+      }
+      .p-info {
+        padding: 15px;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
       }
       .p-name {
         font-weight: 600;
-        font-size: 0.95rem;
-        margin-bottom: 5px;
-        height: 40px;
+        color: #374151;
+        font-size: 1rem;
+        margin-bottom: 8px;
+        line-height: 1.4;
+        height: 44px;
         overflow: hidden;
         display: -webkit-box;
         -webkit-line-clamp: 2;
         -webkit-box-orient: vertical;
-        line-height: 1.4;
       }
       .p-price {
         color: #ef4444;
-        font-weight: bold;
+        font-weight: 700;
         font-size: 1.1rem;
+        margin-top: auto;
       }
-      .btn-buy-now {
+      .btn-add-cart {
+        margin-top: 10px;
         width: 100%;
+        padding: 10px;
+        border: 1px solid #10b981;
+        color: #10b981;
+        background: white;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: 0.2s;
+      }
+      .btn-add-cart:hover {
         background: #10b981;
         color: white;
-        border: none;
-        padding: 8px;
-        border-radius: 4px;
-        margin-top: 10px;
-        cursor: pointer;
-        font-weight: bold;
-      }
-      .btn-buy-now:hover {
-        background: #059669;
       }
 
-      /* Style cho Navbar Custom (Copy từ Home sang) */
-      .nav-cat-btn {
-        background: white;
-        border: 1px solid #e5e7eb;
-        padding: 8px 15px;
-        border-radius: 20px;
-        cursor: pointer;
-        font-weight: 600;
-        color: #374151;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        position: relative;
+      /* Responsive */
+      @media (max-width: 992px) {
+        .product-grid {
+          grid-template-columns: repeat(2, 1fr);
+        }
       }
-      .cat-dropdown {
-        position: absolute;
-        top: 110%;
-        left: 0;
-        background: white;
-        width: 220px;
-        border-radius: 12px;
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
-        display: none;
-        flex-direction: column;
-        overflow: hidden;
-        border: 1px solid #eee;
-      }
-      .cat-dropdown.show {
-        display: flex;
-      }
-      .cat-dropdown a {
-        padding: 12px 15px;
-        text-decoration: none;
-        color: #333;
-        border-bottom: 1px solid #f9f9f9;
-        display: flex;
-        gap: 10px;
-        align-items: center;
-      }
-      .cat-dropdown a:hover {
-        background: #ecfdf5;
-        color: #10b981;
-        padding-left: 20px;
-      }
-
-      .nav-search-input {
-        width: 400px;
-        padding: 10px 40px 10px 20px;
-        border: 2px solid #e5e7eb;
-        border-radius: 25px;
-        outline: none;
-      }
-      .nav-search-input:focus {
-        border-color: #10b981;
-      }
-      .nav-icon-link {
-        color: #4b5563;
-        font-size: 1.4rem;
-        position: relative;
-        margin-left: 10px;
-        text-decoration: none;
-      }
-      .badge {
-        position: absolute;
-        top: -5px;
-        right: -5px;
-        background: #ef4444;
-        color: white;
-        font-size: 0.65rem;
-        padding: 2px 6px;
-        border-radius: 10px;
-        border: 2px solid white;
+      @media (max-width: 768px) {
+        .main-container {
+          flex-direction: column;
+        }
+        .sidebar {
+          width: 100%;
+          position: static;
+        }
       }
     </style>
   </head>
@@ -350,98 +247,53 @@
       <aside class="sidebar">
         <div class="filter-group">
           <div class="filter-title">
-            <i class="fa-solid fa-filter"></i> Tìm nhanh
-          </div>
-          <input
-            type="text"
-            id="sidebarSearch"
-            class="mini-search"
-            placeholder="Lọc tên..."
-          />
-        </div>
-
-        <div class="filter-group">
-          <div class="filter-title">
             <i class="fa-solid fa-layer-group"></i> Danh mục
           </div>
-          <ul class="cat-list" id="catFilterList"></ul>
+          <ul class="cat-list" id="catFilterList">
+            <li class="cat-item active" data-id="all">Tất cả sản phẩm</li>
+          </ul>
         </div>
 
         <div class="filter-group">
           <div class="filter-title">
-            <i class="fa-solid fa-money-bill-wave"></i> Giá tiền
+            <i class="fa-solid fa-filter-circle-dollar"></i> Khoảng giá
           </div>
-          <div style="display: flex; gap: 5px">
+          <div class="price-range">
             <input
               type="number"
-              id="priceFrom"
-              class="price-input"
-              placeholder="Từ"
+              placeholder="Giá thấp nhất (VNĐ)"
+              id="minPrice"
             />
             <input
               type="number"
-              id="priceTo"
-              class="price-input"
-              placeholder="Đến"
+              placeholder="Giá cao nhất (VNĐ)"
+              id="maxPrice"
             />
+            <button
+              class="btn-apply"
+              onclick="alert('Tính năng đang cập nhật!')"
+            >
+              Áp dụng
+            </button>
           </div>
-          <button class="btn-filter" id="btnFilterPrice">Áp dụng</button>
         </div>
       </aside>
 
-      <main class="content-area">
-        <div class="shop-banner">
-          <div>
-            <h2>Thế Giới Đồ Ăn Vặt 🍟</h2>
-            <p>Săn deal hời, ăn chơi thả ga!</p>
-          </div>
-        </div>
-
-        <div class="header-block">
-          <div class="header-row-top">
-            <div class="page-title" id="pageTitle">TẤT CẢ SẢN PHẨM</div>
-            <div style="display: flex; align-items: center; gap: 10px">
-              <span>Sắp xếp:</span>
-              <select class="sort-select" id="sortSelect">
-                <option value="newest">Mới nhất</option>
-                <option value="price_asc">Giá: Thấp đến Cao</option>
-                <option value="price_desc">Giá: Cao đến Thấp</option>
-              </select>
-            </div>
-          </div>
-
-          <div class="header-row-bottom">
-            <div class="pagination" id="paginationTop"></div>
+      <div class="product-content">
+        <div class="page-header">
+          <div class="ph-title" id="pageTitle">Tất cả sản phẩm</div>
+          <div class="ph-sort">
+            Sắp xếp:
+            <select>
+              <option>Mới nhất</option>
+              <option>Giá tăng dần</option>
+              <option>Giá giảm dần</option>
+            </select>
           </div>
         </div>
 
         <div class="product-grid" id="productGrid"></div>
-
-        <div class="pagination-container-bottom">
-          <div class="pagination" id="paginationBottom"></div>
-        </div>
-      </main>
-    </div>
-
-    <div
-      style="
-        position: fixed;
-        bottom: 30px;
-        right: 30px;
-        width: 50px;
-        height: 50px;
-        background: #3b82f6;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: white;
-        font-size: 1.5rem;
-        cursor: pointer;
-        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-      "
-    >
-      <i class="fa-solid fa-comments"></i>
+      </div>
     </div>
 
     <script type="module" src="index.js"></script>

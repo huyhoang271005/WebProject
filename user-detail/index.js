@@ -63,7 +63,7 @@ async function render(user) {
                 roleId: rolesSelect.value
             }
             await getLoader('btnUpdate', async()=>{
-                const result = await callAPI('/users', 'POST', data);
+                const result = await callAPI('/users', 'PATCH', data);
                 await showDialog(result.success ? 'success' : 'error', result.message);
             });
         });
