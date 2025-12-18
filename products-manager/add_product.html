@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thêm sản phẩm mới</title>
+    <link rel="stylesheet" href="../public/public.css">
+    <link rel="stylesheet" href="../dialog/index.css">
+    <link rel="stylesheet" href="index.css">
+    <script src="https://kit.fontawesome.com/e9c281dd3f.js" crossorigin="anonymous"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="header-left">
+                <button onclick="window.location.href='index.html'" class="btn-back">
+                    <i class="fa-solid fa-arrow-left"></i>
+                </button>
+                <h2>Thêm sản phẩm mới</h2>
+            </div>
+        </div>
+
+        <form id="productForm">
+            <div class="form-layout">
+                <div class="section">
+                    <h3><i class="fa-solid fa-info-circle"></i> Thông tin cơ bản</h3>
+                    <div class="form-content">
+                        <div class="image-section">
+                            <label class="img-label">Ảnh đại diện</label>
+                            <div class="main-img-upload" onclick="document.getElementById('mainImgInput').click()">
+                                <div class="placeholder" id="mainImgPlaceholder">
+                                    <i class="fa-solid fa-cloud-arrow-up"></i>
+                                    <span>Tải ảnh lên</span>
+                                </div>
+                                <img id="mainImgPreview" class="hidden" src="" alt="Preview">
+                            </div>
+                            <input type="file" id="mainImgInput" class="hidden" accept="image/*">
+                        </div>
+
+                        <div class="fields-section">
+                            <div class="form-group">
+                                <label>Tên sản phẩm <span class="required">*</span></label>
+                                <input type="text" id="prodName" required placeholder="VD: Áo Thun">
+                            </div>
+                            <div class="form-group">
+                                <label>Mô tả</label>
+                                <textarea id="prodDesc" rows="3"></textarea>
+                            </div>
+                            <div class="grid-2">
+                                <div class="form-group">
+                                    <label>Danh mục <span class="required">*</span></label>
+                                    <select id="prodCate" required><option value="">-- Chọn --</option></select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Thương hiệu <span class="required">*</span></label>
+                                    <select id="prodBrand" required><option value="">-- Chọn danh mục trước --</option></select>
+                                </div>
+                            </div>
+                            <div class="grid-2">
+                                <div class="form-group">
+                                    <label>Giá bán <span class="required">*</span></label>
+                                    <input type="number" id="prodPrice" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Giá gốc</label>
+                                    <input type="number" id="prodOriginalPrice">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h3><i class="fa-solid fa-layer-group"></i> Biến thể</h3>
+                    <div id="attributes-container"></div>
+                    <div style="margin-top: 15px;">
+                        <button type="button" id="btnAddAttr" class="btn-secondary">
+                            <i class="fa-solid fa-plus"></i> Thêm thuộc tính
+                        </button>
+                    </div>
+                    <div id="variants-wrapper" class="hidden">
+                        <h4>Danh sách biến thể</h4>
+                        <div id="variant-list"></div>
+                    </div>
+                </div>
+
+                <div class="footer-actions">
+                    <button type="button" class="btn-secondary" onclick="window.location.href='index.html'">
+                        Hủy bỏ
+                    </button>
+                    <button type="submit" class="btn-primary">
+                        <i class="fa-solid fa-save"></i> Lưu sản phẩm
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+    
+    <script type="module" src="index.js"></script>
+</body>
+</html>
