@@ -3,6 +3,7 @@ import { ProductService } from "./service.js";
 import { ProductLogic } from "./logic.js";
 import { ProductUI } from "./ui.js";
 
+// Cấu hình đường dẫn ảnh (đổi port nếu backend khác 8080)
 const IMAGE_BASE_URL = "http://localhost:8080/images/";
 
 let state = {
@@ -15,7 +16,7 @@ let state = {
     mainImageFile: null
 };
 
-// === 1. VIEW & RENDER MANAGEMENT
+// === 1. QUẢN LÝ VIEW & RENDER (Phần mới thêm) ===
 const ViewManager = {
     // Chuyển sang xem danh sách
     showList: () => {

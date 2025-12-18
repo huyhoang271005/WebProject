@@ -12,8 +12,7 @@ body {
     padding: 40px 20px; 
     min-height: 100vh;
 }
-.hidden { display: none !important; 
-} 
+.hidden { display: none !important; } /* Quan trọng để ẩn hiện view */
 
 /* --- HEADER --- */
 .header {
