@@ -35,11 +35,29 @@ function render() {
         return;
     }
 
-    // Vẽ từng dòng sản phẩm
-    cartData.forEach((p, pIdx) => p.cartItemDTOList.forEach((item, cIdx) => {
-        const variant = p.productVariantsDTOList.find(v => v.variantId === item.variantId);
-        if(variant) box.appendChild(createRow(p, item, variant, pIdx, cIdx));
-    }));
+    // Duyệt qua từng SẢN PHẨM CHA (Ví dụ: Snack, Sữa...)
+    cartData.forEach((p, pIdx) => {
+        // 1. Tạo cái khung bao ngoài cho cả nhóm sản phẩm này
+        const groupWrapper = document.createElement("div");
+        groupWrapper.className = "product-group"; // Class mới dùng để làm nền trắng
+
+        let hasItem = false;
+
+        // 2. Duyệt qua các biến thể con bên trong (43g, 73g...)
+        p.cartItemDTOList.forEach((item, cIdx) => {
+            const variant = p.productVariantsDTOList.find(v => v.variantId === item.variantId);
+            if(variant) {
+                // Tạo dòng item con và nhét vào khung bao
+                groupWrapper.appendChild(createRow(p, item, variant, pIdx, cIdx));
+                hasItem = true;
+            }
+        });
+
+        // 3. Nếu nhóm này có sản phẩm thì mới hiện ra
+        if (hasItem) {
+            box.appendChild(groupWrapper);
+        }
+    });
     
     updateTotal();
 }
