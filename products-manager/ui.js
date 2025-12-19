@@ -8,7 +8,7 @@ export const ProductUI = {
         mainImageFile: null
     },
 
-    // --- [MỚI] CHUYỂN ĐỔI VIEW (LIST <-> CREATE) ---
+    // --- [MỚI] CHUYỂN ĐỔI GIỮA DANH SÁCH & FORM ---
     toggleView: (viewName) => {
         const listView = document.getElementById('listView');
         const createView = document.getElementById('createView');
@@ -22,7 +22,7 @@ export const ProductUI = {
         }
     },
 
-    // --- [MỚI] RENDER DANH SÁCH (KHÔNG CÓ RATING) ---
+    // --- [MỚI] RENDER DANH SÁCH SẢN PHẨM ---
     renderProductList: (products, categories, brands) => {
         const tbody = document.getElementById('productTableBody');
         
@@ -34,11 +34,9 @@ export const ProductUI = {
         const formatCurrency = (amount) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
 
         tbody.innerHTML = products.map(p => {
-            // Dùng == để so sánh lỏng (string với number) cho an toàn
+            // Dùng so sánh lỏng (==) để tránh lỗi lệch kiểu (string/number) giữa ID sản phẩm và danh mục
             const catName = categories.find(c => c.categoryId == p.categoryId)?.categoryName || '<span class="text-muted fst-italic">---</span>';
             const brandName = brands.find(b => b.brandId == p.brandId)?.brandName || '<span class="text-muted fst-italic">---</span>';
-            
-            // Xử lý ảnh null
             const imageUrl = p.imageUrl || 'https://placehold.co/50x50?text=No+Img';
 
             return `
@@ -60,7 +58,6 @@ export const ProductUI = {
                     </td>
                     <td class="text-danger fw-bold">${formatCurrency(p.price)}</td>
                     <td class="text-decoration-line-through text-muted small">${formatCurrency(p.originalPrice)}</td>
-                    
                     <td class="text-end pe-4">
                         <div class="btn-group">
                             <button class="btn btn-sm btn-outline-primary border-0" title="Chỉnh sửa">
@@ -76,8 +73,8 @@ export const ProductUI = {
         }).join('');
     },
 
-    // --- CÁC HÀM XỬ LÝ ATTRIBUTE & VARIANT (GIỮ NGUYÊN LOGIC CŨ) ---
-    
+    // --- LOGIC CŨ (DROPDOWN & ATTRIBUTES) GIỮ NGUYÊN ---
+
     initSearchableDropdown: (selectId, items, displayField = 'name', valueField = 'id') => {
         const select = document.getElementById(selectId);
         if (!select) return;
@@ -102,8 +99,7 @@ export const ProductUI = {
                     </button>
                     <div id="selectedAttributesList"></div>
                 </div>
-            </div>
-        `;
+            </div>`;
         document.getElementById('addAttributeBtn').addEventListener('click', ProductUI.addAttributeRow);
     },
 
@@ -113,8 +109,6 @@ export const ProductUI = {
         const row = document.createElement('div');
         row.className = 'attribute-row mb-3 p-3 border rounded bg-light';
         row.id = rowId;
-        
-        // Render row HTML
         row.innerHTML = `
             <div class="row align-items-end">
                 <div class="col-md-5">
@@ -125,7 +119,7 @@ export const ProductUI = {
                     </select>
                 </div>
                 <div class="col-md-6">
-                    <label class="form-label small fw-bold">Giá trị (cách nhau dấu phẩy)</label>
+                    <label class="form-label small fw-bold">Giá trị</label>
                     <textarea class="form-control attribute-values-input" rows="1" disabled></textarea>
                 </div>
                 <div class="col-md-1">
@@ -135,21 +129,17 @@ export const ProductUI = {
         `;
         list.appendChild(row);
 
-        // Attach events
         const attrSelect = row.querySelector('.attribute-select');
         const valuesInput = row.querySelector('.attribute-values-input');
 
         attrSelect.addEventListener('change', (e) => {
             valuesInput.disabled = !e.target.value;
-            if (e.target.value) valuesInput.focus();
-            else valuesInput.value = '';
             ProductUI.updateSelectedAttributes();
         });
-
         valuesInput.addEventListener('input', ProductUI.updateSelectedAttributes);
-        row.querySelector('.remove-attr-btn').addEventListener('click', () => {
-            row.remove();
-            ProductUI.updateSelectedAttributes();
+        row.querySelector('.remove-attr-btn').addEventListener('click', () => { 
+            row.remove(); 
+            ProductUI.updateSelectedAttributes(); 
         });
     },
 
@@ -157,18 +147,17 @@ export const ProductUI = {
         const rows = document.querySelectorAll('.attribute-row');
         const selectedAttributes = [];
         rows.forEach(row => {
-            const attributeId = row.querySelector('.attribute-select').value;
-            const valuesString = row.querySelector('.attribute-values-input').value;
-
+            const attrSelect = row.querySelector('.attribute-select');
+            const valuesInput = row.querySelector('.attribute-values-input');
+            const attributeId = attrSelect.value;
+            const valuesString = valuesInput.value;
             if (attributeId && valuesString.trim()) {
                 const attribute = ProductUI.state.attributes.find(a => a.attributeId === attributeId);
                 if (attribute) {
                     const values = valuesString.split(',').filter(v => v.trim()).map((name, idx) => ({
                         id: `${attributeId}_${idx}`, attributeValueId: null, name: name.trim()
                     }));
-                    if (values.length > 0) {
-                        selectedAttributes.push({ attributeId: attribute.attributeId, attributeName: attribute.attributeName, values: values });
-                    }
+                    if (values.length > 0) selectedAttributes.push({ ...attribute, values });
                 }
             }
         });
@@ -186,67 +175,43 @@ export const ProductUI = {
     renderVariantsTable: () => {
         const container = document.getElementById('variantsContainer');
         if (!container) return;
-        
         if (ProductUI.state.variants.length === 0) {
-            container.innerHTML = '';
-            return;
+            container.innerHTML = ''; return;
         }
-
         container.innerHTML = `
-            <div class="card shadow-sm mt-4">
-                <div class="card-body">
-                    <h5 class="card-title text-primary">Danh sách biến thể (${ProductUI.state.variants.length})</h5>
-                    <div class="table-responsive">
-                        <table class="table table-bordered table-hover align-middle">
-                            <thead class="table-light">
-                                <tr>
-                                    <th>Tên biến thể</th>
-                                    <th style="width: 150px">Ảnh</th>
-                                    <th>Giá gốc</th>
-                                    <th>Giá bán</th>
-                                    <th>Tồn kho</th>
-                                </tr>
-                            </thead>
-                            <tbody id="variantsTableBody"></tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        `;
-
+            <div class="card shadow-sm mt-4"><div class="card-body">
+                <h5 class="card-title text-primary">Danh sách biến thể</h5>
+                <div class="table-responsive"><table class="table table-bordered table-hover align-middle">
+                    <thead class="table-light"><tr><th>Tên</th><th>Ảnh</th><th>Giá gốc</th><th>Giá bán</th><th>Tồn</th></tr></thead>
+                    <tbody id="variantsTableBody"></tbody>
+                </table></div>
+            </div></div>`;
         const tbody = document.getElementById('variantsTableBody');
-        ProductUI.state.variants.forEach((variant, index) => {
-            const row = document.createElement('tr');
-            row.innerHTML = `
-                <td class="fw-bold">${variant.displayName}</td>
-                <td><input type="file" class="form-control form-control-sm v-img" data-i="${index}" accept="image/*"></td>
-                <td><input type="number" class="form-control form-control-sm v-po" data-i="${index}" value="${variant.priceOriginal}" min="0"></td>
-                <td><input type="number" class="form-control form-control-sm v-p" data-i="${index}" value="${variant.price}" min="0"></td>
-                <td><input type="number" class="form-control form-control-sm v-s" data-i="${index}" value="${variant.stock}" min="0"></td>
+        ProductUI.state.variants.forEach((v, idx) => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td class="fw-bold">${v.displayName}</td>
+                <td><input type="file" class="form-control form-control-sm v-img" data-i="${idx}"></td>
+                <td><input type="number" class="form-control form-control-sm v-po" data-i="${idx}" value="${v.priceOriginal}"></td>
+                <td><input type="number" class="form-control form-control-sm v-p" data-i="${idx}" value="${v.price}"></td>
+                <td><input type="number" class="form-control form-control-sm v-s" data-i="${idx}" value="${v.stock}"></td>
             `;
-            tbody.appendChild(row);
+            tbody.appendChild(tr);
         });
-
-        // Event delegation for inputs
-        tbody.querySelectorAll('input').forEach(input => {
-            input.addEventListener('change', (e) => {
-                const idx = e.target.dataset.i;
-                if (e.target.classList.contains('v-p')) ProductUI.state.variants[idx].price = parseFloat(e.target.value) || 0;
-                if (e.target.classList.contains('v-po')) ProductUI.state.variants[idx].priceOriginal = parseFloat(e.target.value) || 0;
-                if (e.target.classList.contains('v-s')) ProductUI.state.variants[idx].stock = parseInt(e.target.value) || 0;
-                if (e.target.classList.contains('v-img')) ProductUI.state.variants[idx].imageFile = e.target.files[0];
-            });
-        });
+        tbody.querySelectorAll('input').forEach(i => i.addEventListener('change', (e) => {
+            const idx = e.target.dataset.i;
+            if (e.target.classList.contains('v-p')) ProductUI.state.variants[idx].price = parseFloat(e.target.value);
+            if (e.target.classList.contains('v-po')) ProductUI.state.variants[idx].priceOriginal = parseFloat(e.target.value);
+            if (e.target.classList.contains('v-s')) ProductUI.state.variants[idx].stock = parseInt(e.target.value);
+            if (e.target.classList.contains('v-img')) ProductUI.state.variants[idx].imageFile = e.target.files[0];
+        }));
     },
 
     handleMainImageUpload: (file) => {
         if (file) {
             ProductUI.state.mainImageFile = file;
             const reader = new FileReader();
-            reader.onload = (e) => {
-                document.getElementById('mainImagePreview').innerHTML = 
-                    `<img src="${e.target.result}" class="img-thumbnail mt-2" style="max-height: 150px;">`;
-            };
+            reader.onload = (e) => document.getElementById('mainImagePreview').innerHTML = `<img src="${e.target.result}" class="img-thumbnail mt-2" style="max-height: 150px;">`;
             reader.readAsDataURL(file);
         }
     }
