@@ -13,26 +13,31 @@ let state = {
     mainImageFile: null
 };
 
-// --- [MỚI] HÀM LOAD DANH SÁCH TỪ API ---
+// --- HÀM LOAD DANH SÁCH (API) ---
 async function loadProductList() {
-    // Show loading
-    document.getElementById('productTableBody').innerHTML = '<tr><td colspan="6" class="text-center py-5">Đang tải dữ liệu... <div class="spinner-border spinner-border-sm text-primary"></div></td></tr>';
+    // Hiển thị loading trong bảng
+    document.getElementById('productTableBody').innerHTML = 
+        '<tr><td colspan="5" class="text-center py-5">Đang tải dữ liệu... <div class="spinner-border spinner-border-sm text-primary"></div></td></tr>';
     
     try {
+        // Gọi API lấy danh sách
         const products = await ProductService.getProducts();
         state.products = products;
+        
+        // Render ra bảng (ProductUI đã bỏ cột rating)
         ProductUI.renderProductList(state.products, state.categories, state.brands);
     } catch (error) {
         console.error("Lỗi tải danh sách:", error);
-        document.getElementById('productTableBody').innerHTML = '<tr><td colspan="6" class="text-center text-danger py-4">Không thể tải dữ liệu.</td></tr>';
+        document.getElementById('productTableBody').innerHTML = 
+            '<tr><td colspan="5" class="text-center text-danger py-4">Không thể tải dữ liệu. Vui lòng thử lại sau.</td></tr>';
     }
 }
 
-// --- HANDLER SAVE ---
+// --- XỬ LÝ LƯU (CREATE) ---
 async function handleSave(e) {
     e.preventDefault();
 
-    // 1. VALIDATION
+    // 1. Validation cơ bản
     const productName = document.getElementById("productName").value.trim();
     const price = parseFloat(document.getElementById("price").value);
     const priceOriginal = parseFloat(document.getElementById("priceOriginal").value);
@@ -44,10 +49,7 @@ async function handleSave(e) {
         return;
     }
     
-    if (ProductUI.state.variants.length > 0 && ProductUI.state.selectedAttributes.length === 0) {
-         await showDialog("error", "Lỗi variants không hợp lệ!"); return;
-    }
-
+    // Validate logic Variants
     const validation = ProductLogic.validateProduct({
         productName, price, priceOriginal, variants: ProductUI.state.variants
     });
@@ -57,7 +59,7 @@ async function handleSave(e) {
         return;
     }
 
-    // 2. CHUẨN BỊ PAYLOAD
+    // 2. Chuẩn bị Payload JSON
     const payload = ProductLogic.formatProductData(
         {
             productName,
@@ -68,15 +70,19 @@ async function handleSave(e) {
         ProductUI.state.variants
     );
 
-    // 3. CHUẨN BỊ FORM DATA
+    // 3. Chuẩn bị FormData (Multipart)
     const formData = new FormData();
+    
+    // Ảnh chính
     if (state.mainImageFile) {
         payload.productDetailDTO.imageName = "productImage"; 
         formData.append("productImage", state.mainImageFile);
     } else {
-        await showDialog("error", "Vui lòng chọn ảnh chính!"); return;
+        await showDialog("error", "Vui lòng chọn ảnh chính cho sản phẩm!");
+        return;
     }
     
+    // Ảnh biến thể
     ProductUI.state.variants.forEach((v, index) => {
         if (v.imageFile) {
             const variantKey = `image_variant_${index}`;
@@ -85,6 +91,7 @@ async function handleSave(e) {
         }
     });
     
+    // Append JSON blob
     const jsonBlob = new Blob([JSON.stringify(payload)], { type: "application/json" });
     formData.append("productDTO", jsonBlob);
 
@@ -99,18 +106,20 @@ async function handleSave(e) {
         
         if (res && res.success) {
             await showDialog("success", "Tạo sản phẩm thành công!");
+            
+            // Reset form
             resetForm();
             
-            // [MỚI] Chuyển về trang danh sách và load lại
+            // Quay về danh sách và load lại
             ProductUI.toggleView('list');
-            await loadProductList();
+            await loadProductList(); 
         } else {
             const errorMsg = res?.data?.[0]?.error || res?.message || "Có lỗi xảy ra";
             await showDialog("error", errorMsg);
         }
     } catch (error) {
-        console.error("Client Error:", error);
-        await showDialog("error", "Có lỗi xảy ra: " + error.message);
+        console.error("Lỗi:", error);
+        await showDialog("error", "Lỗi kết nối: " + error.message);
     } finally {
         submitBtn.disabled = false;
         spinner.classList.add("d-none");
@@ -135,10 +144,11 @@ function setupEventListeners() {
     document.getElementById("productForm").onsubmit = handleSave;
     document.getElementById("resetBtn").onclick = resetForm;
     
-    // [MỚI] Event chuyển đổi View
+    // Nút chuyển đổi View
     document.getElementById("btnOpenCreate").onclick = () => ProductUI.toggleView('create');
     document.getElementById("btnBackToList").onclick = () => ProductUI.toggleView('list');
     
+    // Upload ảnh chính
     document.getElementById("mainImage").onchange = (e) => {
         const file = e.target.files[0];
         if (file) {
@@ -147,23 +157,22 @@ function setupEventListeners() {
         }
     };
 
-    // Handler chọn danh mục -> lọc thương hiệu
+    // Filter Brands theo Category
     document.getElementById("categoryId").onchange = (e) => {
-        const categoryId = e.target.value;
+        const catId = e.target.value;
         const brandSelect = document.getElementById("brandId");
         
-        if (!categoryId) {
-            brandSelect.innerHTML = '<option value="">-- Chọn danh mục trước --</option>';
-            return;
-        }
-        let filteredBrands = state.brands.filter(b => b.categoryId === categoryId);
-        
         brandSelect.innerHTML = '<option value="">-- Chọn thương hiệu --</option>';
-        if (filteredBrands.length === 0) {
-            brandSelect.innerHTML += '<option value="" disabled>Không có thương hiệu nào</option>';
+        if (!catId) return;
+
+        // Dùng == so sánh lỏng để tránh lỗi string/number
+        const filtered = state.brands.filter(b => b.categoryId == catId);
+        
+        if (filtered.length === 0) {
+            brandSelect.innerHTML += '<option disabled>Không có thương hiệu</option>';
         } else {
-            filteredBrands.forEach(brand => {
-                brandSelect.innerHTML += `<option value="${brand.brandId}">${brand.brandName}</option>`;
+            filtered.forEach(b => {
+                brandSelect.innerHTML += `<option value="${b.brandId}">${b.brandName}</option>`;
             });
         }
     };
@@ -171,36 +180,42 @@ function setupEventListeners() {
 
 async function loadInitialData() {
     try {
-        // Load danh mục, thương hiệu, thuộc tính
-        const [cats, brands, attrs] = await Promise.all([
-            ProductService.getCategories(),
+        // --- BƯỚC 1: GỌI "MỒI" 1 API TRƯỚC ---
+        // Mục đích: Nếu token hết hạn, chỉ API này chịu trách nhiệm refresh.
+        // Các API sau sẽ chờ API này xong mới chạy nên sẽ dùng token mới.
+        const cats = await ProductService.getCategories();
+
+        // --- BƯỚC 2: GỌI CÁC API CÒN LẠI SONG SONG ---
+        // Lúc này token đã an toàn, có thể gọi Promise.all thoải mái
+        const [brands, attrs, products] = await Promise.all([
             ProductService.getBrands(),
-            ProductService.getAttributes()
+            ProductService.getAttributes(),
+            ProductService.getProducts()
         ]);
+
+        // Gán dữ liệu vào State
         state.categories = cats || [];
         state.brands = brands || [];
         state.attributes = attrs || [];
+        state.products = products || []; // Nhớ gán products vào state
         
+        // Cập nhật UI State
         ProductUI.state.categories = state.categories;
         ProductUI.state.brands = state.brands;
         ProductUI.state.attributes = state.attributes;
 
-        // Render Category Select
+        // Render Dropdown Category
         const categorySelect = document.getElementById("categoryId");
         categorySelect.innerHTML = '<option value="">-- Chọn danh mục --</option>';
         state.categories.forEach(c => {
             categorySelect.innerHTML += `<option value="${c.categoryId}">${c.categoryName}</option>`;
         });
 
-        // Render Brand Select (Init)
-        const brandSelect = document.getElementById("brandId");
-        brandSelect.innerHTML = '<option value="">-- Chọn danh mục trước --</option>';
-
-        // Init Attribute UI
+        // Render Attribute Selector
         ProductUI.renderAttributeSelector();
 
-        // [MỚI] Load danh sách sản phẩm ngay sau khi có metadata
-        await loadProductList();
+        // Render Danh sách sản phẩm
+        ProductUI.renderProductList(state.products, state.categories, state.brands);
 
     } catch (error) {
         console.error("Error loading initial data:", error);
