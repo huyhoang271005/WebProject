@@ -1,30 +1,49 @@
+/* =========================================
+   1. VARIABLES & RESET
+   ========================================= */
+:root {
+    /* Color Palette - Green & White Theme */
+    --primary-color: #10B981;       /* Emerald 500 */
+    --primary-dark: #059669;        /* Emerald 600 */
+    --primary-light: #D1FAE5;       /* Emerald 100 */
+
+    --secondary-color: #6B7280;     /* Cool Gray */
+    --secondary-dark: #4B5563;
+
+    --danger-color: #EF4444;
+    --danger-dark: #DC2626;
+
+    --bg-gradient-start: #34D399;   /* Light Green */
+    --bg-gradient-end: #065F46;     /* Dark Green */
+
+    --bg-light: #F9FAFB;
+    --bg-white: #FFFFFF;
+
+    --text-primary: #1F2937;
+    --text-secondary: #6B7280;
+    --text-white: #FFFFFF;
+
+    --border-color: #E5E7EB;
+
+    /* Effects */
+    --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    --radius: 12px;
+}
+
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
 }
 
-:root {
-    --primary-color: #3B82F6;
-    --primary-dark: #2563EB;
-    --secondary-color: #6c757d;
-    --success-color: #10B981;
-    --success-dark: #059669;
-    --danger-color: #EF4444;
-    --danger-dark: #DC2626;
-    --border-color: #E5E7EB;
-    --bg-light: #F9FAFB;
-    --text-primary: #111827;
-    --text-secondary: #6B7280;
-    --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.15);
-}
-
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, var(--bg-gradient-start) 0%, var(--bg-gradient-end) 100%);
     min-height: 100vh;
     padding: 20px;
+    color: var(--text-primary);
+    line-height: 1.5;
 }
 
 .container {
@@ -32,17 +51,19 @@ body {
     margin: 0 auto;
 }
 
-/* Header */
+/* =========================================
+   2. HEADER
+   ========================================= */
 header {
     text-align: center;
-    color: white;
+    color: var(--text-white);
     margin-bottom: 30px;
     text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 header h1 {
     font-size: 2rem;
-    font-weight: 600;
+    font-weight: 700;
     margin-bottom: 8px;
     display: flex;
     align-items: center;
@@ -51,41 +72,35 @@ header h1 {
 }
 
 header .subtitle {
-    font-size: 0.95rem;
+    font-size: 1rem;
     opacity: 0.9;
+    font-weight: 300;
 }
 
-/* Main Container */
+/* =========================================
+   3. LAYOUT & SECTIONS
+   ========================================= */
 .contact-container {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 24px;
-    animation: fadeIn 0.4s ease-in;
+    animation: fadeIn 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(-10px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-/* Sections */
+/* Common Card Styles */
 .add-address-section,
 .list-address-section {
-    background: white;
-    border-radius: 16px;
+    background: var(--bg-white);
+    border-radius: var(--radius);
     box-shadow: var(--shadow-lg);
     overflow: hidden;
+    display: flex;
+    flex-direction: column;
 }
 
 .section-header {
-    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
-    color: white;
+    background: linear-gradient(to right, var(--primary-color), var(--primary-dark));
+    color: var(--text-white);
     padding: 20px 24px;
 }
 
@@ -100,10 +115,12 @@ header .subtitle {
 
 .count-badge {
     font-size: 0.85rem;
-    background: rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.25);
+    color: var(--text-white);
     padding: 2px 10px;
-    border-radius: 12px;
-    margin-left: 8px;
+    border-radius: 20px;
+    margin-left: auto; /* Đẩy badge sang phải */
+    font-weight: 600;
 }
 
 .add-address-section form,
@@ -111,7 +128,9 @@ header .subtitle {
     padding: 24px;
 }
 
-/* Form Styling */
+/* =========================================
+   4. FORMS & INPUTS
+   ========================================= */
 .form-group {
     margin-bottom: 20px;
 }
@@ -119,8 +138,8 @@ header .subtitle {
 .form-group label {
     display: flex;
     align-items: center;
-    gap: 8px;
-    font-weight: 500;
+    gap: 4px;
+    font-weight: 600;
     color: var(--text-primary);
     margin-bottom: 8px;
     font-size: 0.9rem;
@@ -134,38 +153,39 @@ header .subtitle {
 .form-group input[type="tel"] {
     width: 100%;
     padding: 12px 16px;
-    border: 2px solid var(--border-color);
+    border: 1px solid var(--border-color);
     border-radius: 8px;
     font-size: 0.95rem;
     transition: all 0.2s ease;
-    background: white;
+    background: var(--bg-white);
 }
 
 .form-group input:focus {
     outline: none;
     border-color: var(--primary-color);
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.15); /* Green Glow */
 }
 
 .form-group input:disabled {
     background: var(--bg-light);
     cursor: not-allowed;
-    opacity: 0.6;
+    opacity: 0.7;
 }
 
-/* Button Group */
+/* =========================================
+   5. BUTTONS
+   ========================================= */
 .btn-group {
     display: flex;
     gap: 12px;
     margin-top: 24px;
 }
 
-/* Button Styling */
 button {
     padding: 12px 24px;
     border: none;
     border-radius: 8px;
-    font-weight: 500;
+    font-weight: 600;
     font-size: 0.95rem;
     cursor: pointer;
     transition: all 0.2s ease;
@@ -179,19 +199,20 @@ button:disabled,
 button.loading {
     opacity: 0.6;
     cursor: not-allowed;
+    filter: grayscale(100%);
 }
 
 .primary-btn {
-    background-color: var(--success-color);
+    background-color: var(--primary-color);
     color: white;
     flex: 1;
-    box-shadow: 0 2px 4px rgba(16, 185, 129, 0.2);
+    box-shadow: 0 4px 6px rgba(16, 185, 129, 0.25);
 }
 
 .primary-btn:hover:not(:disabled) {
-    background-color: var(--success-dark);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(16, 185, 129, 0.3);
+    background-color: var(--primary-dark);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 10px rgba(16, 185, 129, 0.3);
 }
 
 .primary-btn:active:not(:disabled) {
@@ -199,78 +220,87 @@ button.loading {
 }
 
 .secondary-btn {
-    background-color: var(--secondary-color);
-    color: white;
+    background-color: var(--bg-light);
+    color: var(--text-secondary);
+    border: 1px solid var(--border-color);
     flex: 1;
 }
 
 .secondary-btn:hover:not(:disabled) {
-    background-color: #5a6268;
-    transform: translateY(-1px);
+    background-color: #E5E7EB;
+    color: var(--text-primary);
 }
 
-/* Address List */
+/* =========================================
+   6. ADDRESS LIST & ITEMS
+   ========================================= */
 #addressList {
     max-height: 600px;
     overflow-y: auto;
-    padding-right: 4px;
+    padding-right: 6px;
 }
 
+/* Custom Scrollbar (Green Theme) */
 #addressList::-webkit-scrollbar {
     width: 6px;
 }
-
 #addressList::-webkit-scrollbar-track {
-    background: var(--bg-light);
-    border-radius: 3px;
+    background: transparent;
 }
-
 #addressList::-webkit-scrollbar-thumb {
-    background: var(--border-color);
+    background: #CBD5E1;
     border-radius: 3px;
 }
-
 #addressList::-webkit-scrollbar-thumb:hover {
-    background: var(--text-secondary);
+    background: var(--primary-color); /* Green on hover */
 }
 
-/* Address Item */
 .address-item {
-    border: 2px solid var(--border-color);
+    border: 1px solid var(--border-color);
     border-radius: 12px;
-    padding: 16px;
+    padding: 20px;
     margin-bottom: 16px;
     transition: all 0.2s ease;
-    background: white;
-    animation: slideIn 0.3s ease-out;
+    background: var(--bg-white);
+    position: relative;
+    overflow: hidden;
 }
 
-@keyframes slideIn {
-    from {
-        opacity: 0;
-        transform: translateX(-20px);
-    }
-    to {
-        opacity: 1;
-        transform: translateX(0);
-    }
+/* Left border accent */
+.address-item::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background: var(--border-color);
+    transition: background 0.2s;
 }
 
 .address-item:hover {
     border-color: var(--primary-color);
-    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.15);
+    box-shadow: var(--shadow);
     transform: translateY(-2px);
 }
 
+.address-item:hover::before {
+    background: var(--primary-color);
+}
+
 .address-item.editing {
-    border-color: var(--success-color);
-    background: rgba(16, 185, 129, 0.05);
+    border-color: var(--primary-color);
+    background: var(--primary-light); /* Light Green BG */
+}
+.address-item.editing::before {
+    background: var(--primary-dark);
 }
 
 .address-item h4 {
     color: var(--text-primary);
     margin-bottom: 12px;
-    font-size: 1.05rem;
+    font-size: 1.1rem;
+    font-weight: 700;
     display: flex;
     align-items: center;
     gap: 8px;
@@ -278,46 +308,49 @@ button.loading {
 
 .address-item p {
     color: var(--text-secondary);
-    font-size: 0.9rem;
-    margin-bottom: 6px;
+    font-size: 0.95rem;
+    margin-bottom: 8px;
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
 }
 
 .address-item p i {
-    width: 16px;
+    width: 20px;
+    text-align: center;
     color: var(--primary-color);
 }
 
 /* Address Actions */
 .address-actions {
     display: flex;
-    gap: 8px;
-    margin-top: 12px;
-    padding-top: 12px;
-    border-top: 1px solid var(--border-color);
+    gap: 10px;
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid rgba(0,0,0,0.05);
 }
 
 .address-actions button {
     padding: 8px 16px;
     font-size: 0.85rem;
     flex: 1;
+    border-radius: 6px;
 }
 
 .address-actions .edit-btn {
+    background: var(--primary-light);
+    color: var(--primary-dark);
+}
+
+.address-actions .edit-btn:hover {
     background: var(--primary-color);
     color: white;
 }
 
-.address-actions .edit-btn:hover {
-    background: var(--primary-dark);
-}
-
 .address-actions .delete-btn {
-    background: white;
+    background: transparent;
     color: var(--danger-color);
-    border: 2px solid var(--danger-color);
+    border: 1px solid var(--danger-color);
 }
 
 .address-actions .delete-btn:hover {
@@ -325,14 +358,9 @@ button.loading {
     color: white;
 }
 
-/* Empty State */
-.no-address-message {
-    text-align: center;
-    color: var(--text-secondary);
-    font-style: italic;
-    padding: 60px 20px;
-}
-
+/* =========================================
+   7. STATES & NOTIFICATIONS
+   ========================================= */
 .empty-state {
     text-align: center;
     padding: 60px 20px;
@@ -341,7 +369,7 @@ button.loading {
 
 .empty-state i {
     font-size: 4rem;
-    color: var(--border-color);
+    color: var(--primary-light); /* Green-tinted gray */
     margin-bottom: 16px;
 }
 
@@ -351,35 +379,17 @@ button.loading {
     color: var(--text-primary);
 }
 
-/* Loading State */
-.loading-message {
-    text-align: center;
-    padding: 40px 20px;
-    color: var(--text-secondary);
-}
-
-.fa-spinner {
-    animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-    from {
-        transform: rotate(0deg);
-    }
-    to {
-        transform: rotate(360deg);
-    }
-}
-
-/* Load Page */
+/* Loading Overlay */
 #loadPage {
     position: fixed;
     top: 0;
     left: 0;
     right: 0;
     bottom: 0;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, var(--bg-gradient-start), var(--bg-gradient-end));
     display: flex;
+    flex-direction: column;
+    gap: 15px;
     align-items: center;
     justify-content: center;
     z-index: 9999;
@@ -388,64 +398,78 @@ button.loading {
     font-weight: 500;
 }
 
-/* Responsive */
+/* Spinner Animation */
+.fa-spinner {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    100% { transform: rotate(360deg); }
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Notification Toast */
+#notification {
+    position: fixed;
+    top: 24px;
+    right: 24px;
+    padding: 16px 24px;
+    border-radius: 12px;
+    color: white;
+    font-weight: 500;
+    box-shadow: var(--shadow-lg);
+    opacity: 0;
+    transform: translateX(100%);
+    transition: all 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+#notification.show {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+#notification.success {
+    background-color: var(--primary-dark);
+    border-left: 5px solid #34D399;
+}
+
+#notification.error {
+    background-color: var(--danger-color);
+    border-left: 5px solid #FCA5A5;
+}
+
+.hidden {
+    display: none !important;
+}
+
+/* =========================================
+   8. RESPONSIVE
+   ========================================= */
 @media (max-width: 968px) {
     .contact-container {
         grid-template-columns: 1fr;
     }
-
-    header h1 {
-        font-size: 1.5rem;
-    }
 }
 
 @media (max-width: 640px) {
-    body {
-        padding: 12px;
-    }
+    body { padding: 12px; }
 
     .add-address-section form,
     .list-address-section > div:not(.section-header) {
         padding: 16px;
     }
 
-    .btn-group {
+    .btn-group, .address-actions {
         flex-direction: column;
     }
 
-    .address-actions {
-        flex-direction: column;
-    }
-
-    header h1 {
-        font-size: 1.3rem;
-        flex-direction: column;
-        gap: 8px;
-    }
-}
-
-#notification {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    padding: 15px 20px;
-    border-radius: 8px;
-    color: white;
-    font-size: 16px;
-    opacity: 0;
-    transition: opacity 0.5s ease;
-    z-index: 9999;
-}
-
-#notification.success {
-    background-color: #4CAF50; /* xanh */
-}
-#notification.error {
-    background-color: #f44336; /* đỏ */
-}
-#notification.show {
-    opacity: 1;
-}
-.hidden {
-    display: none;
+    header h1 { font-size: 1.5rem; }
 }
