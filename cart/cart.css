@@ -18,6 +18,9 @@ html, body {
     max-width: 1400px;
     margin: 0 auto;
 }
+.cart-container input:focus, .cart-container select:focus {
+    box-shadow: none !important; /* !important để ép buộc bỏ cái bóng đi */
+}
 
 /* === LEFT SECTION === */
 .section-box {
