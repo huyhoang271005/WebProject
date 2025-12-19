@@ -1,6 +1,5 @@
 import { callAPI } from "../public/api.js";
 import { showDialog } from "../dialog/index.js";
-// Import đúng tên file trong public.docx là Sse.js (viết hoa S) [cite: 344]
 import { connectSse, subscribeTopic } from "../public/Sse.js";
 
 const noImage = "https://cdn-icons-png.flaticon.com/512/847/847969.png";
@@ -92,7 +91,6 @@ const navbarHTML = `
             </div>
         </div>
     </nav>
-    
     <div style="height: 70px; width: 100%; clear: both;"></div>
 `;
 
@@ -111,9 +109,8 @@ export async function loadNavbar(options = {}) {
     document.getElementById("nbCenterSlot").innerHTML = options.centerHTML;
 
   try {
-    // Kiểm tra user info
     if (!userData.username) {
-      const profile = await callAPI("/profile"); // Gọi GET [cite: 9]
+      const profile = await callAPI("/profile");
       if (profile && profile.success) {
         const user = profile.data;
         sessionStorage.setItem("imageUrl", user.imageUrl || noImage);
@@ -129,8 +126,6 @@ export async function loadNavbar(options = {}) {
         userData.roleName = "GUEST";
       }
     }
-
-    // Update UI
     if (userData.imageUrl)
       document.getElementById("nbAvatar").src = userData.imageUrl;
     if (userData.username)
@@ -144,7 +139,6 @@ export async function loadNavbar(options = {}) {
         .forEach((el) => el.style.setProperty("display", "flex", "important"));
     }
 
-    // SSE chỉ chạy khi đã login
     if (userData.username && userData.username !== "Khách") {
       await initNotificationSystem();
     }
@@ -157,7 +151,10 @@ export async function loadNavbar(options = {}) {
 async function initNotificationSystem() {
   try {
     const notiList = document.getElementById("nbNotiList");
-    const res = await callAPI("/notification", "GET"); // Gọi GET
+
+    // [FIX] Đường dẫn chuẩn và thêm page/size
+    const res = await callAPI("/auth/notifications?page=0&size=20", "GET");
+
     if (res && res.success && res.data && res.data.listData) {
       renderNotiList(res.data.listData);
     } else {
@@ -165,7 +162,7 @@ async function initNotificationSystem() {
         '<div class="empty-noti">Không có thông báo nào</div>';
     }
 
-    await connectSse("/sse"); // Hàm này trong public/Sse.js [cite: 349]
+    await connectSse("/sse");
     subscribeTopic("notification", (data) => {
       const newNoti = data.data || data;
       prependNotification(newNoti);
@@ -174,11 +171,10 @@ async function initNotificationSystem() {
       updateBadge(count + 1);
     });
   } catch (err) {
-    console.warn("Lỗi SSE:", err);
+    console.warn("Lỗi SSE/Noti:", err);
   }
 }
 
-// ... (Giữ nguyên các hàm setupEvents, renderNotiList... không đổi) ...
 function setupEvents() {
   const userBtn = document.getElementById("nbUserMenu");
   const notiBtn = document.getElementById("nbNotiBtn");
@@ -204,7 +200,7 @@ function setupEvents() {
   if (logoutBtn) {
     logoutBtn.onclick = async () => {
       await showDialog("question", "Bạn có chắc muốn đăng xuất?", async () => {
-        await callAPI("/logout"); // Có thể cần method POST tùy backend, nhưng mặc định là GET [cite: 9]
+        await callAPI("/logout");
         sessionStorage.clear();
         window.location.replace("../auth/login");
       });

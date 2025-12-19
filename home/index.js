@@ -24,10 +24,8 @@ document.addEventListener("DOMContentLoaded", async () => {
             <i class="fa-solid fa-magnifying-glass" style="position:absolute; right:15px; top:50%; transform:translateY(-50%); color:#10B981; cursor:pointer;" id="homeSearchBtn"></i>
         </div>`,
     });
-
     renderNavCategories();
     setupNavbarEvents();
-
     await renderHomeSections();
   } catch (e) {
     console.error(e);
@@ -41,16 +39,15 @@ async function renderHomeSections() {
   if (!container) return;
   container.innerHTML = "";
 
-  // [QUAN TRỌNG] API GET -> Tham số data phải là NULL [cite: 9]
-  const res = await callAPI("/auth/products", "GET", null);
+  // [FIX] Truyền page & size vào URL
+  const res = await callAPI("/auth/products?page=0&size=20", "GET", null);
 
   if (res && res.success) {
-    const allProducts = Array.isArray(res.data)
-      ? res.data
-      : res.data?.listData || res.data?.content || [];
+    // [FIX] Lấy data từ listData
+    const listData = res.data?.listData || [];
 
-    if (allProducts.length > 0) {
-      const list = allProducts.slice(0, 10);
+    if (listData.length > 0) {
+      const list = listData.slice(0, 10);
       container.insertAdjacentHTML(
         "beforeend",
         `
@@ -72,25 +69,26 @@ async function renderHomeSections() {
 }
 
 function createProductHTML(p) {
+  // [FIX] Map đúng tên trường từ JSON: imageUrl, productName, productId
   const imgUrl =
-    p.image || "https://cdn-icons-png.flaticon.com/512/2748/2748558.png";
+    p.imageUrl || "https://cdn-icons-png.flaticon.com/512/2748/2748558.png";
   const priceFormatted = new Intl.NumberFormat("vi-VN", {
     style: "currency",
     currency: "VND",
   }).format(p.price || 0);
 
   return `
-        <div class="product-card" onclick="window.location.href='../product-detail/index.html?id=${p.id}'">
+        <div class="product-card" onclick="window.location.href='../product-detail/index.html?id=${p.productId}'">
             <div class="p-img"><img src="${imgUrl}" style="width:100%; height:100%; object-fit:contain;"></div>
             <div class="p-info">
-                <div class="p-name" title="${p.name}">${p.name}</div>
+                <div class="p-name" title="${p.productName}">${p.productName}</div>
                 <div class="p-price">${priceFormatted}</div>
             </div>
         </div>
     `;
 }
 
-// ... (Giữ nguyên setupNavbarEvents, renderNavCategories) ...
+// ... Helper functions giữ nguyên
 function setupNavbarEvents() {
   const catBtn = document.getElementById("catBtn");
   const catDropdown = document.getElementById("catDropdown");
