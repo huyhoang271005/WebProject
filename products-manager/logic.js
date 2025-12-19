@@ -50,7 +50,7 @@ export const ProductLogic = {
         return { isValid: errors.length === 0, errors: errors };
     },
 
-    // [FIXED] Format Data: Gửi kèm Name và ID cha để Backend map được khi ValueID là null
+    // [FIX QUAN TRỌNG NHẤT Ở ĐÂY]
     formatProductData: (formData, selectedAttributes, variants) => {
         const productDetailDTO = {
             productId: null,
@@ -65,6 +65,7 @@ export const ProductLogic = {
             createdAt: null, updatedAt: null
         };
 
+        // Xử lý Attributes
         const attributes = selectedAttributes.map(attr => {
             if (!attr.values || attr.values.length === 0) return null;
             return {
@@ -77,7 +78,16 @@ export const ProductLogic = {
             };
         }).filter(a => a !== null);
 
+        // Xử lý Variants
         const formattedVariants = variants.map((variant, index) => {
+            // [FIX]: Tạo danh sách values con lồng trực tiếp vào variant
+            // Cách này giúp Backend biết ngay variant này gồm những thuộc tính nào mà không cần map ID
+            const valuesInsideVariant = variant.combination.map(combo => ({
+                attributeId: combo.attributeId,
+                attributeValueId: (combo.valueId && String(combo.valueId).indexOf('_') === -1) ? combo.valueId : null,
+                attributeValueName: combo.valueName
+            }));
+
             return {
                 variantId: (variant.variantId && String(variant.variantId).indexOf('variant_gen') === -1) ? variant.variantId : null,
                 imageName: variant.imageName,
@@ -85,20 +95,25 @@ export const ProductLogic = {
                 originalPrice: parseFloat(variant.priceOriginal) || parseFloat(formData.priceOriginal),
                 price: parseFloat(variant.price) || parseFloat(formData.price),
                 stock: parseInt(variant.stock) || 0,
-                sold: 0, active: true
+                sold: 0, active: true,
+                
+                // Gửi thêm trường này để Backend dễ map (nếu Backend hỗ trợ)
+                attributeValues: valuesInsideVariant,
+                // Một số backend dùng tên trường này
+                variantValues: valuesInsideVariant 
             };
         });
 
-        // [PHẦN QUAN TRỌNG NHẤT ĐỂ SỬA LỖI]
+        // Vẫn giữ danh sách variantValues rời (để tương thích ngược nếu backend dùng cách này cho Update)
         const variantValues = [];
         variants.forEach((variant, variantIndex) => {
             if (variant.combination && variant.combination.length > 0) {
                 variant.combination.forEach(combo => {
                     variantValues.push({
-                        variantId: variant.variantId || `variant_index_${variantIndex}`,
-                        // Gửi thêm attributeId để backend biết giá trị này thuộc thuộc tính nào
-                        attributeId: combo.attributeId, 
-                        // Nếu ID là null (do mới tạo), backend sẽ dùng attributeValueName để map
+                        // Nếu là tạo mới, ta không có variantId thật, nên việc gửi list rời này rất rủi ro.
+                        // Hy vọng Backend sẽ dùng attributeValues lồng bên trên.
+                        variantId: variant.variantId || null, 
+                        attributeId: combo.attributeId,
                         attributeValueId: (combo.valueId && String(combo.valueId).indexOf('_') === -1) ? combo.valueId : null,
                         attributeValueName: combo.valueName
                     });
