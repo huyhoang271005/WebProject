@@ -34,7 +34,7 @@ export const ProductUI = {
         const formatCurrency = (amount) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
 
         tbody.innerHTML = products.map(p => {
-            // Dùng so sánh lỏng (==) để tránh lỗi lệch kiểu (string/number) giữa ID sản phẩm và danh mục
+            // Dùng so sánh lỏng (==) để tránh lỗi lệch kiểu (string/number)
             const catName = categories.find(c => c.categoryId == p.categoryId)?.categoryName || '<span class="text-muted fst-italic">---</span>';
             const brandName = brands.find(b => b.brandId == p.brandId)?.brandName || '<span class="text-muted fst-italic">---</span>';
             const imageUrl = p.imageUrl || 'https://placehold.co/50x50?text=No+Img';
@@ -73,7 +73,7 @@ export const ProductUI = {
         }).join('');
     },
 
-    // --- LOGIC CŨ (DROPDOWN & ATTRIBUTES) GIỮ NGUYÊN ---
+    // --- CÁC HÀM CŨ GIỮ NGUYÊN ---
 
     initSearchableDropdown: (selectId, items, displayField = 'name', valueField = 'id') => {
         const select = document.getElementById(selectId);
