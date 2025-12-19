@@ -74,20 +74,24 @@
       .sidebar-search-box {
         position: relative;
         width: 100%;
+        box-sizing: border-box; /* Quan trọng */
       }
       .sidebar-search-box input {
-        width: 100%;
-        padding: 10px 15px 10px 35px;
+        width: 100% !important; /* Ép chiều rộng bằng thẻ cha */
+        max-width: 100%; /* Không cho phép tràn */
+        padding: 10px 15px 10px 35px; /* Chừa chỗ cho icon bên trái */
         border: 1px solid #e5e7eb;
         border-radius: 8px;
         outline: none;
         font-size: 0.9rem;
         background: #f9fafb;
         transition: 0.2s;
+        box-sizing: border-box !important; /* Tính cả padding vào chiều rộng */
       }
       .sidebar-search-box input:focus {
         background: white;
         border-color: #10b981;
+        box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
       }
       .sidebar-search-box i {
         position: absolute;
@@ -95,6 +99,8 @@
         top: 50%;
         transform: translateY(-50%);
         color: #9ca3af;
+        font-size: 0.9rem;
+        pointer-events: none; /* Để bấm xuyên qua icon vào input */
       }
 
       .cat-list {
