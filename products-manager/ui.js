@@ -72,6 +72,7 @@ export const ProductUI = {
         document.getElementById('addAttributeBtn').addEventListener('click', () => ProductUI.addAttributeRow());
     },
 
+    // [HÀM QUAN TRỌNG ĐÃ SỬA]
     addAttributeRow: (data = null) => {
         const list = document.getElementById('selectedAttributesList');
         const rowId = `attr_row_${Date.now()}_${Math.random()}`;
@@ -82,6 +83,7 @@ export const ProductUI = {
         const selectedAttrId = data ? data.attributeId : "";
         const valuesText = data ? data.values.map(v => v.name).join(', ') : "";
 
+        // Tạo HTML
         row.innerHTML = `
             <div class="row align-items-end">
                 <div class="col-md-5">
@@ -89,13 +91,13 @@ export const ProductUI = {
                     <select class="form-select attribute-select">
                         <option value="">-- Chọn --</option>
                         ${ProductUI.state.attributes.map(attr => 
-                            `<option value="${attr.attributeId}" ${attr.attributeId == selectedAttrId ? 'selected' : ''}>${attr.attributeName}</option>`
+                            `<option value="${attr.attributeId}">${attr.attributeName}</option>`
                         ).join('')}
                     </select>
                 </div>
                 <div class="col-md-6">
                     <label class="form-label small fw-bold">Giá trị (cách nhau dấu phẩy)</label>
-                    <textarea class="form-control attribute-values-input" rows="1" ${!selectedAttrId ? 'disabled' : ''}>${valuesText}</textarea>
+                    <textarea class="form-control attribute-values-input" rows="1" disabled>${valuesText}</textarea>
                 </div>
                 <div class="col-md-1">
                     <button type="button" class="btn btn-outline-danger btn-sm w-100 remove-attr-btn"><i class="bi bi-x-lg"></i></button>
@@ -104,9 +106,16 @@ export const ProductUI = {
         `;
         list.appendChild(row);
 
+        // --- [FIX] Gán giá trị thủ công sau khi append vào DOM để đảm bảo ăn chắc 100% ---
         const attrSelect = row.querySelector('.attribute-select');
         const valuesInput = row.querySelector('.attribute-values-input');
-        
+
+        if (selectedAttrId) {
+            attrSelect.value = selectedAttrId; // Ép chọn đúng ID
+            valuesInput.disabled = false;      // Mở khóa ô nhập
+        }
+        // ---------------------------------------------------------------------------------
+
         attrSelect.addEventListener('change', (e) => {
             valuesInput.disabled = !e.target.value;
             if(!e.target.value) valuesInput.value = '';

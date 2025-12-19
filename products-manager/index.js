@@ -40,7 +40,7 @@ function attachEditEvents() {
     });
 }
 
-// Hàm render Brand (Cứu cánh: Nếu lọc không ra gì thì hiện tất cả)
+// [HÀM QUAN TRỌNG ĐÃ SỬA]
 function renderBrandOptions(categoryId, selectedBrandId = null) {
     const brandSelect = document.getElementById("brandId");
     brandSelect.innerHTML = '<option value="">-- Chọn thương hiệu --</option>';
@@ -49,20 +49,24 @@ function renderBrandOptions(categoryId, selectedBrandId = null) {
     if (categoryId) {
         filteredBrands = state.brands.filter(b => b.categoryId == categoryId);
     }
-
-    // [QUAN TRỌNG] Nếu lọc ra rỗng (do data lỗi/thiếu categoryId), thì hiển thị TOÀN BỘ để cứu dropdown
+    // Fallback nếu lọc rỗng
     if (filteredBrands.length === 0 && state.brands.length > 0) {
         filteredBrands = state.brands; 
     }
 
     if (filteredBrands.length > 0) {
         filteredBrands.forEach(b => {
-            const isSelected = selectedBrandId && (b.brandId == selectedBrandId);
-            brandSelect.innerHTML += `<option value="${b.brandId}" ${isSelected ? 'selected' : ''}>${b.brandName}</option>`;
+            brandSelect.innerHTML += `<option value="${b.brandId}">${b.brandName}</option>`;
         });
     } else {
         brandSelect.innerHTML += '<option disabled>Không có dữ liệu thương hiệu</option>';
     }
+
+    // --- [FIX] Gán giá trị thủ công sau khi render HTML ---
+    if (selectedBrandId) {
+        brandSelect.value = selectedBrandId;
+    }
+    // -----------------------------------------------------
 }
 
 function handleEdit(id) {
@@ -81,28 +85,31 @@ function handleEdit(id) {
     document.getElementById("price").value = product.price;
     document.getElementById("priceOriginal").value = product.originalPrice;
     
-    if(product.categoryId) document.getElementById("categoryId").value = product.categoryId;
-    
-    // 2. Load Brands
+    // 2. Load Danh mục & Thương hiệu
+    if(product.categoryId) {
+        document.getElementById("categoryId").value = product.categoryId;
+    } else {
+        document.getElementById("categoryId").value = "";
+    }
+    // Gọi hàm renderBrandOptions (đã có fix gán value bên trong)
     renderBrandOptions(product.categoryId, product.brandId);
 
     if (product.imageUrl) {
         document.getElementById('mainImagePreview').innerHTML = `<img src="${product.imageUrl}" class="img-thumbnail mt-2" style="max-height: 150px;">`;
     }
 
-    // 3. Fill Attributes & Variants
+    // 3. Fill Attributes
     ProductUI.state.isEditingMode = true; 
     document.getElementById('selectedAttributesList').innerHTML = "";
-    
     const uiAttributes = (fullData.attributes || []).map(attr => ({
         attributeId: attr.attributeId,
         attributeName: attr.attributeName,
         values: attr.attributeValues.map(v => ({ id: v.attributeValueId, name: v.attributeValueName }))
     }));
-
     uiAttributes.forEach(attr => ProductUI.addAttributeRow(attr));
     ProductUI.state.selectedAttributes = uiAttributes;
 
+    // 4. Fill Variants
     const uiVariants = (fullData.variants || []).map(v => ({
         variantId: v.variantId, displayName: "Biến thể cũ (Cập nhật)", price: v.price, priceOriginal: v.originalPrice, stock: v.stock, imageUrl: v.imageUrl, imageFile: null
     }));
@@ -143,8 +150,6 @@ function setupEventListeners() {
     document.getElementById("btnOpenCreate").onclick = () => { resetForm(); ProductUI.toggleView('create'); };
     document.getElementById("btnBackToList").onclick = () => ProductUI.toggleView('list');
     document.getElementById("mainImage").onchange = (e) => { if(e.target.files[0]) { state.mainImageFile = e.target.files[0]; ProductUI.handleMainImageUpload(e.target.files[0]); } };
-    
-    // Sử dụng hàm renderBrandOptions chung
     document.getElementById("categoryId").onchange = (e) => {
         const catId = e.target.value;
         renderBrandOptions(catId);
