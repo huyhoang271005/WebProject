@@ -1,7 +1,9 @@
 import { callAPI } from "../public/api.js";
 import { showDialog } from "../dialog/index.js";
+// Import đúng tên file trong public.docx là Sse.js (viết hoa S) [cite: 344]
 import { connectSse, subscribeTopic } from "../public/Sse.js";
-import {noImage} from "../public/public.js"
+
+const noImage = "https://cdn-icons-png.flaticon.com/512/847/847969.png";
 
 const navbarHTML = `
     <style>
@@ -14,8 +16,6 @@ const navbarHTML = `
         }
         .nb-brand { font-size: 1.6rem; font-weight: 800; color: #10B981; text-decoration: none; display: flex; align-items: center; gap: 10px; min-width: 180px; }
         #nbCenterSlot { flex: 1; display: flex; align-items: center; justify-content: center; margin: 0 20px; gap: 15px; }
-        
-        /* Chỉnh lại slot bên phải để chứa Giỏ hàng + Thông báo + User */
         #nbRightSlot { display: flex; align-items: center; gap: 20px; } 
 
         .nb-icon-btn { position: relative; cursor: pointer; font-size: 1.2rem; color: #555; transition: 0.2s; display: flex; align-items: center; justify-content: center; text-decoration: none; }
@@ -28,7 +28,6 @@ const navbarHTML = `
             border-radius: 10px; font-weight: bold; border: 2px solid white;
         }
 
-        /* ... (Giữ nguyên CSS User Menu & Dropdown cũ ...) */
         .nb-user-menu { position: relative; cursor: pointer; padding-left: 15px; border-left: 1px solid #eee; display: flex; align-items: center; gap: 10px; margin-left: 15px; }
         .nb-avatar { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; border: 2px solid #E5E7EB; transition: 0.2s; }
         .nb-dropdown { position: absolute; right: 0; top: 60px; background: white; width: 260px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); display: none; flex-direction: column; overflow: hidden; border: 1px solid #eee; animation: slideDown 0.2s ease; z-index: 1100; }
@@ -77,13 +76,15 @@ const navbarHTML = `
                     </div>
                     <a href="../profile"><i class="fa-regular fa-id-card"></i> Trang cá nhân</a>
                     <a href="../session"><i class="fa-solid fa-laptop-medical"></i> Quản lý phiên</a>
+                    <a href="../contact"><i class="fa-solid fa-address-book"></i> Địa chỉ</a>
                     
                     <div class="nb-admin-only" style="border-top: 1px solid #eee; margin-top:5px;"></div>
                     <div class="nb-admin-only" style="padding:5px 20px; font-size:0.7rem; color:#999; font-weight:bold;">QUẢN TRỊ</div>
                     <a href="../role-permission" class="nb-admin-only"><i class="fa-solid fa-user-shield"></i> Phân quyền</a>
                     <a href="../users" class="nb-admin-only"><i class="fa-solid fa-users-gear"></i> Users</a>
                     <a href="../catalog-management" class="nb-admin-only"><i class="fa-solid fa-list-check"></i> Danh mục</a>
-
+                    <a href="../products-manager" class="nb-admin-only"><i class="fa-utility fa-semibold fa-display"></i> Quản lí sản phẩm</a>
+                    
                     <button id="nbLogout" style="color:red; border-top: 1px solid #eee; margin-top:5px;">
                         <i class="fa-solid fa-right-from-bracket"></i> Đăng xuất
                     </button>
@@ -91,11 +92,9 @@ const navbarHTML = `
             </div>
         </div>
     </nav>
+    
+    <div style="height: 70px; width: 100%; clear: both;"></div>
 `;
-
-// ... (Phần còn lại của file navbar.js giữ nguyên logic loadNavbar, initNotificationSystem...)
-// CHỈ LƯU Ý: Trong hàm loadNavbar, không cần check `options.rightHTML` nữa hoặc chỉ append thêm vào nếu cần.
-// Nhưng tốt nhất bro xoá dòng `if (options.rightHTML)...` đi vì giờ ta hardcode giỏ hàng rồi.
 
 const userData = {
   imageUrl: sessionStorage.getItem("imageUrl"),
@@ -111,10 +110,10 @@ export async function loadNavbar(options = {}) {
   if (options.centerHTML)
     document.getElementById("nbCenterSlot").innerHTML = options.centerHTML;
 
-  // ... Logic load user, sse, events giữ nguyên như cũ ...
   try {
+    // Kiểm tra user info
     if (!userData.username) {
-      const profile = await callAPI("/profile");
+      const profile = await callAPI("/profile"); // Gọi GET [cite: 9]
       if (profile && profile.success) {
         const user = profile.data;
         sessionStorage.setItem("imageUrl", user.imageUrl || noImage);
@@ -130,6 +129,8 @@ export async function loadNavbar(options = {}) {
         userData.roleName = "GUEST";
       }
     }
+
+    // Update UI
     if (userData.imageUrl)
       document.getElementById("nbAvatar").src = userData.imageUrl;
     if (userData.username)
@@ -142,6 +143,8 @@ export async function loadNavbar(options = {}) {
         .querySelectorAll(".nb-admin-only")
         .forEach((el) => el.style.setProperty("display", "flex", "important"));
     }
+
+    // SSE chỉ chạy khi đã login
     if (userData.username && userData.username !== "Khách") {
       await initNotificationSystem();
     }
@@ -151,21 +154,20 @@ export async function loadNavbar(options = {}) {
   setupEvents();
 }
 
-// ... Copy nốt các hàm initNotificationSystem, setupEvents, ... từ file cũ vào đây
-// Đảm bảo import ConnectSse từ "../public/Sse.js" là được.
 async function initNotificationSystem() {
   try {
     const notiList = document.getElementById("nbNotiList");
-    const res = await callAPI("/auth/notifications", "GET");
+    const res = await callAPI("/notification", "GET"); // Gọi GET
     if (res && res.success && res.data && res.data.listData) {
       renderNotiList(res.data.listData);
     } else {
       notiList.innerHTML =
         '<div class="empty-noti">Không có thông báo nào</div>';
     }
-    await connectSse("/sse");
-    subscribeTopic("notifications", data => {
-      const newNoti = data;
+
+    await connectSse("/sse"); // Hàm này trong public/Sse.js [cite: 349]
+    subscribeTopic("notification", (data) => {
+      const newNoti = data.data || data;
       prependNotification(newNoti);
       const badge = document.getElementById("nbBadge");
       let count = parseInt(badge.textContent) || 0;
@@ -176,6 +178,7 @@ async function initNotificationSystem() {
   }
 }
 
+// ... (Giữ nguyên các hàm setupEvents, renderNotiList... không đổi) ...
 function setupEvents() {
   const userBtn = document.getElementById("nbUserMenu");
   const notiBtn = document.getElementById("nbNotiBtn");
@@ -201,7 +204,7 @@ function setupEvents() {
   if (logoutBtn) {
     logoutBtn.onclick = async () => {
       await showDialog("question", "Bạn có chắc muốn đăng xuất?", async () => {
-        await callAPI("/logout");
+        await callAPI("/logout"); // Có thể cần method POST tùy backend, nhưng mặc định là GET [cite: 9]
         sessionStorage.clear();
         window.location.replace("../auth/login");
       });

@@ -12,7 +12,6 @@
     ></script>
 
     <style>
-      /* --- GLOBAL & BACKGROUND --- */
       * {
         box-sizing: border-box;
       }
@@ -26,14 +25,14 @@
         margin: 0 !important;
         padding: 0 !important;
         font-family: "Segoe UI", sans-serif;
-        /* NỀN MÂY TRỜI */
         background: url("https://img.freepik.com/free-vector/blue-sky-with-clouds-background_1017-26302.jpg")
           no-repeat center center fixed !important;
         background-size: cover !important;
       }
 
+      /* [ĐÃ SỬA] Padding-top nhỏ lại */
       .main-container {
-        padding-top: 90px;
+        padding-top: 20px;
         padding-bottom: 50px;
         max-width: 1200px;
         margin: 0 auto;
@@ -41,9 +40,10 @@
         gap: 30px;
         padding-left: 20px;
         padding-right: 20px;
+        position: relative;
+        z-index: 1;
       }
 
-      /* --- SIDEBAR (BỘ LỌC) --- */
       .sidebar {
         width: 280px;
         flex-shrink: 0;
@@ -52,9 +52,10 @@
         padding: 20px;
         height: fit-content;
         position: sticky;
-        top: 90px; /* Trượt theo khi cuộn */
+        top: 90px; /* Cách đỉnh 90px để không bị navbar che khi cuộn */
         box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
         border: 1px solid #f3f4f6;
+        z-index: 10;
       }
       .filter-group {
         margin-bottom: 25px;
@@ -68,37 +69,39 @@
         gap: 10px;
         color: #111827;
       }
-
       .cat-list {
         list-style: none;
         padding: 0;
         margin: 0;
       }
       .cat-item {
-        padding: 10px 15px;
+        padding: 12px 15px;
         cursor: pointer;
         border-radius: 8px;
         transition: 0.2s;
+        margin-bottom: 5px;
         display: flex;
         align-items: center;
         gap: 10px;
         color: #4b5563;
-        font-weight: 500;
+        font-weight: 600;
+        user-select: none;
       }
       .cat-item:hover {
         background: #f3f4f6;
         color: #10b981;
+        transform: translateX(5px);
       }
       .cat-item.active {
         background: #ecfdf5;
         color: #10b981;
-        font-weight: 700;
+        font-weight: 800;
+        border-left: 4px solid #10b981;
       }
-
       .price-range input {
         width: 100%;
         margin-bottom: 10px;
-        padding: 8px 12px;
+        padding: 10px 12px;
         border: 1px solid #e5e7eb;
         border-radius: 8px;
         outline: none;
@@ -108,21 +111,21 @@
         background: #10b981;
         color: white;
         border: none;
-        padding: 10px;
+        padding: 12px;
         border-radius: 8px;
         font-weight: bold;
         cursor: pointer;
         transition: 0.2s;
+        margin-top: 5px;
       }
       .btn-apply:hover {
         background: #059669;
       }
 
-      /* --- PRODUCT LIST AREA --- */
       .product-content {
         flex: 1;
+        min-width: 0;
       }
-
       .page-header {
         background: white;
         padding: 20px 30px;
@@ -131,6 +134,8 @@
         display: flex;
         justify-content: space-between;
         align-items: center;
+        flex-wrap: wrap;
+        gap: 15px;
         box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
         border: 1px solid #f3f4f6;
       }
@@ -146,7 +151,6 @@
         outline: none;
         cursor: pointer;
       }
-
       .product-grid {
         display: grid;
         grid-template-columns: repeat(3, 1fr);
@@ -160,13 +164,14 @@
         border: 1px solid #e5e7eb;
         transition: 0.3s;
         cursor: pointer;
+        position: relative;
         display: flex;
         flex-direction: column;
-        position: relative;
+        height: 100%;
       }
       .product-card:hover {
         transform: translateY(-5px);
-        box-shadow: 0 15px 30px rgba(0, 0, 0, 0.08);
+        box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
         border-color: #10b981;
       }
       .p-img {
@@ -176,13 +181,17 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 3rem;
-        color: #e5e7eb;
+        border-bottom: 1px solid #f0f0f0;
+        overflow: hidden;
+      }
+      .p-img img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
         transition: 0.3s;
       }
-      .product-card:hover .p-img {
-        background: #f0fdf4;
-        color: #10b981;
+      .product-card:hover .p-img img {
+        transform: scale(1.05);
       }
       .p-info {
         padding: 15px;
@@ -194,7 +203,7 @@
         font-weight: 600;
         color: #374151;
         font-size: 1rem;
-        margin-bottom: 8px;
+        margin-bottom: 10px;
         line-height: 1.4;
         height: 44px;
         overflow: hidden;
@@ -205,11 +214,11 @@
       .p-price {
         color: #ef4444;
         font-weight: 700;
-        font-size: 1.1rem;
+        font-size: 1.2rem;
         margin-top: auto;
+        margin-bottom: 15px;
       }
       .btn-add-cart {
-        margin-top: 10px;
         width: 100%;
         padding: 10px;
         border: 1px solid #10b981;
@@ -219,25 +228,25 @@
         font-weight: 600;
         cursor: pointer;
         transition: 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
       }
       .btn-add-cart:hover {
         background: #10b981;
         color: white;
       }
 
-      /* Responsive */
       @media (max-width: 992px) {
         .product-grid {
           grid-template-columns: repeat(2, 1fr);
         }
-      }
-      @media (max-width: 768px) {
+        .sidebar {
+          display: none;
+        }
         .main-container {
           flex-direction: column;
-        }
-        .sidebar {
-          width: 100%;
-          position: static;
         }
       }
     </style>
@@ -250,10 +259,11 @@
             <i class="fa-solid fa-layer-group"></i> Danh mục
           </div>
           <ul class="cat-list" id="catFilterList">
-            <li class="cat-item active" data-id="all">Tất cả sản phẩm</li>
+            <li class="cat-item active" onclick="changeCategory(null, this)">
+              Đang tải...
+            </li>
           </ul>
         </div>
-
         <div class="filter-group">
           <div class="filter-title">
             <i class="fa-solid fa-filter-circle-dollar"></i> Khoảng giá
@@ -269,20 +279,18 @@
               placeholder="Giá cao nhất (VNĐ)"
               id="maxPrice"
             />
-            <button
-              class="btn-apply"
-              onclick="alert('Tính năng đang cập nhật!')"
-            >
-              Áp dụng
-            </button>
+            <button class="btn-apply">Áp dụng</button>
           </div>
         </div>
       </aside>
-
       <div class="product-content">
         <div class="page-header">
           <div class="ph-title" id="pageTitle">Tất cả sản phẩm</div>
           <div class="ph-sort">
+            <i
+              class="fa-solid fa-arrow-down-short-wide"
+              style="color: #666; margin-right: 5px"
+            ></i>
             Sắp xếp:
             <select>
               <option>Mới nhất</option>
@@ -291,11 +299,9 @@
             </select>
           </div>
         </div>
-
         <div class="product-grid" id="productGrid"></div>
       </div>
     </div>
-
     <script type="module" src="index.js"></script>
   </body>
 </html>

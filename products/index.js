@@ -1,7 +1,7 @@
 import { loadNavbar } from "../navbar/navbar.js";
+import { callAPI } from "../public/api.js";
 import { toggleLoading } from "../public/loader.js";
 
-// Mock Data Danh mục (Giống bên Home)
 const CATEGORIES = [
   { id: "an-vat", name: "Đồ ăn vặt", icon: "fa-cookie-bite" },
   { id: "nuoc-ngot", name: "Nước giải khát", icon: "fa-bottle-water" },
@@ -10,82 +10,148 @@ const CATEGORIES = [
   { id: "gia-dung", name: "Gia dụng", icon: "fa-pump-soap" },
 ];
 
+let currentFilter = { keyword: null, categoryId: null };
+
 document.addEventListener("DOMContentLoaded", async () => {
   toggleLoading(true);
 
-  // 1. Load Navbar (Tự động có Giỏ hàng)
   await loadNavbar({
-    // Chỉ cần truyền ô tìm kiếm, không cần truyền giỏ hàng nữa
     centerHTML: `
       <div style="position:relative; width: 100%; max-width: 500px;">
-          <input type="text" class="nav-search-input" style="width:100%; padding-left: 20px;" placeholder="Tìm kiếm trong cửa hàng...">
-          <i class="fa-solid fa-magnifying-glass" style="position:absolute; right:15px; top:50%; transform:translateY(-50%); color:#10B981;"></i>
-      </div>
-    `,
+          <input type="text" class="nav-search-input" id="prodSearch" style="width:100%; padding-left: 20px;" placeholder="Tìm kiếm...">
+          <i class="fa-solid fa-magnifying-glass" id="prodSearchBtn" style="position:absolute; right:15px; top:50%; transform:translateY(-50%); color:#10B981; cursor:pointer;"></i>
+      </div>`,
   });
 
-  // 2. Render Danh mục bên Sidebar
-  renderSidebarCategories();
+  const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.get("cat")) currentFilter.categoryId = urlParams.get("cat");
+  if (urlParams.get("search")) currentFilter.keyword = urlParams.get("search");
 
-  // 3. Render Sản phẩm giả
-  renderProducts("all");
+  renderSidebarCategories();
+  setupEvents();
+
+  await fetchProducts();
 
   toggleLoading(false);
 });
 
-// --- LOGIC RENDER ---
+async function fetchProducts() {
+  const grid = document.getElementById("productGrid");
+  if (!grid) return;
+  grid.innerHTML =
+    '<div style="grid-column: 1/-1; text-align: center;">Đang tải...</div>';
 
+  try {
+    // [QUAN TRỌNG] Tự nối tham số vào URL
+    let endpoint = "/auth/products";
+    const params = [];
+
+    if (currentFilter.keyword)
+      params.push(`keyword=${encodeURIComponent(currentFilter.keyword)}`);
+    if (currentFilter.categoryId && currentFilter.categoryId !== "all") {
+      params.push(`categoryId=${encodeURIComponent(currentFilter.categoryId)}`);
+    }
+
+    if (params.length > 0) endpoint += "?" + params.join("&");
+
+    // Gọi API GET với data = null
+    const res = await callAPI(endpoint, "GET", null);
+
+    grid.innerHTML = "";
+    if (res && res.success) {
+      const list = Array.isArray(res.data)
+        ? res.data
+        : res.data?.listData || res.data?.content || [];
+
+      if (list.length > 0) {
+        grid.innerHTML = list.map((p) => createProductHTML(p)).join("");
+      } else {
+        grid.innerHTML =
+          '<div style="grid-column: 1/-1; text-align: center; font-size:1.2rem; color:#666; margin-top:50px;">Không tìm thấy sản phẩm nào</div>';
+      }
+    } else {
+      grid.innerHTML = `<div style="grid-column: 1/-1; text-align: center; color:red;">${
+        res?.message || "Lỗi tải dữ liệu"
+      }</div>`;
+    }
+  } catch (e) {
+    console.error(e);
+    grid.innerHTML =
+      '<div style="grid-column: 1/-1; text-align: center; color:red;">Lỗi kết nối Server!</div>';
+  }
+}
+
+function createProductHTML(p) {
+  const imgUrl =
+    p.image || "https://cdn-icons-png.flaticon.com/512/2748/2748558.png";
+  const priceFormatted = new Intl.NumberFormat("vi-VN", {
+    style: "currency",
+    currency: "VND",
+  }).format(p.price || 0);
+
+  return `
+        <div class="product-card" onclick="window.location.href='../product-detail/index.html?id=${p.id}'">
+            <div class="p-img"><img src="${imgUrl}" style="width:100%; height:100%; object-fit:contain;"></div>
+            <div class="p-info">
+                <div class="p-name" title="${p.name}">${p.name}</div>
+                <div class="p-price">${priceFormatted}</div>
+                <button class="btn-add-cart" onclick="event.stopPropagation(); alert('Thêm vào giỏ')">
+                    <i class="fa-solid fa-cart-plus"></i> Thêm
+                </button>
+            </div>
+        </div>
+    `;
+}
+
+// ... (Các hàm helper window.changeCategory, renderSidebarCategories, setupEvents giữ nguyên) ...
 function renderSidebarCategories() {
   const list = document.getElementById("catFilterList");
   if (!list) return;
-
-  // Lấy cat từ URL nếu có (ví dụ: products/index.html?cat=an-vat)
-  const urlParams = new URLSearchParams(window.location.search);
-  const activeCat = urlParams.get("cat") || "all";
-
-  // Render list
-  const itemsHTML = CATEGORIES.map(
+  let html = `<li class="cat-item ${
+    !currentFilter.categoryId ? "active" : ""
+  }" onclick="changeCategory(null, this)">Tất cả sản phẩm</li>`;
+  html += CATEGORIES.map(
     (c) => `
         <li class="cat-item ${
-          activeCat === c.id ? "active" : ""
-        }" onclick="window.location.href='?cat=${c.id}'">
+          currentFilter.categoryId === c.id ? "active" : ""
+        }" onclick="changeCategory('${c.id}', this)">
             <i class="fa-solid ${c.icon}" style="width:20px"></i> ${c.name}
         </li>
     `
   ).join("");
-
-  list.insertAdjacentHTML("beforeend", itemsHTML);
-
-  // Update Title trang
-  if (activeCat !== "all") {
-    const catName = CATEGORIES.find((c) => c.id === activeCat)?.name;
-    if (catName) document.getElementById("pageTitle").textContent = catName;
-  }
+  list.innerHTML = html;
 }
 
-function renderProducts(catId) {
-  const grid = document.getElementById("productGrid");
-  if (!grid) return;
+window.changeCategory = (catId, element) => {
+  document
+    .querySelectorAll(".cat-item")
+    .forEach((el) => el.classList.remove("active"));
+  element.classList.add("active");
+  currentFilter.categoryId = catId;
 
-  grid.innerHTML = "";
+  const catName = catId
+    ? CATEGORIES.find((c) => c.id === catId)?.name
+    : "Tất cả sản phẩm";
+  const pageTitle = document.getElementById("pageTitle");
+  if (pageTitle) pageTitle.textContent = catName;
 
-  // Tạo 12 sản phẩm giả
-  for (let i = 1; i <= 12; i++) {
-    const price = Math.floor(Math.random() * 200) + 10 + ".000đ";
-    grid.insertAdjacentHTML(
-      "beforeend",
-      `
-            <div class="product-card" onclick="alert('Xem chi tiết SP ${i}')">
-                <div class="p-img">P-${i}</div>
-                <div class="p-info">
-                    <div class="p-name">Sản phẩm mẫu số ${i} - Chất lượng cao</div>
-                    <div class="p-price">${price}</div>
-                    <button class="btn-add-cart" onclick="event.stopPropagation(); alert('Đã thêm vào giỏ!')">
-                        <i class="fa-solid fa-cart-plus"></i> Thêm vào giỏ
-                    </button>
-                </div>
-            </div>
-        `
-    );
-  }
+  fetchProducts();
+};
+
+function setupEvents() {
+  const searchInput = document.getElementById("prodSearch");
+  const searchBtn = document.getElementById("prodSearchBtn");
+
+  if (currentFilter.keyword && searchInput)
+    searchInput.value = currentFilter.keyword;
+
+  const doSearch = () => {
+    currentFilter.keyword = searchInput.value.trim();
+    fetchProducts();
+  };
+  if (searchBtn) searchBtn.onclick = doSearch;
+  if (searchInput)
+    searchInput.onkeypress = (e) => {
+      if (e.key === "Enter") doSearch();
+    };
 }

@@ -12,7 +12,6 @@
     ></script>
 
     <style>
-      /* --- GLOBAL STYLE --- */
       * {
         box-sizing: border-box;
       }
@@ -26,21 +25,19 @@
         margin: 0 !important;
         padding: 0 !important;
         font-family: "Segoe UI", sans-serif;
-
-        /* NỀN MÂY TRỜI ĐỒNG BỘ */
         background: url("https://img.freepik.com/free-vector/blue-sky-with-clouds-background_1017-26302.jpg")
           no-repeat center center fixed !important;
         background-size: cover !important;
       }
 
+      /* [ĐÃ SỬA] Xóa padding-top 90px đi vì Navbar đã có spacer đẩy xuống rồi */
       .main-container {
-        padding-top: 90px;
+        padding-top: 20px; /* Chỉ để 20px cho thoáng */
         padding-bottom: 50px;
         max-width: 1200px;
         margin: 0 auto;
       }
 
-      /* BANNER */
       .hero {
         margin: 0 20px 30px 20px;
         border-radius: 20px;
@@ -97,7 +94,6 @@
         background: #059669;
       }
 
-      /* PRODUCT GRID */
       .category-section {
         background: white;
         margin: 0 20px 40px 20px;
@@ -173,6 +169,7 @@
         cursor: pointer;
         display: flex;
         flex-direction: column;
+        height: 100%;
       }
       .product-card:hover {
         transform: translateY(-8px);
@@ -219,7 +216,7 @@
         margin-top: auto;
       }
 
-      /* Nav Search + Dropdown */
+      /* Nav Search */
       .nav-cat-btn {
         background: white;
         border: 1px solid #e5e7eb;
@@ -296,7 +293,6 @@
         box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.1);
       }
 
-      /* Chat Btn */
       .chat-btn {
         position: fixed;
         bottom: 30px;
