@@ -18,7 +18,13 @@ export const ProductService = {
         const res = await callAPI(`/attributes`, "GET");
         return res?.data?.listData || [];
     },
+    // Lấy danh sách products
+    getProducts: async () => {
+        const res = await callAPI(`/auth/admin/products`, "GET");         
+        return res?.data?.listData || res?.data || [];
+    },
 
+    // Post sản phẩm
     createProduct: async (productData) => {
         const res = await callAPI(`/auth/admin/products`, "POST", productData, true);
         return res;
