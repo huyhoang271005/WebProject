@@ -14,20 +14,24 @@ let currentFilter = { keyword: null, categoryId: null };
 
 document.addEventListener("DOMContentLoaded", async () => {
   toggleLoading(true);
+
+  // 1. Load Navbar và chèn ô Search vào giữa
   await loadNavbar({
     centerHTML: `
       <div style="position:relative; width: 100%; max-width: 500px;">
-          <input type="text" class="nav-search-input" id="prodSearch" style="width:100%; padding-left: 20px;" placeholder="Tìm kiếm...">
-          <i class="fa-solid fa-magnifying-glass" id="prodSearchBtn" style="position:absolute; right:15px; top:50%; transform:translateY(-50%); color:#10B981; cursor:pointer;"></i>
+          <input type="text" class="nav-search-input" id="navbarSearchInput" style="width:100%; padding-left: 20px;" placeholder="Tìm kiếm (ví dụ: sữa, snack)...">
+          <i class="fa-solid fa-magnifying-glass" id="navbarSearchBtn" style="position:absolute; right:15px; top:50%; transform:translateY(-50%); color:#10B981; cursor:pointer;"></i>
       </div>`,
   });
 
+  // 2. Lấy params từ URL (nếu từ Home nhảy sang)
   const urlParams = new URLSearchParams(window.location.search);
   if (urlParams.get("cat")) currentFilter.categoryId = urlParams.get("cat");
   if (urlParams.get("search")) currentFilter.keyword = urlParams.get("search");
 
   renderSidebarCategories();
   setupEvents();
+
   await fetchProducts();
   toggleLoading(false);
 });
@@ -42,7 +46,7 @@ async function fetchProducts() {
     let endpoint = "/auth/products";
     const params = [];
 
-    // [FIX] Thêm page và size mặc định (có thể tăng lên 50)
+    // Mặc định page 0, size 50
     params.push("page=0");
     params.push("size=50");
 
@@ -58,9 +62,7 @@ async function fetchProducts() {
     grid.innerHTML = "";
 
     if (res && res.success) {
-      // [FIX] Lấy đúng listData
       const list = res.data?.listData || [];
-
       if (list.length > 0) {
         grid.innerHTML = list.map((p) => createProductHTML(p)).join("");
       } else {
@@ -79,8 +81,8 @@ async function fetchProducts() {
   }
 }
 
+// --- HÀM TẠO HTML SẢN PHẨM (CÓ NHÃN GIẢM GIÁ) ---
 function createProductHTML(p) {
-  // [FIX] Map đúng tên trường: imageUrl, productName, productId
   const imgUrl =
     p.imageUrl || "https://cdn-icons-png.flaticon.com/512/2748/2748558.png";
   const priceFormatted = new Intl.NumberFormat("vi-VN", {
@@ -88,13 +90,44 @@ function createProductHTML(p) {
     currency: "VND",
   }).format(p.price || 0);
 
+  // Logic tính % giảm giá
+  let discountBadge = "";
+  let originalPriceHTML = "";
+
+  // Chỉ hiện nếu có giá gốc và giá gốc > giá bán
+  if (p.originalPrice && p.originalPrice > p.price) {
+    const percent = Math.round(
+      ((p.originalPrice - p.price) / p.originalPrice) * 100
+    );
+    const originalFormatted = new Intl.NumberFormat("vi-VN", {
+      style: "currency",
+      currency: "VND",
+    }).format(p.originalPrice);
+
+    // Nhãn giảm giá (Badge)
+    discountBadge = `
+            <div style="position: absolute; top: 10px; right: 10px; background: #EF4444; color: white; 
+                        padding: 4px 8px; border-radius: 8px; font-weight: bold; font-size: 0.8rem; 
+                        box-shadow: 0 2px 5px rgba(0,0,0,0.2); z-index: 2;">
+                -${percent}%
+            </div>
+        `;
+
+    // Giá gốc bị gạch ngang
+    originalPriceHTML = `<span style="text-decoration: line-through; color: #9ca3af; font-size: 0.9rem; margin-right: 5px;">${originalFormatted}</span>`;
+  }
+
   return `
-        <div class="product-card" onclick="window.location.href='../product-detail/index.html?id=${p.productId}'">
+        <div class="product-card" onclick="window.location.href='../product-detail/index.html?id=${p.productId}'" style="position: relative;">
+            ${discountBadge}
             <div class="p-img"><img src="${imgUrl}" style="width:100%; height:100%; object-fit:contain;"></div>
             <div class="p-info">
                 <div class="p-name" title="${p.productName}">${p.productName}</div>
-                <div class="p-price">${priceFormatted}</div>
-                <button class="btn-add-cart" onclick="event.stopPropagation(); alert('Thêm vào giỏ')">
+                <div class="p-price-box" style="margin-top: auto; margin-bottom: 10px;">
+                    ${originalPriceHTML}
+                    <span style="color: #ef4444; font-weight: 700; font-size: 1.1rem;">${priceFormatted}</span>
+                </div>
+                <button class="btn-add-cart" onclick="event.stopPropagation(); alert('Đã thêm vào giỏ')">
                     <i class="fa-solid fa-cart-plus"></i> Thêm
                 </button>
             </div>
@@ -102,7 +135,41 @@ function createProductHTML(p) {
     `;
 }
 
-// ... Helper functions giữ nguyên
+// --- HELPER FUNCTIONS ---
+function setupEvents() {
+  // 1. Bắt sự kiện thanh Search trên Navbar
+  const navSearch = document.getElementById("navbarSearchInput");
+  const navBtn = document.getElementById("navbarSearchBtn");
+
+  const doSearch = () => {
+    // Lấy từ khóa, backend sẽ lo việc có dấu hay không dấu
+    currentFilter.keyword = navSearch.value.trim();
+    fetchProducts();
+  };
+
+  if (navSearch) {
+    // Nếu đã có từ khóa (từ url) thì điền vào ô input
+    if (currentFilter.keyword) navSearch.value = currentFilter.keyword;
+
+    navSearch.onkeypress = (e) => {
+      if (e.key === "Enter") doSearch();
+    };
+  }
+  if (navBtn) navBtn.onclick = doSearch;
+
+  // 2. Ô Tìm nhanh ở Sidebar (nếu bro dùng code sidebar cũ)
+  const sidebarSearch = document.getElementById("sidebarSearch");
+  if (sidebarSearch) {
+    sidebarSearch.oninput = (e) => {
+      currentFilter.keyword = e.target.value.trim();
+      if (navSearch) navSearch.value = currentFilter.keyword; // Đồng bộ lên trên
+      // Debounce đơn giản (chờ 0.5s mới search để đỡ lag)
+      clearTimeout(window.searchTimeout);
+      window.searchTimeout = setTimeout(() => fetchProducts(), 500);
+    };
+  }
+}
+
 function renderSidebarCategories() {
   const list = document.getElementById("catFilterList");
   if (!list) return;
@@ -120,31 +187,20 @@ function renderSidebarCategories() {
   ).join("");
   list.innerHTML = html;
 }
+
 window.changeCategory = (catId, element) => {
   document
     .querySelectorAll(".cat-item")
     .forEach((el) => el.classList.remove("active"));
   element.classList.add("active");
   currentFilter.categoryId = catId;
+
+  // Đổi tên tiêu đề trang
   const catName = catId
     ? CATEGORIES.find((c) => c.id === catId)?.name
     : "Tất cả sản phẩm";
   const pageTitle = document.getElementById("pageTitle");
   if (pageTitle) pageTitle.textContent = catName;
+
   fetchProducts();
 };
-function setupEvents() {
-  const searchInput = document.getElementById("prodSearch");
-  const searchBtn = document.getElementById("prodSearchBtn");
-  if (currentFilter.keyword && searchInput)
-    searchInput.value = currentFilter.keyword;
-  const doSearch = () => {
-    currentFilter.keyword = searchInput.value.trim();
-    fetchProducts();
-  };
-  if (searchBtn) searchBtn.onclick = doSearch;
-  if (searchInput)
-    searchInput.onkeypress = (e) => {
-      if (e.key === "Enter") doSearch();
-    };
-}

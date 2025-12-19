@@ -69,7 +69,6 @@ async function renderHomeSections() {
 }
 
 function createProductHTML(p) {
-  // [FIX] Map đúng tên trường từ JSON: imageUrl, productName, productId
   const imgUrl =
     p.imageUrl || "https://cdn-icons-png.flaticon.com/512/2748/2748558.png";
   const priceFormatted = new Intl.NumberFormat("vi-VN", {
@@ -77,13 +76,46 @@ function createProductHTML(p) {
     currency: "VND",
   }).format(p.price || 0);
 
+  // Logic tính % giảm giá
+  let discountBadge = "";
+  let originalPriceHTML = "";
+
+  // Chỉ hiện nếu có giá gốc và giá gốc > giá bán
+  if (p.originalPrice && p.originalPrice > p.price) {
+    const percent = Math.round(
+      ((p.originalPrice - p.price) / p.originalPrice) * 100
+    );
+    const originalFormatted = new Intl.NumberFormat("vi-VN", {
+      style: "currency",
+      currency: "VND",
+    }).format(p.originalPrice);
+
+    // Nhãn giảm giá (Badge)
+    discountBadge = `
+            <div style="position: absolute; top: 10px; right: 10px; background: #EF4444; color: white; 
+                        padding: 4px 8px; border-radius: 8px; font-weight: bold; font-size: 0.8rem; 
+                        box-shadow: 0 2px 5px rgba(0,0,0,0.2); z-index: 2;">
+                -${percent}%
+            </div>
+        `;
+
+    // Giá gốc bị gạch ngang
+    originalPriceHTML = `<span style="text-decoration: line-through; color: #9ca3af; font-size: 0.9rem; margin-right: 5px;">${originalFormatted}</span>`;
+  }
+
   return `
-        <div class="product-card" onclick="window.location.href='../product-detail/index.html?id=${p.productId}'">
+        <div class="product-card" onclick="window.location.href='../product-detail/index.html?id=${p.productId}'" style="position: relative;">
+            ${discountBadge}
             <div class="p-img"><img src="${imgUrl}" style="width:100%; height:100%; object-fit:contain;"></div>
             <div class="p-info">
                 <div class="p-name" title="${p.productName}">${p.productName}</div>
-                <div class="p-origin-price">${p.priceFormatted}</div>
-                <div class="p-price">${priceFormatted}</div>
+                <div class="p-price-box" style="margin-top: auto; margin-bottom: 10px;">
+                    ${originalPriceHTML}
+                    <span style="color: #ef4444; font-weight: 700; font-size: 1.1rem;">${priceFormatted}</span>
+                </div>
+                <button class="btn-add-cart" onclick="event.stopPropagation(); alert('Đã thêm vào giỏ')">
+                    <i class="fa-solid fa-cart-plus"></i> Thêm
+                </button>
             </div>
         </div>
     `;
