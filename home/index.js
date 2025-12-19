@@ -2,6 +2,7 @@ import { loadNavbar } from "../navbar/navbar.js";
 import { callAPI } from "../public/api.js";
 import { toggleLoading } from "../public/loader.js";
 
+// Danh mục tĩnh ở Home (chỉ để hiển thị icon cho đẹp)
 const CATEGORIES = [
   { id: "an-vat", name: "Đồ ăn vặt", icon: "fa-cookie-bite" },
   { id: "nuoc-ngot", name: "Nước giải khát", icon: "fa-bottle-water" },
@@ -60,12 +61,12 @@ async function renderHomeSections() {
           `
       );
     } else {
-      container.innerHTML = `<div style="text-align:center; padding: 20px; color: #666;">Chưa có sản phẩm nào</div>`;
+      container.innerHTML = `<div style="text-align:center; padding:20px; color:#666;">Chưa có sản phẩm</div>`;
     }
   }
 }
 
-// Hàm này giống hệt bên products/index.js
+// Hàm giống hệt products/index.js
 function createProductHTML(p) {
   const imgUrl =
     p.imageUrl || "https://cdn-icons-png.flaticon.com/512/2748/2748558.png";
@@ -75,7 +76,7 @@ function createProductHTML(p) {
   }).format(p.price || 0);
 
   let discountBadge = "";
-  let originalPriceHTML = `<div style="height: 16px;"></div>`;
+  let originalPriceHTML = "";
 
   if (p.originalPrice && p.originalPrice > p.price) {
     const percent = Math.round(
@@ -85,43 +86,45 @@ function createProductHTML(p) {
       style: "currency",
       currency: "VND",
     }).format(p.originalPrice);
-
-    discountBadge = `
-            <div style="position: absolute; top: 0; right: 0; background: rgba(255, 212, 36, 0.95); color: #b42b2b; 
-                        padding: 3px 6px; font-weight: 700; font-size: 0.75rem; border-bottom-left-radius: 8px; z-index: 2;">
-                -${percent}%
-            </div>
-        `;
-    originalPriceHTML = `
-            <div style="text-decoration: line-through; color: #9ca3af; font-size: 0.8rem; line-height: 1;">
-                ${originalFormatted}
-            </div>`;
+    discountBadge = `<div style="position:absolute; top:0; right:0; background:#FFD424; color:#d0021b; padding:3px 6px; font-weight:800; font-size:0.7rem; border-bottom-left-radius:8px; z-index:2;">-${percent}%</div>`;
+    originalPriceHTML = `<span style="text-decoration:line-through; color:#9ca3af; font-size:0.75rem; margin-right:6px;">${originalFormatted}</span>`;
   }
+
+  const rating = p.ratingAvg || 5;
+  const starsHTML = renderStars(rating);
 
   return `
         <div class="product-card" onclick="window.location.href='../product-detail/index.html?id=${p.productId}'" 
-             style="position: relative; border-radius: 8px; border: 1px solid #e5e7eb; overflow: hidden; background: white; transition: transform 0.2s; cursor: pointer;">
+             style="position:relative; border-radius:8px; border:1px solid #f3f4f6; overflow:hidden; background:white; transition:all 0.2s; cursor:pointer; box-shadow:0 1px 2px rgba(0,0,0,0.05);">
             ${discountBadge}
-            <div class="p-img" style="height: 160px; width: 100%; display: flex; align-items: center; justify-content: center; background: #f9fafb;">
-                <img src="${imgUrl}" style="width: 100%; height: 100%; object-fit: contain;">
+            <div class="p-img" style="height:160px; display:flex; align-items:center; justify-content:center; background:#fff; border-bottom:1px solid #f9f9f9;">
+                <img src="${imgUrl}" style="width:100%; height:100%; object-fit:contain; padding:10px;">
             </div>
-            <div class="p-info" style="padding: 8px 10px 12px 10px;">
-                <div class="p-name" title="${p.productName}" 
-                     style="font-size: 0.9rem; font-weight: 500; color: #333; margin-bottom: 6px; height: 36px; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; line-height: 1.3;">
+            <div class="p-info" style="padding:10px;">
+                <div class="p-name" title="${p.productName}" style="font-size:0.9rem; font-weight:500; color:#333; margin-bottom:4px; height:36px; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; line-height:1.3;">
                     ${p.productName}
                 </div>
-                ${originalPriceHTML}
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 4px;">
-                    <span style="color: #ef4444; font-weight: 700; font-size: 1rem;">${priceFormatted}</span>
-                    <button onclick="event.stopPropagation(); alert('Đã thêm vào giỏ')" 
-                            style="width: 28px; height: 28px; border-radius: 50%; border: 1px solid #10B981; background: #ecfdf5; color: #10B981; 
-                                   display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s;">
-                        <i class="fa-solid fa-cart-plus" style="font-size: 0.85rem;"></i>
-                    </button>
+                <div style="margin-bottom:6px; font-size:0.7rem; color:#fbbf24; display:flex; align-items:center;">
+                    ${starsHTML} <span style="color:#9ca3af; margin-left:4px;">(99+)</span>
+                </div>
+                <div style="display:flex; align-items:baseline;">
+                    ${originalPriceHTML}
+                    <span style="color:#ef4444; font-weight:700; font-size:1rem;">${priceFormatted}</span>
                 </div>
             </div>
         </div>
     `;
+}
+
+function renderStars(rating) {
+  let html = "";
+  for (let i = 1; i <= 5; i++) {
+    if (i <= rating) html += '<i class="fa-solid fa-star"></i>';
+    else if (i - 0.5 <= rating)
+      html += '<i class="fa-solid fa-star-half-stroke"></i>';
+    else html += '<i class="fa-regular fa-star" style="color:#e5e7eb"></i>';
+  }
+  return html;
 }
 
 function setupNavbarEvents() {
