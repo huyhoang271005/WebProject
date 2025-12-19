@@ -40,16 +40,35 @@ html, body {
     gap: 9px;
 }
 
-/* CART ITEM */
+/* 1. KHUNG BAO NGOÀI (Đại diện cho 1 Sản phẩm cha) */
+.product-group {
+    background-color: #fff;       /* Nền trắng chung */
+    border-radius: 8px;           /* Bo tròn khung to */
+    box-shadow: 0 1px 4px rgba(0,0,0,0.05); /* Bóng mờ */
+    margin-bottom: 15px;          /* Cách xa sản phẩm tiếp theo */
+    overflow: hidden;             /* Để bo tròn không bị con đè lên */
+    border: 1px solid #eee;
+}
+
+/* 2. DÒNG SẢN PHẨM CON (Biến thể bên trong) */
 .cart-item {
     display: flex;
-    align-items: center; /* Mình đổi thành center để nó căn giữa theo chiều dọc cho đẹp hơn */
-    background-color: #fff;       /* Nền trắng riêng cho từng thằng */
-    padding: 20px;                /* Cách đều 4 phía (cũ là 20px 0) */
-    margin-bottom: 15px;          /* Đẩy xa thằng bên dưới ra -> Tách khối */
-    border-radius: 8px;           /* Bo tròn góc */
-    box-shadow: 0 2px 5px rgba(0,0,0,0.05); /* Bóng mờ nhẹ */
-    border: 1px solid #eee;       /* Viền mỏng bao quanh */
+    align-items: center;
+    padding: 20px;                /* Khoảng cách bên trong */
+    background-color: transparent; /* Trong suốt để ăn theo nền cha */
+    border-bottom: 1px solid #f0f0f0; /* Gạch ngang ngăn cách các item cùng nhóm */
+    
+    /* Reset lại các thuộc tính cũ nếu có */
+    margin-bottom: 0 !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    border: none;                 /* Xóa viền bao quanh cũ */
+    border-bottom: 1px solid #f3f4f6; /* Thêm lại gạch chân */
+}
+
+/* 3. Xóa gạch chân của thằng con cuối cùng trong nhóm cho đẹp */
+.cart-item:last-child {
+    border-bottom: none;
 }
 /* 1. Xóa nền trắng của cái khung to bao ngoài */
 .cart-items-section.section-box {
