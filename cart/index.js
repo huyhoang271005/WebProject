@@ -2,10 +2,40 @@ import { callAPI } from '../public/api.js';
 import { showDialog } from '../dialog/index.js';
 
 const money = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' });
-let cartData = [], checked = new Set(), busy = false;
+let cartData = [], checked = new Set(), busy = false;let currentPage = 0;      // Trang hiện tại (Bắt đầu từ 0 hoặc 1 tùy API của bạn)
+const pageSize = 10;      // Số lượng sản phẩm mỗi lần load
+let hasMore = true;       // Cờ kiểm tra xem còn dữ liệu để load không
+let isLoading = false;
 
+// --- 3. KHỞI TẠO & CUỘN VÔ TẬN ---
 document.addEventListener("DOMContentLoaded", async () => {
-    await loadCart();
+    // Tạo element "Đang tải thêm..."
+    const cartBox = document.getElementById("cartList");
+    const loader = document.createElement("div");
+    loader.id = "loading-more";
+    loader.innerHTML = '<div style="text-align:center; padding:15px; color:#666; clear:both;"><i class="fas fa-spinner fa-spin"></i> Đang tải thêm sản phẩm...</div>';
+    loader.style.display = "none";
+    
+    // Nhét nó vào ngay sau danh sách sản phẩm (trong khung cha)
+    if(cartBox.parentElement) {
+         cartBox.parentElement.appendChild(loader);
+    }
+
+    // Load trang 0 ngay khi vào
+    await loadCart(0, pageSize);
+
+    // Bắt sự kiện cuộn
+    window.addEventListener('scroll', () => {
+        // Công thức kiểm tra chạm đáy
+        if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 50) {
+            if (hasMore && !isLoading) {
+                console.log("Load tiếp trang: " + (currentPage + 1));
+                loadCart(currentPage + 1, pageSize);
+            }
+        }
+    });
+
+    // Code nút Mua hàng (giữ nguyên của bạn)
     document.querySelector(".checkout-btn").onclick = (e) => {
         if(!e.target.disabled) {
             localStorage.setItem("checkoutItems", JSON.stringify([...checked]));
@@ -13,14 +43,47 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
     };
 });
+// --- 2. HÀM LOAD CART ---
+async function loadCart(page = 0, size = 10) {
+    // Chặn gọi nếu đang tải hoặc hết hàng (trừ lần đầu)
+    if (isLoading || (page > 0 && !hasMore)) return;
+    
+    isLoading = true;
+    
+    // Hiện spinner quay quay
+    const loader = document.getElementById("loading-more");
+    if (page > 0 && loader) loader.style.display = "block";
 
-// === 1. LOAD DATA ===
-async function loadCart() {
-    const res = await callAPI('/auth/carts', 'GET');
-    if (res.success) { 
-        cartData = res.data.listData || []; 
+    // --- GỌI API ---
+    // Không bọc try-catch nữa, tin tưởng vào Backend/callAPI
+    const res = await callAPI(`/auth/carts?page=${page}&size=${size}`, 'GET');
+    
+    // Kiểm tra kết quả trả về
+    if (res && res.success) { 
+        const newData = res.data.listData || [];
+        
+        // Cập nhật cờ còn hàng hay không
+        hasMore = res.data.hasMore;
+
+        if (page === 0) {
+            cartData = newData; // Gán mới
+        } else {
+            cartData = [...cartData, ...newData]; // Nối đuôi
+        }
+
+        currentPage = page;
         render(); 
-    } else document.getElementById("cartList").innerHTML = `<p class="text-center p-5">${res.message}</p>`;
+    } else {
+        // Backend trả về lỗi logic (success: false)
+        if (page === 0) {
+            const msg = res ? res.message : "Không tải được dữ liệu";
+            document.getElementById("cartList").innerHTML = `<p class="text-center p-5">${msg}</p>`;
+        }
+    }
+
+    // --- DỌN DẸP (Chạy cuối cùng) ---
+    isLoading = false;
+    if (loader) loader.style.display = "none";
 }
 
 // === 2. UI RENDER ===
@@ -35,11 +98,29 @@ function render() {
         return;
     }
 
-    // Vẽ từng dòng sản phẩm
-    cartData.forEach((p, pIdx) => p.cartItemDTOList.forEach((item, cIdx) => {
-        const variant = p.productVariantsDTOList.find(v => v.variantId === item.variantId);
-        if(variant) box.appendChild(createRow(p, item, variant, pIdx, cIdx));
-    }));
+    // Duyệt qua từng SẢN PHẨM CHA (Ví dụ: Snack, Sữa...)
+    cartData.forEach((p, pIdx) => {
+        // 1. Tạo cái khung bao ngoài cho cả nhóm sản phẩm này
+        const groupWrapper = document.createElement("div");
+        groupWrapper.className = "product-group"; // Class mới dùng để làm nền trắng
+
+        let hasItem = false;
+
+        // 2. Duyệt qua các biến thể con bên trong (43g, 73g...)
+        p.cartItemDTOList.forEach((item, cIdx) => {
+            const variant = p.productVariantsDTOList.find(v => v.variantId === item.variantId);
+            if(variant) {
+                // Tạo dòng item con và nhét vào khung bao
+                groupWrapper.appendChild(createRow(p, item, variant, pIdx, cIdx));
+                hasItem = true;
+            }
+        });
+
+        // 3. Nếu nhóm này có sản phẩm thì mới hiện ra
+        if (hasItem) {
+            box.appendChild(groupWrapper);
+        }
+    });
     
     updateTotal();
 }
@@ -231,7 +312,7 @@ window.changeVar = async (el) => {
             
             // Kiểm tra tồn kho trước khi gộp
             if (newTotalQty > newV.stock) {
-                await showDialog("error", `Không thể gộp: Tổng số lượng (${newTotalQty}) vượt quá tồn kho (${newV.stock})`);
+                // await showDialog("error", `Không thể gộp: Tổng số lượng (${newTotalQty}) vượt quá tồn kho (${newV.stock})`);
                 render(); // Reset UI
                 return;
             }

@@ -19,6 +19,16 @@ export const ProductService = {
         return res?.data?.listData || [];
     },
 
+    getProductById: async (id) => {
+        try {
+            const res = await callAPI(`/auth/admin/products/${id}`, "GET");
+            return res?.data || null;
+        } catch (error) {
+            console.error("Lỗi lấy chi tiết sản phẩm:", error);
+            return null;
+        }
+    },
+
     createProduct: async (productData) => {
         const res = await callAPI(`/auth/admin/products`, "POST", productData, true);
         return res;

@@ -12,7 +12,6 @@
     ></script>
 
     <style>
-      /* --- GLOBAL & BACKGROUND --- */
       * {
         box-sizing: border-box;
       }
@@ -26,14 +25,13 @@
         margin: 0 !important;
         padding: 0 !important;
         font-family: "Segoe UI", sans-serif;
-        /* NỀN MÂY TRỜI */
         background: url("https://img.freepik.com/free-vector/blue-sky-with-clouds-background_1017-26302.jpg")
           no-repeat center center fixed !important;
         background-size: cover !important;
       }
 
       .main-container {
-        padding-top: 90px;
+        padding-top: 20px;
         padding-bottom: 50px;
         max-width: 1200px;
         margin: 0 auto;
@@ -41,9 +39,10 @@
         gap: 30px;
         padding-left: 20px;
         padding-right: 20px;
+        position: relative;
+        z-index: 1;
       }
 
-      /* --- SIDEBAR (BỘ LỌC) --- */
       .sidebar {
         width: 280px;
         flex-shrink: 0;
@@ -52,9 +51,10 @@
         padding: 20px;
         height: fit-content;
         position: sticky;
-        top: 90px; /* Trượt theo khi cuộn */
+        top: 90px;
         box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
         border: 1px solid #f3f4f6;
+        z-index: 10;
       }
       .filter-group {
         margin-bottom: 25px;
@@ -75,54 +75,34 @@
         margin: 0;
       }
       .cat-item {
-        padding: 10px 15px;
+        padding: 12px 15px;
         cursor: pointer;
         border-radius: 8px;
         transition: 0.2s;
+        margin-bottom: 5px;
         display: flex;
         align-items: center;
         gap: 10px;
         color: #4b5563;
-        font-weight: 500;
+        font-weight: 600;
+        user-select: none;
       }
       .cat-item:hover {
         background: #f3f4f6;
         color: #10b981;
+        transform: translateX(5px);
       }
       .cat-item.active {
         background: #ecfdf5;
         color: #10b981;
-        font-weight: 700;
+        font-weight: 800;
+        border-left: 4px solid #10b981;
       }
 
-      .price-range input {
-        width: 100%;
-        margin-bottom: 10px;
-        padding: 8px 12px;
-        border: 1px solid #e5e7eb;
-        border-radius: 8px;
-        outline: none;
-      }
-      .btn-apply {
-        width: 100%;
-        background: #10b981;
-        color: white;
-        border: none;
-        padding: 10px;
-        border-radius: 8px;
-        font-weight: bold;
-        cursor: pointer;
-        transition: 0.2s;
-      }
-      .btn-apply:hover {
-        background: #059669;
-      }
-
-      /* --- PRODUCT LIST AREA --- */
       .product-content {
         flex: 1;
+        min-width: 0;
       }
-
       .page-header {
         background: white;
         padding: 20px 30px;
@@ -131,6 +111,8 @@
         display: flex;
         justify-content: space-between;
         align-items: center;
+        flex-wrap: wrap;
+        gap: 15px;
         box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
         border: 1px solid #f3f4f6;
       }
@@ -147,97 +129,27 @@
         cursor: pointer;
       }
 
+      /* Grid 4 cột cho đẹp và gọn */
       .product-grid {
         display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 20px;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 15px;
       }
 
-      .product-card {
-        background: white;
-        border-radius: 16px;
-        overflow: hidden;
-        border: 1px solid #e5e7eb;
-        transition: 0.3s;
-        cursor: pointer;
-        display: flex;
-        flex-direction: column;
-        position: relative;
+      @media (max-width: 1200px) {
+        .product-grid {
+          grid-template-columns: repeat(3, 1fr);
+        }
       }
-      .product-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 15px 30px rgba(0, 0, 0, 0.08);
-        border-color: #10b981;
-      }
-      .p-img {
-        width: 100%;
-        height: 200px;
-        background: #f9fafb;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 3rem;
-        color: #e5e7eb;
-        transition: 0.3s;
-      }
-      .product-card:hover .p-img {
-        background: #f0fdf4;
-        color: #10b981;
-      }
-      .p-info {
-        padding: 15px;
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-      }
-      .p-name {
-        font-weight: 600;
-        color: #374151;
-        font-size: 1rem;
-        margin-bottom: 8px;
-        line-height: 1.4;
-        height: 44px;
-        overflow: hidden;
-        display: -webkit-box;
-        -webkit-line-clamp: 2;
-        -webkit-box-orient: vertical;
-      }
-      .p-price {
-        color: #ef4444;
-        font-weight: 700;
-        font-size: 1.1rem;
-        margin-top: auto;
-      }
-      .btn-add-cart {
-        margin-top: 10px;
-        width: 100%;
-        padding: 10px;
-        border: 1px solid #10b981;
-        color: #10b981;
-        background: white;
-        border-radius: 8px;
-        font-weight: 600;
-        cursor: pointer;
-        transition: 0.2s;
-      }
-      .btn-add-cart:hover {
-        background: #10b981;
-        color: white;
-      }
-
-      /* Responsive */
       @media (max-width: 992px) {
         .product-grid {
           grid-template-columns: repeat(2, 1fr);
         }
-      }
-      @media (max-width: 768px) {
+        .sidebar {
+          display: none;
+        }
         .main-container {
           flex-direction: column;
-        }
-        .sidebar {
-          width: 100%;
-          position: static;
         }
       }
     </style>
@@ -246,36 +158,37 @@
     <div class="main-container">
       <aside class="sidebar">
         <div class="filter-group">
+          <div class="filter-title" style="margin-bottom: 10px">
+            <i class="fa-solid fa-magnifying-glass" style="color: #10b981"></i>
+            Tìm nhanh
+          </div>
+          <input
+            type="text"
+            id="sidebarSearch"
+            placeholder="Gõ tên món..."
+            style="
+              width: 100%;
+              padding: 10px 15px;
+              border: 1px solid #e5e7eb;
+              border-radius: 30px;
+              outline: none;
+              font-size: 0.9rem;
+              background: #f9fafb;
+            "
+          />
+        </div>
+
+        <hr style="border: 0; border-top: 1px solid #f3f4f6; margin: 15px 0" />
+
+        <div class="filter-group">
           <div class="filter-title">
             <i class="fa-solid fa-layer-group"></i> Danh mục
           </div>
           <ul class="cat-list" id="catFilterList">
-            <li class="cat-item active" data-id="all">Tất cả sản phẩm</li>
+            <li class="cat-item active" onclick="changeCategory(null, this)">
+              Đang tải...
+            </li>
           </ul>
-        </div>
-
-        <div class="filter-group">
-          <div class="filter-title">
-            <i class="fa-solid fa-filter-circle-dollar"></i> Khoảng giá
-          </div>
-          <div class="price-range">
-            <input
-              type="number"
-              placeholder="Giá thấp nhất (VNĐ)"
-              id="minPrice"
-            />
-            <input
-              type="number"
-              placeholder="Giá cao nhất (VNĐ)"
-              id="maxPrice"
-            />
-            <button
-              class="btn-apply"
-              onclick="alert('Tính năng đang cập nhật!')"
-            >
-              Áp dụng
-            </button>
-          </div>
         </div>
       </aside>
 
@@ -283,6 +196,10 @@
         <div class="page-header">
           <div class="ph-title" id="pageTitle">Tất cả sản phẩm</div>
           <div class="ph-sort">
+            <i
+              class="fa-solid fa-arrow-down-short-wide"
+              style="color: #666; margin-right: 5px"
+            ></i>
             Sắp xếp:
             <select>
               <option>Mới nhất</option>
@@ -291,7 +208,6 @@
             </select>
           </div>
         </div>
-
         <div class="product-grid" id="productGrid"></div>
       </div>
     </div>

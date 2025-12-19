@@ -37,19 +37,59 @@ html, body {
     margin-bottom: 20px;
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 9px;
 }
 
-/* CART ITEM */
+/* 1. KHUNG BAO NGOÀI (Đại diện cho 1 Sản phẩm cha) */
+.product-group {
+    background-color: #fff;       /* Nền trắng chung */
+    border-radius: 8px;           /* Bo tròn khung to */
+    box-shadow: 0 1px 4px rgba(0,0,0,0.05); /* Bóng mờ */
+    margin-bottom: 15px;          /* Cách xa sản phẩm tiếp theo */
+    overflow: hidden;             /* Để bo tròn không bị con đè lên */
+    border: 1px solid #eee;
+}
+
+/* 2. DÒNG SẢN PHẨM CON (Biến thể bên trong) */
 .cart-item {
     display: flex;
-    align-items: flex-start;
-    padding: 20px 0;
-    border-bottom: 1px solid #F3F4F6;
+    align-items: center;
+    padding: 20px;                /* Khoảng cách bên trong */
+    background-color: transparent; /* Trong suốt để ăn theo nền cha */
+    border-bottom: 1px solid #f0f0f0; /* Gạch ngang ngăn cách các item cùng nhóm */
+    
+    /* Reset lại các thuộc tính cũ nếu có */
+    margin-bottom: 0 !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    border: none;                 /* Xóa viền bao quanh cũ */
+    border-bottom: 1px solid #f3f4f6; /* Thêm lại gạch chân */
 }
 
+/* 3. Xóa gạch chân của thằng con cuối cùng trong nhóm cho đẹp */
 .cart-item:last-child {
     border-bottom: none;
+}
+/* 1. Xóa nền trắng của cái khung to bao ngoài */
+.cart-items-section.section-box {
+    background-color: transparent !important; /* Làm trong suốt */
+    box-shadow: none !important; /* Bỏ bóng đổ của khung to */
+    padding: 0 !important; /* Bỏ padding để nó sát lề */
+    border: none !important;
+}
+/* 2. Biến cái thanh tiêu đề "Chọn tất cả" thành 1 cục riêng */
+.cart-items-section .cart-header {
+    background-color: #fff;
+    padding: 15px 20px;
+    margin-bottom: 12px; /* Đẩy cách xa sản phẩm bên dưới 1 chút */
+    border-radius: 8px; /* Bo tròn góc */
+    box-shadow: 0 1px 4px rgba(0,0,0,0.05); /* Bóng mờ nhẹ cho đẹp */
+}
+/* Tùy chọn: Khi di chuột vào thì nổi lên xíu cho xịn */
+.cart-item:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    transform: translateY(-1px);
+    transition: all 0.2s ease;
 }
 
 .delete-btn {
