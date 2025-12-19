@@ -21,7 +21,7 @@ export const ProductService = {
 
     // Lấy DS sản phẩm
     getProducts: async () => {
-        const res = await callAPI(`/auth/admin/products`, "GET");
+        const res = await callAPI(`/auth/admin/products/6786aedf-aa81-44ef-b28f-06abff1b5c1c`, "GET");
         return res?.data?.listData || res?.data || [];
     },
 
