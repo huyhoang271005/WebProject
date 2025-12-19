@@ -48,7 +48,7 @@ export function initEmailList(initialEmails = []) {
                 const email = emails[idx];
                 if(email.validated === true || email.validated === false){
                     await showDialog('question', 'Bạn có chắc muốn xoá email này không?', async()=>{
-                        const result = await callAPI(`/email/${email.emailId}`, 'DELETE')
+                        const result = await callAPI(`/emails/${email.emailId}`, 'DELETE')
                         if(result.success){
                             emails.splice(idx, 1);
                             render();
@@ -69,7 +69,7 @@ export function initEmailList(initialEmails = []) {
                 const email = emails[idx];
                 await showDialog('question', `Gửi email xác thực đến ${email.email}`, async () => {
                     if(email.email === '' || !email?.email) return;
-                    const addEmail = await callAPI('/email', 'POST', {email: email.email});
+                    const addEmail = await callAPI('/emails', 'POST', {email: email.email});
                     if (addEmail.success){
                         const result = await callAPI('/auth/send-verify-email', 'POST', {email: email.email});
                         if(result.success){

@@ -11,20 +11,20 @@ let isEditing = false;
 const config = {
     category: {
         name: 'Danh mục',
-        getList: '/auth/categories',
-        crud: '/auth/category',
+        getList: '/categories',
+        crud: '/categories',
         hasDesc: true
     },
     brand: {
         name: 'Thương hiệu',
-        getList: '/auth/brands',
-        crud: '/auth/brand',
+        getList: '/brands',
+        crud: '/brands',
         hasDesc: true
     },
     attribute: {
         name: 'Thuộc tính',
-        getList: '/auth/attributes',
-        crud: '/auth/attribute',
+        getList: '/attributes',
+        crud: '/attributes',
         hasDesc: false
     }
 };
@@ -114,30 +114,25 @@ async function loadData(isLoadMore = false) {
     }
 
     const conf = config[currentType];
-    // Thêm try-catch để nếu lỗi mạng thì không bị treo
-    try {
-        const result = await callAPI(`${conf.getList}?page=${page}&size=${size}`, "GET");
+    const result = await callAPI(`${conf.getList}?page=${page}&size=${size}`, "GET");
 
-        if (!result.success) {
-            // Không hiện dialog lỗi khi mới vào trang (đỡ phiền), chỉ log ra console
-            console.error("Lỗi tải dữ liệu:", result.message);
-            return;
-        }
-
-        const { hasMore, listData } = result.data || { hasMore: false, listData: [] };
-
-        if (Array.isArray(listData)) {
-            listData.forEach(item => {
-                const tr = createRowHTML(item);
-                tableBody.appendChild(tr);
-            });
-        }
-
-        loadMoreBtn.style.display = hasMore ? "block" : "none";
-        if (hasMore) page++;
-    } catch (e) {
-        console.error(e);
+    if (!result.success) {
+        // Không hiện dialog lỗi khi mới vào trang (đỡ phiền), chỉ log ra console
+        console.error("Lỗi tải dữ liệu:", result.message);
+        return;
     }
+
+    const { hasMore, listData } = result.data || { hasMore: false, listData: [] };
+
+    if (Array.isArray(listData)) {
+        listData.forEach(item => {
+            const tr = createRowHTML(item);
+            tableBody.appendChild(tr);
+        });
+    }
+
+    loadMoreBtn.style.display = hasMore ? "block" : "none";
+    if (hasMore) page++;
 }
 
 // === 5. HÀM LƯU DỮ LIỆU (Đã sửa để dùng loadData) ===
@@ -161,22 +156,12 @@ saveBtn.addEventListener("click", async () => {
         method = "PUT";
     }
 
-    // Dùng try-catch để đảm bảo nút luôn được mở khóa dù có lỗi
     await getLoader("saveBtn", async () => {
-        try {
-            const result = await callAPI(conf.crud, method, payload);
-            await showDialog(result.success ? "success" : "error", result.message);
-
-            if (result.success) {
-                resetForm();
-                //Đợi 300ms (0.3 giây) cho Server kịp lưu rồi mới load lại
-                setTimeout(async () => {
-                    await loadData();
-                }, 300);
-            }
-        } catch (err) {
-            console.error(err);
-            await showDialog("error", "Có lỗi xảy ra trong quá trình xử lý");
+        const result = await callAPI(conf.crud, method, payload);
+        await showDialog(result.success ? "success" : "error", result.message);
+        if (result.success) {
+            resetForm();
+            await loadData();
         }
     });
 });
@@ -203,7 +188,6 @@ async function deleteItem(id, name) {
     await showDialog("question", `Bạn chắc chắn muốn xóa ${conf.name} "${name}"?`, async () => {
         const result = await callAPI(`${conf.crud}/${id}`, "DELETE");
         await showDialog(result.success ? "success" : "error", result.message);
-
         if (result.success) {
             await loadData(); // Tải lại bảng sau khi xóa
         }

@@ -1,156 +1,358 @@
 <!DOCTYPE html>
 <html lang="vi">
-<head>
+  <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Tạp Hóa Xanh - Trang chủ</title>
-    
-    <link rel="stylesheet" href="../dialog/index.css"/>
-    <link rel="stylesheet" href="../public/public.css"/>
-    <script src="https://kit.fontawesome.com/e9c281dd3f.js" crossorigin="anonymous"></script>
+    <title>Tạp Hóa Xanh - Trang Chủ</title>
+    <link rel="stylesheet" href="../dialog/index.css" />
+    <link rel="stylesheet" href="../public/public.css" />
+    <script
+      src="https://kit.fontawesome.com/e9c281dd3f.js"
+      crossorigin="anonymous"
+    ></script>
 
     <style>
-        /* RESET CSS CƯỠNG CHẾ */
-        html, body {
-            margin: 0 !important; padding: 0 !important; width: 100% !important; min-height: 100vh;
-            background-color: #f3f4f6 !important; font-family: 'Segoe UI', sans-serif; display: block !important;
+      /* --- GLOBAL STYLE --- */
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        display: block !important;
+        width: 100% !important;
+        height: auto !important;
+        min-height: 100vh;
+        overflow-y: auto !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        font-family: "Segoe UI", sans-serif;
+
+        /* NỀN MÂY TRỜI ĐỒNG BỘ */
+        background: url("https://img.freepik.com/free-vector/blue-sky-with-clouds-background_1017-26302.jpg")
+          no-repeat center center fixed !important;
+        background-size: cover !important;
+      }
+
+      .main-container {
+        padding-top: 90px;
+        padding-bottom: 50px;
+        max-width: 1200px;
+        margin: 0 auto;
+      }
+
+      /* BANNER */
+      .hero {
+        margin: 0 20px 30px 20px;
+        border-radius: 20px;
+        overflow: hidden;
+        height: 380px;
+        position: relative;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+      }
+      .hero img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: center 25%;
+        filter: brightness(0.8);
+      }
+      .hero-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        padding-left: 80px;
+        color: white;
+        background: linear-gradient(
+          90deg,
+          rgba(0, 0, 0, 0.6) 0%,
+          rgba(0, 0, 0, 0) 60%
+        );
+      }
+      .hero h1 {
+        font-size: 3.5rem;
+        margin-bottom: 15px;
+        font-weight: 800;
+        text-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+      }
+      .hero button {
+        padding: 15px 40px;
+        background: #10b981;
+        color: white;
+        border: none;
+        border-radius: 50px;
+        font-weight: bold;
+        cursor: pointer;
+        font-size: 1.1rem;
+        transition: 0.3s;
+        width: fit-content;
+        box-shadow: 0 5px 15px rgba(16, 185, 129, 0.4);
+      }
+      .hero button:hover {
+        transform: translateY(-3px);
+        background: #059669;
+      }
+
+      /* PRODUCT GRID */
+      .category-section {
+        background: white;
+        margin: 0 20px 40px 20px;
+        padding: 30px;
+        border-radius: 20px;
+        border: 1px solid #f0f0f0;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02);
+      }
+      .section-header {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 25px;
+        padding-bottom: 15px;
+        border-bottom: 2px solid #f3f4f6;
+        align-items: center;
+      }
+      .section-title {
+        font-size: 1.5rem;
+        font-weight: 800;
+        color: #111827;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      .btn-see-more {
+        text-decoration: none;
+        color: #10b981;
+        padding: 8px 20px;
+        border-radius: 30px;
+        font-weight: 600;
+        font-size: 0.95rem;
+        transition: 0.2s;
+        background: #ecfdf5;
+      }
+      .btn-see-more:hover {
+        background: #10b981;
+        color: white;
+      }
+
+      .product-grid-5 {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 25px;
+      }
+      @media (max-width: 1200px) {
+        .product-grid-5 {
+          grid-template-columns: repeat(4, 1fr);
         }
-
-        /* NAVBAR */
-        .navbar {
-            background: white; height: 70px; width: 100%; position: fixed; top: 0; left: 0; z-index: 1000;
-            display: flex; align-items: center; justify-content: space-between; padding: 0 30px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05); box-sizing: border-box;
+      }
+      @media (max-width: 992px) {
+        .product-grid-5 {
+          grid-template-columns: repeat(3, 1fr);
         }
-        .brand { font-size: 1.5rem; font-weight: bold; color: #10B981; text-decoration: none; display: flex; align-items: center; gap: 10px; min-width: 180px; }
-        
-        .nav-cat-btn {
-            background: white; border: 1px solid #E5E7EB; padding: 8px 15px; border-radius: 20px;
-            cursor: pointer; font-weight: 600; color: #374151; display: flex; align-items: center; gap: 8px; position: relative;
+      }
+      @media (max-width: 768px) {
+        .product-grid-5 {
+          grid-template-columns: repeat(2, 1fr);
         }
-        .cat-dropdown {
-            position: absolute; top: 110%; left: 0; background: white; width: 220px; border-radius: 12px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.15); display: none; flex-direction: column; overflow: hidden; border: 1px solid #eee;
+        .hero h1 {
+          font-size: 2rem;
         }
-        .cat-dropdown.show { display: flex; }
-        .cat-dropdown a { padding: 12px 15px; text-decoration: none; color: #333; border-bottom: 1px solid #f9f9f9; transition: 0.2s; display: flex; gap: 10px; align-items: center; }
-        .cat-dropdown a:hover { background: #ECFDF5; color: #10B981; padding-left: 20px; }
-
-        .search-wrapper { flex: 1; max-width: 500px; position: relative; margin: 0 20px; }
-        .search-input { width: 100%; padding: 10px 45px 10px 20px; border: 2px solid #E5E7EB; border-radius: 25px; outline: none; }
-        .search-btn { position: absolute; right: 5px; top: 50%; transform: translateY(-50%); background: #10B981; color: white; border: none; width: 34px; height: 34px; border-radius: 50%; cursor: pointer; }
-
-        .nav-actions { display: flex; align-items: center; gap: 15px; }
-        .nav-link { text-decoration: none; color: #4B5563; font-weight: 600; display: flex; align-items: center; gap: 5px; }
-        .cart-badge { background: #EF4444; color: white; font-size: 0.7rem; padding: 2px 6px; border-radius: 10px; position: relative; top: -10px; left: -5px; }
-
-        .admin-only { display: none; }
-        .user-menu { position: relative; cursor: pointer; }
-        .user-avatar { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; border: 2px solid #E5E7EB; }
-        .user-dropdown {
-            position: absolute; right: 0; top: 55px; background: white; width: 240px; border-radius: 12px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1); display: none; flex-direction: column; overflow: hidden; border: 1px solid #E5E7EB;
+        .hero {
+          height: 300px;
         }
-        .user-dropdown.show { display: flex; }
-        .user-dropdown a, .user-dropdown button { padding: 12px 20px; text-decoration: none; color: #333; text-align: left; background: none; border: none; cursor: pointer; border-bottom: 1px solid #f9f9f9; }
-        .user-dropdown a:hover, .user-dropdown button:hover { background: #F9FAFB; color: #10B981; }
+      }
 
-        /* MAIN CONTENT */
-        .main-container { margin-top: 70px; padding-bottom: 50px; }
+      .product-card {
+        background: white;
+        border-radius: 16px;
+        overflow: hidden;
+        border: 1px solid #e5e7eb;
+        transition: 0.3s;
+        cursor: pointer;
+        display: flex;
+        flex-direction: column;
+      }
+      .product-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 15px 30px rgba(0, 0, 0, 0.08);
+        border-color: #10b981;
+      }
+      .p-img {
+        width: 100%;
+        height: 180px;
+        background: #f9fafb;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 3rem;
+        color: #e5e7eb;
+        transition: 0.3s;
+      }
+      .product-card:hover .p-img {
+        background: #f0fdf4;
+        color: #10b981;
+      }
+      .p-info {
+        padding: 15px;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+      }
+      .p-name {
+        font-weight: 600;
+        color: #374151;
+        font-size: 1rem;
+        margin-bottom: 8px;
+        line-height: 1.4;
+        overflow: hidden;
+        height: 44px;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+      }
+      .p-price {
+        color: #ef4444;
+        font-weight: 700;
+        font-size: 1.1rem;
+        margin-top: auto;
+      }
 
-        /* Banner */
-        .hero { margin: 20px 30px; border-radius: 16px; overflow: hidden; height: 350px; position: relative; }
-        .hero img { width: 100%; height: 100%; object-fit: cover; filter: brightness(0.7); }
-        .hero-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; padding-left: 60px; color: white; }
-        .hero h1 { font-size: 3rem; margin-bottom: 10px; font-weight: 800; }
-        .hero button { padding: 12px 35px; background: #10B981; color: white; border: none; border-radius: 30px; font-weight: bold; cursor: pointer; font-size: 1.1rem; }
+      /* Nav Search + Dropdown */
+      .nav-cat-btn {
+        background: white;
+        border: 1px solid #e5e7eb;
+        padding: 8px 18px;
+        border-radius: 50px;
+        cursor: pointer;
+        font-weight: 600;
+        color: #374151;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        position: relative;
+        transition: 0.2s;
+      }
+      .nav-cat-btn:hover {
+        border-color: #10b981;
+        color: #10b981;
+      }
+      .cat-dropdown {
+        position: absolute;
+        top: 120%;
+        left: 0;
+        background: white;
+        width: 240px;
+        border-radius: 12px;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+        display: none;
+        flex-direction: column;
+        overflow: hidden;
+        border: 1px solid #f3f4f6;
+        z-index: 1001;
+        animation: fadeIn 0.2s ease;
+      }
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      .cat-dropdown.show {
+        display: flex;
+      }
+      .cat-dropdown a {
+        padding: 14px 20px;
+        text-decoration: none;
+        color: #4b5563;
+        border-bottom: 1px solid #f9f9f9;
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        transition: 0.2s;
+      }
+      .cat-dropdown a:hover {
+        background: #ecfdf5;
+        color: #10b981;
+        padding-left: 25px;
+      }
+      .nav-search-input {
+        width: 450px;
+        padding: 10px 45px 10px 20px;
+        border: 1px solid #e5e7eb;
+        border-radius: 50px;
+        outline: none;
+        background: #f9fafb;
+        transition: 0.2s;
+      }
+      .nav-search-input:focus {
+        border-color: #10b981;
+        background: white;
+        box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.1);
+      }
 
-        /* Product Section */
-        .category-section { background: white; margin: 30px; padding: 25px; border-radius: 16px; border: 1px solid #E5E7EB; }
-        .section-header { display: flex; justify-content: space-between; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 2px solid #f3f4f6; }
-        .section-title { font-size: 1.4rem; font-weight: 800; color: #1F2937; display: flex; align-items: center; gap: 10px; }
-        .btn-see-more { text-decoration: none; color: #10B981; border: 2px solid #10B981; padding: 6px 20px; border-radius: 20px; font-weight: 700; font-size: 0.9rem; transition: 0.2s; }
-        .btn-see-more:hover { background: #10B981; color: white; }
-
-        .product-grid-5 { display: grid; grid-template-columns: repeat(5, 1fr); gap: 20px; }
-        
-        .product-card { background: white; border-radius: 12px; overflow: hidden; border: 1px solid #E5E7EB; transition: 0.2s; cursor: pointer; display: flex; flex-direction: column; }
-        .product-card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.1); border-color: #10B981; }
-        .p-img { width: 100%; height: 160px; background: #f9fafb; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; color: #ccc; }
-        .p-info { padding: 12px; }
-        .p-name { font-weight: 600; color: #374151; font-size: 0.95rem; margin-bottom: 5px; height: 40px; overflow: hidden; }
-        .p-price { color: #EF4444; font-weight: bold; font-size: 1.1rem; }
-
-        /* Admin Toolbar */
-        .admin-toolbar { background: white; margin: 20px 30px; padding: 15px; border-radius: 12px; border-left: 5px solid #F59E0B; display: flex; gap: 15px; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        .admin-input { flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 6px; outline: none; }
-        .admin-btn { background: #F59E0B; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; }
-
-        /* Toast */
-        #toast-container { position: fixed; bottom: 30px; right: 30px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; pointer-events: none; }
-        .toast { pointer-events: auto; background: white; padding: 15px 20px; border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); border-left: 4px solid #10B981; display: flex; align-items: center; gap: 10px; animation: slideIn 0.3s; }
-        @keyframes slideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
-
-        @media (max-width: 1200px) { .product-grid-5 { grid-template-columns: repeat(4, 1fr); } }
-        @media (max-width: 992px) { .product-grid-5 { grid-template-columns: repeat(3, 1fr); } }
+      /* Chat Btn */
+      .chat-btn {
+        position: fixed;
+        bottom: 30px;
+        right: 30px;
+        width: 60px;
+        height: 60px;
+        background: #3b82f6;
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.8rem;
+        cursor: pointer;
+        z-index: 9999;
+        box-shadow: 0 5px 20px rgba(59, 130, 246, 0.4);
+        border: 3px solid white;
+        transition: 0.2s;
+      }
+      .chat-btn:hover {
+        transform: scale(1.1);
+      }
+      #toast-container {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 9999;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
     </style>
-</head>
-<body>
-
-    <nav class="navbar">
-        <a href="#" class="brand"><i class="fa-solid fa-leaf"></i> Tạp Hóa Xanh</a>
-        
-        <div class="nav-cat-btn" id="catBtn">
-            <i class="fa-solid fa-bars"></i> <span>Danh mục</span>
-            <div class="cat-dropdown" id="catDropdown"></div>
-        </div>
-
-        <div class="search-wrapper">
-            <input type="text" class="search-input" id="mainSearch" placeholder="Tìm sản phẩm...">
-            <button class="search-btn" id="btnSearch"><i class="fa-solid fa-magnifying-glass"></i></button>
-        </div>
-
-        <div class="nav-actions">
-            <a href="../products/index.html" class="nav-link"><i class="fa-regular fa-compass"></i> Khám phá</a>
-            <a href="../cart" class="nav-link"><i class="fa-solid fa-cart-shopping"></i> <span class="cart-badge">3</span></a>
-
-            <div class="user-menu" id="userMenuBtn">
-                <img src="" class="user-avatar" id="navAvatar" onerror="this.src='https://cdn-icons-png.flaticon.com/512/847/847969.png'">
-                <div class="user-dropdown" id="userDropdown">
-                    <div style="padding:10px 20px; background:#f9f9f9; font-weight:bold; border-bottom:1px solid #eee;" id="welcomeName">User</div>
-                    <a href="../profile">Hồ sơ cá nhân</a>
-                    <a href="../session">Quản lý thiết bị</a>
-                    
-                    <a href="../role-permission" class="admin-only" style="color:#B45309;"><i class="fa-solid fa-shield-halved"></i> Phân quyền</a>
-                    <a href="../users" class="admin-only" style="color:#B45309;"><i class="fa-solid fa-users"></i> Quản lý Users</a>
-                    <a href="../catalog-management" class="admin-only" style="color:#B45309;"><i class="fa-solid fa-list"></i> QL Danh mục</a>
-                    <button id="logout" style="color:red;"><i class="fa-solid fa-power-off"></i> Đăng xuất</button>
-                </div>
-            </div>
-        </div>
-    </nav>
-
+  </head>
+  <body>
     <div class="main-container">
-        <div class="admin-toolbar admin-only">
-            <strong style="color:#B45309;">ADMIN BROADCAST:</strong>
-            <input type="text" id="message" class="admin-input" placeholder="Nhập thông báo gửi toàn hệ thống...">
-            <button id="sendAll" class="admin-btn">Gửi</button>
+      <div class="hero">
+        <img
+          src="https://img.freepik.com/free-photo/assortment-various-barbecue-food-grill_23-2148243673.jpg?w=1380"
+          alt="Banner"
+        />
+        <div class="hero-overlay">
+          <h1>Siêu Sale Tạp Hóa 🍡</h1>
+          <p>Giảm giá 50% tất cả các loại đồ ăn vặt!</p>
+          <button
+            onclick="window.location.href='../products/index.html?cat=an-vat'"
+          >
+            Mua Ngay
+          </button>
         </div>
-
-        <div class="hero">
-            <img src="https://img.freepik.com/free-photo/assortment-various-barbecue-food-grill_23-2148243673.jpg?w=1380">
-            <div class="hero-overlay">
-                <h1>Siêu Sale Tạp Hóa 🍡</h1>
-                <p>Giảm giá 50% các loại đồ ăn vặt!</p>
-                <button onclick="window.location.href='../products/index.html?cat=an-vat'">Mua Ngay</button>
-            </div>
-        </div>
-
-        <div id="homeContainer"></div>
+      </div>
+      <div id="homeContainer"></div>
     </div>
-
+    <div class="chat-btn" onclick="alert('Tính năng Chat đang phát triển!')">
+      <i class="fa-solid fa-comments"></i>
+    </div>
     <div id="toast-container"></div>
-
     <script type="module" src="index.js"></script>
-</body>
+  </body>
 </html>

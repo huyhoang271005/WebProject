@@ -2,11 +2,12 @@ import { loadPage, convertToVNTime, getLoader, noImage } from "../public/public.
 import { showDialog } from "../dialog/index.js";
 import { callAPI } from "../public/api.js";
 import { initEmailList } from "./email-list.js";
-
+import { loadNavbar } from "../navbar/navbar.js";
 await loadPage(async()=>{
+    await loadNavbar();
     const param = new URLSearchParams(window.location.search);
     const uid = param.get('uid');
-    const user = await callAPI(`/user/${uid}`);
+    const user = await callAPI(`/users/${uid}`);
     if(!user.success){
         await showDialog('error', user.message);
         return;
@@ -62,7 +63,7 @@ async function render(user) {
                 roleId: rolesSelect.value
             }
             await getLoader('btnUpdate', async()=>{
-                const result = await callAPI('/user', 'POST', data);
+                const result = await callAPI('/users', 'PATCH', data);
                 await showDialog(result.success ? 'success' : 'error', result.message);
             });
         });

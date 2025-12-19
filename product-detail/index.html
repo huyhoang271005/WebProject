@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chi tiết sản phẩm</title>
+
+    <script src="https://kit.fontawesome.com/e9c281dd3f.js" crossorigin="anonymous"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="../public/public.css">
+    <link rel="stylesheet" href="index.css">
+</head>
+<body>
+
+<div id="loadPage"></div>
+<div id="notification" class="hidden"></div>
+<div id="info" class="container" style="display: none;">
+    <div class="product-card">
+        <div class="product-layout">
+            <div class="gallery-section">
+                <div class="main-image-box">
+                    <img id="mainImage" src="" alt="Ảnh sản phẩm">
+                </div>
+            </div>
+
+            <div class="details-section">
+                <h1 id="productName" class="product-name">...</h1>
+
+                <div class="meta-row">
+                    <div class="rating-box">
+                        <span id="ratingScore" class="rating-num">0.0</span>
+                        <div id="stars" class="stars-container"></div>
+                    </div>
+                    <div class="seperator">|</div>
+                    <div class="sales-box">Đã bán <span id="totalSales">0</span></div>
+                </div>
+
+                <div class="price-section">
+                    <span id="originalPrice" class="price-del"></span>
+                    <div class="price-main-wrapper">
+                        <span id="currentPrice" class="price-current">Loading...</span>
+                        <span id="discountTag" class="discount-tag"></span>
+                    </div>
+                </div>
+
+                <div id="attributesArea" class="attributes-wrapper">
+                </div>
+
+                <div class="quantity-wrapper">
+                    <span class="qty-label">Số lượng</span>
+                    <div class="qty-control">
+                        <button id="btnDecrease"><i class="fa-solid fa-minus"></i></button>
+                        <input type="number" id="inputQuantity" value="1" min="1">
+                        <button id="btnIncrease"><i class="fa-solid fa-plus"></i></button>
+                    </div>
+                    <span id="stockCount" class="stock-info"></span>
+                </div>
+
+                <div class="action-group">
+                    <button id="btnAddToCart" class="btn btn-outlined">
+                        <i class="fa-solid fa-cart-plus"></i> Thêm vào giỏ
+                    </button>
+                    <button id="btnBuyNow" class="btn btn-filled">
+                        Mua ngay
+                    </button>
+                </div>
+
+                <div class="description-section">
+                    <div class="desc-header">MÔ TẢ SẢN PHẨM</div>
+                    <p id="descriptionContent" class="desc-text"></p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script type="module" src="index.js"></script>
+</body>
+</html>

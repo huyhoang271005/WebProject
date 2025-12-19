@@ -1,0 +1,165 @@
+import { showDialog } from "../dialog/index.js";
+import { ProductService } from "./service.js";
+import { ProductLogic } from "./logic.js";
+import { ProductUI } from "./ui.js";
+
+let state = {
+    products: [],
+    categories: [],
+    brands: [],
+    attributes: [],
+    variants: [],
+    selectedAttributes: [],
+    mainImageFile: null
+};
+
+// --- HÀM LOAD 1 SẢN PHẨM (TEST) ---
+async function loadProductList() {
+    const tbody = document.getElementById('productTableBody');
+    tbody.innerHTML = '<tr><td colspan="5" class="text-center py-5">Đang tải dữ liệu... <div class="spinner-border spinner-border-sm text-primary"></div></td></tr>';
+    
+    try {
+        // ID LẤY TỪ JSON CỦA BẠN (Hardcode để test)
+        const testId = "6786aedf-aa81-44ef-b28f-06abff1b5c1c";
+        
+        console.log(`Đang gọi API lấy chi tiết ID: ${testId}`);
+        
+        const data = await ProductService.getProductById(testId);
+
+        if (data && data.productDetailDTO) {
+            // JSON trả về object, nhưng hàm renderProductList cần mảng []
+            // -> Ta bọc nó lại thành mảng 1 phần tử
+            const singleProduct = data.productDetailDTO;
+            state.products = [singleProduct];
+            
+            // Render ra bảng
+            ProductUI.renderProductList(state.products, state.categories, state.brands);
+        } else {
+            tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-4">Không tìm thấy sản phẩm hoặc lỗi dữ liệu.</td></tr>';
+        }
+    } catch (error) {
+        console.error("Lỗi tải dữ liệu:", error);
+        tbody.innerHTML = '<tr><td colspan="5" class="text-center text-danger py-4">Lỗi kết nối API.</td></tr>';
+    }
+}
+
+// --- CÁC HÀM XỬ LÝ LƯU & EVENT (GIỮ NGUYÊN) ---
+async function handleSave(e) {
+    e.preventDefault();
+    // 1. Validation
+    const productName = document.getElementById("productName").value.trim();
+    const price = parseFloat(document.getElementById("price").value);
+    const priceOriginal = parseFloat(document.getElementById("priceOriginal").value);
+    const categoryId = document.getElementById("categoryId").value;
+    const brandId = document.getElementById("brandId").value;
+
+    if (!productName || !categoryId || !brandId || !price || !priceOriginal) {
+        await showDialog("error", "Vui lòng điền đầy đủ thông tin bắt buộc!"); return;
+    }
+    const validation = ProductLogic.validateProduct({ productName, price, priceOriginal, variants: ProductUI.state.variants });
+    if (!validation.isValid) { await showDialog("error", validation.errors.join('\n')); return; }
+
+    // 2. Payload
+    const payload = ProductLogic.formatProductData(
+        { productName, description: document.getElementById("description").value.trim() || "", price, priceOriginal, categoryId, brandId },
+        ProductUI.state.selectedAttributes, ProductUI.state.variants
+    );
+
+    const formData = new FormData();
+    if (state.mainImageFile) {
+        payload.productDetailDTO.imageName = "productImage"; 
+        formData.append("productImage", state.mainImageFile);
+    } else { await showDialog("error", "Thiếu ảnh chính!"); return; }
+    
+    ProductUI.state.variants.forEach((v, i) => {
+        if (v.imageFile) {
+            payload.variants[i].imageName = `image_variant_${i}`;
+            formData.append(`image_variant_${i}`, v.imageFile);
+        }
+    });
+    
+    formData.append("productDTO", new Blob([JSON.stringify(payload)], { type: "application/json" }));
+
+    // 3. Submit
+    const submitBtn = document.getElementById("submitBtn");
+    const spinner = document.getElementById("submitSpinner");
+    submitBtn.disabled = true; spinner.classList.remove("d-none");
+
+    try {
+        const res = await ProductService.createProduct(formData);
+        if (res && res.success) {
+            await showDialog("success", "Tạo sản phẩm thành công!");
+            resetForm();
+            // Quay về danh sách và load lại
+            ProductUI.toggleView('list');
+            await loadProductList();
+        } else {
+            await showDialog("error", res?.message || "Có lỗi xảy ra");
+        }
+    } catch (error) {
+        await showDialog("error", "Lỗi: " + error.message);
+    } finally {
+        submitBtn.disabled = false; spinner.classList.add("d-none");
+    }
+}
+
+function resetForm() {
+    state.mainImageFile = null;
+    ProductUI.state.variants = [];
+    ProductUI.state.selectedAttributes = [];
+    ProductUI.state.mainImageFile = null;
+    document.getElementById("productForm").reset();
+    document.getElementById("selectedAttributesList").innerHTML = "";
+    document.getElementById("variantsContainer").innerHTML = "";
+    document.getElementById("mainImagePreview").innerHTML = "";
+}
+
+function setupEventListeners() {
+    document.getElementById("productForm").onsubmit = handleSave;
+    document.getElementById("resetBtn").onclick = resetForm;
+    
+    document.getElementById("btnOpenCreate").onclick = () => ProductUI.toggleView('create');
+    document.getElementById("btnBackToList").onclick = () => ProductUI.toggleView('list');
+    
+    document.getElementById("mainImage").onchange = (e) => {
+        if(e.target.files[0]) { state.mainImageFile = e.target.files[0]; ProductUI.handleMainImageUpload(e.target.files[0]); }
+    };
+
+    document.getElementById("categoryId").onchange = (e) => {
+        const categoryId = e.target.value;
+        const brandSelect = document.getElementById("brandId");
+        brandSelect.innerHTML = '<option value="">-- Chọn thương hiệu --</option>';
+        if(!categoryId) return;
+        state.brands.filter(b => b.categoryId == categoryId).forEach(b => {
+            brandSelect.innerHTML += `<option value="${b.brandId}">${b.brandName}</option>`;
+        });
+    };
+}
+
+async function loadInitialData() {
+    try {
+        const cats = await ProductService.getCategories();
+        const [brands, attrs] = await Promise.all([
+            ProductService.getBrands(),
+            ProductService.getAttributes()
+        ]);
+        
+        state.categories = cats || [];
+        state.brands = brands || [];
+        state.attributes = attrs || [];
+        ProductUI.state.categories = state.categories;
+        ProductUI.state.brands = state.brands;
+        ProductUI.state.attributes = state.attributes;
+
+        const categorySelect = document.getElementById("categoryId");
+        categorySelect.innerHTML = '<option value="">-- Chọn danh mục --</option>';
+        state.categories.forEach(c => categorySelect.innerHTML += `<option value="${c.categoryId}">${c.categoryName}</option>`);
+        ProductUI.renderAttributeSelector();
+        
+        // Gọi hàm load 1 sản phẩm
+        await loadProductList();
+
+    } catch (e) { console.error(e); }
+}
+
+(async function init() { await loadInitialData(); setupEventListeners(); })();

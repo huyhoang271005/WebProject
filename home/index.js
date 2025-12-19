@@ -1,6 +1,5 @@
-import { showDialog } from "../dialog/index.js";
-import { callAPI, connectSse } from "../public/api.js";
-import { getLoader } from "../public/public.js";
+import { loadNavbar } from "../navbar/navbar.js";
+import { toggleLoading } from "../public/loader.js"; // Import Loader dùng chung
 
 const CATEGORIES = [
   { id: "an-vat", name: "Đồ ăn vặt", icon: "fa-cookie-bite" },
@@ -11,168 +10,111 @@ const CATEGORIES = [
 ];
 
 document.addEventListener("DOMContentLoaded", async () => {
-  // 1. Check User
+  toggleLoading(true); // Bật Loader xịn
+
   try {
-    const profile = await callAPI("/profile");
-    if (profile && profile.success) {
-      const user = profile.data;
-      if (user.imageUrl)
-        document.getElementById("navAvatar").src = user.imageUrl;
-      if (user.username)
-        document.getElementById("welcomeName").textContent = user.username;
-      if (user.roleName === "ADMIN" || user.role === "ADMIN") {
-        document
-          .querySelectorAll(".admin-only")
-          .forEach((el) => (el.style.display = "block")); // Hiện menu admin
-      }
-    } else {
-      window.location.replace("../auth/login"); // Chưa login -> về login
-      return;
-    }
+    // Navbar giờ tự có giỏ hàng, chỉ cần truyền cái thanh Search vào giữa thôi
+    await loadNavbar({
+      centerHTML: `
+        <div class="nav-cat-btn" id="catBtn">
+            <i class="fa-solid fa-bars"></i> <span>Danh mục</span>
+            <div class="cat-dropdown" id="catDropdown"></div>
+        </div>
+        <div style="position:relative;">
+            <input type="text" class="nav-search-input" id="homeSearch" placeholder="Tìm sản phẩm...">
+            <i class="fa-solid fa-magnifying-glass" style="position:absolute; right:15px; top:50%; transform:translateY(-50%); color:#10B981; cursor:pointer;" id="homeSearchBtn"></i>
+        </div>
+      `,
+      // KHÔNG CẦN rightHTML nữa, vì Navbar tự có Giỏ hàng rồi
+    });
+
+    renderNavCategories();
+    setupNavbarEvents();
+    renderHomeSections();
   } catch (e) {
     console.error(e);
+  } finally {
+    // Tắt loading sau 0.5s cho mượt
+    setTimeout(() => toggleLoading(false), 500);
   }
-
-  // 2. Render UI
-  renderNavCategories();
-  renderHomeSections();
-
-  // 3. SSE
-  try {
-    connectSse("/connect", (data) => {
-      if (data.success) showToast("Thông báo", data.message);
-    });
-  } catch (e) {}
 });
 
+// ... (Giữ nguyên các hàm helper bên dưới: renderNavCategories, renderHomeSections...)
+// Copy nốt các hàm helper từ code cũ vào đây
+function setupNavbarEvents() {
+  const catBtn = document.getElementById("catBtn");
+  const catDropdown = document.getElementById("catDropdown");
+  if (catBtn) {
+    catBtn.onclick = (e) => {
+      e.stopPropagation();
+      catDropdown.classList.toggle("show");
+    };
+    document.addEventListener("click", () => {
+      if (catDropdown) catDropdown.classList.remove("show");
+    });
+  }
+}
+function renderNavCategories() {
+  const el = document.getElementById("catDropdown");
+  if (el)
+    el.innerHTML = CATEGORIES.map(
+      (c) =>
+        `<a href="../products/index.html?cat=${c.id}"><i class="fa-solid ${c.icon}"></i> ${c.name}</a>`
+    ).join("");
+}
 function renderHomeSections() {
   const container = document.getElementById("homeContainer");
-  const products = generateMockProducts(); // Tạo sản phẩm giả
-
+  if (!container) return;
+  const products = generateMockProducts();
   container.innerHTML = "";
   CATEGORIES.forEach((cat) => {
-    const list = products.filter((p) => p.catId === cat.id).slice(0, 5); // Lấy 5 món đầu mỗi loại
-
+    const list = products.filter((p) => p.catId === cat.id).slice(0, 5);
     if (list.length > 0) {
       container.insertAdjacentHTML(
         "beforeend",
         `
-            <div class="category-section">
-                <div class="section-header">
-                    <div class="section-title"><i class="fa-solid ${
-                      cat.icon
-                    }" style="color:#10B981"></i> ${cat.name}</div>
-                    <a href="../products/index.html?cat=${
-                      cat.id
-                    }" class="btn-see-more">Xem thêm <i class="fa-solid fa-arrow-right"></i></a>
-                </div>
-                <div class="product-grid-5">
-                    ${list
-                      .map(
-                        (p) => `
-                        <div class="product-card" onclick="alert('Chi tiết: ${
-                          p.name
-                        }')">
-                            <div class="p-img">${p.name.charAt(0)}</div>
-                            <div class="p-info">
-                                <div class="p-name" title="${p.name}">${
-                          p.name
-                        }</div>
-                                <div class="p-price">${p.price}</div>
-                                <div class="p-sold">Đã bán ${Math.floor(
-                                  Math.random() * 2000
-                                )}</div>
+                <div class="category-section">
+                    <div class="section-header">
+                        <div class="section-title"><i class="fa-solid ${
+                          cat.icon
+                        }" style="color:#10B981"></i> ${cat.name}</div>
+                        <a href="../products/index.html?cat=${
+                          cat.id
+                        }" class="btn-see-more">Xem thêm <i class="fa-solid fa-arrow-right"></i></a>
+                    </div>
+                    <div class="product-grid-5">
+                        ${list
+                          .map(
+                            (p) => `
+                            <div class="product-card" onclick="alert('Xem: ${
+                              p.name
+                            }')">
+                                <div class="p-img">${p.name.charAt(0)}</div>
+                                <div class="p-info">
+                                    <div class="p-name">${p.name}</div>
+                                    <div class="p-price">${p.price}</div>
+                                </div>
                             </div>
-                        </div>
-                    `
-                      )
-                      .join("")}
+                        `
+                          )
+                          .join("")}
+                    </div>
                 </div>
-            </div>`
+            `
       );
     }
   });
 }
-
-function renderNavCategories() {
-  document.getElementById("catDropdown").innerHTML = CATEGORIES.map(
-    (cat) =>
-      `<a href="../products/index.html?cat=${cat.id}"><i class="fa-solid ${cat.icon}"></i> ${cat.name}</a>`
-  ).join("");
-}
-
 function generateMockProducts() {
   let arr = [];
   CATEGORIES.forEach((c) => {
     for (let i = 1; i <= 10; i++) {
       arr.push({
         catId: c.id,
-        name: `${c.name} - Món ngon ${i}`,
+        name: `${c.name} - Món số ${i}`,
         price: Math.floor(Math.random() * 200) + 10 + ".000đ",
       });
     }
   });
   return arr;
 }
-
-// Logic khác
-const sendAllBtn = document.getElementById("sendAll");
-if (sendAllBtn) {
-  sendAllBtn.onclick = async () => {
-    const msg = document.getElementById("message").value.trim();
-    if (!msg) return;
-    await getLoader("sendAll", async () => {
-      const res = await callAPI("/push", "POST", {
-        success: true,
-        message: msg,
-        data: null,
-      });
-      if (res.success) {
-        document.getElementById("message").value = "";
-        showToast("Thành công", "Đã gửi!");
-      } else showToast("Lỗi", res.message);
-    });
-  };
-}
-
-document.getElementById("logout").onclick = async () => {
-  await showDialog("question", "Đăng xuất?", async () => {
-    await callAPI("/logout");
-    localStorage.setItem("rememberUser", "false");
-    window.location.replace("../auth/login");
-  });
-};
-
-function showToast(title, msg) {
-  const div = document.createElement("div");
-  div.className = "toast";
-  div.innerHTML = `<i class="fa-solid fa-bell" style="color:#10B981; font-size:1.2rem;"></i> <div><b>${title}</b><div>${msg}</div></div>`;
-  document.getElementById("toast-container").appendChild(div);
-  setTimeout(() => div.remove(), 5000);
-}
-
-// Dropdown Toggle
-document.getElementById("catBtn").onclick = (e) => {
-  e.stopPropagation();
-  document.getElementById("catDropdown").classList.toggle("show");
-  document.getElementById("userDropdown").classList.remove("show");
-};
-document.getElementById("userMenuBtn").onclick = (e) => {
-  e.stopPropagation();
-  document.getElementById("userDropdown").classList.toggle("show");
-  document.getElementById("catDropdown").classList.remove("show");
-};
-document.onclick = () => {
-  document
-    .querySelectorAll(".show")
-    .forEach((el) => el.classList.remove("show"));
-};
-
-// Search
-document.getElementById("btnSearch").onclick = () => {
-  const q = document.getElementById("mainSearch").value.trim();
-  if (q)
-    window.location.href = `../products/index.html?search=${encodeURIComponent(
-      q
-    )}`;
-};

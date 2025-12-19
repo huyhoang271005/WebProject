@@ -1,7 +1,8 @@
-const API_BASE = "https://uncoagulative-tyrannisingly-eddie.ngrok-free.dev";
-import { EventSourcePlus } from "https://cdn.jsdelivr.net/npm/event-source-plus/+esm";
+export const API_BASE = "https://uncoagulative-tyrannisingly-eddie.ngrok-free.dev";
 
-let accessToken = null;
+export const authState = {
+    accessToken: null
+}
 /**
  * endpoint là bắt buộc, isMultipart: true nếu gửi FormData
  */
@@ -14,14 +15,13 @@ async function callAPIWithRetry(endpoint, method, data, isMultipart, alreadyRefr
         const options = { method, headers: { "Accept": "*/*" } };
         options.headers["ngrok-skip-browser-warning"] = `26763`;
         if (!endpoint.startsWith("/auth")) {
-            if(!accessToken){
+            if(!authState.accessToken){
                 const result = await refreshAccessToken();
                 if(!result.success){
                     return result;
                 }
-                return await callAPIWithRetry(endpoint, method, data, isMultipart, true);
             }
-            options.headers["Authorization"] = `Bearer ${accessToken}`;
+            options.headers["Authorization"] = `Bearer ${authState.accessToken}`;
         }
         options.credentials = "include";
         if (data) {
@@ -52,7 +52,7 @@ async function callAPIWithRetry(endpoint, method, data, isMultipart, alreadyRefr
     }
 }
 
-async function refreshAccessToken() {
+export async function refreshAccessToken() {
     const res = await fetch(`${API_BASE}/auth/refresh-token`, {
         method: "POST",
         credentials: "include",
@@ -64,7 +64,7 @@ async function refreshAccessToken() {
     const body = await res.json();
     const token = body.data;
     if (body.success &&token?.accessToken) {
-        accessToken = token.accessToken;
+        authState.accessToken = token.accessToken;
     }
     if(res.status === 401) {
         setTimeout(()=>{
@@ -78,51 +78,4 @@ async function refreshAccessToken() {
         }
     }
     return body;
-}
-
-/*enpoint connect sse, bên trong hàm callback có data trả về*/
-export async function connectSse(endpoint, callback) {
-
-    async function start() {
-        const res = await fetch(`${API_BASE}`, {
-            headers: {
-                'Authorization': `Bearer ${accessToken}`,
-                'ngrok-skip-browser-warning': '2710'
-            }
-        });
-        if(res.status === 401){
-            const result = await refreshAccessToken()
-            if(!result.success){
-                await callback(result);
-                return;
-            }
-            const token = result.data;
-            if (token?.accessToken) {
-                accessToken = token.accessToken;
-            }
-        }
-        const es = new EventSourcePlus(`${API_BASE}${endpoint}`, {
-            headers: {
-                'Authorization': `Bearer ${accessToken}`,
-                'ngrok-skip-browser-warning': '2710'
-            }
-        });
-
-        es.listen({
-            async onMessage(e) {
-                try {
-                    const obj = JSON.parse(e.data);
-                    await callback(obj);
-                } catch(err) {
-                    console.error(err);
-                }
-            },
-            async onError(e) {
-                await start();
-                return;
-            }
-        });
-    }
-
-    await start();
 }
