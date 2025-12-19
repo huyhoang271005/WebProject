@@ -13,7 +13,7 @@ export const ProductUI = {
         if (viewName === 'create') {
             listView.classList.add('d-none');
             createView.classList.remove('d-none');
-            // [FIX] Khi đổi tên nút, phải chèn lại cả thẻ SPINNER
+            // Reset text mặc định, sẽ được override ở handleEdit
             if(formTitle) formTitle.textContent = "Thêm Sản Phẩm Mới";
             if(submitBtn) submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm d-none" id="submitSpinner"></span> Tạo sản phẩm';
         } else {
@@ -115,6 +115,7 @@ export const ProductUI = {
         const attrSelect = row.querySelector('.attribute-select');
         const valuesInput = row.querySelector('.attribute-values-input');
 
+        // [FIX] SetTimeout để đảm bảo dropdown nhận giá trị
         if (selectedAttrId) {
             setTimeout(() => {
                 attrSelect.value = selectedAttrId; 
@@ -155,9 +156,8 @@ export const ProductUI = {
 
     updateVariantsFromAttributes: () => {
         import('./logic.js').then(({ ProductLogic }) => {
-            if (!ProductUI.state.isEditingMode) {
-                ProductUI.state.variants = ProductLogic.generateVariants(ProductUI.state.selectedAttributes);
-            }
+            // Luôn generate lại để đảm bảo tính nhất quán
+            ProductUI.state.variants = ProductLogic.generateVariants(ProductUI.state.selectedAttributes);
             ProductUI.renderVariantsTable();
         });
     },

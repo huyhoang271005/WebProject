@@ -1,5 +1,5 @@
 export const ProductLogic = {
-    // Generate variants
+    // Tạo tổ hợp biến thể
     generateVariants: (selectedAttributes) => {
         if (!selectedAttributes || selectedAttributes.length === 0) return [];
         const validAttributes = selectedAttributes.filter(attr => attr.values && attr.values.length > 0);
@@ -50,7 +50,7 @@ export const ProductLogic = {
         return { isValid: errors.length === 0, errors: errors };
     },
 
-    // [FIX QUAN TRỌNG NHẤT Ở ĐÂY]
+    // [FIXED] Format Data: Nhúng attributeValues vào trong Variant
     formatProductData: (formData, selectedAttributes, variants) => {
         const productDetailDTO = {
             productId: null,
@@ -65,24 +65,24 @@ export const ProductLogic = {
             createdAt: null, updatedAt: null
         };
 
-        // Xử lý Attributes
+        // Attributes
         const attributes = selectedAttributes.map(attr => {
             if (!attr.values || attr.values.length === 0) return null;
             return {
                 attributeId: attr.attributeId || null,
                 attributeName: attr.attributeName,
                 attributeValues: attr.values.map(v => ({
+                    // Check ID tạm (có dấu _) thì gửi null để tạo mới
                     attributeValueId: (v.id && String(v.id).indexOf('_') === -1) ? v.id : null, 
                     attributeValueName: v.name
                 }))
             };
         }).filter(a => a !== null);
 
-        // Xử lý Variants
+        // Variants
         const formattedVariants = variants.map((variant, index) => {
-            // [FIX]: Tạo danh sách values con lồng trực tiếp vào variant
-            // Cách này giúp Backend biết ngay variant này gồm những thuộc tính nào mà không cần map ID
-            const valuesInsideVariant = variant.combination.map(combo => ({
+            // Tạo danh sách giá trị con
+            const valuesInside = variant.combination.map(combo => ({
                 attributeId: combo.attributeId,
                 attributeValueId: (combo.valueId && String(combo.valueId).indexOf('_') === -1) ? combo.valueId : null,
                 attributeValueName: combo.valueName
@@ -97,22 +97,17 @@ export const ProductLogic = {
                 stock: parseInt(variant.stock) || 0,
                 sold: 0, active: true,
                 
-                // Gửi thêm trường này để Backend dễ map (nếu Backend hỗ trợ)
-                attributeValues: valuesInsideVariant,
-                // Một số backend dùng tên trường này
-                variantValues: valuesInsideVariant 
+                attributeValues: valuesInside
             };
         });
 
-        // Vẫn giữ danh sách variantValues rời (để tương thích ngược nếu backend dùng cách này cho Update)
+        // Variant Values (Vẫn giữ để tương thích ngược nếu backend cần)
         const variantValues = [];
         variants.forEach((variant, variantIndex) => {
             if (variant.combination && variant.combination.length > 0) {
                 variant.combination.forEach(combo => {
                     variantValues.push({
-                        // Nếu là tạo mới, ta không có variantId thật, nên việc gửi list rời này rất rủi ro.
-                        // Hy vọng Backend sẽ dùng attributeValues lồng bên trên.
-                        variantId: variant.variantId || null, 
+                        variantId: variant.variantId || null, // Backend sẽ tự map nếu null
                         attributeId: combo.attributeId,
                         attributeValueId: (combo.valueId && String(combo.valueId).indexOf('_') === -1) ? combo.valueId : null,
                         attributeValueName: combo.valueName

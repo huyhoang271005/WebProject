@@ -15,7 +15,7 @@ async function loadProductList() {
     tbody.innerHTML = '<tr><td colspan="5" class="text-center py-5">Đang tải dữ liệu... <div class="spinner-border spinner-border-sm text-primary"></div></td></tr>';
     
     try {
-        const testId = "6786aedf-aa81-44ef-b28f-06abff1b5c1c"; 
+        const testId = "0af4a625-3409-4539-9121-cb811ec4bf32"; // ID từ JSON bạn gửi
         const data = await ProductService.getProductById(testId);
 
         if (data && data.productDetailDTO) {
@@ -45,12 +45,8 @@ function renderBrandOptions(categoryId, selectedBrandId = null) {
     brandSelect.innerHTML = '<option value="">-- Chọn thương hiệu --</option>';
 
     let filteredBrands = [];
-    if (categoryId) {
-        filteredBrands = state.brands.filter(b => b.categoryId == categoryId);
-    }
-    if (filteredBrands.length === 0 && state.brands.length > 0) {
-        filteredBrands = state.brands; 
-    }
+    if (categoryId) filteredBrands = state.brands.filter(b => b.categoryId == categoryId);
+    if (filteredBrands.length === 0 && state.brands.length > 0) filteredBrands = state.brands; 
 
     if (filteredBrands.length > 0) {
         filteredBrands.forEach(b => {
@@ -61,12 +57,11 @@ function renderBrandOptions(categoryId, selectedBrandId = null) {
     }
 
     if (selectedBrandId) {
-        setTimeout(() => {
-            brandSelect.value = selectedBrandId;
-        }, 0);
+        setTimeout(() => { brandSelect.value = selectedBrandId; }, 0);
     }
 }
 
+// [HÀM SỬA - ĐÃ CẬP NHẬT LOGIC MAP JSON]
 function handleEdit(id) {
     const product = state.products.find(p => p.productId === id);
     if (!product || !product.fullData) return;
@@ -74,18 +69,17 @@ function handleEdit(id) {
 
     ProductUI.toggleView('create');
     document.querySelector('#createView h2').textContent = "Cập Nhật Sản Phẩm";
-    
-    // [FIX] Giữ lại thẻ SPINNER khi đổi tên nút
     document.getElementById('submitBtn').innerHTML = '<span class="spinner-border spinner-border-sm d-none" id="submitSpinner"></span> Lưu thay đổi';
     
     state.currentProductId = id;
 
-    // Fill thông tin
+    // 1. Fill thông tin cơ bản
     document.getElementById("productName").value = product.productName;
     document.getElementById("description").value = product.description || "";
     document.getElementById("price").value = product.price;
     document.getElementById("priceOriginal").value = product.originalPrice;
     
+    // 2. Fill Category & Brand
     if(product.categoryId) {
         document.getElementById("categoryId").value = product.categoryId;
     } else {
@@ -97,19 +91,63 @@ function handleEdit(id) {
         document.getElementById('mainImagePreview').innerHTML = `<img src="${product.imageUrl}" class="img-thumbnail mt-2" style="max-height: 150px;">`;
     }
 
+    // 3. Fill Attributes (Lấy từ fullData.attributes)
     ProductUI.state.isEditingMode = true; 
     document.getElementById('selectedAttributesList').innerHTML = "";
+    
+    // Map dữ liệu thuộc tính
     const uiAttributes = (fullData.attributes || []).map(attr => ({
         attributeId: attr.attributeId,
         attributeName: attr.attributeName,
         values: attr.attributeValues.map(v => ({ id: v.attributeValueId, name: v.attributeValueName }))
     }));
+
     uiAttributes.forEach(attr => ProductUI.addAttributeRow(attr));
     ProductUI.state.selectedAttributes = uiAttributes;
 
-    const uiVariants = (fullData.variants || []).map(v => ({
-        variantId: v.variantId, displayName: "Biến thể cũ (Cập nhật)", price: v.price, priceOriginal: v.originalPrice, stock: v.stock, imageUrl: v.imageUrl, imageFile: null
-    }));
+    // 4. Fill Variants (Logic KHÓ: Ghép variantValues để tìm tên)
+    const apiVariants = fullData.variants || [];
+    const apiVariantValues = fullData.variantValues || [];
+
+    const uiVariants = apiVariants.map(v => {
+        // Tìm tất cả variantValues khớp với variantId này
+        const relatedValues = apiVariantValues.filter(vv => vv.variantId === v.variantId);
+        
+        // Từ relatedValues -> Tìm tên (VD: X, Xanh)
+        // Cần duyệt qua uiAttributes để tìm tên dựa vào attributeValueId
+        const names = relatedValues.map(vv => {
+            for (const attr of uiAttributes) {
+                const foundVal = attr.values.find(val => val.id === vv.attributeValueId);
+                if (foundVal) return foundVal.name;
+            }
+            return "?";
+        });
+
+        // Tạo combination giả để logic update hoạt động
+        const combination = relatedValues.map(vv => {
+            // Tìm attributeId và attributeName
+             for (const attr of uiAttributes) {
+                const foundVal = attr.values.find(val => val.id === vv.attributeValueId);
+                if (foundVal) return {
+                    attributeId: attr.attributeId, attributeName: attr.attributeName,
+                    valueId: foundVal.id, valueName: foundVal.name
+                };
+            }
+            return {};
+        });
+
+        return {
+            variantId: v.variantId, 
+            displayName: names.length > 0 ? names.join(' - ') : "Biến thể cũ", 
+            combination: combination, // Gán combination để khi Save có dữ liệu
+            price: v.price,
+            priceOriginal: v.originalPrice,
+            stock: v.stock,
+            imageUrl: v.imageUrl,
+            imageFile: null
+        };
+    });
+    
     ProductUI.state.variants = uiVariants;
     ProductUI.renderVariantsTable();
     ProductUI.state.isEditingMode = false;
@@ -135,11 +173,9 @@ async function handleSave(e) {
     ProductUI.state.variants.forEach((v, i) => { if (v.imageFile) { payload.variants[i].imageName = `image_variant_${i}`; formData.append(`image_variant_${i}`, v.imageFile); } });
     formData.append("productDTO", new Blob([JSON.stringify(payload)], { type: "application/json" }));
     
-    const submitBtn = document.getElementById("submitBtn");
-    const spinner = document.getElementById("submitSpinner"); // Bây giờ sẽ tìm thấy vì thẻ span đã được chèn lại
-    
+    const submitBtn = document.getElementById("submitBtn"); 
+    const spinner = document.getElementById("submitSpinner"); 
     submitBtn.disabled = true; 
-    // [FIX] Check null an toàn
     if(spinner) spinner.classList.remove("d-none");
 
     try { 
@@ -164,10 +200,7 @@ function resetForm() {
     state.currentProductId = null; state.mainImageFile = null; ProductUI.state.variants = []; ProductUI.state.selectedAttributes = []; ProductUI.state.mainImageFile = null;
     document.getElementById("productForm").reset(); document.getElementById("selectedAttributesList").innerHTML = ""; document.getElementById("variantsContainer").innerHTML = ""; document.getElementById("mainImagePreview").innerHTML = "";
     document.querySelector('#createView h2').textContent = "Thêm Sản Phẩm Mới"; 
-    
-    // [FIX] Giữ lại thẻ SPINNER khi reset
     document.getElementById('submitBtn').innerHTML = '<span class="spinner-border spinner-border-sm d-none" id="submitSpinner"></span> Tạo sản phẩm';
-    
     document.getElementById("brandId").innerHTML = '<option value="">-- Chọn thương hiệu --</option>';
 }
 
