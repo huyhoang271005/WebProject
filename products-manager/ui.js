@@ -72,7 +72,6 @@ export const ProductUI = {
         document.getElementById('addAttributeBtn').addEventListener('click', () => ProductUI.addAttributeRow());
     },
 
-    // [HÀM ĐÃ SỬA: DÙNG SETTIMEOUT ĐỂ CHỌN GIÁ TRỊ]
     addAttributeRow: (data = null) => {
         const list = document.getElementById('selectedAttributesList');
         const rowId = `attr_row_${Date.now()}_${Math.random()}`;
@@ -83,7 +82,7 @@ export const ProductUI = {
         const selectedAttrId = data ? data.attributeId : "";
         const valuesText = data ? data.values.map(v => v.name).join(', ') : "";
 
-        // Tạo HTML Options trước
+        // Tạo Options
         const optionsHtml = ProductUI.state.attributes.map(attr => 
             `<option value="${attr.attributeId}">${attr.attributeName}</option>`
         ).join('');
@@ -111,15 +110,13 @@ export const ProductUI = {
         const attrSelect = row.querySelector('.attribute-select');
         const valuesInput = row.querySelector('.attribute-values-input');
 
-        // --- [FIX QUAN TRỌNG] ---
-        // Dùng setTimeout để đảm bảo DOM đã render xong mới gán value
+        // [FIX] SetTimeout để đảm bảo ăn giá trị khi Sửa
         if (selectedAttrId) {
             setTimeout(() => {
                 attrSelect.value = selectedAttrId; 
                 valuesInput.disabled = false;
             }, 0);
         }
-        // ------------------------
 
         attrSelect.addEventListener('change', (e) => {
             valuesInput.disabled = !e.target.value;
@@ -139,7 +136,6 @@ export const ProductUI = {
             const attributeId = attrSelect.value;
             const valuesString = valuesInput.value;
             if (attributeId && valuesString.trim()) {
-                // Fix so sánh ID (==)
                 const attribute = ProductUI.state.attributes.find(a => a.attributeId == attributeId);
                 if (attribute) {
                     const values = valuesString.split(',').filter(v => v.trim()).map((name, idx) => ({
@@ -155,9 +151,9 @@ export const ProductUI = {
 
     updateVariantsFromAttributes: () => {
         import('./logic.js').then(({ ProductLogic }) => {
-            if (!ProductUI.state.isEditingMode) {
-                ProductUI.state.variants = ProductLogic.generateVariants(ProductUI.state.selectedAttributes);
-            }
+            // [FIX] Bỏ check isEditingMode để luôn tạo variants mới khi user thay đổi thuộc tính
+            // Điều này đảm bảo khi Thêm mới (Add) variants được tạo ra.
+            ProductUI.state.variants = ProductLogic.generateVariants(ProductUI.state.selectedAttributes);
             ProductUI.renderVariantsTable();
         });
     },

@@ -1,5 +1,5 @@
 export const ProductLogic = {
-    // Tạo tổ hợp biến thể từ thuộc tính
+    // Generate variants
     generateVariants: (selectedAttributes) => {
         if (!selectedAttributes || selectedAttributes.length === 0) return [];
         const validAttributes = selectedAttributes.filter(attr => attr.values && attr.values.length > 0);
@@ -34,24 +34,25 @@ export const ProductLogic = {
         }));
     },
 
-    // Validate dữ liệu
+    // Validate
     validateProduct: (productData) => {
         const errors = [];
         if (!productData.productName || productData.productName.trim() === '') errors.push('Tên sản phẩm không được để trống');
         if (!productData.price || productData.price <= 0) errors.push('Giá bán phải lớn hơn 0');
         if (!productData.priceOriginal || productData.priceOriginal <= 0) errors.push('Giá gốc phải lớn hơn 0');
-        if (productData.price > productData.priceOriginal) errors.push('Giá bán không được lớn hơn giá gốc');
+        if (Number(productData.price) > Number(productData.priceOriginal)) errors.push('Giá bán không được lớn hơn giá gốc');
         
+        // Bỏ qua check variants nếu không có attribute nào (SP đơn giản)
+        // Nhưng nếu UI bắt buộc thì giữ lại. Ở đây mình check an toàn:
         if (productData.variants && productData.variants.length > 0) {
             productData.variants.forEach((variant, index) => {
-                if (!variant.price || variant.price <= 0) errors.push(`Biến thể ${index + 1}: Giá bán phải lớn hơn 0`);
-                if (!variant.priceOriginal || variant.priceOriginal <= 0) errors.push(`Biến thể ${index + 1}: Giá gốc phải lớn hơn 0`);
+                if (!variant.price || variant.price < 0) errors.push(`Biến thể ${index + 1}: Giá bán không hợp lệ`);
             });
         }
         return { isValid: errors.length === 0, errors: errors };
     },
 
-    // Format dữ liệu để gửi lên API
+    // [FIX] Format Data: Dùng String() để tránh lỗi crash khi id là null/undefined
     formatProductData: (formData, selectedAttributes, variants) => {
         const productDetailDTO = {
             productId: null,
@@ -72,7 +73,8 @@ export const ProductLogic = {
                 attributeId: attr.attributeId || null,
                 attributeName: attr.attributeName,
                 attributeValues: attr.values.map(v => ({
-                    attributeValueId: (v.id && !v.id.toString().includes('_')) ? v.id : null, 
+                    // FIX: Dùng String() để check an toàn
+                    attributeValueId: (v.id && String(v.id).indexOf('_') === -1) ? v.id : null, 
                     attributeValueName: v.name
                 }))
             };
@@ -80,7 +82,8 @@ export const ProductLogic = {
 
         const formattedVariants = variants.map((variant, index) => {
             return {
-                variantId: (variant.variantId && !variant.variantId.toString().startsWith('variant_gen')) ? variant.variantId : null,
+                // FIX: Dùng String() để check an toàn
+                variantId: (variant.variantId && String(variant.variantId).indexOf('variant_gen') === -1) ? variant.variantId : null,
                 imageName: variant.imageName,
                 imageUrl: null,
                 originalPrice: parseFloat(variant.priceOriginal) || parseFloat(formData.priceOriginal),
@@ -96,7 +99,8 @@ export const ProductLogic = {
                 variant.combination.forEach(combo => {
                     variantValues.push({
                         variantId: variant.variantId || `variant_index_${variantIndex}`,
-                        attributeValueId: (combo.valueId && !combo.valueId.toString().includes('_')) ? combo.valueId : null
+                        // FIX: Dùng String() để check an toàn
+                        attributeValueId: (combo.valueId && String(combo.valueId).indexOf('_') === -1) ? combo.valueId : null
                     });
                 });
             }

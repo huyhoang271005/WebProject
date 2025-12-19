@@ -40,7 +40,6 @@ function attachEditEvents() {
     });
 }
 
-// [HÀM ĐÃ SỬA: THÊM SETTIMEOUT]
 function renderBrandOptions(categoryId, selectedBrandId = null) {
     const brandSelect = document.getElementById("brandId");
     brandSelect.innerHTML = '<option value="">-- Chọn thương hiệu --</option>';
@@ -49,7 +48,7 @@ function renderBrandOptions(categoryId, selectedBrandId = null) {
     if (categoryId) {
         filteredBrands = state.brands.filter(b => b.categoryId == categoryId);
     }
-    // Fallback: nếu lọc rỗng thì hiện hết để tránh lỗi
+    // Fallback: Nếu không tìm thấy brand theo category, hiện tất cả để tránh lỗi
     if (filteredBrands.length === 0 && state.brands.length > 0) {
         filteredBrands = state.brands; 
     }
@@ -62,13 +61,12 @@ function renderBrandOptions(categoryId, selectedBrandId = null) {
         brandSelect.innerHTML += '<option disabled>Không có dữ liệu thương hiệu</option>';
     }
 
-    // --- [FIX] Dùng setTimeout để chắc chắn DOM đã update xong ---
+    // [FIX] SetTimeout để đảm bảo ăn giá trị khi Sửa
     if (selectedBrandId) {
         setTimeout(() => {
             brandSelect.value = selectedBrandId;
         }, 0);
     }
-    // -------------------------------------------------------------
 }
 
 function handleEdit(id) {
@@ -81,27 +79,25 @@ function handleEdit(id) {
     document.getElementById('submitBtn').innerHTML = "Lưu thay đổi";
     state.currentProductId = id;
 
-    // 1. Fill thông tin
+    // Fill thông tin
     document.getElementById("productName").value = product.productName;
     document.getElementById("description").value = product.description || "";
     document.getElementById("price").value = product.price;
     document.getElementById("priceOriginal").value = product.originalPrice;
     
-    // 2. Fill Danh mục & Thương hiệu
+    // Fill Danh mục & Thương hiệu
     if(product.categoryId) {
         document.getElementById("categoryId").value = product.categoryId;
     } else {
         document.getElementById("categoryId").value = "";
     }
-    // Gọi hàm render brand
     renderBrandOptions(product.categoryId, product.brandId);
 
     if (product.imageUrl) {
         document.getElementById('mainImagePreview').innerHTML = `<img src="${product.imageUrl}" class="img-thumbnail mt-2" style="max-height: 150px;">`;
     }
 
-    // 3. Fill Attributes
-    ProductUI.state.isEditingMode = true; 
+    // Fill Attributes (Quan trọng: Xử lý hiển thị)
     document.getElementById('selectedAttributesList').innerHTML = "";
     const uiAttributes = (fullData.attributes || []).map(attr => ({
         attributeId: attr.attributeId,
@@ -111,13 +107,13 @@ function handleEdit(id) {
     uiAttributes.forEach(attr => ProductUI.addAttributeRow(attr));
     ProductUI.state.selectedAttributes = uiAttributes;
 
-    // 4. Fill Variants
+    // Fill Variants (Gán cứng variants từ API để hiển thị đúng ID cũ)
     const uiVariants = (fullData.variants || []).map(v => ({
         variantId: v.variantId, displayName: "Biến thể cũ (Cập nhật)", price: v.price, priceOriginal: v.originalPrice, stock: v.stock, imageUrl: v.imageUrl, imageFile: null
     }));
     ProductUI.state.variants = uiVariants;
     ProductUI.renderVariantsTable();
-    ProductUI.state.isEditingMode = false;
+    // Lưu ý: Sau khi render xong, nếu user đổi thuộc tính, updateVariantsFromAttributes ở ui.js sẽ chạy và tạo variants mới
 }
 
 async function handleSave(e) {
@@ -128,14 +124,18 @@ async function handleSave(e) {
     const categoryId = document.getElementById("categoryId").value;
     const brandId = document.getElementById("brandId").value;
     if (!productName || !categoryId || !brandId || !price || !priceOriginal) { await showDialog("error", "Vui lòng điền đầy đủ thông tin bắt buộc!"); return; }
+    
     const validation = ProductLogic.validateProduct({ productName, price, priceOriginal, variants: ProductUI.state.variants });
     if (!validation.isValid) { await showDialog("error", validation.errors.join('\n')); return; }
+    
     const payload = ProductLogic.formatProductData({ productName, description: document.getElementById("description").value.trim() || "", price, priceOriginal, categoryId, brandId }, ProductUI.state.selectedAttributes, ProductUI.state.variants);
     if (state.currentProductId) { payload.productDetailDTO.productId = state.currentProductId; }
+    
     const formData = new FormData();
     if (state.mainImageFile) { payload.productDetailDTO.imageName = "productImage"; formData.append("productImage", state.mainImageFile); } else if (!state.currentProductId) { await showDialog("error", "Vui lòng chọn ảnh chính cho sản phẩm!"); return; }
     ProductUI.state.variants.forEach((v, i) => { if (v.imageFile) { payload.variants[i].imageName = `image_variant_${i}`; formData.append(`image_variant_${i}`, v.imageFile); } });
     formData.append("productDTO", new Blob([JSON.stringify(payload)], { type: "application/json" }));
+    
     const submitBtn = document.getElementById("submitBtn"); const spinner = document.getElementById("submitSpinner"); submitBtn.disabled = true; spinner.classList.remove("d-none");
     try { const res = await ProductService.createProduct(formData); if (res && res.success) { await showDialog("success", state.currentProductId ? "Cập nhật thành công!" : "Tạo sản phẩm thành công!"); resetForm(); ProductUI.toggleView('list'); await loadProductList(); } else { await showDialog("error", res?.message || "Có lỗi xảy ra"); } } catch (error) { await showDialog("error", "Lỗi: " + error.message); } finally { submitBtn.disabled = false; spinner.classList.add("d-none"); }
 }
