@@ -72,7 +72,7 @@ export const ProductUI = {
         document.getElementById('addAttributeBtn').addEventListener('click', () => ProductUI.addAttributeRow());
     },
 
-    // [HÀM QUAN TRỌNG ĐÃ SỬA]
+    // [HÀM ĐÃ SỬA: DÙNG SETTIMEOUT ĐỂ CHỌN GIÁ TRỊ]
     addAttributeRow: (data = null) => {
         const list = document.getElementById('selectedAttributesList');
         const rowId = `attr_row_${Date.now()}_${Math.random()}`;
@@ -83,16 +83,18 @@ export const ProductUI = {
         const selectedAttrId = data ? data.attributeId : "";
         const valuesText = data ? data.values.map(v => v.name).join(', ') : "";
 
-        // Tạo HTML
+        // Tạo HTML Options trước
+        const optionsHtml = ProductUI.state.attributes.map(attr => 
+            `<option value="${attr.attributeId}">${attr.attributeName}</option>`
+        ).join('');
+
         row.innerHTML = `
             <div class="row align-items-end">
                 <div class="col-md-5">
                     <label class="form-label small fw-bold">Thuộc tính</label>
                     <select class="form-select attribute-select">
                         <option value="">-- Chọn --</option>
-                        ${ProductUI.state.attributes.map(attr => 
-                            `<option value="${attr.attributeId}">${attr.attributeName}</option>`
-                        ).join('')}
+                        ${optionsHtml}
                     </select>
                 </div>
                 <div class="col-md-6">
@@ -106,15 +108,18 @@ export const ProductUI = {
         `;
         list.appendChild(row);
 
-        // --- [FIX] Gán giá trị thủ công sau khi append vào DOM để đảm bảo ăn chắc 100% ---
         const attrSelect = row.querySelector('.attribute-select');
         const valuesInput = row.querySelector('.attribute-values-input');
 
+        // --- [FIX QUAN TRỌNG] ---
+        // Dùng setTimeout để đảm bảo DOM đã render xong mới gán value
         if (selectedAttrId) {
-            attrSelect.value = selectedAttrId; // Ép chọn đúng ID
-            valuesInput.disabled = false;      // Mở khóa ô nhập
+            setTimeout(() => {
+                attrSelect.value = selectedAttrId; 
+                valuesInput.disabled = false;
+            }, 0);
         }
-        // ---------------------------------------------------------------------------------
+        // ------------------------
 
         attrSelect.addEventListener('change', (e) => {
             valuesInput.disabled = !e.target.value;
@@ -134,6 +139,7 @@ export const ProductUI = {
             const attributeId = attrSelect.value;
             const valuesString = valuesInput.value;
             if (attributeId && valuesString.trim()) {
+                // Fix so sánh ID (==)
                 const attribute = ProductUI.state.attributes.find(a => a.attributeId == attributeId);
                 if (attribute) {
                     const values = valuesString.split(',').filter(v => v.trim()).map((name, idx) => ({

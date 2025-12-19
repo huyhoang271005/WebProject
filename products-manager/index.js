@@ -40,7 +40,7 @@ function attachEditEvents() {
     });
 }
 
-// [HÀM QUAN TRỌNG ĐÃ SỬA]
+// [HÀM ĐÃ SỬA: THÊM SETTIMEOUT]
 function renderBrandOptions(categoryId, selectedBrandId = null) {
     const brandSelect = document.getElementById("brandId");
     brandSelect.innerHTML = '<option value="">-- Chọn thương hiệu --</option>';
@@ -49,7 +49,7 @@ function renderBrandOptions(categoryId, selectedBrandId = null) {
     if (categoryId) {
         filteredBrands = state.brands.filter(b => b.categoryId == categoryId);
     }
-    // Fallback nếu lọc rỗng
+    // Fallback: nếu lọc rỗng thì hiện hết để tránh lỗi
     if (filteredBrands.length === 0 && state.brands.length > 0) {
         filteredBrands = state.brands; 
     }
@@ -62,11 +62,13 @@ function renderBrandOptions(categoryId, selectedBrandId = null) {
         brandSelect.innerHTML += '<option disabled>Không có dữ liệu thương hiệu</option>';
     }
 
-    // --- [FIX] Gán giá trị thủ công sau khi render HTML ---
+    // --- [FIX] Dùng setTimeout để chắc chắn DOM đã update xong ---
     if (selectedBrandId) {
-        brandSelect.value = selectedBrandId;
+        setTimeout(() => {
+            brandSelect.value = selectedBrandId;
+        }, 0);
     }
-    // -----------------------------------------------------
+    // -------------------------------------------------------------
 }
 
 function handleEdit(id) {
@@ -85,13 +87,13 @@ function handleEdit(id) {
     document.getElementById("price").value = product.price;
     document.getElementById("priceOriginal").value = product.originalPrice;
     
-    // 2. Load Danh mục & Thương hiệu
+    // 2. Fill Danh mục & Thương hiệu
     if(product.categoryId) {
         document.getElementById("categoryId").value = product.categoryId;
     } else {
         document.getElementById("categoryId").value = "";
     }
-    // Gọi hàm renderBrandOptions (đã có fix gán value bên trong)
+    // Gọi hàm render brand
     renderBrandOptions(product.categoryId, product.brandId);
 
     if (product.imageUrl) {
