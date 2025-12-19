@@ -8,7 +8,7 @@ export const ProductUI = {
         mainImageFile: null
     },
 
-    // --- [MỚI] CHUYỂN ĐỔI GIỮA DANH SÁCH & FORM ---
+    // --- [Má»šI] CHUYá»‚N Äá»”I GIá»®A DANH SÃCH & FORM ---
     toggleView: (viewName) => {
         const listView = document.getElementById('listView');
         const createView = document.getElementById('createView');
@@ -22,19 +22,19 @@ export const ProductUI = {
         }
     },
 
-    // --- [MỚI] RENDER DANH SÁCH SẢN PHẨM ---
+    // --- [Má»šI] RENDER DANH SÃCH Sáº¢N PHáº¨M ---
     renderProductList: (products, categories, brands) => {
         const tbody = document.getElementById('productTableBody');
         
         if (!products || products.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="5" class="text-center py-5 text-muted">Chưa có sản phẩm nào.</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="5" class="text-center py-5 text-muted">ChÆ°a cÃ³ sáº£n pháº©m nÃ o.</td></tr>`;
             return;
         }
 
         const formatCurrency = (amount) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
 
         tbody.innerHTML = products.map(p => {
-            // Dùng so sánh lỏng (==) để tránh lỗi lệch kiểu (string/number)
+            // DÃ¹ng so sÃ¡nh lá»ng (==) Ä‘á»ƒ trÃ¡nh lá»—i lá»‡ch kiá»ƒu (string/number) giá»¯a ID sáº£n pháº©m vÃ  danh má»¥c
             const catName = categories.find(c => c.categoryId == p.categoryId)?.categoryName || '<span class="text-muted fst-italic">---</span>';
             const brandName = brands.find(b => b.brandId == p.brandId)?.brandName || '<span class="text-muted fst-italic">---</span>';
             const imageUrl = p.imageUrl || 'https://placehold.co/50x50?text=No+Img';
@@ -60,10 +60,10 @@ export const ProductUI = {
                     <td class="text-decoration-line-through text-muted small">${formatCurrency(p.originalPrice)}</td>
                     <td class="text-end pe-4">
                         <div class="btn-group">
-                            <button class="btn btn-sm btn-outline-primary border-0" title="Chỉnh sửa">
+                            <button class="btn btn-sm btn-outline-primary border-0" title="Chá»‰nh sá»­a">
                                 <i class="bi bi-pencil-square"></i>
                             </button>
-                            <button class="btn btn-sm btn-outline-danger border-0" title="Xóa">
+                            <button class="btn btn-sm btn-outline-danger border-0" title="XÃ³a">
                                 <i class="bi bi-trash"></i>
                             </button>
                         </div>
@@ -73,12 +73,12 @@ export const ProductUI = {
         }).join('');
     },
 
-    // --- CÁC HÀM CŨ GIỮ NGUYÊN ---
+    // --- LOGIC CÅ¨ (DROPDOWN & ATTRIBUTES) GIá»® NGUYÃŠN ---
 
     initSearchableDropdown: (selectId, items, displayField = 'name', valueField = 'id') => {
         const select = document.getElementById(selectId);
         if (!select) return;
-        select.innerHTML = '<option value="">-- Chọn --</option>';
+        select.innerHTML = '<option value="">-- Chá»n --</option>';
         items.forEach(item => {
             const option = document.createElement('option');
             option.value = item[valueField];
@@ -93,9 +93,9 @@ export const ProductUI = {
         container.innerHTML = `
             <div class="card shadow-sm">
                 <div class="card-body">
-                    <h5 class="card-title text-primary">Biến thể sản phẩm</h5>
+                    <h5 class="card-title text-primary">Biáº¿n thá»ƒ sáº£n pháº©m</h5>
                     <button type="button" class="btn btn-sm btn-outline-primary mb-3" id="addAttributeBtn">
-                        + Thêm thuộc tính
+                        + ThÃªm thuá»™c tÃ­nh
                     </button>
                     <div id="selectedAttributesList"></div>
                 </div>
@@ -112,14 +112,14 @@ export const ProductUI = {
         row.innerHTML = `
             <div class="row align-items-end">
                 <div class="col-md-5">
-                    <label class="form-label small fw-bold">Thuộc tính</label>
+                    <label class="form-label small fw-bold">Thuá»™c tÃ­nh</label>
                     <select class="form-select attribute-select">
-                        <option value="">-- Chọn --</option>
+                        <option value="">-- Chá»n --</option>
                         ${ProductUI.state.attributes.map(attr => `<option value="${attr.attributeId}">${attr.attributeName}</option>`).join('')}
                     </select>
                 </div>
                 <div class="col-md-6">
-                    <label class="form-label small fw-bold">Giá trị</label>
+                    <label class="form-label small fw-bold">GiÃ¡ trá»‹</label>
                     <textarea class="form-control attribute-values-input" rows="1" disabled></textarea>
                 </div>
                 <div class="col-md-1">
@@ -180,9 +180,9 @@ export const ProductUI = {
         }
         container.innerHTML = `
             <div class="card shadow-sm mt-4"><div class="card-body">
-                <h5 class="card-title text-primary">Danh sách biến thể</h5>
+                <h5 class="card-title text-primary">Danh sÃ¡ch biáº¿n thá»ƒ</h5>
                 <div class="table-responsive"><table class="table table-bordered table-hover align-middle">
-                    <thead class="table-light"><tr><th>Tên</th><th>Ảnh</th><th>Giá gốc</th><th>Giá bán</th><th>Tồn</th></tr></thead>
+                    <thead class="table-light"><tr><th>TÃªn</th><th>áº¢nh</th><th>GiÃ¡ gá»‘c</th><th>GiÃ¡ bÃ¡n</th><th>Tá»“n</th></tr></thead>
                     <tbody id="variantsTableBody"></tbody>
                 </table></div>
             </div></div>`;
