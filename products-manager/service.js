@@ -22,7 +22,7 @@ export const ProductService = {
     getProducts: async () => {
         try {
             // Dùng POST để tìm kiếm (body {} rỗng = lấy tất cả)
-            const res = await callAPI(`/auth/admin/products/search`, "POST", {}, false);
+            const res = await callAPI(`/auth/admin/products/search`, "GET", {}, false);
             
             // Xử lý dữ liệu trả về an toàn
             return res?.data?.listData || res?.data || [];
