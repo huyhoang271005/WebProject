@@ -37,16 +37,13 @@ html, body {
     margin-bottom: 20px;
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 9px;
 }
 
 /* CART ITEM */
 .cart-item {
-    /* --- GIỮ NGUYÊN 2 DÒNG NÀY ĐỂ BỐ CỤC KHÔNG BỊ VỠ --- */
     display: flex;
     align-items: center; /* Mình đổi thành center để nó căn giữa theo chiều dọc cho đẹp hơn */
-
-    /* --- PHẦN MỚI: TẠO GIAO DIỆN DẠNG THẺ (CARD) --- */
     background-color: #fff;       /* Nền trắng riêng cho từng thằng */
     padding: 20px;                /* Cách đều 4 phía (cũ là 20px 0) */
     margin-bottom: 15px;          /* Đẩy xa thằng bên dưới ra -> Tách khối */
