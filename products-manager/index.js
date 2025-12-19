@@ -6,7 +6,7 @@ import { ProductUI } from "./ui.js";
 let state = {
     products: [], categories: [], brands: [], attributes: [],
     variants: [], selectedAttributes: [], mainImageFile: null,
-    currentProductId: null // Track ID đang sửa
+    currentProductId: null 
 };
 
 // --- LOAD DANH SÁCH ---
@@ -41,7 +41,7 @@ function attachEditEvents() {
     });
 }
 
-// [LOGIC SỬA ĐẦY ĐỦ]
+// [HÀM SỬA - ĐÃ CẬP NHẬT LOGIC THƯƠNG HIỆU]
 function handleEdit(id) {
     const product = state.products.find(p => p.productId === id);
     if (!product || !product.fullData) return;
@@ -52,17 +52,20 @@ function handleEdit(id) {
     document.getElementById('submitBtn').innerHTML = "Lưu thay đổi";
     state.currentProductId = id;
 
-    // Fill thông tin cơ bản
+    // 1. Fill thông tin cơ bản
     document.getElementById("productName").value = product.productName;
     document.getElementById("description").value = product.description || "";
     document.getElementById("price").value = product.price;
     document.getElementById("priceOriginal").value = product.originalPrice;
     
-    // Fill Danh mục và Thương hiệu (Fix lỗi không hiện thương hiệu)
+    // 2. Fill Category & Brand
+    const brandSelect = document.getElementById("brandId");
+
     if(product.categoryId) {
+        // TRƯỜNG HỢP 1: Đã có danh mục -> Load thương hiệu tương ứng
         document.getElementById("categoryId").value = product.categoryId;
-        const brandSelect = document.getElementById("brandId");
         brandSelect.innerHTML = '<option value="">-- Chọn thương hiệu --</option>';
+        
         const filteredBrands = state.brands.filter(b => b.categoryId == product.categoryId);
         if (filteredBrands.length > 0) {
             filteredBrands.forEach(b => {
@@ -70,15 +73,19 @@ function handleEdit(id) {
                 brandSelect.innerHTML += `<option value="${b.brandId}" ${isSelected ? 'selected' : ''}>${b.brandName}</option>`;
             });
         } else {
-            brandSelect.innerHTML += '<option disabled>Không có thương hiệu nào</option>';
+            brandSelect.innerHTML += '<option disabled>Không có thương hiệu nào thuộc danh mục này</option>';
         }
+    } else {
+        // TRƯỜNG HỢP 2: Chưa có danh mục (Data cũ/lỗi) -> Thông báo người dùng chọn
+        document.getElementById("categoryId").value = "";
+        brandSelect.innerHTML = '<option value="" disabled selected>⬅️ Vui lòng chọn Danh mục trước</option>';
     }
 
     if (product.imageUrl) {
         document.getElementById('mainImagePreview').innerHTML = `<img src="${product.imageUrl}" class="img-thumbnail mt-2" style="max-height: 150px;">`;
     }
 
-    // Fill Attributes & Variants
+    // 3. Fill Attributes
     ProductUI.state.isEditingMode = true; 
     document.getElementById('selectedAttributesList').innerHTML = "";
     
@@ -91,6 +98,7 @@ function handleEdit(id) {
     uiAttributes.forEach(attr => ProductUI.addAttributeRow(attr));
     ProductUI.state.selectedAttributes = uiAttributes;
 
+    // 4. Fill Variants
     const uiVariants = (fullData.variants || []).map(v => ({
         variantId: v.variantId, 
         displayName: "Biến thể cũ (Cập nhật)", 
@@ -106,7 +114,7 @@ function handleEdit(id) {
     ProductUI.state.isEditingMode = false;
 }
 
-// --- HANDLER SAVE (ĐÃ FIX ẢNH) ---
+// --- HANDLER SAVE ---
 async function handleSave(e) {
     e.preventDefault();
     const productName = document.getElementById("productName").value.trim();
@@ -193,14 +201,26 @@ function setupEventListeners() {
     document.getElementById("mainImage").onchange = (e) => {
         if(e.target.files[0]) { state.mainImageFile = e.target.files[0]; ProductUI.handleMainImageUpload(e.target.files[0]); }
     };
+    // SỰ KIỆN QUAN TRỌNG: Khi chọn danh mục -> Load Brands
     document.getElementById("categoryId").onchange = (e) => {
         const categoryId = e.target.value;
         const brandSelect = document.getElementById("brandId");
         brandSelect.innerHTML = '<option value="">-- Chọn thương hiệu --</option>';
-        if(!categoryId) return;
-        state.brands.filter(b => b.categoryId == categoryId).forEach(b => {
-            brandSelect.innerHTML += `<option value="${b.brandId}">${b.brandName}</option>`;
-        });
+        
+        if(!categoryId) {
+            brandSelect.innerHTML = '<option value="" disabled selected>⬅️ Vui lòng chọn Danh mục trước</option>';
+            return;
+        }
+
+        const filteredBrands = state.brands.filter(b => b.categoryId == categoryId);
+        
+        if (filteredBrands.length > 0) {
+            filteredBrands.forEach(b => {
+                brandSelect.innerHTML += `<option value="${b.brandId}">${b.brandName}</option>`;
+            });
+        } else {
+            brandSelect.innerHTML += '<option disabled>Không có thương hiệu nào</option>';
+        }
     };
 }
 
