@@ -8,33 +8,37 @@ export const ProductUI = {
         mainImageFile: null
     },
 
-    // --- [Má»šI] CHUYá»‚N Äá»”I GIá»®A DANH SÃCH & FORM ---
+    // Chuyển đổi giữa List và Form
     toggleView: (viewName) => {
         const listView = document.getElementById('listView');
         const createView = document.getElementById('createView');
+        const formTitle = document.querySelector('#createView h2');
+        const submitBtn = document.getElementById('submitBtn');
         
         if (viewName === 'create') {
             listView.classList.add('d-none');
             createView.classList.remove('d-none');
+            // Mặc định là Thêm mới
+            if(formTitle) formTitle.textContent = "Thêm Sản Phẩm Mới";
+            if(submitBtn) submitBtn.innerHTML = "Tạo sản phẩm";
         } else {
             listView.classList.remove('d-none');
             createView.classList.add('d-none');
         }
     },
 
-    // --- [Má»šI] RENDER DANH SÃCH Sáº¢N PHáº¨M ---
+    // Render danh sách (ĐÃ BỎ NÚT XÓA)
     renderProductList: (products, categories, brands) => {
         const tbody = document.getElementById('productTableBody');
         
         if (!products || products.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="5" class="text-center py-5 text-muted">ChÆ°a cÃ³ sáº£n pháº©m nÃ o.</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="5" class="text-center py-5 text-muted">Chưa có sản phẩm nào.</td></tr>`;
             return;
         }
 
         const formatCurrency = (amount) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
 
         tbody.innerHTML = products.map(p => {
-            // DÃ¹ng so sÃ¡nh lá»ng (==) Ä‘á»ƒ trÃ¡nh lá»—i lá»‡ch kiá»ƒu (string/number) giá»¯a ID sáº£n pháº©m vÃ  danh má»¥c
             const catName = categories.find(c => c.categoryId == p.categoryId)?.categoryName || '<span class="text-muted fst-italic">---</span>';
             const brandName = brands.find(b => b.brandId == p.brandId)?.brandName || '<span class="text-muted fst-italic">---</span>';
             const imageUrl = p.imageUrl || 'https://placehold.co/50x50?text=No+Img';
@@ -59,26 +63,21 @@ export const ProductUI = {
                     <td class="text-danger fw-bold">${formatCurrency(p.price)}</td>
                     <td class="text-decoration-line-through text-muted small">${formatCurrency(p.originalPrice)}</td>
                     <td class="text-end pe-4">
-                        <div class="btn-group">
-                            <button class="btn btn-sm btn-outline-primary border-0" title="Chá»‰nh sá»­a">
-                                <i class="bi bi-pencil-square"></i>
-                            </button>
-                            <button class="btn btn-sm btn-outline-danger border-0" title="XÃ³a">
-                                <i class="bi bi-trash"></i>
-                            </button>
-                        </div>
+                        <button class="btn btn-sm btn-outline-primary border-0 btn-edit" data-id="${p.productId}" title="Chỉnh sửa">
+                            <i class="bi bi-pencil-square"></i> Sửa
+                        </button>
                     </td>
                 </tr>
             `;
         }).join('');
     },
 
-    // --- LOGIC CÅ¨ (DROPDOWN & ATTRIBUTES) GIá»® NGUYÃŠN ---
+    // --- LOGIC ATTRIBUTES & VARIANTS ---
 
     initSearchableDropdown: (selectId, items, displayField = 'name', valueField = 'id') => {
         const select = document.getElementById(selectId);
         if (!select) return;
-        select.innerHTML = '<option value="">-- Chá»n --</option>';
+        select.innerHTML = '<option value="">-- Chọn --</option>';
         items.forEach(item => {
             const option = document.createElement('option');
             option.value = item[valueField];
@@ -90,37 +89,47 @@ export const ProductUI = {
     renderAttributeSelector: () => {
         const container = document.getElementById('attributesContainer');
         if (!container) return;
+        
+        // Fix lỗi font chữ ở đây (Lưu file UTF-8)
         container.innerHTML = `
             <div class="card shadow-sm">
                 <div class="card-body">
-                    <h5 class="card-title text-primary">Biáº¿n thá»ƒ sáº£n pháº©m</h5>
+                    <h5 class="card-title text-primary">Biến thể sản phẩm</h5>
                     <button type="button" class="btn btn-sm btn-outline-primary mb-3" id="addAttributeBtn">
-                        + ThÃªm thuá»™c tÃ­nh
+                        + Thêm thuộc tính
                     </button>
                     <div id="selectedAttributesList"></div>
                 </div>
             </div>`;
-        document.getElementById('addAttributeBtn').addEventListener('click', ProductUI.addAttributeRow);
+        document.getElementById('addAttributeBtn').addEventListener('click', () => ProductUI.addAttributeRow());
     },
 
-    addAttributeRow: () => {
+    // Hàm thêm hàng thuộc tính (có hỗ trợ pre-fill dữ liệu khi sửa)
+    addAttributeRow: (data = null) => {
         const list = document.getElementById('selectedAttributesList');
-        const rowId = `attr_row_${Date.now()}`;
+        const rowId = `attr_row_${Date.now()}_${Math.random()}`;
         const row = document.createElement('div');
         row.className = 'attribute-row mb-3 p-3 border rounded bg-light';
         row.id = rowId;
+        
+        // Chuẩn bị value nếu có data (chế độ sửa)
+        const selectedAttrId = data ? data.attributeId : "";
+        const valuesText = data ? data.values.map(v => v.name).join(', ') : "";
+
         row.innerHTML = `
             <div class="row align-items-end">
                 <div class="col-md-5">
-                    <label class="form-label small fw-bold">Thuá»™c tÃ­nh</label>
+                    <label class="form-label small fw-bold">Thuộc tính</label>
                     <select class="form-select attribute-select">
-                        <option value="">-- Chá»n --</option>
-                        ${ProductUI.state.attributes.map(attr => `<option value="${attr.attributeId}">${attr.attributeName}</option>`).join('')}
+                        <option value="">-- Chọn --</option>
+                        ${ProductUI.state.attributes.map(attr => 
+                            `<option value="${attr.attributeId}" ${attr.attributeId === selectedAttrId ? 'selected' : ''}>${attr.attributeName}</option>`
+                        ).join('')}
                     </select>
                 </div>
                 <div class="col-md-6">
-                    <label class="form-label small fw-bold">GiÃ¡ trá»‹</label>
-                    <textarea class="form-control attribute-values-input" rows="1" disabled></textarea>
+                    <label class="form-label small fw-bold">Giá trị (cách nhau dấu phẩy)</label>
+                    <textarea class="form-control attribute-values-input" rows="1" ${!selectedAttrId ? 'disabled' : ''}>${valuesText}</textarea>
                 </div>
                 <div class="col-md-1">
                     <button type="button" class="btn btn-outline-danger btn-sm w-100 remove-attr-btn"><i class="bi bi-x-lg"></i></button>
@@ -134,6 +143,7 @@ export const ProductUI = {
 
         attrSelect.addEventListener('change', (e) => {
             valuesInput.disabled = !e.target.value;
+            if(!e.target.value) valuesInput.value = '';
             ProductUI.updateSelectedAttributes();
         });
         valuesInput.addEventListener('input', ProductUI.updateSelectedAttributes);
@@ -162,12 +172,22 @@ export const ProductUI = {
             }
         });
         ProductUI.state.selectedAttributes = selectedAttributes;
+        
+        // Lưu ý: Khi đang sửa (Edit Mode) mà người dùng thay đổi attribute,
+        // ta sẽ tạo lại variants mới (mất variants cũ). 
+        // Logic này để đơn giản hóa, giữ nguyên.
         ProductUI.updateVariantsFromAttributes();
     },
 
     updateVariantsFromAttributes: () => {
         import('./logic.js').then(({ ProductLogic }) => {
-            ProductUI.state.variants = ProductLogic.generateVariants(ProductUI.state.selectedAttributes);
+            // Chỉ generate lại nếu user thay đổi input, 
+            // còn nếu đang load từ API (Edit mode) thì variants đã được set thủ công ở index.js rồi
+            // Ta check flag hoặc so sánh length. Ở đây ta cứ generate lại cho nhất quán logic tạo mới.
+            // (Nâng cao: Cần logic merge variants cũ khi sửa, nhưng ở đây ta làm đơn giản trước)
+            if (!ProductUI.state.isEditingMode) {
+                ProductUI.state.variants = ProductLogic.generateVariants(ProductUI.state.selectedAttributes);
+            }
             ProductUI.renderVariantsTable();
         });
     },
@@ -180,24 +200,35 @@ export const ProductUI = {
         }
         container.innerHTML = `
             <div class="card shadow-sm mt-4"><div class="card-body">
-                <h5 class="card-title text-primary">Danh sÃ¡ch biáº¿n thá»ƒ</h5>
+                <h5 class="card-title text-primary">Danh sách biến thể</h5>
                 <div class="table-responsive"><table class="table table-bordered table-hover align-middle">
-                    <thead class="table-light"><tr><th>TÃªn</th><th>áº¢nh</th><th>GiÃ¡ gá»‘c</th><th>GiÃ¡ bÃ¡n</th><th>Tá»“n</th></tr></thead>
+                    <thead class="table-light"><tr><th>Tên</th><th style="width:120px">Ảnh</th><th>Giá gốc</th><th>Giá bán</th><th>Tồn</th></tr></thead>
                     <tbody id="variantsTableBody"></tbody>
                 </table></div>
             </div></div>`;
         const tbody = document.getElementById('variantsTableBody');
+        
         ProductUI.state.variants.forEach((v, idx) => {
+            // Xử lý ảnh preview nếu có URL (khi sửa)
+            let imgPreview = '';
+            if (v.imageUrl) {
+                imgPreview = `<div class="mt-1"><img src="${v.imageUrl}" style="width:30px;height:30px;object-fit:cover;border:1px solid #ccc"></div>`;
+            }
+
             const tr = document.createElement('tr');
             tr.innerHTML = `
-                <td class="fw-bold">${v.displayName}</td>
-                <td><input type="file" class="form-control form-control-sm v-img" data-i="${idx}"></td>
+                <td class="fw-bold small">${v.displayName}</td>
+                <td>
+                    <input type="file" class="form-control form-control-sm v-img" data-i="${idx}">
+                    ${imgPreview}
+                </td>
                 <td><input type="number" class="form-control form-control-sm v-po" data-i="${idx}" value="${v.priceOriginal}"></td>
                 <td><input type="number" class="form-control form-control-sm v-p" data-i="${idx}" value="${v.price}"></td>
                 <td><input type="number" class="form-control form-control-sm v-s" data-i="${idx}" value="${v.stock}"></td>
             `;
             tbody.appendChild(tr);
         });
+        
         tbody.querySelectorAll('input').forEach(i => i.addEventListener('change', (e) => {
             const idx = e.target.dataset.i;
             if (e.target.classList.contains('v-p')) ProductUI.state.variants[idx].price = parseFloat(e.target.value);
