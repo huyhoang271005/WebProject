@@ -20,7 +20,7 @@ export const ProductService = {
     },
     // Lấy danh sách products
     getProducts: async () => {
-        const res = await callAPI(`/auth/admin/products`, "GET");         
+        const res = await callAPI(`/products`, "GET");         
         return res?.data?.listData || res?.data || [];
     },
 
