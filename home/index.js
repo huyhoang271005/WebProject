@@ -82,6 +82,7 @@ function createProductHTML(p) {
             <div class="p-img"><img src="${imgUrl}" style="width:100%; height:100%; object-fit:contain;"></div>
             <div class="p-info">
                 <div class="p-name" title="${p.productName}">${p.productName}</div>
+                <div class="p-origin-price">${p.priceFormatted}</div>
                 <div class="p-price">${priceFormatted}</div>
             </div>
         </div>
