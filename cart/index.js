@@ -186,44 +186,97 @@ window.modQty = async (id, delta, manualVal) => {
 };
 
 window.changeVar = async (el) => {
-    if(busy) return; busy = true;
+    if(busy) return; 
+    busy = true; // Khóa lại để tránh click liên tục
     try {
         const row = el.closest(".cart-item");
         const [pIdx, cIdx] = row.dataset.idx.split('-');
-        const product = cartData[pIdx];
-        const currentItem = product.cartItemDTOList[cIdx];
         
+        const product = cartData[pIdx];                 // Sản phẩm cha (Ví dụ: Snack)
+        const currentItem = product.cartItemDTOList[cIdx]; // Item đang được chọn sửa (Ví dụ: Snack 43g)
+        
+        // 1. Lấy Variant ID mới từ dropdown mà người dùng vừa chọn
         const ids = Array.from(row.querySelectorAll(".variant-select")).map(s => s.value);
-        const newVariant = product.productVariantsDTOList.find(v => ids.every(id => v.attributeValueIdList.includes(id)));
+        const newV = product.productVariantsDTOList.find(v => ids.every(id => v.attributeValueIdList.includes(id)));
 
-        if (!newVariant) { await showDialog("error", "Hết hàng/Không tồn tại"); render(); return; }
-        if (newVariant.variantId === currentItem.variantId) return;
+        // Kiểm tra hợp lệ
+        if (!newV) { 
+            await showDialog("error", "Hết hàng hoặc không tồn tại"); 
+            render(); // Reset lại dropdown về cũ
+            return; 
+        }
+        if (newV.variantId === currentItem.variantId) return; // Nếu chọn lại cái cũ thì không làm gì
 
-        const existingItem = product.cartItemDTOList.find(i => 
-            i.variantId === newVariant.variantId && i.cartItemId !== currentItem.cartItemId
+        // === 2. QUAN TRỌNG: TÌM DÒNG TRÙNG (LOGIC GỘP) ===
+        // Tìm xem trong giỏ đã có dòng nào (khác dòng hiện tại) mang VariantId mới này chưa?
+        const duplicateItem = product.cartItemDTOList.find(i => 
+            i.variantId === newV.variantId && 
+            i.cartItemId !== currentItem.cartItemId
         );
 
-        if (existingItem) {
-            const newTotalQty = Number(currentItem.quantity) + Number(existingItem.quantity);
-            if (newTotalQty > newVariant.stock) {
-                await showDialog("error", `Tổng số lượng (${newTotalQty}) vượt quá kho (${newVariant.stock})`);
-                render(); return;
+        if (duplicateItem) {
+            // >>> TRƯỜNG HỢP 1: CÓ TRÙNG -> GỘP <<<
+            console.log("Phát hiện trùng -> Thực hiện gộp...");
+
+            // Bước A: Tính tổng số lượng (Số lượng dòng đích + Số lượng dòng đang sửa)
+            const newTotalQty = Number(duplicateItem.quantity) + Number(currentItem.quantity);
+            
+            // Kiểm tra tồn kho trước khi gộp
+            if (newTotalQty > newV.stock) {
+                await showDialog("error", `Không thể gộp: Tổng số lượng (${newTotalQty}) vượt quá tồn kho (${newV.stock})`);
+                render(); // Reset UI
+                return;
             }
 
-            const resUpdate = await callAPI('/auth/carts', 'PUT', { cartItemId: existingItem.cartItemId, variantId: existingItem.variantId, quantity: newTotalQty });
+            // Bước B: Cập nhật dòng đích (duplicateItem) lên số lượng tổng
+            const resUpdate = await api('/auth/carts', 'PUT', { 
+                cartItemId: duplicateItem.cartItemId, 
+                variantId: duplicateItem.variantId, 
+                quantity: newTotalQty 
+            });
+
             if (resUpdate.success) {
-                if ((await callAPI(`/auth/carts/${currentItem.cartItemId}`, 'DELETE')).success) {
+                // Bước C: Xóa dòng hiện tại (currentItem) vì đã cộng dồn sang kia rồi
+                const resDelete = await api(`/auth/carts/${currentItem.cartItemId}`, 'DELETE');
+                if (resDelete.success) {
+                    // === CẬP NHẬT GIAO DIỆN TỨC THÌ (KHÔNG CẦN RELOAD) ===
+                    // 1. Xóa item hiện tại khỏi dữ liệu cục bộ
                     product.cartItemDTOList = product.cartItemDTOList.filter(i => i.cartItemId !== currentItem.cartItemId);
-                    existingItem.quantity = newTotalQty;
+                    // 2. Cập nhật số lượng mới cho item đích
+                    duplicateItem.quantity = newTotalQty;
+                    // 3. Xử lý checkbox: Nếu dòng bị xóa đang được check, phải bỏ nó ra khỏi Set checked
                     checked.delete(currentItem.cartItemId);
-                    await showDialog("success", "Gộp thành công!");
+
+                    await showDialog("success", "Đã gộp sản phẩm thành công!");
+                    render(); // Vẽ lại giao diện
+                } else {
+                    await showDialog("error", "Lỗi khi xóa dòng thừa");
                     render();
                 }
-            } else await showDialog("error", "Lỗi gộp");
+            } else {
+                await showDialog("error", resUpdate.message || "Lỗi cập nhật số lượng gộp");
+                render();
+            }
+
         } else {
-            const res = await callAPI('/auth/carts', 'PUT', { cartItemId: currentItem.cartItemId, variantId: newVariant.variantId, quantity: currentItem.quantity });
-            if (res.success) { currentItem.variantId = newVariant.variantId; render(); }
-            else { await showDialog("error", res.message || "Lỗi đổi loại"); render(); }
+            // >>> TRƯỜNG HỢP 2: KHÔNG TRÙNG -> ĐỔI BÌNH THƯỜNG <<<
+            console.log("Không trùng -> Đổi biến thể bình thường");
+            
+            const res = await api('/auth/carts', 'PUT', { 
+                cartItemId: currentItem.cartItemId, 
+                variantId: newV.variantId, 
+                quantity: currentItem.quantity 
+            });
+            
+            if (res.success) {
+                currentItem.variantId = newV.variantId; // Cập nhật ID mới vào RAM
+                render();
+            } else {
+                await showDialog("error", res.message || "Lỗi đổi phân loại");
+                render(); // Reset UI
+            }
         }
-    } finally { busy = false; }
+    } finally {
+        busy = false; // Mở khóa click
+    }
 };
