@@ -27,7 +27,6 @@ async function loadProductList() {
             tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-4">Không tìm thấy sản phẩm.</td></tr>';
         }
     } catch (error) {
-        console.error("Lỗi:", error);
         tbody.innerHTML = '<tr><td colspan="5" class="text-center text-danger py-4">Lỗi kết nối API.</td></tr>';
     }
 }
@@ -41,7 +40,31 @@ function attachEditEvents() {
     });
 }
 
-// [HÀM SỬA - ĐÃ CẬP NHẬT LOGIC THƯƠNG HIỆU]
+// Hàm render Brand (Cứu cánh: Nếu lọc không ra gì thì hiện tất cả)
+function renderBrandOptions(categoryId, selectedBrandId = null) {
+    const brandSelect = document.getElementById("brandId");
+    brandSelect.innerHTML = '<option value="">-- Chọn thương hiệu --</option>';
+
+    let filteredBrands = [];
+    if (categoryId) {
+        filteredBrands = state.brands.filter(b => b.categoryId == categoryId);
+    }
+
+    // [QUAN TRỌNG] Nếu lọc ra rỗng (do data lỗi/thiếu categoryId), thì hiển thị TOÀN BỘ để cứu dropdown
+    if (filteredBrands.length === 0 && state.brands.length > 0) {
+        filteredBrands = state.brands; 
+    }
+
+    if (filteredBrands.length > 0) {
+        filteredBrands.forEach(b => {
+            const isSelected = selectedBrandId && (b.brandId == selectedBrandId);
+            brandSelect.innerHTML += `<option value="${b.brandId}" ${isSelected ? 'selected' : ''}>${b.brandName}</option>`;
+        });
+    } else {
+        brandSelect.innerHTML += '<option disabled>Không có dữ liệu thương hiệu</option>';
+    }
+}
+
 function handleEdit(id) {
     const product = state.products.find(p => p.productId === id);
     if (!product || !product.fullData) return;
@@ -52,40 +75,22 @@ function handleEdit(id) {
     document.getElementById('submitBtn').innerHTML = "Lưu thay đổi";
     state.currentProductId = id;
 
-    // 1. Fill thông tin cơ bản
+    // 1. Fill thông tin
     document.getElementById("productName").value = product.productName;
     document.getElementById("description").value = product.description || "";
     document.getElementById("price").value = product.price;
     document.getElementById("priceOriginal").value = product.originalPrice;
     
-    // 2. Fill Category & Brand
-    const brandSelect = document.getElementById("brandId");
-
-    if(product.categoryId) {
-        // TRƯỜNG HỢP 1: Đã có danh mục -> Load thương hiệu tương ứng
-        document.getElementById("categoryId").value = product.categoryId;
-        brandSelect.innerHTML = '<option value="">-- Chọn thương hiệu --</option>';
-        
-        const filteredBrands = state.brands.filter(b => b.categoryId == product.categoryId);
-        if (filteredBrands.length > 0) {
-            filteredBrands.forEach(b => {
-                const isSelected = product.brandId && (b.brandId == product.brandId);
-                brandSelect.innerHTML += `<option value="${b.brandId}" ${isSelected ? 'selected' : ''}>${b.brandName}</option>`;
-            });
-        } else {
-            brandSelect.innerHTML += '<option disabled>Không có thương hiệu nào thuộc danh mục này</option>';
-        }
-    } else {
-        // TRƯỜNG HỢP 2: Chưa có danh mục (Data cũ/lỗi) -> Thông báo người dùng chọn
-        document.getElementById("categoryId").value = "";
-        brandSelect.innerHTML = '<option value="" disabled selected>⬅️ Vui lòng chọn Danh mục trước</option>';
-    }
+    if(product.categoryId) document.getElementById("categoryId").value = product.categoryId;
+    
+    // 2. Load Brands
+    renderBrandOptions(product.categoryId, product.brandId);
 
     if (product.imageUrl) {
         document.getElementById('mainImagePreview').innerHTML = `<img src="${product.imageUrl}" class="img-thumbnail mt-2" style="max-height: 150px;">`;
     }
 
-    // 3. Fill Attributes
+    // 3. Fill Attributes & Variants
     ProductUI.state.isEditingMode = true; 
     document.getElementById('selectedAttributesList').innerHTML = "";
     
@@ -98,23 +103,14 @@ function handleEdit(id) {
     uiAttributes.forEach(attr => ProductUI.addAttributeRow(attr));
     ProductUI.state.selectedAttributes = uiAttributes;
 
-    // 4. Fill Variants
     const uiVariants = (fullData.variants || []).map(v => ({
-        variantId: v.variantId, 
-        displayName: "Biến thể cũ (Cập nhật)", 
-        price: v.price,
-        priceOriginal: v.originalPrice,
-        stock: v.stock,
-        imageUrl: v.imageUrl,
-        imageFile: null
+        variantId: v.variantId, displayName: "Biến thể cũ (Cập nhật)", price: v.price, priceOriginal: v.originalPrice, stock: v.stock, imageUrl: v.imageUrl, imageFile: null
     }));
-    
     ProductUI.state.variants = uiVariants;
     ProductUI.renderVariantsTable();
     ProductUI.state.isEditingMode = false;
 }
 
-// --- HANDLER SAVE ---
 async function handleSave(e) {
     e.preventDefault();
     const productName = document.getElementById("productName").value.trim();
@@ -122,105 +118,36 @@ async function handleSave(e) {
     const priceOriginal = parseFloat(document.getElementById("priceOriginal").value);
     const categoryId = document.getElementById("categoryId").value;
     const brandId = document.getElementById("brandId").value;
-
-    if (!productName || !categoryId || !brandId || !price || !priceOriginal) {
-        await showDialog("error", "Vui lòng điền đầy đủ thông tin bắt buộc!"); return;
-    }
-    
+    if (!productName || !categoryId || !brandId || !price || !priceOriginal) { await showDialog("error", "Vui lòng điền đầy đủ thông tin bắt buộc!"); return; }
     const validation = ProductLogic.validateProduct({ productName, price, priceOriginal, variants: ProductUI.state.variants });
     if (!validation.isValid) { await showDialog("error", validation.errors.join('\n')); return; }
-
-    const payload = ProductLogic.formatProductData(
-        { productName, description: document.getElementById("description").value.trim() || "", price, priceOriginal, categoryId, brandId },
-        ProductUI.state.selectedAttributes, ProductUI.state.variants
-    );
-
-    if (state.currentProductId) {
-        payload.productDetailDTO.productId = state.currentProductId;
-    }
-
+    const payload = ProductLogic.formatProductData({ productName, description: document.getElementById("description").value.trim() || "", price, priceOriginal, categoryId, brandId }, ProductUI.state.selectedAttributes, ProductUI.state.variants);
+    if (state.currentProductId) { payload.productDetailDTO.productId = state.currentProductId; }
     const formData = new FormData();
-    
-    if (state.mainImageFile) {
-        payload.productDetailDTO.imageName = "productImage"; 
-        formData.append("productImage", state.mainImageFile);
-    } else if (!state.currentProductId) {
-        await showDialog("error", "Vui lòng chọn ảnh chính cho sản phẩm!"); return;
-    }
-    
-    ProductUI.state.variants.forEach((v, i) => {
-        if (v.imageFile) {
-            payload.variants[i].imageName = `image_variant_${i}`;
-            formData.append(`image_variant_${i}`, v.imageFile);
-        }
-    });
-    
+    if (state.mainImageFile) { payload.productDetailDTO.imageName = "productImage"; formData.append("productImage", state.mainImageFile); } else if (!state.currentProductId) { await showDialog("error", "Vui lòng chọn ảnh chính cho sản phẩm!"); return; }
+    ProductUI.state.variants.forEach((v, i) => { if (v.imageFile) { payload.variants[i].imageName = `image_variant_${i}`; formData.append(`image_variant_${i}`, v.imageFile); } });
     formData.append("productDTO", new Blob([JSON.stringify(payload)], { type: "application/json" }));
-
-    const submitBtn = document.getElementById("submitBtn");
-    const spinner = document.getElementById("submitSpinner");
-    submitBtn.disabled = true; spinner.classList.remove("d-none");
-
-    try {
-        const res = await ProductService.createProduct(formData);
-        if (res && res.success) {
-            await showDialog("success", state.currentProductId ? "Cập nhật thành công!" : "Tạo sản phẩm thành công!");
-            resetForm();
-            ProductUI.toggleView('list');
-            await loadProductList();
-        } else {
-            await showDialog("error", res?.message || "Có lỗi xảy ra");
-        }
-    } catch (error) {
-        await showDialog("error", "Lỗi: " + error.message);
-    } finally {
-        submitBtn.disabled = false; spinner.classList.add("d-none");
-    }
+    const submitBtn = document.getElementById("submitBtn"); const spinner = document.getElementById("submitSpinner"); submitBtn.disabled = true; spinner.classList.remove("d-none");
+    try { const res = await ProductService.createProduct(formData); if (res && res.success) { await showDialog("success", state.currentProductId ? "Cập nhật thành công!" : "Tạo sản phẩm thành công!"); resetForm(); ProductUI.toggleView('list'); await loadProductList(); } else { await showDialog("error", res?.message || "Có lỗi xảy ra"); } } catch (error) { await showDialog("error", "Lỗi: " + error.message); } finally { submitBtn.disabled = false; spinner.classList.add("d-none"); }
 }
 
 function resetForm() {
-    state.currentProductId = null;
-    state.mainImageFile = null;
-    ProductUI.state.variants = [];
-    ProductUI.state.selectedAttributes = [];
-    ProductUI.state.mainImageFile = null;
-    document.getElementById("productForm").reset();
-    document.getElementById("selectedAttributesList").innerHTML = "";
-    document.getElementById("variantsContainer").innerHTML = "";
-    document.getElementById("mainImagePreview").innerHTML = "";
-    document.querySelector('#createView h2').textContent = "Thêm Sản Phẩm Mới";
-    document.getElementById('submitBtn').innerHTML = "Tạo sản phẩm";
+    state.currentProductId = null; state.mainImageFile = null; ProductUI.state.variants = []; ProductUI.state.selectedAttributes = []; ProductUI.state.mainImageFile = null;
+    document.getElementById("productForm").reset(); document.getElementById("selectedAttributesList").innerHTML = ""; document.getElementById("variantsContainer").innerHTML = ""; document.getElementById("mainImagePreview").innerHTML = "";
+    document.querySelector('#createView h2').textContent = "Thêm Sản Phẩm Mới"; document.getElementById('submitBtn').innerHTML = "Tạo sản phẩm";
+    document.getElementById("brandId").innerHTML = '<option value="">-- Chọn thương hiệu --</option>';
 }
 
 function setupEventListeners() {
-    document.getElementById("productForm").onsubmit = handleSave;
-    document.getElementById("resetBtn").onclick = resetForm;
+    document.getElementById("productForm").onsubmit = handleSave; document.getElementById("resetBtn").onclick = resetForm;
     document.getElementById("btnOpenCreate").onclick = () => { resetForm(); ProductUI.toggleView('create'); };
     document.getElementById("btnBackToList").onclick = () => ProductUI.toggleView('list');
+    document.getElementById("mainImage").onchange = (e) => { if(e.target.files[0]) { state.mainImageFile = e.target.files[0]; ProductUI.handleMainImageUpload(e.target.files[0]); } };
     
-    document.getElementById("mainImage").onchange = (e) => {
-        if(e.target.files[0]) { state.mainImageFile = e.target.files[0]; ProductUI.handleMainImageUpload(e.target.files[0]); }
-    };
-    // SỰ KIỆN QUAN TRỌNG: Khi chọn danh mục -> Load Brands
+    // Sử dụng hàm renderBrandOptions chung
     document.getElementById("categoryId").onchange = (e) => {
-        const categoryId = e.target.value;
-        const brandSelect = document.getElementById("brandId");
-        brandSelect.innerHTML = '<option value="">-- Chọn thương hiệu --</option>';
-        
-        if(!categoryId) {
-            brandSelect.innerHTML = '<option value="" disabled selected>⬅️ Vui lòng chọn Danh mục trước</option>';
-            return;
-        }
-
-        const filteredBrands = state.brands.filter(b => b.categoryId == categoryId);
-        
-        if (filteredBrands.length > 0) {
-            filteredBrands.forEach(b => {
-                brandSelect.innerHTML += `<option value="${b.brandId}">${b.brandName}</option>`;
-            });
-        } else {
-            brandSelect.innerHTML += '<option disabled>Không có thương hiệu nào</option>';
-        }
+        const catId = e.target.value;
+        renderBrandOptions(catId);
     };
 }
 
@@ -236,7 +163,7 @@ async function loadInitialData() {
         state.categories.forEach(c => categorySelect.innerHTML += `<option value="${c.categoryId}">${c.categoryName}</option>`);
         ProductUI.renderAttributeSelector();
         await loadProductList();
-    } catch (e) { console.error(e); }
+    } catch (e) {}
 }
 
 (async function init() { await loadInitialData(); setupEventListeners(); })();

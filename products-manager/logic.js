@@ -1,5 +1,5 @@
 export const ProductLogic = {
-    // Generate all variant combinations from attributes
+    // Tạo tổ hợp biến thể từ thuộc tính
     generateVariants: (selectedAttributes) => {
         if (!selectedAttributes || selectedAttributes.length === 0) return [];
         const validAttributes = selectedAttributes.filter(attr => attr.values && attr.values.length > 0);
@@ -26,7 +26,7 @@ export const ProductLogic = {
 
         return combinations.map((combo, index) => ({
             id: `variant_gen_${Date.now()}_${index}`,
-            variantId: null, // Mới tạo thì null
+            variantId: null,
             combination: combo,
             displayName: combo.map(c => c.valueName).join(' - '),
             imageName: null, imageUrl: null, imageFile: null,
@@ -34,7 +34,7 @@ export const ProductLogic = {
         }));
     },
 
-    // Validate product data before submission
+    // Validate dữ liệu
     validateProduct: (productData) => {
         const errors = [];
         if (!productData.productName || productData.productName.trim() === '') errors.push('Tên sản phẩm không được để trống');
@@ -51,14 +51,13 @@ export const ProductLogic = {
         return { isValid: errors.length === 0, errors: errors };
     },
 
-    // [QUAN TRỌNG] Format Data: Giữ lại ID thật khi sửa
+    // Format dữ liệu để gửi lên API
     formatProductData: (formData, selectedAttributes, variants) => {
         const productDetailDTO = {
-            productId: null, // Sẽ được gán ở index.js nếu là edit
+            productId: null,
             productName: formData.productName,
             description: formData.description || "",
-            imageName: null, 
-            imageUrl: null,
+            imageName: null, imageUrl: null,
             originalPrice: parseFloat(formData.priceOriginal), 
             price: parseFloat(formData.price),
             categoryId: formData.categoryId,
@@ -67,24 +66,20 @@ export const ProductLogic = {
             createdAt: null, updatedAt: null
         };
 
-        // Attributes
         const attributes = selectedAttributes.map(attr => {
             if (!attr.values || attr.values.length === 0) return null;
             return {
                 attributeId: attr.attributeId || null,
                 attributeName: attr.attributeName,
                 attributeValues: attr.values.map(v => ({
-                    // Nếu ID có dấu _ hoặc gạch ngang dài (id tạm) thì set null để backend tạo mới
                     attributeValueId: (v.id && !v.id.toString().includes('_')) ? v.id : null, 
                     attributeValueName: v.name
                 }))
             };
         }).filter(a => a !== null);
 
-        // Variants
         const formattedVariants = variants.map((variant, index) => {
             return {
-                // Giữ nguyên variantId nếu có (để update), nếu không thì null (để tạo mới)
                 variantId: (variant.variantId && !variant.variantId.toString().startsWith('variant_gen')) ? variant.variantId : null,
                 imageName: variant.imageName,
                 imageUrl: null,
@@ -95,13 +90,11 @@ export const ProductLogic = {
             };
         });
 
-        // Variant Values
         const variantValues = [];
         variants.forEach((variant, variantIndex) => {
             if (variant.combination && variant.combination.length > 0) {
                 variant.combination.forEach(combo => {
                     variantValues.push({
-                        // Map theo index hoặc ID
                         variantId: variant.variantId || `variant_index_${variantIndex}`,
                         attributeValueId: (combo.valueId && !combo.valueId.toString().includes('_')) ? combo.valueId : null
                     });

@@ -16,7 +16,6 @@ export const ProductUI = {
         }
     },
 
-    // [ĐÃ SỬA] Render List: Bỏ nút xóa
     renderProductList: (products, categories, brands) => {
         const tbody = document.getElementById('productTableBody');
         if (!products || products.length === 0) {
@@ -57,7 +56,6 @@ export const ProductUI = {
         }).join('');
     },
 
-    // [ĐÃ SỬA] Fix lỗi font chữ
     renderAttributeSelector: () => {
         const container = document.getElementById('attributesContainer');
         if (!container) return;
@@ -91,7 +89,7 @@ export const ProductUI = {
                     <select class="form-select attribute-select">
                         <option value="">-- Chọn --</option>
                         ${ProductUI.state.attributes.map(attr => 
-                            `<option value="${attr.attributeId}" ${attr.attributeId === selectedAttrId ? 'selected' : ''}>${attr.attributeName}</option>`
+                            `<option value="${attr.attributeId}" ${attr.attributeId == selectedAttrId ? 'selected' : ''}>${attr.attributeName}</option>`
                         ).join('')}
                     </select>
                 </div>
@@ -108,6 +106,7 @@ export const ProductUI = {
 
         const attrSelect = row.querySelector('.attribute-select');
         const valuesInput = row.querySelector('.attribute-values-input');
+        
         attrSelect.addEventListener('change', (e) => {
             valuesInput.disabled = !e.target.value;
             if(!e.target.value) valuesInput.value = '';
@@ -126,7 +125,7 @@ export const ProductUI = {
             const attributeId = attrSelect.value;
             const valuesString = valuesInput.value;
             if (attributeId && valuesString.trim()) {
-                const attribute = ProductUI.state.attributes.find(a => a.attributeId === attributeId);
+                const attribute = ProductUI.state.attributes.find(a => a.attributeId == attributeId);
                 if (attribute) {
                     const values = valuesString.split(',').filter(v => v.trim()).map((name, idx) => ({
                         id: `${attributeId}_${idx}`, attributeValueId: null, name: name.trim()
