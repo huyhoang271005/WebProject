@@ -33,7 +33,7 @@ export const ProductService = {
             // Nếu Backend bảo URL cũ đúng nhưng sai method -> Có thể là POST vào chính /auth/admin/products
             // Hoặc POST vào /auth/admin/products/search. Tôi để /search vì nó an toàn hơn.
             // Nếu vẫn lỗi 404, bạn hãy xóa chữ "/search" đi là được.
-            const res = await callAPI(`/auth/admin/products/search`, "POST", payload, false);
+            const res = await callAPI(`/auth/admin/products/search`, "GET");
             
             return res?.data?.listData || res?.data || [];
         } catch (error) {
