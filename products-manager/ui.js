@@ -1,55 +1,40 @@
 export const ProductUI = {
     state: {
-        categories: [],
-        brands: [],
-        attributes: [],
-        selectedAttributes: [],
-        variants: [],
-        mainImageFile: null
+        categories: [], brands: [], attributes: [],
+        selectedAttributes: [], variants: [], mainImageFile: null, isEditingMode: false
     },
 
-    // Chuyển đổi giữa List và Form
     toggleView: (viewName) => {
         const listView = document.getElementById('listView');
         const createView = document.getElementById('createView');
-        const formTitle = document.querySelector('#createView h2');
-        const submitBtn = document.getElementById('submitBtn');
-        
         if (viewName === 'create') {
             listView.classList.add('d-none');
             createView.classList.remove('d-none');
-            // Mặc định là Thêm mới
-            if(formTitle) formTitle.textContent = "Thêm Sản Phẩm Mới";
-            if(submitBtn) submitBtn.innerHTML = "Tạo sản phẩm";
         } else {
             listView.classList.remove('d-none');
             createView.classList.add('d-none');
         }
     },
 
-    // Render danh sách (ĐÃ BỎ NÚT XÓA)
+    // [ĐÃ SỬA] Render List: Bỏ nút xóa
     renderProductList: (products, categories, brands) => {
         const tbody = document.getElementById('productTableBody');
-        
         if (!products || products.length === 0) {
             tbody.innerHTML = `<tr><td colspan="5" class="text-center py-5 text-muted">Chưa có sản phẩm nào.</td></tr>`;
             return;
         }
-
         const formatCurrency = (amount) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
 
         tbody.innerHTML = products.map(p => {
-            const catName = categories.find(c => c.categoryId == p.categoryId)?.categoryName || '<span class="text-muted fst-italic">---</span>';
-            const brandName = brands.find(b => b.brandId == p.brandId)?.brandName || '<span class="text-muted fst-italic">---</span>';
+            const catName = categories.find(c => c.categoryId == p.categoryId)?.categoryName || '<span class="text-muted">---</span>';
+            const brandName = brands.find(b => b.brandId == p.brandId)?.brandName || '<span class="text-muted">---</span>';
             const imageUrl = p.imageUrl || 'https://placehold.co/50x50?text=No+Img';
 
             return `
                 <tr>
                     <td class="ps-4">
                         <div class="d-flex align-items-center">
-                            <img src="${imageUrl}" class="rounded border me-3" 
-                                 style="width: 48px; height: 48px; object-fit: cover;" 
-                                 alt="${p.productName}">
+                            <img src="${imageUrl}" class="rounded border me-3" style="width: 48px; height: 48px; object-fit: cover;" alt="${p.productName}">
                             <div>
                                 <div class="fw-bold text-dark text-truncate" style="max-width: 250px;">${p.productName}</div>
                                 <small class="text-muted" style="font-size: 11px;">ID: ${p.productId?.substring(0, 8)}...</small>
@@ -72,25 +57,10 @@ export const ProductUI = {
         }).join('');
     },
 
-    // --- LOGIC ATTRIBUTES & VARIANTS ---
-
-    initSearchableDropdown: (selectId, items, displayField = 'name', valueField = 'id') => {
-        const select = document.getElementById(selectId);
-        if (!select) return;
-        select.innerHTML = '<option value="">-- Chọn --</option>';
-        items.forEach(item => {
-            const option = document.createElement('option');
-            option.value = item[valueField];
-            option.textContent = item[displayField];
-            select.appendChild(option);
-        });
-    },
-
+    // [ĐÃ SỬA] Fix lỗi font chữ
     renderAttributeSelector: () => {
         const container = document.getElementById('attributesContainer');
         if (!container) return;
-        
-        // Fix lỗi font chữ ở đây (Lưu file UTF-8)
         container.innerHTML = `
             <div class="card shadow-sm">
                 <div class="card-body">
@@ -104,7 +74,6 @@ export const ProductUI = {
         document.getElementById('addAttributeBtn').addEventListener('click', () => ProductUI.addAttributeRow());
     },
 
-    // Hàm thêm hàng thuộc tính (có hỗ trợ pre-fill dữ liệu khi sửa)
     addAttributeRow: (data = null) => {
         const list = document.getElementById('selectedAttributesList');
         const rowId = `attr_row_${Date.now()}_${Math.random()}`;
@@ -112,7 +81,6 @@ export const ProductUI = {
         row.className = 'attribute-row mb-3 p-3 border rounded bg-light';
         row.id = rowId;
         
-        // Chuẩn bị value nếu có data (chế độ sửa)
         const selectedAttrId = data ? data.attributeId : "";
         const valuesText = data ? data.values.map(v => v.name).join(', ') : "";
 
@@ -140,17 +108,13 @@ export const ProductUI = {
 
         const attrSelect = row.querySelector('.attribute-select');
         const valuesInput = row.querySelector('.attribute-values-input');
-
         attrSelect.addEventListener('change', (e) => {
             valuesInput.disabled = !e.target.value;
             if(!e.target.value) valuesInput.value = '';
             ProductUI.updateSelectedAttributes();
         });
         valuesInput.addEventListener('input', ProductUI.updateSelectedAttributes);
-        row.querySelector('.remove-attr-btn').addEventListener('click', () => { 
-            row.remove(); 
-            ProductUI.updateSelectedAttributes(); 
-        });
+        row.querySelector('.remove-attr-btn').addEventListener('click', () => { row.remove(); ProductUI.updateSelectedAttributes(); });
     },
 
     updateSelectedAttributes: () => {
@@ -172,19 +136,11 @@ export const ProductUI = {
             }
         });
         ProductUI.state.selectedAttributes = selectedAttributes;
-        
-        // Lưu ý: Khi đang sửa (Edit Mode) mà người dùng thay đổi attribute,
-        // ta sẽ tạo lại variants mới (mất variants cũ). 
-        // Logic này để đơn giản hóa, giữ nguyên.
         ProductUI.updateVariantsFromAttributes();
     },
 
     updateVariantsFromAttributes: () => {
         import('./logic.js').then(({ ProductLogic }) => {
-            // Chỉ generate lại nếu user thay đổi input, 
-            // còn nếu đang load từ API (Edit mode) thì variants đã được set thủ công ở index.js rồi
-            // Ta check flag hoặc so sánh length. Ở đây ta cứ generate lại cho nhất quán logic tạo mới.
-            // (Nâng cao: Cần logic merge variants cũ khi sửa, nhưng ở đây ta làm đơn giản trước)
             if (!ProductUI.state.isEditingMode) {
                 ProductUI.state.variants = ProductLogic.generateVariants(ProductUI.state.selectedAttributes);
             }
@@ -209,19 +165,11 @@ export const ProductUI = {
         const tbody = document.getElementById('variantsTableBody');
         
         ProductUI.state.variants.forEach((v, idx) => {
-            // Xử lý ảnh preview nếu có URL (khi sửa)
-            let imgPreview = '';
-            if (v.imageUrl) {
-                imgPreview = `<div class="mt-1"><img src="${v.imageUrl}" style="width:30px;height:30px;object-fit:cover;border:1px solid #ccc"></div>`;
-            }
-
+            let imgPreview = v.imageUrl ? `<div class="mt-1"><img src="${v.imageUrl}" style="width:30px;height:30px;object-fit:cover;border:1px solid #ccc"></div>` : '';
             const tr = document.createElement('tr');
             tr.innerHTML = `
                 <td class="fw-bold small">${v.displayName}</td>
-                <td>
-                    <input type="file" class="form-control form-control-sm v-img" data-i="${idx}">
-                    ${imgPreview}
-                </td>
+                <td><input type="file" class="form-control form-control-sm v-img" data-i="${idx}">${imgPreview}</td>
                 <td><input type="number" class="form-control form-control-sm v-po" data-i="${idx}" value="${v.priceOriginal}"></td>
                 <td><input type="number" class="form-control form-control-sm v-p" data-i="${idx}" value="${v.price}"></td>
                 <td><input type="number" class="form-control form-control-sm v-s" data-i="${idx}" value="${v.stock}"></td>

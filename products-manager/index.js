@@ -4,35 +4,24 @@ import { ProductLogic } from "./logic.js";
 import { ProductUI } from "./ui.js";
 
 let state = {
-    products: [],
-    categories: [],
-    brands: [],
-    attributes: [],
-    variants: [],
-    selectedAttributes: [],
-    mainImageFile: null,
-    currentProductId: null // [MỚI] Để track đang sửa sản phẩm nào
+    products: [], categories: [], brands: [], attributes: [],
+    variants: [], selectedAttributes: [], mainImageFile: null,
+    currentProductId: null // Track ID đang sửa
 };
 
-// --- HÀM LOAD DANH SÁCH ---
+// --- LOAD DANH SÁCH ---
 async function loadProductList() {
     const tbody = document.getElementById('productTableBody');
     tbody.innerHTML = '<tr><td colspan="5" class="text-center py-5">Đang tải dữ liệu... <div class="spinner-border spinner-border-sm text-primary"></div></td></tr>';
     
     try {
-        // ID TEST CỦA BẠN
         const testId = "6786aedf-aa81-44ef-b28f-06abff1b5c1c"; 
         const data = await ProductService.getProductById(testId);
 
         if (data && data.productDetailDTO) {
             state.products = [data.productDetailDTO];
-            // Lưu lại data full để dùng cho Edit (vì productDetailDTO thiếu variants list chi tiết)
-            // Ta sẽ gộp data trả về vào object product để dễ xử lý
             state.products[0].fullData = data; 
-
             ProductUI.renderProductList(state.products, state.categories, state.brands);
-            
-            // [MỚI] Gán sự kiện click cho các nút Sửa
             attachEditEvents();
         } else {
             tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-4">Không tìm thấy sản phẩm.</td></tr>';
@@ -43,117 +32,83 @@ async function loadProductList() {
     }
 }
 
-// [MỚI] Gán sự kiện cho nút Sửa
 function attachEditEvents() {
     document.querySelectorAll('.btn-edit').forEach(btn => {
         btn.addEventListener('click', (e) => {
-            // Ngăn chặn hành vi mặc định
-            e.preventDefault(); 
-            const id = btn.dataset.id;
-            handleEdit(id);
+            e.preventDefault();
+            handleEdit(btn.dataset.id);
         });
     });
 }
 
-// [MỚI] Logic xử lý khi bấm Sửa
+// [LOGIC SỬA ĐẦY ĐỦ]
 function handleEdit(id) {
     const product = state.products.find(p => p.productId === id);
     if (!product || !product.fullData) return;
-    
-    const fullData = product.fullData; // Dữ liệu đầy đủ từ API (bao gồm attributes, variants)
+    const fullData = product.fullData;
 
-    // 1. Chuyển sang View Form
     ProductUI.toggleView('create');
     document.querySelector('#createView h2').textContent = "Cập Nhật Sản Phẩm";
     document.getElementById('submitBtn').innerHTML = "Lưu thay đổi";
-    state.currentProductId = id; // Đánh dấu đang sửa
+    state.currentProductId = id;
 
-    // 2. Điền thông tin cơ bản
+    // Fill thông tin cơ bản
     document.getElementById("productName").value = product.productName;
     document.getElementById("description").value = product.description || "";
     document.getElementById("price").value = product.price;
     document.getElementById("priceOriginal").value = product.originalPrice;
     
-    // Select Category & Brand
-    if(product.categoryId) document.getElementById("categoryId").value = product.categoryId;
-    // Trigger change để load brands nếu cần (hoặc set tay)
-    if(product.categoryId && product.brandId) {
-        // Logic filter brand giống setupEventListeners
+    // Fill Danh mục và Thương hiệu (Fix lỗi không hiện thương hiệu)
+    if(product.categoryId) {
+        document.getElementById("categoryId").value = product.categoryId;
         const brandSelect = document.getElementById("brandId");
         brandSelect.innerHTML = '<option value="">-- Chọn thương hiệu --</option>';
-        state.brands.filter(b => b.categoryId == product.categoryId).forEach(b => {
-             brandSelect.innerHTML += `<option value="${b.brandId}" ${b.brandId == product.brandId ? 'selected' : ''}>${b.brandName}</option>`;
-        });
+        const filteredBrands = state.brands.filter(b => b.categoryId == product.categoryId);
+        if (filteredBrands.length > 0) {
+            filteredBrands.forEach(b => {
+                const isSelected = product.brandId && (b.brandId == product.brandId);
+                brandSelect.innerHTML += `<option value="${b.brandId}" ${isSelected ? 'selected' : ''}>${b.brandName}</option>`;
+            });
+        } else {
+            brandSelect.innerHTML += '<option disabled>Không có thương hiệu nào</option>';
+        }
     }
 
-    // Preview ảnh chính cũ
     if (product.imageUrl) {
         document.getElementById('mainImagePreview').innerHTML = `<img src="${product.imageUrl}" class="img-thumbnail mt-2" style="max-height: 150px;">`;
     }
 
-    // 3. Điền Attributes (Phần Khó Nhất)
-    // Cần map từ API attributes -> UI selectedAttributes
-    ProductUI.state.isEditingMode = true; // Cờ để chặn auto-generate variants
-    document.getElementById('selectedAttributesList').innerHTML = ""; // Xóa cũ
+    // Fill Attributes & Variants
+    ProductUI.state.isEditingMode = true; 
+    document.getElementById('selectedAttributesList').innerHTML = "";
     
-    const apiAttributes = fullData.attributes || [];
-    const uiAttributes = [];
+    const uiAttributes = (fullData.attributes || []).map(attr => ({
+        attributeId: attr.attributeId,
+        attributeName: attr.attributeName,
+        values: attr.attributeValues.map(v => ({ id: v.attributeValueId, name: v.attributeValueName }))
+    }));
 
-    apiAttributes.forEach(attr => {
-        // Map cấu trúc API sang cấu trúc UI
-        const values = attr.attributeValues.map(v => ({
-            id: v.attributeValueId, // Giữ ID thực
-            name: v.attributeValueName
-        }));
-
-        uiAttributes.push({
-            attributeId: attr.attributeId,
-            attributeName: attr.attributeName,
-            values: values
-        });
-
-        // Render ra giao diện
-        ProductUI.addAttributeRow({
-            attributeId: attr.attributeId,
-            values: values
-        });
-    });
-
+    uiAttributes.forEach(attr => ProductUI.addAttributeRow(attr));
     ProductUI.state.selectedAttributes = uiAttributes;
 
-    // 4. Điền Variants (Phần Khó Nhì)
-    // Map API variants -> UI variants
-    const apiVariants = fullData.variants || [];
-    const uiVariants = apiVariants.map(v => {
-        // Cần tìm tên hiển thị (displayName) cho variant này
-        // Thường API trả về không có tên ghép (VD: Đỏ - XL), ta phải tự tìm hoặc dùng tạm ID
-        // Ở đây ta tìm trong variantValues để ghép tên (nếu có logic đó), 
-        // hoặc đơn giản là hiển thị "Biến thể X" nếu lười :D. 
-        // Nhưng tốt nhất là hiển thị giá/tồn kho đúng.
-        return {
-            variantId: v.variantId, // ID thực để update
-            displayName: "Biến thể (Cập nhật)", // Tạm thời, vì logic ghép tên từ API response khá phức tạp
-            price: v.price,
-            priceOriginal: v.originalPrice,
-            stock: v.stock,
-            imageUrl: v.imageUrl,
-            imageFile: null
-        };
-    });
-
-    // Nếu muốn hiển thị tên Variant đúng (VD: Màu Đỏ - Size L), ta cần logic map variantValues trong fullData.
-    // Logic này khá dài dòng, nếu bạn cần thì bảo tôi, còn tạm thời hiển thị list variant ra để sửa giá/kho đã.
+    const uiVariants = (fullData.variants || []).map(v => ({
+        variantId: v.variantId, 
+        displayName: "Biến thể cũ (Cập nhật)", 
+        price: v.price,
+        priceOriginal: v.originalPrice,
+        stock: v.stock,
+        imageUrl: v.imageUrl,
+        imageFile: null
+    }));
     
     ProductUI.state.variants = uiVariants;
     ProductUI.renderVariantsTable();
-
-    ProductUI.state.isEditingMode = false; // Tắt cờ
+    ProductUI.state.isEditingMode = false;
 }
 
-// --- HANDLER SAVE (Cập nhật logic Update) ---
+// --- HANDLER SAVE (ĐÃ FIX ẢNH) ---
 async function handleSave(e) {
     e.preventDefault();
-    // ... Validation code cũ giữ nguyên ...
     const productName = document.getElementById("productName").value.trim();
     const price = parseFloat(document.getElementById("price").value);
     const priceOriginal = parseFloat(document.getElementById("priceOriginal").value);
@@ -164,7 +119,6 @@ async function handleSave(e) {
         await showDialog("error", "Vui lòng điền đầy đủ thông tin bắt buộc!"); return;
     }
     
-    // ... (Validation Logic & Payload cũ giữ nguyên) ...
     const validation = ProductLogic.validateProduct({ productName, price, priceOriginal, variants: ProductUI.state.variants });
     if (!validation.isValid) { await showDialog("error", validation.errors.join('\n')); return; }
 
@@ -173,18 +127,18 @@ async function handleSave(e) {
         ProductUI.state.selectedAttributes, ProductUI.state.variants
     );
 
-    // Nếu đang sửa -> Gán ID sản phẩm vào payload
     if (state.currentProductId) {
         payload.productDetailDTO.productId = state.currentProductId;
     }
 
     const formData = new FormData();
-    // Logic ảnh chính: Nếu có file mới thì gửi, không thì thôi (API update phải xử lý đc việc này)
+    
     if (state.mainImageFile) {
         payload.productDetailDTO.imageName = "productImage"; 
         formData.append("productImage", state.mainImageFile);
-    } 
-    // Nếu đang sửa mà không chọn ảnh mới -> Backend giữ ảnh cũ. (Cần đảm bảo backend hỗ trợ)
+    } else if (!state.currentProductId) {
+        await showDialog("error", "Vui lòng chọn ảnh chính cho sản phẩm!"); return;
+    }
     
     ProductUI.state.variants.forEach((v, i) => {
         if (v.imageFile) {
@@ -195,17 +149,12 @@ async function handleSave(e) {
     
     formData.append("productDTO", new Blob([JSON.stringify(payload)], { type: "application/json" }));
 
-    // Submit
     const submitBtn = document.getElementById("submitBtn");
     const spinner = document.getElementById("submitSpinner");
     submitBtn.disabled = true; spinner.classList.remove("d-none");
 
     try {
-        let res;
-        // Nếu đang có ID -> Gọi API Update (Bạn cần thêm hàm updateProduct trong service nếu chưa có, hoặc dùng tạm create)
-        // Giả sử dùng chung create (POST) hoặc logic backend tự xử
-        res = await ProductService.createProduct(formData);
-        
+        const res = await ProductService.createProduct(formData);
         if (res && res.success) {
             await showDialog("success", state.currentProductId ? "Cập nhật thành công!" : "Tạo sản phẩm thành công!");
             resetForm();
@@ -222,30 +171,23 @@ async function handleSave(e) {
 }
 
 function resetForm() {
-    state.currentProductId = null; // Reset ID sửa
+    state.currentProductId = null;
     state.mainImageFile = null;
     ProductUI.state.variants = [];
     ProductUI.state.selectedAttributes = [];
     ProductUI.state.mainImageFile = null;
-    
     document.getElementById("productForm").reset();
     document.getElementById("selectedAttributesList").innerHTML = "";
     document.getElementById("variantsContainer").innerHTML = "";
     document.getElementById("mainImagePreview").innerHTML = "";
-    
-    // Reset tiêu đề form
     document.querySelector('#createView h2').textContent = "Thêm Sản Phẩm Mới";
     document.getElementById('submitBtn').innerHTML = "Tạo sản phẩm";
 }
 
-// ... (Phần setupEventListeners và loadInitialData giữ nguyên) ...
 function setupEventListeners() {
     document.getElementById("productForm").onsubmit = handleSave;
     document.getElementById("resetBtn").onclick = resetForm;
-    document.getElementById("btnOpenCreate").onclick = () => {
-        resetForm(); // Reset trước khi mở form thêm mới
-        ProductUI.toggleView('create');
-    };
+    document.getElementById("btnOpenCreate").onclick = () => { resetForm(); ProductUI.toggleView('create'); };
     document.getElementById("btnBackToList").onclick = () => ProductUI.toggleView('list');
     
     document.getElementById("mainImage").onchange = (e) => {
@@ -265,25 +207,15 @@ function setupEventListeners() {
 async function loadInitialData() {
     try {
         const cats = await ProductService.getCategories();
-        const [brands, attrs] = await Promise.all([
-            ProductService.getBrands(),
-            ProductService.getAttributes()
-        ]);
-        
-        state.categories = cats || [];
-        state.brands = brands || [];
-        state.attributes = attrs || [];
-        ProductUI.state.categories = state.categories;
-        ProductUI.state.brands = state.brands;
-        ProductUI.state.attributes = state.attributes;
+        const [brands, attrs] = await Promise.all([ProductService.getBrands(), ProductService.getAttributes()]);
+        state.categories = cats || []; state.brands = brands || []; state.attributes = attrs || [];
+        ProductUI.state.categories = state.categories; ProductUI.state.brands = state.brands; ProductUI.state.attributes = state.attributes;
 
         const categorySelect = document.getElementById("categoryId");
         categorySelect.innerHTML = '<option value="">-- Chọn danh mục --</option>';
         state.categories.forEach(c => categorySelect.innerHTML += `<option value="${c.categoryId}">${c.categoryName}</option>`);
         ProductUI.renderAttributeSelector();
-        
         await loadProductList();
-
     } catch (e) { console.error(e); }
 }
 
