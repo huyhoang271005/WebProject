@@ -2,14 +2,7 @@ import { loadNavbar } from "../navbar/navbar.js";
 import { callAPI } from "../public/api.js";
 import { toggleLoading } from "../public/loader.js";
 
-const CATEGORIES = [
-  { id: "an-vat", name: "Đồ ăn vặt", icon: "fa-cookie-bite" },
-  { id: "nuoc-ngot", name: "Nước giải khát", icon: "fa-bottle-water" },
-  { id: "dong-lanh", name: "Đồ đông lạnh", icon: "fa-snowflake" },
-  { id: "mi-tom", name: "Mì ăn liền", icon: "fa-bowl-rice" },
-  { id: "gia-dung", name: "Gia dụng", icon: "fa-pump-soap" },
-];
-
+let categoriesData = [];
 let currentFilter = { keyword: null, categoryId: null };
 
 document.addEventListener("DOMContentLoaded", async () => {
@@ -27,27 +20,46 @@ document.addEventListener("DOMContentLoaded", async () => {
   if (urlParams.get("cat")) currentFilter.categoryId = urlParams.get("cat");
   if (urlParams.get("search")) currentFilter.keyword = urlParams.get("search");
 
+  await fetchCategories();
   renderSidebarCategories();
   setupEvents();
   await fetchProducts();
   toggleLoading(false);
 });
 
+async function fetchCategories() {
+  try {
+    const res = await callAPI("/auth/category", "GET", null);
+    if (res && res.success && Array.isArray(res.data)) {
+      categoriesData = res.data;
+    } else {
+      categoriesData = [
+        { id: "an-vat", name: "Đồ ăn vặt" },
+        { id: "nuoc-ngot", name: "Nước giải khát" },
+      ];
+    }
+  } catch (e) {
+    console.error("Lỗi danh mục:", e);
+  }
+}
+
 async function fetchProducts() {
   const grid = document.getElementById("productGrid");
   if (!grid) return;
   grid.innerHTML =
-    '<div style="grid-column: 1/-1; text-align: center;">Đang tải...</div>';
+    '<div style="grid-column:1/-1; text-align:center; padding:40px; color:#666;">Đang tải...</div>';
 
   try {
     let endpoint = "/auth/products";
-    const params = [];
-    params.push("page=0");
-    params.push("size=50");
+    const params = ["page=0", "size=50"];
 
     if (currentFilter.keyword)
       params.push(`keyword=${encodeURIComponent(currentFilter.keyword)}`);
-    if (currentFilter.categoryId && currentFilter.categoryId !== "all") {
+    if (
+      currentFilter.categoryId &&
+      currentFilter.categoryId !== "all" &&
+      currentFilter.categoryId !== "other"
+    ) {
       params.push(`categoryId=${encodeURIComponent(currentFilter.categoryId)}`);
     }
 
@@ -62,21 +74,18 @@ async function fetchProducts() {
         grid.innerHTML = list.map((p) => createProductHTML(p)).join("");
       } else {
         grid.innerHTML =
-          '<div style="grid-column: 1/-1; text-align: center; font-size:1.2rem; color:#666; margin-top:50px;">Không tìm thấy sản phẩm nào</div>';
+          '<div style="grid-column:1/-1; text-align:center; padding:50px;">Không tìm thấy sản phẩm</div>';
       }
     } else {
-      grid.innerHTML = `<div style="grid-column: 1/-1; text-align: center; color:red;">${
-        res?.message || "Lỗi tải dữ liệu"
-      }</div>`;
+      grid.innerHTML = `<div style="text-align:center; color:red;">${res?.message}</div>`;
     }
   } catch (e) {
-    console.error(e);
     grid.innerHTML =
-      '<div style="grid-column: 1/-1; text-align: center; color:red;">Lỗi kết nối Server!</div>';
+      '<div style="text-align:center; color:red;">Lỗi kết nối!</div>';
   }
 }
 
-// --- HÀM TẠO HTML SẢN PHẨM COMPACT ---
+// --- THẺ SẢN PHẨM: KHÔNG NÚT GIỎ HÀNG, GIÁ GỐC NHỎ ---
 function createProductHTML(p) {
   const imgUrl =
     p.imageUrl || "https://cdn-icons-png.flaticon.com/512/2748/2748558.png";
@@ -86,7 +95,7 @@ function createProductHTML(p) {
   }).format(p.price || 0);
 
   let discountBadge = "";
-  let originalPriceHTML = `<div style="height: 16px;"></div>`; // Giữ chỗ nếu ko giảm giá
+  let originalPriceHTML = "";
 
   if (p.originalPrice && p.originalPrice > p.price) {
     const percent = Math.round(
@@ -97,79 +106,45 @@ function createProductHTML(p) {
       currency: "VND",
     }).format(p.originalPrice);
 
-    // Nhãn giảm giá góc phải
-    discountBadge = `
-            <div style="position: absolute; top: 0; right: 0; background: rgba(255, 212, 36, 0.95); color: #b42b2b; 
-                        padding: 3px 6px; font-weight: 700; font-size: 0.75rem; border-bottom-left-radius: 8px; z-index: 2;">
-                -${percent}%
-            </div>
-        `;
-
-    // Giá gốc gạch ngang nằm trên
-    originalPriceHTML = `
-            <div style="text-decoration: line-through; color: #9ca3af; font-size: 0.8rem; line-height: 1;">
-                ${originalFormatted}
-            </div>`;
+    discountBadge = `<div style="position:absolute; top:0; right:0; background:#FFD424; color:#d0021b; padding:3px 6px; font-weight:800; font-size:0.7rem; border-bottom-left-radius:8px; z-index:2;">-${percent}%</div>`;
+    originalPriceHTML = `<span style="text-decoration:line-through; color:#9ca3af; font-size:0.75rem; margin-right:6px;">${originalFormatted}</span>`;
   }
+
+  const rating = p.ratingAvg || 5;
+  const starsHTML = renderStars(rating);
 
   return `
         <div class="product-card" onclick="window.location.href='../product-detail/index.html?id=${p.productId}'" 
-             style="position: relative; border-radius: 8px; border: 1px solid #e5e7eb; overflow: hidden; background: white; transition: transform 0.2s; cursor: pointer;">
-            
+             style="position:relative; border-radius:8px; border:1px solid #f3f4f6; overflow:hidden; background:white; transition:all 0.2s; cursor:pointer; box-shadow:0 1px 2px rgba(0,0,0,0.05);">
             ${discountBadge}
-            
-            <div class="p-img" style="height: 160px; width: 100%; display: flex; align-items: center; justify-content: center; background: #f9fafb;">
-                <img src="${imgUrl}" style="width: 100%; height: 100%; object-fit: contain;">
+            <div class="p-img" style="height:160px; display:flex; align-items:center; justify-content:center; background:#fff; border-bottom:1px solid #f9f9f9;">
+                <img src="${imgUrl}" style="width:100%; height:100%; object-fit:contain; padding:10px;">
             </div>
-            
-            <div class="p-info" style="padding: 8px 10px 12px 10px;">
-                <div class="p-name" title="${p.productName}" 
-                     style="font-size: 0.9rem; font-weight: 500; color: #333; margin-bottom: 6px; height: 36px; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; line-height: 1.3;">
+            <div class="p-info" style="padding:10px;">
+                <div class="p-name" title="${p.productName}" style="font-size:0.9rem; font-weight:500; color:#333; margin-bottom:4px; height:36px; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; line-height:1.3;">
                     ${p.productName}
                 </div>
-
-                ${originalPriceHTML}
-
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 4px;">
-                    <span style="color: #ef4444; font-weight: 700; font-size: 1rem;">${priceFormatted}</span>
-                    
-                    <button onclick="event.stopPropagation(); alert('Đã thêm vào giỏ')" 
-                            style="width: 28px; height: 28px; border-radius: 50%; border: 1px solid #10B981; background: #ecfdf5; color: #10B981; 
-                                   display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s;">
-                        <i class="fa-solid fa-cart-plus" style="font-size: 0.85rem;"></i>
-                    </button>
+                <div style="margin-bottom:6px; font-size:0.7rem; color:#fbbf24; display:flex; align-items:center;">
+                    ${starsHTML} <span style="color:#9ca3af; margin-left:4px;">(99+)</span>
+                </div>
+                <div style="display:flex; align-items:baseline;">
+                    ${originalPriceHTML}
+                    <span style="color:#ef4444; font-weight:700; font-size:1rem;">${priceFormatted}</span>
                 </div>
             </div>
         </div>
     `;
 }
 
-function setupEvents() {
-  const navSearch = document.getElementById("navbarSearchInput");
-  const navBtn = document.getElementById("navbarSearchBtn");
-
-  const doSearch = () => {
-    currentFilter.keyword = navSearch.value.trim();
-    fetchProducts();
-  };
-
-  if (navSearch) {
-    if (currentFilter.keyword) navSearch.value = currentFilter.keyword;
-    navSearch.onkeypress = (e) => {
-      if (e.key === "Enter") doSearch();
-    };
+function renderStars(rating) {
+  let html = "";
+  for (let i = 1; i <= 5; i++) {
+    if (i <= rating) html += '<i class="fa-solid fa-star"></i>';
+    else if (i - 0.5 <= rating)
+      html += '<i class="fa-solid fa-star-half-stroke"></i>';
+    else html += '<i class="fa-regular fa-star" style="color:#e5e7eb"></i>';
   }
-  if (navBtn) navBtn.onclick = doSearch;
-
-  const sidebarSearch = document.getElementById("sidebarSearch");
-  if (sidebarSearch) {
-    sidebarSearch.oninput = (e) => {
-      currentFilter.keyword = e.target.value.trim();
-      if (navSearch) navSearch.value = currentFilter.keyword;
-      clearTimeout(window.searchTimeout);
-      window.searchTimeout = setTimeout(() => fetchProducts(), 500);
-    };
-  }
+  return html;
 }
 
 function renderSidebarCategories() {
@@ -177,17 +152,40 @@ function renderSidebarCategories() {
   if (!list) return;
   let html = `<li class="cat-item ${
     !currentFilter.categoryId ? "active" : ""
-  }" onclick="changeCategory(null, this)">Tất cả sản phẩm</li>`;
-  html += CATEGORIES.map(
-    (c) => `
-        <li class="cat-item ${
+  }" onclick="changeCategory(null, this)"><i class="fa-solid fa-border-all"></i> Tất cả</li>`;
+  html += categoriesData
+    .map(
+      (c) =>
+        `<li class="cat-item ${
           currentFilter.categoryId === c.id ? "active" : ""
-        }" onclick="changeCategory('${c.id}', this)">
-            <i class="fa-solid ${c.icon}" style="width:20px"></i> ${c.name}
-        </li>
-    `
-  ).join("");
+        }" onclick="changeCategory('${
+          c.id
+        }', this)"><i class="fa-solid fa-caret-right"></i> ${c.name}</li>`
+    )
+    .join("");
+  html += `<li class="cat-item ${
+    currentFilter.categoryId === "other" ? "active" : ""
+  }" onclick="changeCategory('other', this)"><i class="fa-solid fa-ellipsis"></i> Khác</li>`;
   list.innerHTML = html;
+}
+
+function setupEvents() {
+  const navSearch = document.getElementById("navbarSearchInput");
+  const sidebarSearch = document.getElementById("sidebarSearch");
+  const doSearch = (val) => {
+    currentFilter.keyword = val.trim();
+    fetchProducts();
+  };
+
+  if (navSearch)
+    navSearch.onkeypress = (e) => {
+      if (e.key === "Enter") doSearch(navSearch.value);
+    };
+  if (sidebarSearch)
+    sidebarSearch.oninput = (e) => {
+      clearTimeout(window.searchTimeout);
+      window.searchTimeout = setTimeout(() => doSearch(e.target.value), 500);
+    };
 }
 
 window.changeCategory = (catId, element) => {
@@ -196,10 +194,5 @@ window.changeCategory = (catId, element) => {
     .forEach((el) => el.classList.remove("active"));
   element.classList.add("active");
   currentFilter.categoryId = catId;
-  const catName = catId
-    ? CATEGORIES.find((c) => c.id === catId)?.name
-    : "Tất cả sản phẩm";
-  const pageTitle = document.getElementById("pageTitle");
-  if (pageTitle) pageTitle.textContent = catName;
   fetchProducts();
 };

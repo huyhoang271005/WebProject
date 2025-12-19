@@ -36,7 +36,7 @@
         max-width: 1200px;
         margin: 0 auto;
         display: flex;
-        gap: 30px;
+        gap: 20px;
         padding-left: 20px;
         padding-right: 20px;
         position: relative;
@@ -44,29 +44,67 @@
       }
 
       .sidebar {
-        width: 280px;
+        width: 260px;
         flex-shrink: 0;
         background: white;
-        border-radius: 16px;
+        border-radius: 12px;
         padding: 20px;
         height: fit-content;
         position: sticky;
         top: 90px;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
-        border: 1px solid #f3f4f6;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+        border: 1px solid #f0f0f0;
         z-index: 10;
       }
+
       .filter-group {
-        margin-bottom: 25px;
+        margin-bottom: 20px;
       }
       .filter-title {
-        font-weight: 800;
-        font-size: 1.1rem;
-        margin-bottom: 15px;
+        font-weight: 700;
+        font-size: 1rem;
+        margin-bottom: 12px;
         display: flex;
         align-items: center;
-        gap: 10px;
-        color: #111827;
+        gap: 8px;
+        color: #1f2937;
+        text-transform: uppercase;
+      }
+
+      .sidebar-search-box {
+        position: relative;
+        width: 100%;
+        box-sizing: border-box;
+      }
+
+      /* 👇👇👇 ĐÂY LÀ CHỖ ĐÃ FIX 👇👇👇 */
+      .sidebar-search-box input {
+        width: 100% !important;
+        min-width: 0 !important; /* [QUAN TRỌNG] Hủy bỏ giới hạn 300px của public.css */
+        max-width: 100%;
+        padding: 10px 15px 10px 35px;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        outline: none;
+        font-size: 0.9rem;
+        background: #f9fafb;
+        transition: 0.2s;
+        box-sizing: border-box !important;
+      }
+      /* 👆👆👆 ----------------------- 👆👆👆 */
+
+      .sidebar-search-box input:focus {
+        background: white;
+        border-color: #10b981;
+        box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+      }
+      .sidebar-search-box i {
+        position: absolute;
+        left: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #9ca3af;
+        pointer-events: none;
       }
 
       .cat-list {
@@ -75,28 +113,27 @@
         margin: 0;
       }
       .cat-item {
-        padding: 12px 15px;
+        padding: 10px 12px;
         cursor: pointer;
-        border-radius: 8px;
+        border-radius: 6px;
         transition: 0.2s;
-        margin-bottom: 5px;
+        margin-bottom: 2px;
         display: flex;
         align-items: center;
         gap: 10px;
         color: #4b5563;
-        font-weight: 600;
+        font-weight: 500;
         user-select: none;
+        font-size: 0.95rem;
       }
       .cat-item:hover {
         background: #f3f4f6;
         color: #10b981;
-        transform: translateX(5px);
       }
       .cat-item.active {
         background: #ecfdf5;
         color: #10b981;
-        font-weight: 800;
-        border-left: 4px solid #10b981;
+        font-weight: 700;
       }
 
       .product-content {
@@ -105,31 +142,30 @@
       }
       .page-header {
         background: white;
-        padding: 20px 30px;
-        border-radius: 16px;
-        margin-bottom: 25px;
+        padding: 15px 25px;
+        border-radius: 12px;
+        margin-bottom: 20px;
         display: flex;
         justify-content: space-between;
         align-items: center;
         flex-wrap: wrap;
         gap: 15px;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
-        border: 1px solid #f3f4f6;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+        border: 1px solid #f0f0f0;
       }
       .ph-title {
-        font-size: 1.5rem;
+        font-size: 1.25rem;
         font-weight: 800;
         color: #111827;
       }
       .ph-sort select {
         padding: 8px 15px;
-        border-radius: 8px;
+        border-radius: 6px;
         border: 1px solid #e5e7eb;
         outline: none;
         cursor: pointer;
       }
 
-      /* Grid 4 cột cho đẹp và gọn */
       .product-grid {
         display: grid;
         grid-template-columns: repeat(4, 1fr);
@@ -158,35 +194,20 @@
     <div class="main-container">
       <aside class="sidebar">
         <div class="filter-group">
-          <div class="filter-title" style="margin-bottom: 10px">
-            <i class="fa-solid fa-magnifying-glass" style="color: #10b981"></i>
-            Tìm nhanh
+          <div class="filter-title">Tìm nhanh</div>
+          <div class="sidebar-search-box">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input type="text" id="sidebarSearch" placeholder="Gõ tên món..." />
           </div>
-          <input
-            type="text"
-            id="sidebarSearch"
-            placeholder="Gõ tên món..."
-            style="
-              width: 100%;
-              padding: 10px 15px;
-              border: 1px solid #e5e7eb;
-              border-radius: 30px;
-              outline: none;
-              font-size: 0.9rem;
-              background: #f9fafb;
-            "
-          />
         </div>
-
         <hr style="border: 0; border-top: 1px solid #f3f4f6; margin: 15px 0" />
-
         <div class="filter-group">
           <div class="filter-title">
-            <i class="fa-solid fa-layer-group"></i> Danh mục
+            <i class="fa-solid fa-bars-staggered"></i> Danh mục
           </div>
           <ul class="cat-list" id="catFilterList">
-            <li class="cat-item active" onclick="changeCategory(null, this)">
-              Đang tải...
+            <li class="cat-item active">
+              <i class="fa-solid fa-spinner fa-spin"></i> Đang tải...
             </li>
           </ul>
         </div>
@@ -196,11 +217,7 @@
         <div class="page-header">
           <div class="ph-title" id="pageTitle">Tất cả sản phẩm</div>
           <div class="ph-sort">
-            <i
-              class="fa-solid fa-arrow-down-short-wide"
-              style="color: #666; margin-right: 5px"
-            ></i>
-            Sắp xếp:
+            <span style="color: #666; margin-right: 5px">Sắp xếp:</span>
             <select>
               <option>Mới nhất</option>
               <option>Giá tăng dần</option>
@@ -211,7 +228,6 @@
         <div class="product-grid" id="productGrid"></div>
       </div>
     </div>
-
     <script type="module" src="index.js"></script>
   </body>
 </html>
