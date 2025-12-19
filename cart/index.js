@@ -245,7 +245,7 @@ window.changeVar = async (el) => {
 
             if (resUpdate.success) {
                 // Bước C: Xóa dòng hiện tại (currentItem) vì đã cộng dồn sang kia rồi
-                const resDelete = await api(`/auth/carts/${currentItem.cartItemId}`, 'DELETE');
+                const resDelete = await api('/auth/carts/delete', 'POST', [currentItem.cartItemId]);
                 if (resDelete.success) {
                     // === CẬP NHẬT GIAO DIỆN TỨC THÌ (KHÔNG CẦN RELOAD) ===
                     // 1. Xóa item hiện tại khỏi dữ liệu cục bộ
