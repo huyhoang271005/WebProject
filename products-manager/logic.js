@@ -42,8 +42,6 @@ export const ProductLogic = {
         if (!productData.priceOriginal || productData.priceOriginal <= 0) errors.push('Giá gốc phải lớn hơn 0');
         if (Number(productData.price) > Number(productData.priceOriginal)) errors.push('Giá bán không được lớn hơn giá gốc');
         
-        // Bỏ qua check variants nếu không có attribute nào (SP đơn giản)
-        // Nhưng nếu UI bắt buộc thì giữ lại. Ở đây mình check an toàn:
         if (productData.variants && productData.variants.length > 0) {
             productData.variants.forEach((variant, index) => {
                 if (!variant.price || variant.price < 0) errors.push(`Biến thể ${index + 1}: Giá bán không hợp lệ`);
@@ -52,7 +50,7 @@ export const ProductLogic = {
         return { isValid: errors.length === 0, errors: errors };
     },
 
-    // [FIX] Format Data: Dùng String() để tránh lỗi crash khi id là null/undefined
+    // [FIXED] Format Data: Gửi kèm Name và ID cha để Backend map được khi ValueID là null
     formatProductData: (formData, selectedAttributes, variants) => {
         const productDetailDTO = {
             productId: null,
@@ -73,7 +71,6 @@ export const ProductLogic = {
                 attributeId: attr.attributeId || null,
                 attributeName: attr.attributeName,
                 attributeValues: attr.values.map(v => ({
-                    // FIX: Dùng String() để check an toàn
                     attributeValueId: (v.id && String(v.id).indexOf('_') === -1) ? v.id : null, 
                     attributeValueName: v.name
                 }))
@@ -82,7 +79,6 @@ export const ProductLogic = {
 
         const formattedVariants = variants.map((variant, index) => {
             return {
-                // FIX: Dùng String() để check an toàn
                 variantId: (variant.variantId && String(variant.variantId).indexOf('variant_gen') === -1) ? variant.variantId : null,
                 imageName: variant.imageName,
                 imageUrl: null,
@@ -93,14 +89,18 @@ export const ProductLogic = {
             };
         });
 
+        // [PHẦN QUAN TRỌNG NHẤT ĐỂ SỬA LỖI]
         const variantValues = [];
         variants.forEach((variant, variantIndex) => {
             if (variant.combination && variant.combination.length > 0) {
                 variant.combination.forEach(combo => {
                     variantValues.push({
                         variantId: variant.variantId || `variant_index_${variantIndex}`,
-                        // FIX: Dùng String() để check an toàn
-                        attributeValueId: (combo.valueId && String(combo.valueId).indexOf('_') === -1) ? combo.valueId : null
+                        // Gửi thêm attributeId để backend biết giá trị này thuộc thuộc tính nào
+                        attributeId: combo.attributeId, 
+                        // Nếu ID là null (do mới tạo), backend sẽ dùng attributeValueName để map
+                        attributeValueId: (combo.valueId && String(combo.valueId).indexOf('_') === -1) ? combo.valueId : null,
+                        attributeValueName: combo.valueName
                     });
                 });
             }
