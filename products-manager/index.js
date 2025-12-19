@@ -48,7 +48,6 @@ function renderBrandOptions(categoryId, selectedBrandId = null) {
     if (categoryId) {
         filteredBrands = state.brands.filter(b => b.categoryId == categoryId);
     }
-    // Fallback: Nếu không tìm thấy brand theo category, hiện tất cả để tránh lỗi
     if (filteredBrands.length === 0 && state.brands.length > 0) {
         filteredBrands = state.brands; 
     }
@@ -61,7 +60,6 @@ function renderBrandOptions(categoryId, selectedBrandId = null) {
         brandSelect.innerHTML += '<option disabled>Không có dữ liệu thương hiệu</option>';
     }
 
-    // [FIX] SetTimeout để đảm bảo ăn giá trị khi Sửa
     if (selectedBrandId) {
         setTimeout(() => {
             brandSelect.value = selectedBrandId;
@@ -76,7 +74,10 @@ function handleEdit(id) {
 
     ProductUI.toggleView('create');
     document.querySelector('#createView h2').textContent = "Cập Nhật Sản Phẩm";
-    document.getElementById('submitBtn').innerHTML = "Lưu thay đổi";
+    
+    // [FIX] Giữ lại thẻ SPINNER khi đổi tên nút
+    document.getElementById('submitBtn').innerHTML = '<span class="spinner-border spinner-border-sm d-none" id="submitSpinner"></span> Lưu thay đổi';
+    
     state.currentProductId = id;
 
     // Fill thông tin
@@ -85,7 +86,6 @@ function handleEdit(id) {
     document.getElementById("price").value = product.price;
     document.getElementById("priceOriginal").value = product.originalPrice;
     
-    // Fill Danh mục & Thương hiệu
     if(product.categoryId) {
         document.getElementById("categoryId").value = product.categoryId;
     } else {
@@ -97,7 +97,7 @@ function handleEdit(id) {
         document.getElementById('mainImagePreview').innerHTML = `<img src="${product.imageUrl}" class="img-thumbnail mt-2" style="max-height: 150px;">`;
     }
 
-    // Fill Attributes (Quan trọng: Xử lý hiển thị)
+    ProductUI.state.isEditingMode = true; 
     document.getElementById('selectedAttributesList').innerHTML = "";
     const uiAttributes = (fullData.attributes || []).map(attr => ({
         attributeId: attr.attributeId,
@@ -107,13 +107,12 @@ function handleEdit(id) {
     uiAttributes.forEach(attr => ProductUI.addAttributeRow(attr));
     ProductUI.state.selectedAttributes = uiAttributes;
 
-    // Fill Variants (Gán cứng variants từ API để hiển thị đúng ID cũ)
     const uiVariants = (fullData.variants || []).map(v => ({
         variantId: v.variantId, displayName: "Biến thể cũ (Cập nhật)", price: v.price, priceOriginal: v.originalPrice, stock: v.stock, imageUrl: v.imageUrl, imageFile: null
     }));
     ProductUI.state.variants = uiVariants;
     ProductUI.renderVariantsTable();
-    // Lưu ý: Sau khi render xong, nếu user đổi thuộc tính, updateVariantsFromAttributes ở ui.js sẽ chạy và tạo variants mới
+    ProductUI.state.isEditingMode = false;
 }
 
 async function handleSave(e) {
@@ -136,14 +135,39 @@ async function handleSave(e) {
     ProductUI.state.variants.forEach((v, i) => { if (v.imageFile) { payload.variants[i].imageName = `image_variant_${i}`; formData.append(`image_variant_${i}`, v.imageFile); } });
     formData.append("productDTO", new Blob([JSON.stringify(payload)], { type: "application/json" }));
     
-    const submitBtn = document.getElementById("submitBtn"); const spinner = document.getElementById("submitSpinner"); submitBtn.disabled = true; spinner.classList.remove("d-none");
-    try { const res = await ProductService.createProduct(formData); if (res && res.success) { await showDialog("success", state.currentProductId ? "Cập nhật thành công!" : "Tạo sản phẩm thành công!"); resetForm(); ProductUI.toggleView('list'); await loadProductList(); } else { await showDialog("error", res?.message || "Có lỗi xảy ra"); } } catch (error) { await showDialog("error", "Lỗi: " + error.message); } finally { submitBtn.disabled = false; spinner.classList.add("d-none"); }
+    const submitBtn = document.getElementById("submitBtn");
+    const spinner = document.getElementById("submitSpinner"); // Bây giờ sẽ tìm thấy vì thẻ span đã được chèn lại
+    
+    submitBtn.disabled = true; 
+    // [FIX] Check null an toàn
+    if(spinner) spinner.classList.remove("d-none");
+
+    try { 
+        const res = await ProductService.createProduct(formData); 
+        if (res && res.success) { 
+            await showDialog("success", state.currentProductId ? "Cập nhật thành công!" : "Tạo sản phẩm thành công!"); 
+            resetForm(); 
+            ProductUI.toggleView('list'); 
+            await loadProductList(); 
+        } else { 
+            await showDialog("error", res?.message || "Có lỗi xảy ra"); 
+        } 
+    } catch (error) { 
+        await showDialog("error", "Lỗi: " + error.message); 
+    } finally { 
+        submitBtn.disabled = false; 
+        if(spinner) spinner.classList.add("d-none"); 
+    }
 }
 
 function resetForm() {
     state.currentProductId = null; state.mainImageFile = null; ProductUI.state.variants = []; ProductUI.state.selectedAttributes = []; ProductUI.state.mainImageFile = null;
     document.getElementById("productForm").reset(); document.getElementById("selectedAttributesList").innerHTML = ""; document.getElementById("variantsContainer").innerHTML = ""; document.getElementById("mainImagePreview").innerHTML = "";
-    document.querySelector('#createView h2').textContent = "Thêm Sản Phẩm Mới"; document.getElementById('submitBtn').innerHTML = "Tạo sản phẩm";
+    document.querySelector('#createView h2').textContent = "Thêm Sản Phẩm Mới"; 
+    
+    // [FIX] Giữ lại thẻ SPINNER khi reset
+    document.getElementById('submitBtn').innerHTML = '<span class="spinner-border spinner-border-sm d-none" id="submitSpinner"></span> Tạo sản phẩm';
+    
     document.getElementById("brandId").innerHTML = '<option value="">-- Chọn thương hiệu --</option>';
 }
 

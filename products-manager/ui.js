@@ -7,9 +7,15 @@ export const ProductUI = {
     toggleView: (viewName) => {
         const listView = document.getElementById('listView');
         const createView = document.getElementById('createView');
+        const formTitle = document.querySelector('#createView h2');
+        const submitBtn = document.getElementById('submitBtn');
+        
         if (viewName === 'create') {
             listView.classList.add('d-none');
             createView.classList.remove('d-none');
+            // [FIX] Khi đổi tên nút, phải chèn lại cả thẻ SPINNER
+            if(formTitle) formTitle.textContent = "Thêm Sản Phẩm Mới";
+            if(submitBtn) submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm d-none" id="submitSpinner"></span> Tạo sản phẩm';
         } else {
             listView.classList.remove('d-none');
             createView.classList.add('d-none');
@@ -82,7 +88,6 @@ export const ProductUI = {
         const selectedAttrId = data ? data.attributeId : "";
         const valuesText = data ? data.values.map(v => v.name).join(', ') : "";
 
-        // Tạo Options
         const optionsHtml = ProductUI.state.attributes.map(attr => 
             `<option value="${attr.attributeId}">${attr.attributeName}</option>`
         ).join('');
@@ -110,7 +115,6 @@ export const ProductUI = {
         const attrSelect = row.querySelector('.attribute-select');
         const valuesInput = row.querySelector('.attribute-values-input');
 
-        // [FIX] SetTimeout để đảm bảo ăn giá trị khi Sửa
         if (selectedAttrId) {
             setTimeout(() => {
                 attrSelect.value = selectedAttrId; 
@@ -151,9 +155,9 @@ export const ProductUI = {
 
     updateVariantsFromAttributes: () => {
         import('./logic.js').then(({ ProductLogic }) => {
-            // [FIX] Bỏ check isEditingMode để luôn tạo variants mới khi user thay đổi thuộc tính
-            // Điều này đảm bảo khi Thêm mới (Add) variants được tạo ra.
-            ProductUI.state.variants = ProductLogic.generateVariants(ProductUI.state.selectedAttributes);
+            if (!ProductUI.state.isEditingMode) {
+                ProductUI.state.variants = ProductLogic.generateVariants(ProductUI.state.selectedAttributes);
+            }
             ProductUI.renderVariantsTable();
         });
     },
