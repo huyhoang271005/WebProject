@@ -19,21 +19,12 @@ export const ProductService = {
         return res?.data?.listData || [];
     },
 
+    // Lấy DS sản phẩm
     getProducts: async () => {
-        try {
-            // Dùng POST để tìm kiếm (body {} rỗng = lấy tất cả)
-            const res = await callAPI(`/auth/admin/products/search`, "GET", {}, false);
-            
-            // Xử lý dữ liệu trả về an toàn
-            return res?.data?.listData || res?.data || [];
-        } catch (error) {
-            console.error("Lỗi lấy danh sách sản phẩm:", error);
-            // Nếu lỗi thì trả về mảng rỗng để không crash trang
-            return [];
-        }
+        const res = await callAPI(`/auth/admin/products`, "GET");
+        return res?.data?.listData || res?.data || [];
     },
 
-    // Tạo sản phẩm mới
     createProduct: async (productData) => {
         const res = await callAPI(`/auth/admin/products`, "POST", productData, true);
         return res;
