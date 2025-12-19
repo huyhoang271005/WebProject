@@ -14,7 +14,6 @@ let currentFilter = { keyword: null, categoryId: null };
 
 document.addEventListener("DOMContentLoaded", async () => {
   toggleLoading(true);
-
   await loadNavbar({
     centerHTML: `
       <div style="position:relative; width: 100%; max-width: 500px;">
@@ -29,9 +28,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   renderSidebarCategories();
   setupEvents();
-
   await fetchProducts();
-
   toggleLoading(false);
 });
 
@@ -42,9 +39,12 @@ async function fetchProducts() {
     '<div style="grid-column: 1/-1; text-align: center;">Đang tải...</div>';
 
   try {
-    // [QUAN TRỌNG] Tự nối tham số vào URL
     let endpoint = "/auth/products";
     const params = [];
+
+    // [FIX] Thêm page và size mặc định (có thể tăng lên 50)
+    params.push("page=0");
+    params.push("size=50");
 
     if (currentFilter.keyword)
       params.push(`keyword=${encodeURIComponent(currentFilter.keyword)}`);
@@ -54,14 +54,12 @@ async function fetchProducts() {
 
     if (params.length > 0) endpoint += "?" + params.join("&");
 
-    // Gọi API GET với data = null
     const res = await callAPI(endpoint, "GET", null);
-
     grid.innerHTML = "";
+
     if (res && res.success) {
-      const list = Array.isArray(res.data)
-        ? res.data
-        : res.data?.listData || res.data?.content || [];
+      // [FIX] Lấy đúng listData
+      const list = res.data?.listData || [];
 
       if (list.length > 0) {
         grid.innerHTML = list.map((p) => createProductHTML(p)).join("");
@@ -82,18 +80,19 @@ async function fetchProducts() {
 }
 
 function createProductHTML(p) {
+  // [FIX] Map đúng tên trường: imageUrl, productName, productId
   const imgUrl =
-    p.image || "https://cdn-icons-png.flaticon.com/512/2748/2748558.png";
+    p.imageUrl || "https://cdn-icons-png.flaticon.com/512/2748/2748558.png";
   const priceFormatted = new Intl.NumberFormat("vi-VN", {
     style: "currency",
     currency: "VND",
   }).format(p.price || 0);
 
   return `
-        <div class="product-card" onclick="window.location.href='../product-detail/index.html?id=${p.id}'">
+        <div class="product-card" onclick="window.location.href='../product-detail/index.html?id=${p.productId}'">
             <div class="p-img"><img src="${imgUrl}" style="width:100%; height:100%; object-fit:contain;"></div>
             <div class="p-info">
-                <div class="p-name" title="${p.name}">${p.name}</div>
+                <div class="p-name" title="${p.productName}">${p.productName}</div>
                 <div class="p-price">${priceFormatted}</div>
                 <button class="btn-add-cart" onclick="event.stopPropagation(); alert('Thêm vào giỏ')">
                     <i class="fa-solid fa-cart-plus"></i> Thêm
@@ -103,7 +102,7 @@ function createProductHTML(p) {
     `;
 }
 
-// ... (Các hàm helper window.changeCategory, renderSidebarCategories, setupEvents giữ nguyên) ...
+// ... Helper functions giữ nguyên
 function renderSidebarCategories() {
   const list = document.getElementById("catFilterList");
   if (!list) return;
@@ -121,30 +120,24 @@ function renderSidebarCategories() {
   ).join("");
   list.innerHTML = html;
 }
-
 window.changeCategory = (catId, element) => {
   document
     .querySelectorAll(".cat-item")
     .forEach((el) => el.classList.remove("active"));
   element.classList.add("active");
   currentFilter.categoryId = catId;
-
   const catName = catId
     ? CATEGORIES.find((c) => c.id === catId)?.name
     : "Tất cả sản phẩm";
   const pageTitle = document.getElementById("pageTitle");
   if (pageTitle) pageTitle.textContent = catName;
-
   fetchProducts();
 };
-
 function setupEvents() {
   const searchInput = document.getElementById("prodSearch");
   const searchBtn = document.getElementById("prodSearchBtn");
-
   if (currentFilter.keyword && searchInput)
     searchInput.value = currentFilter.keyword;
-
   const doSearch = () => {
     currentFilter.keyword = searchInput.value.trim();
     fetchProducts();
