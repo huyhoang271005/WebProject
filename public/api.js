@@ -1,6 +1,8 @@
 export const API_BASE = "https://uncoagulative-tyrannisingly-eddie.ngrok-free.dev";
 
-export let accessToken = null;
+export const authState = {
+    accessToken: null
+}
 /**
  * endpoint là bắt buộc, isMultipart: true nếu gửi FormData
  */
@@ -13,13 +15,13 @@ async function callAPIWithRetry(endpoint, method, data, isMultipart, alreadyRefr
         const options = { method, headers: { "Accept": "*/*" } };
         options.headers["ngrok-skip-browser-warning"] = `26763`;
         if (!endpoint.startsWith("/auth")) {
-            if(!accessToken){
+            if(!authState.accessToken){
                 const result = await refreshAccessToken();
                 if(!result.success){
                     return result;
                 }
             }
-            options.headers["Authorization"] = `Bearer ${accessToken}`;
+            options.headers["Authorization"] = `Bearer ${authState.accessToken}`;
         }
         options.credentials = "include";
         if (data) {
@@ -62,7 +64,7 @@ export async function refreshAccessToken() {
     const body = await res.json();
     const token = body.data;
     if (body.success &&token?.accessToken) {
-        accessToken = token.accessToken;
+        authState.accessToken = token.accessToken;
     }
     if(res.status === 401) {
         setTimeout(()=>{

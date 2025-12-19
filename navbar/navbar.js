@@ -1,8 +1,7 @@
 import { callAPI } from "../public/api.js";
 import { showDialog } from "../dialog/index.js";
 import { connectSse, subscribeTopic } from "../public/Sse.js";
-
-const noImage = "https://cdn-icons-png.flaticon.com/512/847/847969.png";
+import {noImage} from "../public/public.js"
 
 const navbarHTML = `
     <style>
