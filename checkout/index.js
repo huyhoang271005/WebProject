@@ -217,7 +217,7 @@ async function handleOrder() {
             } else {
                 // Thanh toán COD thành công
                 alert("Đặt hàng thành công!");
-                window.location.href = "../order/index.html";
+                window.location.href = "../orders/index.html";
             }
         } else {
             alert("Lỗi: " + (res.message || "Không thể đặt hàng"));
