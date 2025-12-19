@@ -231,7 +231,7 @@ window.changeVar = async (el) => {
             
             // Kiểm tra tồn kho trước khi gộp
             if (newTotalQty > newV.stock) {
-                await showDialog("error", `Không thể gộp: Tổng số lượng (${newTotalQty}) vượt quá tồn kho (${newV.stock})`);
+                // await showDialog("error", `Không thể gộp: Tổng số lượng (${newTotalQty}) vượt quá tồn kho (${newV.stock})`);
                 render(); // Reset UI
                 return;
             }
