@@ -13,21 +13,37 @@ let state = {
     mainImageFile: null
 };
 
-// --- HÀM LOAD DANH SÁCH (API GET) ---
+// --- HÀM LOAD 1 SẢN PHẨM (TEST) ---
 async function loadProductList() {
-    document.getElementById('productTableBody').innerHTML = '<tr><td colspan="5" class="text-center py-5">Đang tải dữ liệu... <div class="spinner-border spinner-border-sm text-primary"></div></td></tr>';
+    const tbody = document.getElementById('productTableBody');
+    tbody.innerHTML = '<tr><td colspan="5" class="text-center py-5">Đang tải dữ liệu... <div class="spinner-border spinner-border-sm text-primary"></div></td></tr>';
     
     try {
-        const products = await ProductService.getProducts();
-        state.products = products;
-        ProductUI.renderProductList(state.products, state.categories, state.brands);
+        // ID LẤY TỪ JSON CỦA BẠN (Hardcode để test)
+        const testId = "6786aedf-aa81-44ef-b28f-06abff1b5c1c";
+        
+        console.log(`Đang gọi API lấy chi tiết ID: ${testId}`);
+        
+        const data = await ProductService.getProductById(testId);
+
+        if (data && data.productDetailDTO) {
+            // JSON trả về object, nhưng hàm renderProductList cần mảng []
+            // -> Ta bọc nó lại thành mảng 1 phần tử
+            const singleProduct = data.productDetailDTO;
+            state.products = [singleProduct];
+            
+            // Render ra bảng
+            ProductUI.renderProductList(state.products, state.categories, state.brands);
+        } else {
+            tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-4">Không tìm thấy sản phẩm hoặc lỗi dữ liệu.</td></tr>';
+        }
     } catch (error) {
-        console.error("Lỗi tải danh sách:", error);
-        document.getElementById('productTableBody').innerHTML = '<tr><td colspan="5" class="text-center text-danger py-4">Không thể tải dữ liệu (Lỗi kết nối).</td></tr>';
+        console.error("Lỗi tải dữ liệu:", error);
+        tbody.innerHTML = '<tr><td colspan="5" class="text-center text-danger py-4">Lỗi kết nối API.</td></tr>';
     }
 }
 
-// --- XỬ LÝ LƯU (CREATE) ---
+// --- CÁC HÀM XỬ LÝ LƯU & EVENT (GIỮ NGUYÊN) ---
 async function handleSave(e) {
     e.preventDefault();
     // 1. Validation
@@ -102,7 +118,6 @@ function setupEventListeners() {
     document.getElementById("productForm").onsubmit = handleSave;
     document.getElementById("resetBtn").onclick = resetForm;
     
-    // Nút chuyển view
     document.getElementById("btnOpenCreate").onclick = () => ProductUI.toggleView('create');
     document.getElementById("btnBackToList").onclick = () => ProductUI.toggleView('list');
     
@@ -111,11 +126,11 @@ function setupEventListeners() {
     };
 
     document.getElementById("categoryId").onchange = (e) => {
-        const catId = e.target.value;
+        const categoryId = e.target.value;
         const brandSelect = document.getElementById("brandId");
         brandSelect.innerHTML = '<option value="">-- Chọn thương hiệu --</option>';
-        if(!catId) return;
-        state.brands.filter(b => b.categoryId == catId).forEach(b => {
+        if(!categoryId) return;
+        state.brands.filter(b => b.categoryId == categoryId).forEach(b => {
             brandSelect.innerHTML += `<option value="${b.brandId}">${b.brandName}</option>`;
         });
     };
@@ -123,9 +138,7 @@ function setupEventListeners() {
 
 async function loadInitialData() {
     try {
-        // Vẫn giữ "mẹo" gọi Categories trước để xử lý Refresh Token cho mượt
         const cats = await ProductService.getCategories();
-
         const [brands, attrs] = await Promise.all([
             ProductService.getBrands(),
             ProductService.getAttributes()
@@ -134,7 +147,6 @@ async function loadInitialData() {
         state.categories = cats || [];
         state.brands = brands || [];
         state.attributes = attrs || [];
-        
         ProductUI.state.categories = state.categories;
         ProductUI.state.brands = state.brands;
         ProductUI.state.attributes = state.attributes;
@@ -142,10 +154,9 @@ async function loadInitialData() {
         const categorySelect = document.getElementById("categoryId");
         categorySelect.innerHTML = '<option value="">-- Chọn danh mục --</option>';
         state.categories.forEach(c => categorySelect.innerHTML += `<option value="${c.categoryId}">${c.categoryName}</option>`);
-
         ProductUI.renderAttributeSelector();
         
-        // Gọi API lấy danh sách ngay khi vào trang
+        // Gọi hàm load 1 sản phẩm
         await loadProductList();
 
     } catch (e) { console.error(e); }

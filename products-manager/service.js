@@ -19,10 +19,14 @@ export const ProductService = {
         return res?.data?.listData || [];
     },
 
-    // Lấy DS sản phẩm
-    getProducts: async () => {
-        const res = await callAPI(`/auth/admin/products/6786aedf-aa81-44ef-b28f-06abff1b5c1c`, "GET");
-        return res?.data?.listData || res?.data || [];
+    getProductById: async (id) => {
+        try {
+            const res = await callAPI(`/auth/admin/products/${id}`, "GET");
+            return res?.data || null;
+        } catch (error) {
+            console.error("Lỗi lấy chi tiết sản phẩm:", error);
+            return null;
+        }
     },
 
     createProduct: async (productData) => {
