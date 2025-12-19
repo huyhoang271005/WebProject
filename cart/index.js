@@ -136,35 +136,43 @@ window.toggle = (id) => {
 
 window.del = async (id) => {
     if(!confirm("Xóa sản phẩm này?")) return;
-    if((await callAPI(`/auth/carts/${id}`, 'DELETE')).success) {
+    // Gửi mảng chứa 1 phần tử [id]
+    // ⚠️ QUAN TRỌNG: Bạn hãy xem trong Postman cái Request "POST DeleteCart" nó có URL là gì
+    // Ví dụ: /auth/carts/delete hay /auth/carts/remove-multiple
+    // Tôi đang để tạm là '/auth/carts/delete', bạn sửa lại cho đúng nhé!
+    const res = await api('/auth/carts/delete', 'POST', [id]); 
+    
+    if(res.success) {
         cartData.forEach(p => p.cartItemDTOList = p.cartItemDTOList.filter(i => i.cartItemId !== id));
         checked.delete(id); render();
-    } else await showDialog("error", "Lỗi xóa");
+    } else await showDialog("error", res.message || "Lỗi xóa");
 };
 
 // --- HÀM MỚI: XÓA NHIỀU MỤC CÙNG LÚC ---
 window.deleteSelected = async () => {
-    if (checked.size === 0) return;
-    if (!confirm(`Bạn chắc chắn muốn xóa ${checked.size} sản phẩm đã chọn?`)) return;
+    if(!checked.size) return;
+    if(!confirm(`Xóa ${checked.size} mục đã chọn?`)) return;
 
-    let successCount = 0;
-    // Duyệt qua từng ID đã check và gọi API xóa
-    // (Lưu ý: Nếu Backend có API xóa nhiều thì nên dùng API đó sẽ tốt hơn, ở đây mình gọi vòng lặp tạm)
-    for (const id of checked) {
-        const res = await callAPI(`/auth/carts/${id}`, 'DELETE');
-        if (res.success) {
-            // Xóa khỏi RAM
-            cartData.forEach(p => p.cartItemDTOList = p.cartItemDTOList.filter(i => i.cartItemId !== id));
-            successCount++;
-        }
-    }
+    // Chuyển Set thành Array: ['id1', 'id2', ...]
+    const listIds = Array.from(checked);
 
-    if (successCount > 0) {
-        checked.clear(); // Xóa xong thì clear tập đã chọn
-        render();        // Vẽ lại giao diện
-        // showDialog("success", `Đã xóa ${successCount} sản phẩm`); // Optional: Hiện thông báo
+    // Gọi API POST gửi danh sách lên
+    // ⚠️ URL ở đây cũng phải giống URL bên trên
+    const res = await api('/auth/carts/delete', 'POST', listIds);
+
+    if(res.success) {
+        // Xóa thành công trên server -> Xóa trong RAM
+        cartData.forEach(p => {
+            if (p.cartItemDTOList) {
+                p.cartItemDTOList = p.cartItemDTOList.filter(i => !checked.has(i.cartItemId));
+            }
+        });
+        
+        checked.clear(); // Xóa xong thì bỏ chọn hết
+        await showDialog("success", "Đã xóa thành công!");
+        render();
     } else {
-        await showDialog("error", "Có lỗi xảy ra khi xóa");
+        await showDialog("error", res.message || "Lỗi xóa nhiều");
     }
 };
 
