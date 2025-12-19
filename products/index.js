@@ -194,58 +194,61 @@ function createProductHTML(p) {
     currency: "VND",
   }).format(p.price || 0);
 
+  // Xử lý giảm giá
   let discountBadge = "";
-  let originalPriceHTML = "";
-
   if (p.originalPrice && p.originalPrice > p.price) {
     const percent = Math.round(
       ((p.originalPrice - p.price) / p.originalPrice) * 100
     );
-    const originalFormatted = new Intl.NumberFormat("vi-VN", {
-      style: "currency",
-      currency: "VND",
-    }).format(p.originalPrice);
-    discountBadge = `<div style="position:absolute; top:0; right:0; background:#FFD424; color:#d0021b; padding:2px 5px; font-weight:800; font-size:0.65rem; border-bottom-left-radius:6px; z-index:2;">-${percent}%</div>`;
-    originalPriceHTML = `<span style="text-decoration:line-through; color:#9ca3af; font-size:0.7rem; margin-right:4px;">${originalFormatted}</span>`;
+    // Badge giảm giá màu vàng/cam đặc trưng
+    discountBadge = `
+            <div style="position:absolute; top:0; right:0; background-color: rgba(255,212,36,.9); width:36px; height:32px; text-align:center; padding-top:4px; font-weight:700; font-size:0.7rem; z-index:2;">
+                <span style="color:#ee4d2d;">${percent}%</span>
+                <div style="color:white; text-transform:uppercase; font-size:0.6rem;">GIẢM</div>
+                <div style="position:absolute; bottom:-4px; left:0; border-width:0 18px 4px; border-style:solid; border-color:transparent rgba(255,212,36,.9); width:0;"></div>
+            </div>
+        `;
   }
 
-  // [UPDATE] Dùng đúng ratingAvg từ API
+  // Xử lý Rating & Đã bán
   const rating = p.ratingAvg || 0;
   const starsHTML = renderStars(rating);
+  // Fake số đã bán cho đẹp (vì API chưa có)
+  const soldCount = "88";
 
   return `
-        <div class="product-card" onclick="window.location.href='../product-detail/index.html?id=${p.productId}'" 
-             style="position:relative; border-radius:6px; border:1px solid #f0f0f0; overflow:hidden; background:white; transition:all 0.2s; cursor:pointer;">
+        <div class="product-card" onclick="window.location.href='../product-detail/index.html?id=${p.productId}'">
             ${discountBadge}
-            <div class="p-img" style="height:140px; display:flex; align-items:center; justify-content:center; background:#fff; border-bottom:1px solid #f9f9f9;">
-                <img src="${imgUrl}" style="width:100%; height:100%; object-fit:contain; padding:5px;">
+            
+            <div class="p-img">
+                <img src="${imgUrl}" loading="lazy" alt="${p.productName}">
             </div>
-            <div class="p-info" style="padding:8px;">
-                <div class="p-name" title="${p.productName}" style="font-size:0.8rem; font-weight:500; color:#333; margin-bottom:2px; height:32px; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; line-height:1.3;">
-                    ${p.productName}
+            
+            <div class="p-info">
+                <div class="p-name" title="${p.productName}">${p.productName}</div>
+                
+                <div style="margin-top:5px; margin-bottom:5px;">
+                   <span style="color: #ee4d2d; font-size: 1rem; font-weight: 600;">${priceFormatted}</span>
                 </div>
-                <div style="margin-bottom:2px; font-size:0.6rem; color:#fbbf24; display:flex; align-items:center;">
-                    ${starsHTML} <span style="color:#9ca3af; margin-left:2px; font-size:0.6rem;">(Đã bán 0)</span>
-                </div>
-                <div style="display:flex; align-items:baseline; flex-wrap:wrap;">
-                    ${originalPriceHTML}
-                    <span style="color:#ef4444; font-weight:700; font-size:0.9rem;">${priceFormatted}</span>
+
+                <div class="p-meta">
+                    <div class="p-rating">${starsHTML}</div>
+                    <div class="p-sold">Đã bán ${soldCount}</div>
                 </div>
             </div>
         </div>
     `;
 }
 
+// Hàm render sao (giữ nguyên)
 function renderStars(rating) {
-  let html = "";
-  // Nếu rating = 0 (chưa có đánh giá) thì hiển thị 5 sao rỗng hoặc ẩn tùy bro
   if (!rating) rating = 0;
-
+  let html = "";
   for (let i = 1; i <= 5; i++) {
     if (i <= rating) html += '<i class="fa-solid fa-star"></i>';
     else if (i - 0.5 <= rating)
       html += '<i class="fa-solid fa-star-half-stroke"></i>';
-    else html += '<i class="fa-regular fa-star" style="color:#e5e7eb"></i>';
+    else html += '<i class="fa-regular fa-star" style="color:#d5d5d5"></i>';
   }
   return html;
 }

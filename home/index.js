@@ -2,18 +2,13 @@ import { loadNavbar } from "../navbar/navbar.js";
 import { callAPI } from "../public/api.js";
 import { toggleLoading } from "../public/loader.js";
 
-// Danh mục tĩnh ở Home (chỉ để hiển thị icon cho đẹp)
-const CATEGORIES = [
-  { id: "an-vat", name: "Đồ ăn vặt", icon: "fa-cookie-bite" },
-  { id: "nuoc-ngot", name: "Nước giải khát", icon: "fa-bottle-water" },
-  { id: "dong-lanh", name: "Đồ đông lạnh", icon: "fa-snowflake" },
-  { id: "mi-tom", name: "Mì ăn liền", icon: "fa-bowl-rice" },
-  { id: "gia-dung", name: "Gia dụng", icon: "fa-pump-soap" },
-];
+// Biến lưu danh mục lấy từ API (để hiển thị trên navbar)
+let apiCategories = [];
 
 document.addEventListener("DOMContentLoaded", async () => {
   toggleLoading(true);
   try {
+    // 1. Load Navbar
     await loadNavbar({
       centerHTML: `
         <div class="nav-cat-btn" id="catBtn">
@@ -25,8 +20,14 @@ document.addEventListener("DOMContentLoaded", async () => {
             <i class="fa-solid fa-magnifying-glass" style="position:absolute; right:15px; top:50%; transform:translateY(-50%); color:#10B981; cursor:pointer;" id="homeSearchBtn"></i>
         </div>`,
     });
+
+    // 2. Gọi API lấy danh mục (để đồng bộ với trang Products)
+    await fetchCategories();
     renderNavCategories();
+
     setupNavbarEvents();
+
+    // 3. Render nội dung trang chủ
     await renderHomeSections();
   } catch (e) {
     console.error(e);
@@ -35,38 +36,66 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 });
 
+// --- API: LẤY DANH MỤC ---
+async function fetchCategories() {
+  try {
+    const res = await callAPI("/auth/category", "GET", null);
+    if (res && res.success && Array.isArray(res.data)) {
+      apiCategories = res.data;
+    } else {
+      // Fallback nếu API lỗi
+      apiCategories = [
+        { id: "an-vat", name: "Đồ ăn vặt" },
+        { id: "nuoc-ngot", name: "Nước giải khát" },
+      ];
+    }
+  } catch (e) {
+    console.error("Lỗi lấy danh mục:", e);
+  }
+}
+
+// --- LOGIC: RENDER TRANG CHỦ ---
 async function renderHomeSections() {
   const container = document.getElementById("homeContainer");
   if (!container) return;
   container.innerHTML = "";
 
+  // Lấy 20 sản phẩm mới nhất
   const res = await callAPI("/auth/products?page=0&size=20", "GET", null);
 
   if (res && res.success) {
     const listData = res.data?.listData || [];
+
     if (listData.length > 0) {
-      const list = listData.slice(0, 10);
+      // Hiển thị tối đa 12 sản phẩm (cho đẹp grid 6 cột x 2 hàng)
+      const list = listData.slice(0, 12);
+
       container.insertAdjacentHTML(
         "beforeend",
         `
-              <div class="category-section">
-                  <div class="section-header">
-                      <div class="section-title"><i class="fa-solid fa-fire" style="color:#10B981"></i> Sản phẩm mới nhất</div>
-                      <a href="../products/index.html" class="btn-see-more">Xem tất cả <i class="fa-solid fa-arrow-right"></i></a>
+              <div class="category-section" style="width:100%; background:white; padding:20px; border-radius:4px; margin-bottom:20px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                  <div class="section-header" style="border-bottom:1px solid #eee; margin-bottom:15px; padding-bottom:10px; display:flex; justify-content:space-between; align-items:center;">
+                      <div class="section-title" style="color:#ee4d2d; font-weight:700; text-transform:uppercase; font-size:1.1rem;">
+                        <i class="fa-solid fa-fire" style="color:#ee4d2d; margin-right:5px;"></i> GỢI Ý HÔM NAY
+                      </div>
+                      <a href="../products/index.html" style="color:#ee4d2d; text-decoration:none; font-size:0.9rem;">Xem tất cả ></a>
                   </div>
-                  <div class="product-grid-5">
+                  
+                  <div class="product-grid" style="display:grid; grid-template-columns: repeat(6, 1fr); gap:10px;">
                       ${list.map((p) => createProductHTML(p)).join("")}
                   </div>
               </div>
           `
       );
     } else {
-      container.innerHTML = `<div style="text-align:center; padding:20px; color:#666;">Chưa có sản phẩm</div>`;
+      container.innerHTML = `<div style="text-align:center; padding: 20px; color: #666;">Chưa có sản phẩm nào</div>`;
     }
+  } else {
+    container.innerHTML = `<div style="text-align:center; color:red;">Lỗi tải dữ liệu: ${res?.message}</div>`;
   }
 }
 
-// Hàm giống hệt products/index.js
+// --- HÀM TẠO THẺ SẢN PHẨM (CHUẨN SHOPEE) ---
 function createProductHTML(p) {
   const imgUrl =
     p.imageUrl || "https://cdn-icons-png.flaticon.com/512/2748/2748558.png";
@@ -75,58 +104,67 @@ function createProductHTML(p) {
     currency: "VND",
   }).format(p.price || 0);
 
+  // Xử lý Badge Giảm Giá
   let discountBadge = "";
-  let originalPriceHTML = "";
-
   if (p.originalPrice && p.originalPrice > p.price) {
     const percent = Math.round(
       ((p.originalPrice - p.price) / p.originalPrice) * 100
     );
-    const originalFormatted = new Intl.NumberFormat("vi-VN", {
-      style: "currency",
-      currency: "VND",
-    }).format(p.originalPrice);
-    discountBadge = `<div style="position:absolute; top:0; right:0; background:#FFD424; color:#d0021b; padding:3px 6px; font-weight:800; font-size:0.7rem; border-bottom-left-radius:8px; z-index:2;">-${percent}%</div>`;
-    originalPriceHTML = `<span style="text-decoration:line-through; color:#9ca3af; font-size:0.75rem; margin-right:6px;">${originalFormatted}</span>`;
+    discountBadge = `
+            <div style="position:absolute; top:0; right:0; background-color: rgba(255,212,36,.9); width:36px; height:32px; text-align:center; padding-top:4px; font-weight:700; font-size:0.7rem; z-index:2;">
+                <span style="color:#ee4d2d;">${percent}%</span>
+                <div style="color:white; text-transform:uppercase; font-size:0.6rem;">GIẢM</div>
+                <div style="position:absolute; bottom:-4px; left:0; border-width:0 18px 4px; border-style:solid; border-color:transparent rgba(255,212,36,.9); width:0;"></div>
+            </div>`;
   }
 
-  const rating = p.ratingAvg || 5;
+  // Xử lý Rating & Sold
+  const rating = p.ratingAvg || 0;
   const starsHTML = renderStars(rating);
+  const soldCount = "99+"; // Fake số liệu nếu API chưa có
 
   return `
         <div class="product-card" onclick="window.location.href='../product-detail/index.html?id=${p.productId}'" 
-             style="position:relative; border-radius:8px; border:1px solid #f3f4f6; overflow:hidden; background:white; transition:all 0.2s; cursor:pointer; box-shadow:0 1px 2px rgba(0,0,0,0.05);">
+             style="background:white; border:1px solid transparent; border-radius:2px; overflow:hidden; cursor:pointer; position:relative; display:flex; flex-direction:column; transition:transform 0.1s, border-color 0.1s; box-shadow:0 1px 2px rgba(0,0,0,0.1);">
+            
             ${discountBadge}
-            <div class="p-img" style="height:160px; display:flex; align-items:center; justify-content:center; background:#fff; border-bottom:1px solid #f9f9f9;">
-                <img src="${imgUrl}" style="width:100%; height:100%; object-fit:contain; padding:10px;">
+            
+            <div class="p-img" style="width:100%; padding-top:100%; position:relative; background:#f9f9f9;">
+                <img src="${imgUrl}" style="position:absolute; top:0; left:0; width:100%; height:100%; object-fit:cover;">
             </div>
-            <div class="p-info" style="padding:10px;">
-                <div class="p-name" title="${p.productName}" style="font-size:0.9rem; font-weight:500; color:#333; margin-bottom:4px; height:36px; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; line-height:1.3;">
+            
+            <div class="p-info" style="padding:8px; flex:1; display:flex; flex-direction:column; justify-content:space-between;">
+                <div class="p-name" title="${p.productName}" style="font-size:0.85rem; color:#333; line-height:1.1rem; margin-bottom:5px; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; min-height:2.2rem;">
                     ${p.productName}
                 </div>
-                <div style="margin-bottom:6px; font-size:0.7rem; color:#fbbf24; display:flex; align-items:center;">
-                    ${starsHTML} <span style="color:#9ca3af; margin-left:4px;">(99+)</span>
+                
+                <div style="margin-top:auto;">
+                    <span style="color:#ee4d2d; font-size:1rem; font-weight:600;">${priceFormatted}</span>
                 </div>
-                <div style="display:flex; align-items:baseline;">
-                    ${originalPriceHTML}
-                    <span style="color:#ef4444; font-weight:700; font-size:1rem;">${priceFormatted}</span>
+                
+                <div class="p-meta" style="display:flex; align-items:center; justify-content:space-between; margin-top:5px;">
+                    <div class="p-rating" style="font-size:0.6rem; color:#ffce3d;">${starsHTML}</div>
+                    <div class="p-sold" style="font-size:0.7rem; color:#757575;">Đã bán ${soldCount}</div>
                 </div>
             </div>
         </div>
     `;
 }
 
+// --- HELPER: VẼ NGÔI SAO ---
 function renderStars(rating) {
+  if (!rating) rating = 0;
   let html = "";
   for (let i = 1; i <= 5; i++) {
     if (i <= rating) html += '<i class="fa-solid fa-star"></i>';
     else if (i - 0.5 <= rating)
       html += '<i class="fa-solid fa-star-half-stroke"></i>';
-    else html += '<i class="fa-regular fa-star" style="color:#e5e7eb"></i>';
+    else html += '<i class="fa-regular fa-star" style="color:#d5d5d5"></i>';
   }
   return html;
 }
 
+// --- HELPER: NAVBAR EVENTS & CATEGORIES ---
 function setupNavbarEvents() {
   const catBtn = document.getElementById("catBtn");
   const catDropdown = document.getElementById("catDropdown");
@@ -154,11 +192,25 @@ function setupNavbarEvents() {
       if (e.key === "Enter") doSearch();
     };
 }
+
 function renderNavCategories() {
   const el = document.getElementById("catDropdown");
-  if (el)
-    el.innerHTML = CATEGORIES.map(
-      (c) =>
-        `<a href="../products/index.html?cat=${c.id}"><i class="fa-solid ${c.icon}"></i> ${c.name}</a>`
-    ).join("");
+  if (!el) return;
+
+  if (apiCategories.length === 0) {
+    el.innerHTML =
+      '<div style="padding:15px; text-align:center;">Đang tải...</div>';
+    return;
+  }
+
+  // Render danh mục từ API
+  el.innerHTML = apiCategories
+    .map(
+      (c) => `
+        <a href="../products/index.html?cat=${c.id}">
+            <i class="fa-solid fa-caret-right"></i> ${c.name}
+        </a>
+    `
+    )
+    .join("");
 }
