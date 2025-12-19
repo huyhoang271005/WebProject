@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thanh toán</title>
+    <link rel="stylesheet" href="../public/public.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="index.css">
+</head>
+<body>
+<div id="loadPage"></div>
+<div id="info" style="display:none">
+    <div class="checkout-wrapper">
+        <div class="left-col">
+            <section class="card-section">
+                <div class="card-title"><i class="fas fa-map-marker-alt"></i> ĐỊA CHỈ GIAO HÀNG</div>
+                <div id="listAddress">
+                </div>
+                <a href="../contact/index.html" style="display:block; margin-top:10px; color: var(--primary-green); font-size: 0.9rem;">+ Quản lý địa chỉ</a>
+            </section>
+
+            <section class="card-section">
+                <div class="card-title"><i class="fas fa-credit-card"></i> PHƯƠNG THỨC THANH TOÁN</div>
+                <label class="payment-method">
+                    <input type="radio" name="paymentType" value="VN_PAY" checked>
+                    <span>Thanh toán điện tử (VN_PAY)</span>
+                </label>
+                <label class="payment-method">
+                    <input type="radio" name="paymentType" value="COD">
+                    <span>Thanh toán khi nhận hàng (COD)</span>
+                </label>
+            </section>
+        </div>
+
+        <div class="right-col">
+            <section class="card-section summary-card">
+                <div class="card-title"><i class="fas fa-shopping-bag"></i> TÓM TẮT ĐƠN HÀNG</div>
+                <div id="listOrderItems">
+                </div>
+                <hr style="border: 0; border-top: 1px solid #eee; margin: 15px 0;">
+                <div class="total-row">
+                    <span>Tổng cộng:</span>
+                    <span id="txtTotalPrice">0đ</span>
+                </div>
+                <button id="btnConfirmOrder" class="btn-checkout">XÁC NHẬN ĐẶT HÀNG</button>
+            </section>
+        </div>
+    </div>
+</div>
+<script type="module" src="index.js"></script>
+</body>
+</html>
