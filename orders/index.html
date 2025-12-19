@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Đơn hàng của tôi</title>
+    <link rel="stylesheet" href="index.css">
+</head>
+<body>
+<div id="loadPage"></div>
+<div id="info" style="display:none">
+    <div class="order-container">
+        <h2 class="title"><i class="fas fa-history"></i> LỊCH SỬ ĐƠN HÀNG</h2>
+
+        <div class="order-tabs">
+            <button class="tab active" data-status="ALL">Tất cả</button>
+            <button class="tab" data-status="PENDING">Chờ xử lý</button>
+            <button class="tab" data-status="COMPLETED">Hoàn thành</button>
+            <button class="tab" data-status="CANCELLED">Đã hủy</button>
+        </div>
+
+        <div id="orderList">
+        </div>
+    </div>
+</div>
+
+<div id="orderDetailModal" class="modal">
+</div>
+</body>
+</html>
