@@ -7,7 +7,6 @@ let currentNotiIds = [];
 
 const navbarHTML = `
     <style>
-        /* ... (Giữ nguyên toàn bộ CSS cũ của bro) ... */
         .navbar-component {
             background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px);
             height: 70px; width: 100%; position: fixed; top: 0; left: 0; z-index: 1000;
@@ -34,7 +33,7 @@ const navbarHTML = `
         
         .nb-dropdown { 
             position: absolute; right: 0; top: 60px; background: white; 
-            width: 280px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); 
+            width: 270px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); 
             display: none; flex-direction: column; overflow: hidden; border: 1px solid #eee; 
             animation: slideDown 0.2s ease; z-index: 1100; 
         }
@@ -49,9 +48,8 @@ const navbarHTML = `
             display:flex; align-items:center; gap:12px; font-size:0.95rem; transition: 0.2s; 
         }
         .nb-dropdown a:hover, .nb-dropdown button:hover { background: #ECFDF5; color: #10B981; padding-left: 25px; }
-        .nb-dropdown i { width: 22px; text-align: center; color: #555; } 
-
-        /* Notification CSS (Giữ nguyên) */
+        
+        /* NOTIFICATION CSS */
         .noti-header { padding: 15px; font-weight: bold; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; background: #fff; }
         .btn-clear-all { font-size: 0.8rem; color: #EF4444; cursor: pointer; text-decoration: underline; }
         .noti-list { max-height: 400px; overflow-y: auto; }
@@ -66,6 +64,7 @@ const navbarHTML = `
         .btn-del-noti:hover { color: #EF4444; }
         .empty-noti { padding: 30px; text-align: center; color: #999; font-style: italic; }
         
+        /* Ẩn link admin mặc định */
         .nb-admin-only { display: none !important; }
     </style>
 
@@ -102,12 +101,10 @@ const navbarHTML = `
                     <a href="../contact"><i class="fa-solid fa-map-location-dot"></i> Địa chỉ</a>
                     
                     <div class="nb-admin-only" style="border-top: 1px solid #eee; margin-top:5px; padding-top:5px;"></div>
-                    
                     <a href="../products-manager" class="nb-admin-only"><i class="fa-solid fa-box-open"></i> Quản lí sản phẩm</a>
-                    <a href="../catalog-management" class="nb-admin-only"><i class="fa-solid fa-layer-group"></i> Danh mục</a>
-                    <a href="../users" class="nb-admin-only"><i class="fa-solid fa-users"></i> Danh sách người dùng</a>
-                    <a href="../role-permission" class="nb-admin-only"><i class="fa-solid fa-user-shield"></i> Phân quyền</a>
-                    <a href="../notification" class="nb-admin-only"><i class="fa-solid fa-user-shield"></i> Thông báo</a>
+                    <a href="../categories-manager" class="nb-admin-only"><i class="fa-solid fa-layer-group"></i> Quản lí danh mục</a>
+                    <a href="../users-manager" class="nb-admin-only"><i class="fa-solid fa-users"></i> Quản lí người dùng</a>
+                    <a href="../admin" class="nb-admin-only"><i class="fa-solid fa-user-shield"></i> Trang quản trị</a>
                     
                     <button id="nbLogout" style="color:#EF4444; border-top: 1px solid #eee; margin-top:5px;">
                         <i class="fa-solid fa-right-from-bracket"></i> Đăng xuất
@@ -157,6 +154,7 @@ export async function loadNavbar(options = {}) {
     if (userData.roleName)
       document.getElementById("nbRole").textContent = userData.roleName;
 
+    // HIỂN THỊ MENU ADMIN
     if (userData.roleName === "ADMIN") {
       document
         .querySelectorAll(".nb-admin-only")
@@ -165,9 +163,8 @@ export async function loadNavbar(options = {}) {
 
     if (userData.username && userData.username !== "Khách") {
       await initNotificationSystem();
-
-      // [MỚI] Gọi cập nhật số lượng giỏ hàng ngay khi load trang
-      await window.updateCartCount();
+      // [NEW] Cập nhật số giỏ hàng ngay khi load
+      window.updateCartCount();
     } else {
       document.getElementById("nbNotiList").innerHTML =
         '<div class="empty-noti">Đăng nhập để xem thông báo</div>';
@@ -178,34 +175,27 @@ export async function loadNavbar(options = {}) {
   setupEvents();
 }
 
-// --- [MỚI] HÀM CẬP NHẬT SỐ GIỎ HÀNG (Dùng chung toàn web) ---
+// --- HÀM UPDATE SỐ GIỎ HÀNG (TOÀN CỤC) ---
 window.updateCartCount = async () => {
   try {
-    // Giả định API lấy giỏ hàng là GET /auth/carts (trả về danh sách món)
+    // [API] Kiểm tra API get giỏ hàng (/auth/carts)
     const res = await callAPI("/auth/carts", "GET");
-
     const badge = document.getElementById("cartBadge");
-    if (badge) {
-      if (
-        res &&
-        res.success &&
-        Array.isArray(res.data) &&
-        res.data.length > 0
-      ) {
-        // Có hàng -> Hiện số (đếm số món hoặc tổng số lượng tùy logic)
-        const count = res.data.length;
-        badge.innerText = count > 99 ? "99+" : count;
-        badge.style.display = "block";
-      } else {
-        // Giỏ rỗng -> Ẩn badge
-        badge.style.display = "none";
-      }
+
+    if (res && res.success && Array.isArray(res.data) && res.data.length > 0) {
+      // Có hàng -> Hiện số
+      badge.innerText = res.data.length > 99 ? "99+" : res.data.length;
+      badge.style.display = "block";
+    } else {
+      // Giỏ rỗng -> Ẩn
+      badge.style.display = "none";
     }
   } catch (e) {
-    console.error("Lỗi cập nhật giỏ hàng:", e);
+    console.error("Lỗi giỏ hàng:", e);
   }
 };
 
+// ... (Các hàm Notification: initNotificationSystem, setupEvents, renderNotiList... GIỮ NGUYÊN NHƯ CŨ) ...
 async function initNotificationSystem() {
   try {
     const res = await callAPI("/auth/notifications?page=0&size=20", "GET");
@@ -229,7 +219,6 @@ async function initNotificationSystem() {
 }
 
 function setupEvents() {
-  // ... (Giữ nguyên các sự kiện click, logout, notification cũ) ...
   const notiBtn = document.getElementById("nbNotiBtn");
   const notiDropdown = document.getElementById("nbNotiDropdown");
   if (notiBtn) {
@@ -281,7 +270,6 @@ function setupEvents() {
     };
 }
 
-// ... (Các hàm renderNotiList, prependNotification, createNotiItemHTML, deleteNoti, updateBadge GIỮ NGUYÊN) ...
 function renderNotiList(list) {
   const notiList = document.getElementById("nbNotiList");
   currentNotiIds = list.map((item) => item.id || item.notificationId);
