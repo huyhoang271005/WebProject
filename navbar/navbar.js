@@ -3,6 +3,12 @@ import { showDialog } from "../dialog/index.js";
 import { connectSse, subscribeTopic } from "../public/Sse.js";
 
 const noImage = "https://cdn-icons-png.flaticon.com/512/847/847969.png";
+let currentNotiIds = []; // Biến lưu danh sách ID đang hiển thị
+
+// [QUAN TRỌNG] Cấu hình đường dẫn API gốc
+// Nếu bro chạy local thì để localhost, nếu deploy thì phải đổi thành domain thật
+// Cách tốt nhất là lấy từ file config chung, nhưng tạm thời bro sửa ở đây:
+const API_BASE_URL = "http://localhost:8080/api/v1";
 
 // Quản lý trạng thái Lazy Load
 let notiState = {
@@ -10,10 +16,10 @@ let notiState = {
   size: 10,
   hasMore: true,
   isLoading: false,
-  isLoadedFirstTime: false, // Chỉ load khi bấm mở lần đầu
+  isLoadedFirstTime: false,
 };
 
-// CSS + HTML Navbar
+// ... (Phần CSS và HTML navbarHTML GIỮ NGUYÊN KHÔNG ĐỔI) ...
 const navbarHTML = `
     <style>
         .navbar-component {
@@ -174,11 +180,8 @@ export async function loadNavbar(options = {}) {
     }
 
     if (userData.username && userData.username !== "Khách") {
-      // Kết nối SSE
       await connectSse("/sse");
       setupSSERealtime();
-
-      // Chỉ load số lượng giỏ hàng lần đầu
       getInitialCartCount();
     } else {
       document.getElementById("nbNotiList").innerHTML =
@@ -190,32 +193,23 @@ export async function loadNavbar(options = {}) {
   setupEvents();
 }
 
-// --- SSE: LẮNG NGHE REALTIME ---
 function setupSSERealtime() {
-  // 1. Notification: Nhận tin -> Hiện badge -> Chèn lên đầu
   subscribeTopic("notification", (data) => {
     const newNoti = data;
     prependNotification(newNoti);
-    const badge = document.getElementById("nbBadge");
-    badge.style.display = "block";
+    document.getElementById("nbBadge").style.display = "block";
   });
-
-  // 2. Cart: Nhận 1 (tăng) hoặc -1 (giảm)
   subscribeTopic("cart", (data) => {
-    const change = parseInt(data); // Backend trả về 1 hoặc -1
+    const change = parseInt(data);
     const badge = document.getElementById("cartBadge");
-
     let currentCount = parseInt(badge.innerText) || 0;
     let newCount = currentCount + change;
-
     if (newCount < 0) newCount = 0;
-
     badge.innerText = newCount > 99 ? "99+" : newCount;
     badge.style.display = newCount > 0 ? "block" : "none";
   });
 }
 
-// --- LOGIC: CART ---
 async function getInitialCartCount() {
   try {
     const res = await callAPI("/auth/carts", "GET");
@@ -229,10 +223,8 @@ async function getInitialCartCount() {
   }
 }
 
-// --- LOGIC: NOTIFICATION (LAZY LOAD) ---
 async function fetchNotifications() {
   if (notiState.isLoading || !notiState.hasMore) return;
-
   notiState.isLoading = true;
   document.getElementById("notiLoading").style.display = "block";
 
@@ -241,18 +233,13 @@ async function fetchNotifications() {
       `/auth/notifications?page=${notiState.page}&size=${notiState.size}`,
       "GET"
     );
-
     if (res && res.success && res.data && Array.isArray(res.data.listData)) {
       const list = res.data.listData;
-
       if (list.length > 0) {
         const html = list.map((item) => createNotiItemHTML(item)).join("");
-
         const container = document.getElementById("nbNotiList");
-        if (notiState.page === 0)
-          container.innerHTML = html; // Trang đầu thì ghi đè
-        else container.insertAdjacentHTML("beforeend", html); // Trang sau thì nối thêm
-
+        if (notiState.page === 0) container.innerHTML = html;
+        else container.insertAdjacentHTML("beforeend", html);
         notiState.page++;
       } else {
         if (notiState.page === 0)
@@ -260,7 +247,6 @@ async function fetchNotifications() {
             '<div class="empty-noti">Không có thông báo nào</div>';
         notiState.hasMore = false;
       }
-      // Check nếu hết dữ liệu
       if (list.length < notiState.size) notiState.hasMore = false;
     } else {
       notiState.hasMore = false;
@@ -278,15 +264,13 @@ function setupEvents() {
   const notiDropdown = document.getElementById("nbNotiDropdown");
   const notiList = document.getElementById("nbNotiList");
 
-  // Click Chuông -> Lazy Load
   if (notiBtn) {
     notiBtn.onclick = async (e) => {
       e.stopPropagation();
       notiDropdown.classList.toggle("show");
       document.getElementById("nbUserDropdown").classList.remove("show");
-
       if (notiDropdown.classList.contains("show")) {
-        document.getElementById("nbBadge").style.display = "none"; // Tắt chấm đỏ
+        document.getElementById("nbBadge").style.display = "none";
         if (!notiState.isLoadedFirstTime) {
           await fetchNotifications();
           notiState.isLoadedFirstTime = true;
@@ -295,7 +279,6 @@ function setupEvents() {
     };
   }
 
-  // Scroll -> Load More (Infinite Scroll)
   if (notiList) {
     notiList.addEventListener("scroll", () => {
       if (
@@ -307,14 +290,12 @@ function setupEvents() {
     });
   }
 
-  // Xóa tất cả
   const clearAllBtn = document.getElementById("btnClearAllNoti");
   if (clearAllBtn) {
     clearAllBtn.onclick = async (e) => {
       e.stopPropagation();
       if (!confirm("Xóa tất cả thông báo?")) return;
-      // API Delete All (Nếu có)
-      // await callAPI("/auth/notifications/delete-all", "POST");
+      // await callAPI("/auth/notifications/delete-all", "POST"); // Bỏ comment nếu backend có api này
       document.getElementById("nbNotiList").innerHTML =
         '<div class="empty-noti">Không có thông báo nào</div>';
     };
@@ -357,6 +338,8 @@ function createNotiItemHTML(item, isNew = false) {
     ? new Date(item.createdTime).toLocaleString("vi-VN")
     : "";
   const id = item.id || item.notificationId;
+
+  // Lưu ý: ID được truyền vào hàm deleteNoti dưới dạng chuỗi
   return `
         <div class="noti-item ${isNew ? "unread" : ""}" id="noti-${id}">
             <div class="noti-content">
@@ -369,33 +352,43 @@ function createNotiItemHTML(item, isNew = false) {
     `;
 }
 
-// [QUAN TRỌNG] HÀM XÓA DÙNG FETCH TRỰC TIẾP ĐỂ TRÁNH LỖI API.JS
+// [FIX QUAN TRỌNG] HÀM XÓA DÙNG FETCH TRỰC TIẾP
+// Đảm bảo gửi Mảng ["id"] chuẩn JSON
 window.deleteNoti = async (id, e) => {
   e.stopPropagation();
+
+  // Log để kiểm tra (F12)
+  console.log("Đang xóa ID:", id);
+  console.log("Body gửi đi:", JSON.stringify([id]));
+
+  // Xóa UI trước cho mượt
   const item = document.getElementById(`noti-${id}`);
   if (item) item.remove();
 
   try {
-    // Lấy token từ session
     const token =
       sessionStorage.getItem("token") || sessionStorage.getItem("accessToken");
-    // Giả định URL backend (Bro sửa lại nếu khác port)
-    const res = await fetch(
-      "http://localhost:8080/api/v1/auth/notifications/delete",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: "Bearer " + token,
-        },
-        // Gửi mảng chuẩn 100%
-        body: JSON.stringify([id]),
-      }
-    );
 
-    if (!res.ok) console.error("Lỗi xóa noti:", await res.text());
+    // Dùng API_BASE_URL + Endpoint
+    const url = `${API_BASE_URL}/auth/notifications/delete`;
+
+    const res = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Bearer " + token,
+      },
+      body: JSON.stringify([id]), // Gửi mảng ID
+    });
+
+    if (!res.ok) {
+      console.error("Lỗi server:", await res.text());
+      alert("Xóa thất bại (Check console)");
+    } else {
+      console.log("Xóa thành công!");
+    }
   } catch (err) {
-    console.error("Fetch delete error:", err);
+    console.error("Lỗi mạng:", err);
   }
 
   if (document.getElementById("nbNotiList").children.length === 0)
