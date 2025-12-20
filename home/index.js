@@ -2,7 +2,6 @@ import { loadNavbar } from "../navbar/navbar.js";
 import { callAPI } from "../public/api.js";
 import { toggleLoading } from "../public/loader.js";
 
-// [QUAN TRỌNG] Tên biến ở trang Home là apiCategories
 let apiCategories = [];
 
 document.addEventListener("DOMContentLoaded", async () => {
@@ -21,7 +20,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         </div>`,
     });
 
-    // 2. Gọi các API cần thiết
+    // 2. Gọi API
     await fetchCategories();
     renderNavCategories();
     setupNavbarEvents();
@@ -33,7 +32,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 });
 
-// [API] Danh mục (Public)
+// API Danh mục
 async function fetchCategories() {
   try {
     const res = await callAPI("/categories", "GET", null);
@@ -46,20 +45,18 @@ async function fetchCategories() {
       ];
     }
   } catch (e) {
-    console.error("Lỗi lấy danh mục:", e);
+    console.error("Lỗi danh mục:", e);
   }
 }
 
-// [RENDER] Trang chủ
+// Render Sản phẩm
 async function renderHomeSections() {
   const container = document.getElementById("homeContainer");
   if (!container) return;
   container.innerHTML = "";
 
-  // [API] Lấy sản phẩm.
-  // [FIX 500 ERROR] Đổi thành /products (hoặc public endpoint) nếu /auth/products bị chặn khách
-  // Nếu server bro vẫn bắt auth thì giữ nguyên dòng này, nhưng nhớ phải login mới thấy data
-  const res = await callAPI("/products?page=0&size=15", "GET", null);
+  // [CHỐT] Chỉ gọi duy nhất 1 API này (Đã test thành công)
+  const res = await callAPI("/auth/products?page=0&size=15", "GET", null);
 
   if (res && res.success) {
     const listData = res.data?.listData || [];
@@ -74,7 +71,6 @@ async function renderHomeSections() {
                   </div>
                   <a href="../products/index.html" class="btn-see-more">Xem tất cả ></a>
               </div>
-              
               <div class="product-grid-5">
                   ${listData.map((p) => createProductHTML(p)).join("")}
               </div>
@@ -85,27 +81,8 @@ async function renderHomeSections() {
       container.innerHTML = `<div style="text-align:center; padding: 20px; color: #666;">Chưa có sản phẩm nào</div>`;
     }
   } else {
-    // Fallback nếu API /products lỗi, thử lại /auth/products
-    console.log("Thử lại với Auth...");
-    const resAuth = await callAPI("/auth/products?page=0&size=15", "GET", null);
-    if (resAuth && resAuth.success) {
-      // Render lại (code lặp lại chút để fallback)
-      const list = resAuth.data?.listData || [];
-      container.insertAdjacentHTML(
-        "beforeend",
-        `
-            <div class="category-section">
-                <div class="section-header"><div class="section-title">GỢI Ý HÔM NAY</div><a href="../products/index.html">Xem tất cả ></a></div>
-                <div class="product-grid-5">${list
-                  .map((p) => createProductHTML(p))
-                  .join("")}</div>
-            </div>`
-      );
-    } else {
-      container.innerHTML = `<div style="text-align:center; color:red;">Lỗi tải: ${
-        res?.message || "Server Error"
-      }</div>`;
-    }
+    // Nếu lỗi thì báo lỗi luôn chứ không thử lại nữa
+    container.innerHTML = `<div style="text-align:center; color:red;">Lỗi tải dữ liệu: ${res?.message}</div>`;
   }
 }
 
@@ -141,9 +118,7 @@ function createProductHTML(p) {
             </div>
             <div class="p-info">
                 <div class="p-name" title="${p.productName}">${p.productName}</div>
-                <div style="margin-top:auto;">
-                    <span class="p-price">${priceFormatted}</span>
-                </div>
+                <div class="p-price">${priceFormatted}</div>
                 <div class="p-meta" style="display:flex; align-items:center; justify-content:space-between; margin-top:5px; font-size:0.75rem; color:#777;">
                     <div class="p-rating" style="color:#ffce3d;">${starsHTML}</div>
                     <div class="p-sold">Đã bán 99+</div>
