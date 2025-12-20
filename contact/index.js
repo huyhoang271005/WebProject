@@ -1,5 +1,6 @@
 import { callAPI } from "../public/api.js";
-
+import { loadNavbar } from "../navbar/navbar.js";
+import { toggleLoading } from "../public/loader.js";
 
 // DOM Elements
 const addressForm = document.getElementById('addressForm');
@@ -295,3 +296,15 @@ function escapeHtml(text) {
     div.textContent = text;
     return div.innerHTML;
 }
+
+document.addEventListener("DOMContentLoaded", async () => {
+    // Bật loading cho chuyên nghiệp
+    toggleLoading(true);
+
+    // 2. Gọi Navbar
+    // Cách 1: Gọi đơn giản (Mặc định)
+    await loadNavbar();
+
+    // Tắt loading
+    toggleLoading(false);
+});

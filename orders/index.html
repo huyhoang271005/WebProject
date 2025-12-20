@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đơn Hàng Của Tôi</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="index.css">
+</head>
+<body>
+<!-- Navigation sẽ được load động -->
+<div id="navbar-container"></div>
+
+<!-- Loading Screen -->
+<div id="loadPage">
+    <div class="loader-spinner"></div>
+    <p>Đang tải đơn hàng...</p>
+</div>
+
+<!-- Main Content -->
+<div id="info" style="display: none;">
+    <div class="order-container">
+        <!-- Header -->
+        <div class="order-header">
+            <h1><i class="fas fa-shopping-bag"></i> Đơn Hàng Của Tôi</h1>
+            <p class="order-subtitle">Quản lý và theo dõi đơn hàng của bạn</p>
+        </div>
+
+        <!-- Status Tabs -->
+        <div class="status-tabs">
+            <button class="tab-btn active" data-status="ALL" onclick="filterByStatus('ALL')">
+                <i class="fas fa-list"></i> Tất cả
+            </button>
+            <button class="tab-btn" data-status="WAITING" onclick="filterByStatus('WAITING')">
+                <i class="fas fa-clock"></i> Chờ xác nhận
+            </button>
+            <button class="tab-btn" data-status="PENDING" onclick="filterByStatus('PENDING')">
+                <i class="fas fa-hourglass-half"></i> Đang xử lý
+            </button>
+            <button class="tab-btn" data-status="CONFIRMED" onclick="filterByStatus('CONFIRMED')">
+                <i class="fas fa-check-circle"></i> Đã xác nhận
+            </button>
+            <button class="tab-btn" data-status="PAINTED" onclick="filterByStatus('PAINTED')">
+                <i class="fas fa-paint-brush"></i> Đã đóng gói
+            </button>
+            <button class="tab-btn" data-status="DELIVERING" onclick="filterByStatus('DELIVERING')">
+                <i class="fas fa-shipping-fast"></i> Đang giao
+            </button>
+            <button class="tab-btn" data-status="DELIVERED" onclick="filterByStatus('DELIVERED')">
+                <i class="fas fa-box-open"></i> Đã giao
+            </button>
+            <button class="tab-btn" data-status="CANCELED" onclick="filterByStatus('CANCELED')">
+                <i class="fas fa-times-circle"></i> Đã hủy
+            </button>
+            <button class="tab-btn" data-status="REJECTED" onclick="filterByStatus('REJECTED')">
+                <i class="fas fa-ban"></i> Từ chối
+            </button>
+        </div>
+
+        <!-- Search Bar -->
+        <div class="search-bar">
+            <i class="fas fa-search"></i>
+            <input type="text" id="searchInput" placeholder="Tìm kiếm đơn hàng theo mã đơn, tên sản phẩm...">
+        </div>
+
+        <!-- Order List -->
+        <div id="orderList" class="order-list">
+            <!-- Orders will be rendered here -->
+        </div>
+
+        <!-- Empty State -->
+        <div id="emptyState" class="empty-state" style="display: none;">
+            <i class="fas fa-inbox"></i>
+            <h3>Chưa có đơn hàng</h3>
+            <p>Bạn chưa có đơn hàng nào trong mục này</p>
+            <a href="../products/index.html" class="btn-shop-now">
+                <i class="fas fa-shopping-cart"></i> Mua sắm ngay
+            </a>
+        </div>
+
+        <!-- Pagination -->
+        <div id="pagination" class="pagination" style="display: none;">
+            <button id="prevBtn" class="page-btn" onclick="changePage(-1)">
+                <i class="fas fa-chevron-left"></i> Trước
+            </button>
+            <span id="pageInfo" class="page-info">Trang 1</span>
+            <button id="nextBtn" class="page-btn" onclick="changePage(1)">
+                Sau <i class="fas fa-chevron-right"></i>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Order Detail Modal -->
+<div id="orderDetailModal" class="modal" style="display: none;">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2><i class="fas fa-file-invoice"></i> Chi Tiết Đơn Hàng</h2>
+            <button class="modal-close" onclick="closeModal()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div id="modalBody" class="modal-body">
+            <!-- Detail content will be rendered here -->
+        </div>
+    </div>
+</div>
+
+<!-- Notification Toast -->
+<div id="notification" class="notification hidden"></div>
+
+<script type="module" src="index.js"></script>
+</body>
+</html>

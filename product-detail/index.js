@@ -1,6 +1,7 @@
 import { callAPI } from "../public/api.js";
 import { loadPage, noImage } from '../public/public.js';
-
+import { loadNavbar } from "../navbar/navbar.js";
+import { toggleLoading } from "../public/loader.js";
 // --- Global Variables ---
 let productDetail = null;     // Dữ liệu sản phẩm gốc
 let variants = [];            // Danh sách variants
@@ -302,3 +303,15 @@ function validateSelection() {
     }
     return true;
 }
+
+document.addEventListener("DOMContentLoaded", async () => {
+    // Bật loading cho chuyên nghiệp
+    toggleLoading(true);
+
+    // 2. Gọi Navbar
+    // Cách 1: Gọi đơn giản (Mặc định)
+    await loadNavbar();
+
+    // Tắt loading
+    toggleLoading(false);
+});

@@ -1,218 +1,210 @@
-export const ProductUI = {
-    state: {
-        categories: [],
-        brands: [],
-        attributes: [],
-        selectedAttributes: [],
-        variants: [],
-        mainImageFile: null
+// ui.js
+export const UI = {
+    // Cache sẵn các Element
+    els: {
+        list: document.getElementById("view-list"),
+        form: document.getElementById("view-form"),
+        
+        tableBody: document.getElementById("productTableBody"), 
+        
+        cateSelect: document.getElementById("prodCate"),
+        brandSelect: document.getElementById("prodBrand"),
+        attrContainer: document.getElementById("attributes-container"),
+        variantWrapper: document.getElementById("variants-wrapper"),
+        variantList: document.getElementById("variant-list"),
+        formTitle: document.getElementById("formTitle"),
+        mainImgPreview: document.getElementById("mainImgPreview"),
+        mainImgPlaceholder: document.getElementById("mainImgPlaceholder"),
+        mainImgInput: document.getElementById("mainImgInput")
     },
 
-    // --- [Má»šI] CHUYá»‚N Äá»”I GIá»®A DANH SÃCH & FORM ---
-    toggleView: (viewName) => {
-        const listView = document.getElementById('listView');
-        const createView = document.getElementById('createView');
-        
-        if (viewName === 'create') {
-            listView.classList.add('d-none');
-            createView.classList.remove('d-none');
+    switchView: (viewName) => {
+        if (viewName === 'list') {
+            if(UI.els.list) UI.els.list.classList.remove('hidden');
+            if(UI.els.form) UI.els.form.classList.add('hidden');
         } else {
-            listView.classList.remove('d-none');
-            createView.classList.add('d-none');
+            if(UI.els.list) UI.els.list.classList.add('hidden');
+            if(UI.els.form) UI.els.form.classList.remove('hidden');
         }
     },
 
-    // --- [Má»šI] RENDER DANH SÃCH Sáº¢N PHáº¨M ---
-    renderProductList: (products, categories, brands) => {
-        const tbody = document.getElementById('productTableBody');
-        
-        if (!products || products.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="5" class="text-center py-5 text-muted">ChÆ°a cÃ³ sáº£n pháº©m nÃ o.</td></tr>`;
+    // --- HÀM RENDER ĐÃ ĐƯỢC CHỈNH SỬA ---
+    renderTable: (products) => {
+        if (!UI.els.tableBody) return;
+
+        if (!products || !products.length) {
+            UI.els.tableBody.innerHTML = `
+                <tr>
+                    <td colspan="6" style="text-align:center; padding: 20px;">
+                        Không có dữ liệu
+                    </td>
+                </tr>`;
             return;
         }
 
-        const formatCurrency = (amount) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
+        const fmt = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' });
 
-        tbody.innerHTML = products.map(p => {
-            // DÃ¹ng so sÃ¡nh lá»ng (==) Ä‘á»ƒ trÃ¡nh lá»—i lá»‡ch kiá»ƒu (string/number) giá»¯a ID sáº£n pháº©m vÃ  danh má»¥c
-            const catName = categories.find(c => c.categoryId == p.categoryId)?.categoryName || '<span class="text-muted fst-italic">---</span>';
-            const brandName = brands.find(b => b.brandId == p.brandId)?.brandName || '<span class="text-muted fst-italic">---</span>';
-            const imageUrl = p.imageUrl || 'https://placehold.co/50x50?text=No+Img';
+        UI.els.tableBody.innerHTML = products.map(p => {
+            // Xử lý ảnh (ưu tiên ảnh cloud/local)
+            let imgUrl = "https://via.placeholder.com/50";
+            if (p.imageUrl) imgUrl = p.imageUrl;
+            else if (p.imageName) imgUrl = `http://localhost:8080/images/${p.imageName}`;
+
+            // Xử lý giá gốc (nếu null hoặc = 0 thì hiển thị gạch ngang)
+            const priceOriginalDisplay = p.priceOriginal 
+                ? fmt.format(p.priceOriginal) 
+                : '-';
+
+            // Đếm số loại
+            const variantCount = p.variants ? p.variants.length : 0;
+            const variantBadge = variantCount > 0 
+                ? `<span class="badge bg-info text-white">${variantCount} loại</span>` 
+                : `<span class="badge bg-secondary">Đơn thể</span>`;
 
             return `
-                <tr>
-                    <td class="ps-4">
-                        <div class="d-flex align-items-center">
-                            <img src="${imageUrl}" class="rounded border me-3" 
-                                 style="width: 48px; height: 48px; object-fit: cover;" 
-                                 alt="${p.productName}">
-                            <div>
-                                <div class="fw-bold text-dark text-truncate" style="max-width: 250px;">${p.productName}</div>
-                                <small class="text-muted" style="font-size: 11px;">ID: ${p.productId?.substring(0, 8)}...</small>
-                            </div>
-                        </div>
-                    </td>
-                    <td>
-                        <div class="small text-secondary">${catName}</div>
-                        <div class="fw-bold text-dark small">${brandName}</div>
-                    </td>
-                    <td class="text-danger fw-bold">${formatCurrency(p.price)}</td>
-                    <td class="text-decoration-line-through text-muted small">${formatCurrency(p.originalPrice)}</td>
-                    <td class="text-end pe-4">
-                        <div class="btn-group">
-                            <button class="btn btn-sm btn-outline-primary border-0" title="Chá»‰nh sá»­a">
-                                <i class="bi bi-pencil-square"></i>
-                            </button>
-                            <button class="btn btn-sm btn-outline-danger border-0" title="XÃ³a">
-                                <i class="bi bi-trash"></i>
-                            </button>
-                        </div>
-                    </td>
-                </tr>
+            <tr>
+                <td>
+                    <div style="display:flex; align-items:center; gap:10px">
+                        <img src="${imgUrl}" style="width:50px; height:50px; object-fit:cover; border-radius:4px; border: 1px solid #dee2e6;">
+                        <strong>${p.productName}</strong>
+                    </div>
+                </td>
+                
+                <td>
+                    ${p.categoryName || '-'} <br>
+                    <small class="text-muted">${p.brandName || '-'}</small>
+                </td>
+                
+                <td style="color: #999; text-decoration: line-through;">
+                    ${priceOriginalDisplay}
+                </td>
+
+                <td style="color:#d32f2f; font-weight:bold; font-size:1.1em">
+                    ${fmt.format(p.price)}
+                </td>
+
+                <td>${variantBadge}</td>
+
+                <td>
+                    <button onclick="window.editProduct('${p.productId}')" class="btn btn-sm btn-light text-primary" title="Sửa">
+                        <i class="bi bi-pencil-square"></i>
+                    </button>
+                    <button onclick="window.deleteProduct('${p.productId}')" class="btn btn-sm btn-light text-danger" title="Xóa">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </td>
+            </tr>
             `;
         }).join('');
     },
 
-    // --- LOGIC CÅ¨ (DROPDOWN & ATTRIBUTES) GIá»® NGUYÃŠN ---
-
-    initSearchableDropdown: (selectId, items, displayField = 'name', valueField = 'id') => {
-        const select = document.getElementById(selectId);
-        if (!select) return;
-        select.innerHTML = '<option value="">-- Chá»n --</option>';
-        items.forEach(item => {
-            const option = document.createElement('option');
-            option.value = item[valueField];
-            option.textContent = item[displayField];
-            select.appendChild(option);
+    renderBrands: (brands, cateId, selectedBrandId = null) => {
+        if (!UI.els.brandSelect) return;
+        UI.els.brandSelect.innerHTML = `<option value="">-- Chọn thương hiệu --</option>`;
+        
+        if (!cateId) return;
+        
+        const filtered = brands.filter(b => b.categoryId == cateId);
+        (filtered.length ? filtered : brands).forEach(b => {
+            const selected = (selectedBrandId && b.brandId == selectedBrandId) ? 'selected' : '';
+            UI.els.brandSelect.innerHTML += `<option value="${b.brandId}" ${selected}>${b.brandName}</option>`;
         });
     },
 
-    renderAttributeSelector: () => {
-        const container = document.getElementById('attributesContainer');
-        if (!container) return;
-        container.innerHTML = `
-            <div class="card shadow-sm">
-                <div class="card-body">
-                    <h5 class="card-title text-primary">Biáº¿n thá»ƒ sáº£n pháº©m</h5>
-                    <button type="button" class="btn btn-sm btn-outline-primary mb-3" id="addAttributeBtn">
-                        + ThÃªm thuá»™c tÃ­nh
-                    </button>
-                    <div id="selectedAttributesList"></div>
+    renderMainImage: (src) => {
+        if (!UI.els.mainImgPreview) return;
+        
+        if (src) {
+            UI.els.mainImgPreview.src = src;
+            UI.els.mainImgPreview.classList.remove("hidden");
+            if(UI.els.mainImgPlaceholder) UI.els.mainImgPlaceholder.classList.add("hidden");
+        } else {
+            UI.els.mainImgPreview.src = "";
+            UI.els.mainImgPreview.classList.add("hidden");
+            if(UI.els.mainImgPlaceholder) UI.els.mainImgPlaceholder.classList.remove("hidden");
+        }
+    },
+
+    addAttrRow: (nameVal = "", valuesVal = "", onInputCallback, attrId = null, valueIds = [], valueIdMap = {}, allAttributes = []) => {
+        if (!UI.els.attrContainer) return;
+
+        const div = document.createElement("div");
+        div.className = "attr-row";
+        if (attrId) div.dataset.attrId = attrId;
+        if (Object.keys(valueIdMap).length) div.dataset.valueIdMap = JSON.stringify(valueIdMap);
+        
+        const attrOptions = allAttributes.map(attr => 
+            `<option value="${attr.attributeId}" ${attrId === attr.attributeId ? 'selected' : ''}>${attr.attributeName}</option>`
+        ).join('');
+
+        div.innerHTML = `
+            <div style="flex: 0 0 200px;">
+                <select class="inp-attr-select" style="width:100%; padding:10px;">
+                    <option value="">-- Chọn thuộc tính --</option>
+                    ${attrOptions}
+                </select>
+            </div>
+            <div style="flex: 1;">
+                <input type="text" class="inp-attr-vals" value="${valuesVal}" placeholder="Nhập giá trị (ngăn cách phẩy)..." style="width:100%; padding:10px;">
+            </div>
+            <button type="button" class="btn-remove btn btn-outline-danger" style="border:none">
+                <i class="bi bi-x-lg"></i>
+            </button>
+        `;
+
+        const selectEl = div.querySelector(".inp-attr-select");
+        const inputEl = div.querySelector(".inp-attr-vals");
+        
+        selectEl.onchange = (e) => {
+            const selectedAttr = allAttributes.find(a => a.attributeId === e.target.value);
+            if(selectedAttr) {
+                 div.dataset.attrId = selectedAttr.attributeId;
+                 if(selectedAttr.attributeValues && selectedAttr.attributeValues.length) {
+                     inputEl.value = selectedAttr.attributeValues.map(v => v.attributeValueName).join(", ");
+                 }
+            }
+            if(onInputCallback) onInputCallback();
+        }
+
+        inputEl.oninput = () => { if(onInputCallback) onInputCallback(); };
+        div.querySelector(".btn-remove").onclick = () => { div.remove(); if(onInputCallback) onInputCallback(); };
+
+        UI.els.attrContainer.appendChild(div);
+    },
+
+    renderVariants: (variants) => {
+        if (!UI.els.variantWrapper || !UI.els.variantList) return;
+
+        if (!variants.length) {
+            UI.els.variantWrapper.classList.add("hidden");
+            return;
+        }
+        UI.els.variantWrapper.classList.remove("hidden");
+        
+        UI.els.variantList.innerHTML = variants.map((v, i) => {
+            const imgSrc = v.previewUrl ? v.previewUrl : (v.imageUrl || "");
+            return `
+            <div class="variant-item">
+                <div class="v-img-box" onclick="document.getElementById('v_file_${i}').click()">
+                    ${imgSrc ? `<img src="${imgSrc}" style="width:100%;height:100%;object-fit:cover">` : `<i class="bi bi-camera" style="font-size:20px"></i>`}
+                    <input type="file" id="v_file_${i}" hidden onchange="window.handleSelectVariantImage(${i}, this)">
+                </div>
+                <div class="v-name" style="flex:1; font-weight:bold">${v.name}</div>
+                <div class="v-inputs">
+                    <input type="number" placeholder="Giá" value="${v.price}" onchange="window.updateVar(${i},'price',this.value)">
+                    <input type="number" placeholder="Kho" value="${v.stock}" onchange="window.updateVar(${i},'stock',this.value)">
+                    <button onclick="window.removeVariant(${i})" class="btn btn-sm text-danger"><i class="bi bi-trash"></i></button>
                 </div>
             </div>`;
-        document.getElementById('addAttributeBtn').addEventListener('click', ProductUI.addAttributeRow);
+        }).join('');
     },
 
-    addAttributeRow: () => {
-        const list = document.getElementById('selectedAttributesList');
-        const rowId = `attr_row_${Date.now()}`;
-        const row = document.createElement('div');
-        row.className = 'attribute-row mb-3 p-3 border rounded bg-light';
-        row.id = rowId;
-        row.innerHTML = `
-            <div class="row align-items-end">
-                <div class="col-md-5">
-                    <label class="form-label small fw-bold">Thuá»™c tÃ­nh</label>
-                    <select class="form-select attribute-select">
-                        <option value="">-- Chá»n --</option>
-                        ${ProductUI.state.attributes.map(attr => `<option value="${attr.attributeId}">${attr.attributeName}</option>`).join('')}
-                    </select>
-                </div>
-                <div class="col-md-6">
-                    <label class="form-label small fw-bold">GiÃ¡ trá»‹</label>
-                    <textarea class="form-control attribute-values-input" rows="1" disabled></textarea>
-                </div>
-                <div class="col-md-1">
-                    <button type="button" class="btn btn-outline-danger btn-sm w-100 remove-attr-btn"><i class="bi bi-x-lg"></i></button>
-                </div>
-            </div>
-        `;
-        list.appendChild(row);
-
-        const attrSelect = row.querySelector('.attribute-select');
-        const valuesInput = row.querySelector('.attribute-values-input');
-
-        attrSelect.addEventListener('change', (e) => {
-            valuesInput.disabled = !e.target.value;
-            ProductUI.updateSelectedAttributes();
-        });
-        valuesInput.addEventListener('input', ProductUI.updateSelectedAttributes);
-        row.querySelector('.remove-attr-btn').addEventListener('click', () => { 
-            row.remove(); 
-            ProductUI.updateSelectedAttributes(); 
-        });
-    },
-
-    updateSelectedAttributes: () => {
-        const rows = document.querySelectorAll('.attribute-row');
-        const selectedAttributes = [];
-        rows.forEach(row => {
-            const attrSelect = row.querySelector('.attribute-select');
-            const valuesInput = row.querySelector('.attribute-values-input');
-            const attributeId = attrSelect.value;
-            const valuesString = valuesInput.value;
-            if (attributeId && valuesString.trim()) {
-                const attribute = ProductUI.state.attributes.find(a => a.attributeId === attributeId);
-                if (attribute) {
-                    const values = valuesString.split(',').filter(v => v.trim()).map((name, idx) => ({
-                        id: `${attributeId}_${idx}`, attributeValueId: null, name: name.trim()
-                    }));
-                    if (values.length > 0) selectedAttributes.push({ ...attribute, values });
-                }
-            }
-        });
-        ProductUI.state.selectedAttributes = selectedAttributes;
-        ProductUI.updateVariantsFromAttributes();
-    },
-
-    updateVariantsFromAttributes: () => {
-        import('./logic.js').then(({ ProductLogic }) => {
-            ProductUI.state.variants = ProductLogic.generateVariants(ProductUI.state.selectedAttributes);
-            ProductUI.renderVariantsTable();
-        });
-    },
-
-    renderVariantsTable: () => {
-        const container = document.getElementById('variantsContainer');
-        if (!container) return;
-        if (ProductUI.state.variants.length === 0) {
-            container.innerHTML = ''; return;
-        }
-        container.innerHTML = `
-            <div class="card shadow-sm mt-4"><div class="card-body">
-                <h5 class="card-title text-primary">Danh sÃ¡ch biáº¿n thá»ƒ</h5>
-                <div class="table-responsive"><table class="table table-bordered table-hover align-middle">
-                    <thead class="table-light"><tr><th>TÃªn</th><th>áº¢nh</th><th>GiÃ¡ gá»‘c</th><th>GiÃ¡ bÃ¡n</th><th>Tá»“n</th></tr></thead>
-                    <tbody id="variantsTableBody"></tbody>
-                </table></div>
-            </div></div>`;
-        const tbody = document.getElementById('variantsTableBody');
-        ProductUI.state.variants.forEach((v, idx) => {
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td class="fw-bold">${v.displayName}</td>
-                <td><input type="file" class="form-control form-control-sm v-img" data-i="${idx}"></td>
-                <td><input type="number" class="form-control form-control-sm v-po" data-i="${idx}" value="${v.priceOriginal}"></td>
-                <td><input type="number" class="form-control form-control-sm v-p" data-i="${idx}" value="${v.price}"></td>
-                <td><input type="number" class="form-control form-control-sm v-s" data-i="${idx}" value="${v.stock}"></td>
-            `;
-            tbody.appendChild(tr);
-        });
-        tbody.querySelectorAll('input').forEach(i => i.addEventListener('change', (e) => {
-            const idx = e.target.dataset.i;
-            if (e.target.classList.contains('v-p')) ProductUI.state.variants[idx].price = parseFloat(e.target.value);
-            if (e.target.classList.contains('v-po')) ProductUI.state.variants[idx].priceOriginal = parseFloat(e.target.value);
-            if (e.target.classList.contains('v-s')) ProductUI.state.variants[idx].stock = parseInt(e.target.value);
-            if (e.target.classList.contains('v-img')) ProductUI.state.variants[idx].imageFile = e.target.files[0];
-        }));
-    },
-
-    handleMainImageUpload: (file) => {
-        if (file) {
-            ProductUI.state.mainImageFile = file;
-            const reader = new FileReader();
-            reader.onload = (e) => document.getElementById('mainImagePreview').innerHTML = `<img src="${e.target.result}" class="img-thumbnail mt-2" style="max-height: 150px;">`;
-            reader.readAsDataURL(file);
-        }
+    resetForm: (isEdit) => {
+        const form = document.getElementById("productForm");
+        if(form) form.reset();
+        if(UI.els.attrContainer) UI.els.attrContainer.innerHTML = "";
+        if(UI.els.variantWrapper) UI.els.variantWrapper.classList.add("hidden");
+        if(UI.els.formTitle) UI.els.formTitle.innerText = isEdit ? "Cập nhật sản phẩm" : "Thêm sản phẩm";
+        UI.renderMainImage(null);
     }
 };
