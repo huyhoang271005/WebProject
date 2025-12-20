@@ -1,20 +1,6 @@
 import { callAPI } from "../public/api.js";
 import { showDialog } from "../dialog/index.js";
 import { getLoader, loadPage } from "../public/public.js";
-import { loadNavbar } from "../navbar/navbar.js"; 
-import { toggleLoading } from "../public/loader.js";
-
-document.addEventListener("DOMContentLoaded", async () => {
-    // Bật loading cho chuyên nghiệp
-    toggleLoading(true);
-
-    // 2. Gọi Navbar
-    // Cách 1: Gọi đơn giản (Mặc định)
-    await loadNavbar();
-
-    // Tắt loading
-    toggleLoading(false);
-});
 
 // === 1. CẤU HÌNH TRUNG TÂM ===
 let currentType = 'category';

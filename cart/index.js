@@ -1,19 +1,5 @@
 import { callAPI } from '../public/api.js'; 
 import { showDialog } from '../dialog/index.js';
-import { loadNavbar } from "../navbar/navbar.js"; 
-import { toggleLoading } from "../public/loader.js";
-
-document.addEventListener("DOMContentLoaded", async () => {
-    // Bật loading cho chuyên nghiệp
-    toggleLoading(true);
-
-    // 2. Gọi Navbar
-    // Cách 1: Gọi đơn giản (Mặc định)
-    await loadNavbar();
-
-    // Tắt loading
-    toggleLoading(false);
-});
 
 const money = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' });
 let cartData = [], checked = new Set(), busy = false;let currentPage = 0;      // Trang hiện tại (Bắt đầu từ 0 hoặc 1 tùy API của bạn)
