@@ -4,7 +4,7 @@ export const UI = {
     els: {
         list: document.getElementById("view-list"),
         form: document.getElementById("view-form"),
-        tableBody: document.querySelector("#productTable tbody"),
+        tableBody: document.getElementById("productTableBody"),
         cateSelect: document.getElementById("prodCate"),
         brandSelect: document.getElementById("prodBrand"),
         attrContainer: document.getElementById("attributes-container"),
