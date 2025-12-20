@@ -147,7 +147,7 @@ html, body {
     -moz-appearance: none;
 
     /* 2. Kích thước & Font chữ */
-    width: 100%;            /* Luôn full chiều rộng để không bị cắt chữ */
+    width: 200px !important;            /* Luôn full chiều rộng để không bị cắt chữ */
     max-width: 100%;        /* Đảm bảo không tràn ra ngoài */
     padding: 10px 40px 10px 15px; /* Padding phải rộng để chứa mũi tên */
     font-size: 14px;
@@ -204,6 +204,9 @@ html, body {
     height: 36px !important;
     margin-top: 20px;
     margin-right: 15px; /* Thêm khoảng cách nhỏ với nút xóa */
+    width: 120px !important; /* Bạn có thể chỉnh 100px hoặc 110px tùy ý */
+    /* Ngăn không cho nó bị dãn theo flexbox */
+    flex-grow: 0;
 }
 
 .qty-btn {
