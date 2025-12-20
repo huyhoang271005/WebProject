@@ -25,8 +25,7 @@ let state = {
 
 async function reloadData() {
     try {
-        // ID Test giả định, thực tế bạn có thể bỏ hoặc xử lý logic khác
-        const targetId = "6786aedf-aa81-44ef-b28f-06abff1b5c1c"; 
+        const targetId = "6786aedf-aa81-44ef-b28f-06abff1b5c1c"; // ID Test
         const [productData, cats, brands, attrs] = await Promise.all([
             ProductService.getProductById(targetId),
             ProductService.getCategories(),
@@ -197,14 +196,13 @@ function handleCalcVariants() {
     UI.renderVariants(state.variants);
 }
 
-// === LOGIC SAVE ĐÃ CẬP NHẬT ===
 async function handleSave(e) {
     e.preventDefault();
     
     // 1. Lấy dữ liệu thuộc tính từ giao diện
     const currentAttrs = VariantLogic.parseAttributesFromDOM();
 
-    // 2. CHECK AN TOÀN
+    // 2. CHECK AN TOÀN: Có nhập thuộc tính mà chưa bấm "Tạo biến thể"
     if (currentAttrs.length > 0 && state.variants.length === 0) {
         const msg = "⚠️ Bạn chưa tạo biến thể!\nVui lòng nhấn nút màu xanh 'Tạo biến thể' trước khi lưu.";
         if(typeof showDialog === 'function') await showDialog("error", msg);
@@ -230,25 +228,27 @@ async function handleSave(e) {
     };
 
     // 4. Build Attributes (Định nghĩa thuộc tính cho sản phẩm)
-    // Map này dùng để tra cứu ID ở bước 5
-    const attrValueIdMap = {}; 
+    // Đồng thời tạo map để lấy attributeValueId sau
+    const attrValueIdMap = {}; // Key: "attributeId-valueName", Value: attributeValueId hoặc null
     
     currentAttrs.forEach(attr => {
         const attrValues = attr.values.map(v => {
-            // Kiểm tra xem giá trị này đã có ID trong database chưa (trường hợp sửa sản phẩm cũ)
             const existingValueId = attr.valueIdMap[v];
             
-            // LOGIC MỚI: Không dùng temp ID nữa
-            // Nếu có ID cũ -> Dùng ID cũ.
-            // Nếu không (mới nhập) -> Gán thẳng là NULL để Backend tự tạo.
-            const finalId = existingValueId ? existingValueId : null;
+            // Lưu vào map để dùng cho variants
+            attrValueIdMap[`${attr.id}-${v}`] = existingValueId || null;
             
-            // Lưu vào map để lát nữa Step 5 dùng lại
-            attrValueIdMap[`${attr.id}-${v}`] = finalId;
+            // Nếu đã có ID sẵn (giá trị cũ từ DB)
+            if (existingValueId) {
+                return { 
+                    attributeValueId: existingValueId,
+                    attributeValueName: v 
+                };
+            }
             
+            // Nếu là giá trị mới, chỉ gửi tên (backend sẽ tự tạo)
             return { 
-                attributeValueName: v,
-                attributeValueId: finalId // Gửi NULL hoặc UUID thật
+                attributeValueName: v
             };
         });
         
@@ -263,7 +263,7 @@ async function handleSave(e) {
     state.variants.forEach((v, idx) => {
         const imgKey = v.rawFile ? `image_variant_${idx}` : null;
         
-        // Tạo attributeValues với đầy đủ thông tin ID
+        // Tạo attributeValues với thông tin phù hợp
         const variantAttrValues = v.comboValues.map((val, valIdx) => {
             const attr = currentAttrs[valIdx];
             if (!attr) {
@@ -272,19 +272,24 @@ async function handleSave(e) {
             }
             
             const attrId = attr.id;
-            // Key để tìm trong Map
             const mapKey = `${attrId}-${val}`;
-            
-            // Lấy ID từ map ở bước 4.
-            // Nếu là giá trị mới thì nó tự động lấy ra NULL (vì nãy mình gán null rồi)
             const valueId = attrValueIdMap[mapKey];
             
-            return {
-                attributeId: attrId,
-                attributeValueId: valueId, // Gọn gàng, chính xác logic backend
-                attributeName: attr.name,
-                attributeValueName: val
-            };
+            // Nếu có ID thì gửi đầy đủ, không có thì chỉ gửi tên
+            if (valueId) {
+                return {
+                    attributeId: attrId,
+                    attributeValueId: valueId,
+                    attributeName: attr.name,
+                    attributeValueName: val
+                };
+            } else {
+                return {
+                    attributeId: attrId,
+                    attributeName: attr.name,
+                    attributeValueName: val
+                };
+            }
         }).filter(Boolean);
 
         payload.variants.push({
@@ -308,9 +313,20 @@ async function handleSave(e) {
     
     formData.append("productDTO", new Blob([JSON.stringify(payload)], { type: "application/json" }));
 
-    // DEBUG: In ra để kiểm tra
+    // DEBUG: In ra payload để kiểm tra
     console.log("=== PAYLOAD DEBUG ===");
     console.log("Payload JSON:", JSON.stringify(payload, null, 2));
+    console.log("Current Attrs:", currentAttrs);
+    console.log("Total Variants:", payload.variants.length);
+    console.log("===================");
+    
+    // KIỂM TRA: Nếu không có variants thì báo lỗi
+    if (payload.variants.length === 0 && currentAttrs.length > 0) {
+        const msg = "⚠️ Có thuộc tính nhưng không có biến thể!\nVui lòng kiểm tra lại.";
+        if(typeof showDialog === 'function') await showDialog("error", msg);
+        else alert(msg);
+        return;
+    }
 
     // 7. Gửi API
     try {
