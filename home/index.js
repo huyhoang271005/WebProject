@@ -2,7 +2,7 @@ import { loadNavbar } from "../navbar/navbar.js";
 import { callAPI } from "../public/api.js";
 import { toggleLoading } from "../public/loader.js";
 
-// Biến lưu danh mục lấy từ API (để hiển thị trên navbar)
+// [QUAN TRỌNG] Tên biến ở trang Home là apiCategories
 let apiCategories = [];
 
 document.addEventListener("DOMContentLoaded", async () => {
@@ -21,13 +21,10 @@ document.addEventListener("DOMContentLoaded", async () => {
         </div>`,
     });
 
-    // 2. Gọi API lấy danh mục (để đồng bộ với trang Products)
+    // 2. Gọi các API cần thiết
     await fetchCategories();
     renderNavCategories();
-
     setupNavbarEvents();
-
-    // 3. Render nội dung trang chủ
     await renderHomeSections();
   } catch (e) {
     console.error(e);
@@ -36,14 +33,15 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 });
 
-// --- API: LẤY DANH MỤC ---
+// [FIX] API danh mục mới: /categories (Không Auth)
 async function fetchCategories() {
   try {
-    const res = await callAPI("/auth/category", "GET", null);
+    const res = await callAPI("/categories", "GET", null);
     if (res && res.success && Array.isArray(res.data)) {
+      // [FIX LỖI] Gán đúng vào biến apiCategories
       apiCategories = res.data;
     } else {
-      // Fallback nếu API lỗi
+      // Fallback dữ liệu giả nếu lỗi
       apiCategories = [
         { id: "an-vat", name: "Đồ ăn vặt" },
         { id: "nuoc-ngot", name: "Nước giải khát" },
@@ -54,22 +52,18 @@ async function fetchCategories() {
   }
 }
 
-// --- LOGIC: RENDER TRANG CHỦ ---
 async function renderHomeSections() {
   const container = document.getElementById("homeContainer");
   if (!container) return;
   container.innerHTML = "";
 
-  // Lấy 20 sản phẩm mới nhất
+  // API lấy sản phẩm (Giữ nguyên /auth/products hoặc đổi thành /products tùy backend)
   const res = await callAPI("/auth/products?page=0&size=20", "GET", null);
 
   if (res && res.success) {
     const listData = res.data?.listData || [];
-
     if (listData.length > 0) {
-      // Hiển thị tối đa 12 sản phẩm (cho đẹp grid 6 cột x 2 hàng)
       const list = listData.slice(0, 12);
-
       container.insertAdjacentHTML(
         "beforeend",
         `
@@ -80,7 +74,6 @@ async function renderHomeSections() {
                       </div>
                       <a href="../products/index.html" style="color:#ee4d2d; text-decoration:none; font-size:0.9rem;">Xem tất cả ></a>
                   </div>
-                  
                   <div class="product-grid" style="display:grid; grid-template-columns: repeat(6, 1fr); gap:10px;">
                       ${list.map((p) => createProductHTML(p)).join("")}
                   </div>
@@ -91,11 +84,10 @@ async function renderHomeSections() {
       container.innerHTML = `<div style="text-align:center; padding: 20px; color: #666;">Chưa có sản phẩm nào</div>`;
     }
   } else {
-    container.innerHTML = `<div style="text-align:center; color:red;">Lỗi tải dữ liệu: ${res?.message}</div>`;
+    container.innerHTML = `<div style="text-align:center; color:red;">Lỗi tải: ${res?.message}</div>`;
   }
 }
 
-// --- HÀM TẠO THẺ SẢN PHẨM (CHUẨN SHOPEE) ---
 function createProductHTML(p) {
   const imgUrl =
     p.imageUrl || "https://cdn-icons-png.flaticon.com/512/2748/2748558.png";
@@ -104,7 +96,6 @@ function createProductHTML(p) {
     currency: "VND",
   }).format(p.price || 0);
 
-  // Xử lý Badge Giảm Giá
   let discountBadge = "";
   if (p.originalPrice && p.originalPrice > p.price) {
     const percent = Math.round(
@@ -118,40 +109,32 @@ function createProductHTML(p) {
             </div>`;
   }
 
-  // Xử lý Rating & Sold
   const rating = p.ratingAvg || 0;
   const starsHTML = renderStars(rating);
-  const soldCount = "99+"; // Fake số liệu nếu API chưa có
 
   return `
         <div class="product-card" onclick="window.location.href='../product-detail/index.html?id=${p.productId}'" 
              style="background:white; border:1px solid transparent; border-radius:2px; overflow:hidden; cursor:pointer; position:relative; display:flex; flex-direction:column; transition:transform 0.1s, border-color 0.1s; box-shadow:0 1px 2px rgba(0,0,0,0.1);">
-            
             ${discountBadge}
-            
             <div class="p-img" style="width:100%; padding-top:100%; position:relative; background:#f9f9f9;">
                 <img src="${imgUrl}" style="position:absolute; top:0; left:0; width:100%; height:100%; object-fit:cover;">
             </div>
-            
             <div class="p-info" style="padding:8px; flex:1; display:flex; flex-direction:column; justify-content:space-between;">
                 <div class="p-name" title="${p.productName}" style="font-size:0.85rem; color:#333; line-height:1.1rem; margin-bottom:5px; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; min-height:2.2rem;">
                     ${p.productName}
                 </div>
-                
                 <div style="margin-top:auto;">
                     <span style="color:#ee4d2d; font-size:1rem; font-weight:600;">${priceFormatted}</span>
                 </div>
-                
                 <div class="p-meta" style="display:flex; align-items:center; justify-content:space-between; margin-top:5px;">
                     <div class="p-rating" style="font-size:0.6rem; color:#ffce3d;">${starsHTML}</div>
-                    <div class="p-sold" style="font-size:0.7rem; color:#757575;">Đã bán ${soldCount}</div>
+                    <div class="p-sold" style="font-size:0.7rem; color:#757575;">Đã bán 99+</div>
                 </div>
             </div>
         </div>
     `;
 }
 
-// --- HELPER: VẼ NGÔI SAO ---
 function renderStars(rating) {
   if (!rating) rating = 0;
   let html = "";
@@ -164,7 +147,6 @@ function renderStars(rating) {
   return html;
 }
 
-// --- HELPER: NAVBAR EVENTS & CATEGORIES ---
 function setupNavbarEvents() {
   const catBtn = document.getElementById("catBtn");
   const catDropdown = document.getElementById("catDropdown");
@@ -196,21 +178,16 @@ function setupNavbarEvents() {
 function renderNavCategories() {
   const el = document.getElementById("catDropdown");
   if (!el) return;
-
   if (apiCategories.length === 0) {
     el.innerHTML =
       '<div style="padding:15px; text-align:center;">Đang tải...</div>';
     return;
   }
-
-  // Render danh mục từ API
+  // [FIX] Link sang trang products
   el.innerHTML = apiCategories
     .map(
-      (c) => `
-        <a href="../products/index.html?cat=${c.id}">
-            <i class="fa-solid fa-caret-right"></i> ${c.name}
-        </a>
-    `
+      (c) =>
+        `<a href="../products/index.html?cat=${c.id}"><i class="fa-solid fa-caret-right"></i> ${c.name}</a>`
     )
     .join("");
 }
