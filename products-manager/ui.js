@@ -1,348 +1,286 @@
-export const ProductUI = {
-    state: {
-        categories: [],
-        brands: [],
-        attributes: [],
-        selectedAttributes: [],
-        variants: [],
-        mainImageFile: null
-    },
-
-    // Initialize dropdowns với search
-    initSearchableDropdown: (selectId, items, displayField = 'name', valueField = 'id') => {
-        const select = document.getElementById(selectId);
-        if (!select) return;
-
-        // Clear options
-        select.innerHTML = '<option value="">-- Chọn --</option>';
+// ui.js
+export const UI = {
+    // Cache sẵn các Element
+    els: {
+        list: document.getElementById("listView"),        // ✅ SỬA
+        form: document.getElementById("createView"),      // ✅ SỬA
         
-        items.forEach(item => {
-            const option = document.createElement('option');
-            option.value = item[valueField];
-            option.textContent = item[displayField];
-            select.appendChild(option);
-        });
-
-        // Add search functionality với datalist
-        const wrapper = select.parentElement;
-        const searchInput = document.createElement('input');
-        searchInput.type = 'text';
-        searchInput.className = 'form-control mb-2';
-        searchInput.placeholder = `Tìm kiếm...`;
-        searchInput.setAttribute('list', `${selectId}-datalist`);
+        tableBody: document.getElementById("productTableBody"), 
         
-        // Tạo datalist cho autocomplete
-        const datalist = document.createElement('datalist');
-        datalist.id = `${selectId}-datalist`;
-        items.forEach(item => {
-            const option = document.createElement('option');
-            option.value = item[displayField];
-            option.setAttribute('data-id', item[valueField]);
-            datalist.appendChild(option);
-        });
-        wrapper.appendChild(datalist);
-
-        // Event khi nhập search
-        searchInput.addEventListener('input', (e) => {
-            const searchTerm = e.target.value.toLowerCase();
-            
-            // Filter options trong select
-            Array.from(select.options).forEach(option => {
-                if (option.value === '') return;
-                const text = option.textContent.toLowerCase();
-                option.style.display = text.includes(searchTerm) ? '' : 'none';
-            });
-
-            // Tự động chọn nếu match chính xác
-            const exactMatch = items.find(item => 
-                item[displayField].toLowerCase() === searchTerm
-            );
-            if (exactMatch) {
-                select.value = exactMatch[valueField];
-                select.dispatchEvent(new Event('change'));
-            }
-        });
-
-        // Event khi chọn từ datalist
-        searchInput.addEventListener('change', (e) => {
-            const selectedText = e.target.value;
-            const matchedItem = items.find(item => item[displayField] === selectedText);
-            if (matchedItem) {
-                select.value = matchedItem[valueField];
-                select.dispatchEvent(new Event('change'));
-            }
-        });
-
-        wrapper.insertBefore(searchInput, select);
+        cateSelect: document.getElementById("categoryId"),     // ✅ SỬA
+        brandSelect: document.getElementById("brandId"),       // ✅ SỬA
+        attrContainer: document.getElementById("attributesContainer"), // ✅ SỬA
+        variantWrapper: document.getElementById("variantsContainer"),  // ✅ SỬA
+        variantList: document.getElementById("variantsContainer"),     // ✅ SỬA
+        formTitle: document.querySelector("#createView h2"),  // ✅ SỬA
+        mainImgPreview: document.getElementById("mainImagePreview"),
+        mainImgPlaceholder: null,
+        mainImgInput: document.getElementById("mainImage")    // ✅ SỬA
     },
 
-    // Render attribute selector
-    renderAttributeSelector: () => {
-        const container = document.getElementById('attributesContainer');
-        if (!container) return;
-
-        container.innerHTML = `
-            <div class="card">
-                <div class="card-body">
-                    <h5 class="card-title">Thêm thuộc tính biến thể</h5>
-                    <button type="button" class="btn btn-sm btn-primary mb-3" id="addAttributeBtn">
-                        + Thêm thuộc tính
-                    </button>
-                    <div id="selectedAttributesList"></div>
-                </div>
-            </div>
-        `;
-
-        document.getElementById('addAttributeBtn').addEventListener('click', () => {
-            ProductUI.addAttributeRow();
-        });
+    switchView: (viewName) => {
+        if (viewName === 'list') {
+            if(UI.els.list) UI.els.list.classList.remove('d-none');
+            if(UI.els.form) UI.els.form.classList.add('d-none');
+        } else {
+            if(UI.els.list) UI.els.list.classList.add('d-none');
+            if(UI.els.form) UI.els.form.classList.remove('d-none');
+        }
     },
 
-    // Thêm một hàng attribute
-    addAttributeRow: () => {
-        const list = document.getElementById('selectedAttributesList');
-        const rowId = `attr_row_${Date.now()}`;
+    renderTable: (products) => {
+        if (!UI.els.tableBody) return;
 
-        const row = document.createElement('div');
-        row.className = 'attribute-row mb-3 p-3 border rounded';
-        row.id = rowId;
-        row.innerHTML = `
-            <div class="row align-items-end">
-                <div class="col-md-5">
-                    <label class="form-label">Chọn thuộc tính</label>
-                    <select class="form-select attribute-select">
-                        <option value="">-- Chọn thuộc tính --</option>
-                        ${ProductUI.state.attributes.map(attr => 
-                            `<option value="${attr.attributeId}">${attr.attributeName}</option>`
-                        ).join('')}
-                    </select>
-                </div>
-                <div class="col-md-6">
-                    <label class="form-label">Giá trị thuộc tính</label>
-                    <textarea class="form-control attribute-values-input" 
-                              rows="2"
-                              placeholder="VD: Đỏ, Xanh, Vàng" 
-                              disabled></textarea>
-                    <small class="text-muted">Nhập các giá trị ngăn cách bởi dấu phẩy.</small>
-                </div>
-                <div class="col-md-1">
-                    <button type="button" class="btn btn-danger btn-sm w-100 remove-attr-btn">Xóa</button>
-                </div>
-            </div>
-        `;
-
-        list.appendChild(row);
-
-        const attrSelect = row.querySelector('.attribute-select');
-        const valuesInput = row.querySelector('.attribute-values-input');
-
-        // Event: Khi chọn attribute
-        attrSelect.addEventListener('change', (e) => {
-            const selectedAttrId = e.target.value;
-            
-            if (selectedAttrId) {
-                valuesInput.disabled = false;
-                valuesInput.placeholder = 'VD: Đỏ, Xanh, Vàng';
-            } else {
-                valuesInput.disabled = true;
-                valuesInput.value = '';
-                valuesInput.placeholder = 'Vui lòng chọn thuộc tính trước';
-            }
-            
-            ProductUI.updateSelectedAttributes();
-        });
-
-        // Event: Khi nhập values
-        valuesInput.addEventListener('input', () => {
-            ProductUI.updateSelectedAttributes();
-        });
-
-        // Event: Xóa row
-        row.querySelector('.remove-attr-btn').addEventListener('click', () => {
-            row.remove();
-            ProductUI.updateSelectedAttributes();
-        });
-    },
-
-    // Update danh sách attributes đã chọn
-    updateSelectedAttributes: () => {
-        const rows = document.querySelectorAll('.attribute-row');
-        const selectedAttributes = [];
-
-        rows.forEach(row => {
-            const attrSelect = row.querySelector('.attribute-select');
-            const valuesInput = row.querySelector('.attribute-values-input');
-            
-            const attributeId = attrSelect.value;
-            const valuesString = valuesInput.value;
-
-            if (attributeId && valuesString.trim()) {
-                const attribute = ProductUI.state.attributes.find(a => a.attributeId === attributeId);
-                
-                if (attribute) {
-                    const values = valuesString
-                        .split(',')
-                        .map(v => v.trim())
-                        .filter(v => v.length > 0)
-                        .map((name, index) => ({
-                            id: `${attributeId}_${index}_${Date.now()}`,
-                            attributeValueId: null,
-                            name: name
-                        }));
-
-                    if (values.length > 0) {
-                        selectedAttributes.push({
-                            attributeId: attribute.attributeId,
-                            attributeName: attribute.attributeName,
-                            values: values
-                        });
-                    }
-                }
-            }
-        });
-
-        ProductUI.state.selectedAttributes = selectedAttributes;
-        ProductUI.updateVariantsFromAttributes();
-    },
-
-    // Tạo variants từ attributes và render
-    updateVariantsFromAttributes: () => {
-        import('./logic.js').then(({ ProductLogic }) => {
-            const variants = ProductLogic.generateVariants(ProductUI.state.selectedAttributes);
-            ProductUI.state.variants = variants;
-            ProductUI.renderVariantsTable();
-        });
-    },
-
-    // Render bảng variants
-    renderVariantsTable: () => {
-        const container = document.getElementById('variantsContainer');
-        if (!container) return;
-
-        if (ProductUI.state.variants.length === 0) {
-            container.innerHTML = '<p class="text-muted">Chưa có biến thể nào. Thêm thuộc tính để tạo biến thể.</p>';
+        if (!products || !products.length) {
+            UI.els.tableBody.innerHTML = `
+                <tr>
+                    <td colspan="6" class="text-center py-5 text-muted">
+                        Không có dữ liệu
+                    </td>
+                </tr>`;
             return;
         }
 
-        container.innerHTML = `
-            <div class="card">
+        const fmt = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' });
+
+        UI.els.tableBody.innerHTML = products.map(p => {
+            // Xử lý ảnh
+            let imgUrl = "https://via.placeholder.com/50";
+            if (p.imageUrl) imgUrl = p.imageUrl;
+            else if (p.imageName) imgUrl = `/images/${p.imageName}`;
+
+            // Xử lý giá gốc
+            const priceOriginalDisplay = (p.priceOriginal && p.priceOriginal > 0)
+                ? fmt.format(p.priceOriginal) 
+                : '-';
+
+            // Đếm số loại
+            const variantCount = p.variants ? p.variants.length : 0;
+            const variantBadge = variantCount > 0 
+                ? `<span class="badge bg-info text-white">${variantCount} loại</span>` 
+                : `<span class="badge bg-secondary">Đơn thể</span>`;
+
+            return `
+            <tr>
+                <td class="ps-4">
+                    <div class="d-flex align-items-center gap-3">
+                        <img src="${imgUrl}" style="width:50px; height:50px; object-fit:cover; border-radius:4px; border: 1px solid #dee2e6;">
+                        <strong>${p.productName}</strong>
+                    </div>
+                </td>
+                
+                <td>
+                    ${p.categoryName || '-'} <br>
+                    <small class="text-muted">${p.brandName || '-'}</small>
+                </td>
+                
+                <td style="color: #999; text-decoration: line-through;">
+                    ${priceOriginalDisplay}
+                </td>
+
+                <td style="color:#d32f2f; font-weight:bold; font-size:1.1em">
+                    ${fmt.format(p.price)}
+                </td>
+
+                <td>${variantBadge}</td>
+
+                <td class="text-end pe-4">
+                    <button onclick="window.editProduct('${p.productId}')" class="btn btn-sm btn-outline-primary" title="Sửa">
+                        <i class="bi bi-pencil-square"></i>
+                    </button>
+                    <button onclick="window.deleteProduct('${p.productId}')" class="btn btn-sm btn-outline-danger" title="Xóa">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </td>
+            </tr>
+            `;
+        }).join('');
+    },
+
+    renderBrands: (brands, cateId, selectedBrandId = null) => {
+        if (!UI.els.brandSelect) return;
+        UI.els.brandSelect.innerHTML = `<option value="">-- Chọn thương hiệu --</option>`;
+        
+        if (!cateId) return;
+        
+        const filtered = brands.filter(b => b.categoryId == cateId);
+        (filtered.length ? filtered : brands).forEach(b => {
+            const selected = (selectedBrandId && b.brandId == selectedBrandId) ? 'selected' : '';
+            UI.els.brandSelect.innerHTML += `<option value="${b.brandId}" ${selected}>${b.brandName}</option>`;
+        });
+    },
+
+    renderMainImage: (src) => {
+        const preview = document.getElementById("mainImagePreview");
+        if (!preview) return;
+        
+        if (src) {
+            preview.innerHTML = `<img src="${src}" class="img-fluid rounded" style="max-height: 300px;">`;
+        } else {
+            preview.innerHTML = `<p class="text-muted">Chưa chọn ảnh</p>`;
+        }
+    },
+
+    addAttrRow: (nameVal = "", valuesVal = "", onInputCallback, attrId = null, valueIds = [], valueIdMap = {}, allAttributes = []) => {
+        if (!UI.els.attrContainer) return;
+
+        const div = document.createElement("div");
+        div.className = "mb-3";
+        if (attrId) div.dataset.attrId = attrId;
+        if (Object.keys(valueIdMap).length) div.dataset.valueIdMap = JSON.stringify(valueIdMap);
+        
+        const attrOptions = allAttributes.map(attr => 
+            `<option value="${attr.attributeId}" ${attrId === attr.attributeId ? 'selected' : ''}>${attr.attributeName}</option>`
+        ).join('');
+
+        div.innerHTML = `
+            <div class="row g-2 align-items-center">
+                <div class="col-md-3">
+                    <select class="inp-attr-select form-select">
+                        <option value="">-- Chọn thuộc tính --</option>
+                        ${attrOptions}
+                    </select>
+                </div>
+                <div class="col-md-8">
+                    <input type="text" class="inp-attr-vals form-control" value="${valuesVal}" placeholder="Nhập giá trị (ngăn cách phẩy). VD: Đỏ, Xanh, Vàng">
+                </div>
+                <div class="col-md-1">
+                    <button type="button" class="btn-remove btn btn-outline-danger w-100">
+                        <i class="bi bi-x-lg"></i>
+                    </button>
+                </div>
+            </div>
+        `;
+
+        const selectEl = div.querySelector(".inp-attr-select");
+        const inputEl = div.querySelector(".inp-attr-vals");
+        
+        selectEl.onchange = (e) => {
+            const selectedAttr = allAttributes.find(a => a.attributeId === e.target.value);
+            if(selectedAttr) {
+                 div.dataset.attrId = selectedAttr.attributeId;
+                 if(selectedAttr.attributeValues && selectedAttr.attributeValues.length) {
+                     inputEl.value = selectedAttr.attributeValues.map(v => v.attributeValueName).join(", ");
+                 }
+            }
+            if(onInputCallback) onInputCallback();
+        }
+
+        inputEl.oninput = () => { if(onInputCallback) onInputCallback(); };
+        div.querySelector(".btn-remove").onclick = () => { div.remove(); if(onInputCallback) onInputCallback(); };
+
+        UI.els.attrContainer.appendChild(div);
+    },
+
+    renderVariants: (variants) => {
+        if (!UI.els.variantWrapper) return;
+
+        if (!variants.length) {
+            UI.els.variantWrapper.innerHTML = "";
+            return;
+        }
+        
+        const html = `
+            <div class="card shadow-sm mb-4">
                 <div class="card-body">
-                    <h5 class="card-title">Danh sách biến thể (${ProductUI.state.variants.length})</h5>
-                    <div class="table-responsive">
-                        <table class="table table-bordered">
-                            <thead>
-                                <tr>
-                                    <th>Biến thể</th>
-                                    <th>Ảnh</th>
-                                    <th>Giá gốc</th>
-                                    <th>Giá bán</th>
-                                    <th>Tồn kho</th>
-                                </tr>
-                            </thead>
-                            <tbody id="variantsTableBody"></tbody>
-                        </table>
+                    <h5 class="card-title text-primary mb-3">
+                        <i class="bi bi-grid-3x3-gap me-2"></i>Danh sách biến thể 
+                        <span class="badge bg-info">${variants.length}</span>
+                    </h5>
+                    
+                    <div id="variant-list">
+                        ${variants.map((v, i) => {
+                            const imgSrc = v.previewUrl ? v.previewUrl : (v.imageUrl || "");
+                            return `
+                            <div class="card mb-3 border">
+                                <div class="card-body">
+                                    <div class="row g-3 align-items-center">
+                                        <!-- Ảnh -->
+                                        <div class="col-auto">
+                                            <div class="position-relative">
+                                                <div class="border rounded" 
+                                                     style="width:80px; height:80px; cursor:pointer; overflow:hidden; display:flex; align-items:center; justify-content:center; background:#f8f9fa;" 
+                                                     onclick="document.getElementById('v_file_${i}').click()">
+                                                    ${imgSrc 
+                                                        ? `<img src="${imgSrc}" style="width:100%;height:100%;object-fit:cover">` 
+                                                        : `<div class="text-center text-muted">
+                                                               <i class="bi bi-camera d-block" style="font-size:24px"></i>
+                                                               <small style="font-size:10px">Chọn ảnh</small>
+                                                           </div>`
+                                                    }
+                                                </div>
+                                                <input type="file" id="v_file_${i}" hidden onchange="window.handleSelectVariantImage(${i}, this)" accept="image/*">
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Tên biến thể -->
+                                        <div class="col-md-2">
+                                            <label class="form-label text-muted small mb-1">Tên biến thể</label>
+                                            <div class="fw-bold">${v.name}</div>
+                                        </div>
+                                        
+                                        <!-- Giá gốc -->
+                                        <div class="col-md-2">
+                                            <label class="form-label text-muted small mb-1">Giá gốc</label>
+                                            <input type="number" 
+                                                   class="form-control form-control-sm" 
+                                                   placeholder="0" 
+                                                   value="${v.priceOriginal || v.price}" 
+                                                   onchange="window.updateVar(${i},'priceOriginal',this.value)">
+                                        </div>
+                                        
+                                        <!-- Giá bán -->
+                                        <div class="col-md-2">
+                                            <label class="form-label text-muted small mb-1">Giá bán</label>
+                                            <input type="number" 
+                                                   class="form-control form-control-sm" 
+                                                   placeholder="0" 
+                                                   value="${v.price}" 
+                                                   onchange="window.updateVar(${i},'price',this.value)">
+                                        </div>
+                                        
+                                        <!-- Kho -->
+                                        <div class="col-md-2">
+                                            <label class="form-label text-muted small mb-1">Số lượng kho</label>
+                                            <input type="number" 
+                                                   class="form-control form-control-sm" 
+                                                   placeholder="0" 
+                                                   value="${v.stock}" 
+                                                   onchange="window.updateVar(${i},'stock',this.value)">
+                                        </div>
+                                        
+                                        <!-- Nút xóa -->
+                                        <div class="col-auto">
+                                            <label class="form-label text-muted small mb-1 d-block">&nbsp;</label>
+                                            <button onclick="window.removeVariant(${i})" 
+                                                    class="btn btn-sm btn-outline-danger" 
+                                                    title="Xóa biến thể">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>`;
+                        }).join('')}
+                    </div>
+                    
+                    <div class="alert alert-info mb-0 mt-3">
+                        <i class="bi bi-info-circle me-2"></i>
+                        <small>Các biến thể được tạo tự động từ thuộc tính. Bạn có thể chỉnh sửa giá, kho và ảnh cho từng biến thể.</small>
                     </div>
                 </div>
             </div>
         `;
-
-        const tbody = document.getElementById('variantsTableBody');
-        ProductUI.state.variants.forEach((variant, index) => {
-            const row = document.createElement('tr');
-            row.innerHTML = `
-                <td><strong>${variant.displayName}</strong></td>
-                <td>
-                    <input type="file" class="form-control form-control-sm variant-image" 
-                           data-index="${index}" accept="image/*">
-                    ${variant.imageFile ? `<p class="text-muted mt-1 mb-0 small">Đã chọn: ${variant.imageFile.name}</p>` : ''}
-                </td>
-                <td>
-                    <input type="number" class="form-control form-control-sm variant-price-original" 
-                           data-index="${index}" value="${variant.priceOriginal}" min="0" step="1000">
-                </td>
-                <td>
-                    <input type="number" class="form-control form-control-sm variant-price" 
-                           data-index="${index}" value="${variant.price}" min="0" step="1000">
-                </td>
-                <td>
-                    <input type="number" class="form-control form-control-sm variant-stock" 
-                           data-index="${index}" value="${variant.stock}" min="0">
-                </td>
-            `;
-            tbody.appendChild(row);
-        });
-
-        // Add event listeners
-        document.querySelectorAll('.variant-price-original').forEach(input => {
-            input.addEventListener('change', (e) => {
-                const index = parseInt(e.target.dataset.index);
-                ProductUI.state.variants[index].priceOriginal = parseFloat(e.target.value) || 0;
-            });
-        });
-
-        document.querySelectorAll('.variant-price').forEach(input => {
-            input.addEventListener('change', (e) => {
-                const index = parseInt(e.target.dataset.index);
-                ProductUI.state.variants[index].price = parseFloat(e.target.value) || 0;
-            });
-        });
-
-        document.querySelectorAll('.variant-stock').forEach(input => {
-            input.addEventListener('change', (e) => {
-                const index = parseInt(e.target.dataset.index);
-                ProductUI.state.variants[index].stock = parseInt(e.target.value) || 0;
-            });
-        });
-
-        document.querySelectorAll('.variant-image').forEach(input => {
-            input.addEventListener('change', (e) => {
-                const index = parseInt(e.target.dataset.index);
-                const file = e.target.files[0];
-                if (file) {
-                    // Lưu file object vào state
-                    ProductUI.state.variants[index].imageFile = file;
-                    ProductUI.renderVariantsTable(); // Re-render để hiện tên file
-                }
-            });
-        });
+        
+        UI.els.variantWrapper.innerHTML = html;
     },
 
-    // Handle main image upload
-    handleMainImageUpload: (file) => {
-        if (file) {
-            // Lưu file object
-            ProductUI.state.mainImageFile = file;
-            const fileName = file.name;
-            
-            // Preview ảnh
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                const preview = document.getElementById('mainImagePreview');
-                if (preview) {
-                    preview.innerHTML = `
-                        <img src="${e.target.result}" class="img-thumbnail" style="max-width: 200px;">
-                        <p class="text-muted mt-2">Tên ảnh: <strong>${fileName}</strong></p>
-                    `;
-                }
-            };
-            reader.readAsDataURL(file);
-        }
-    },
-
-    // Show notification
-    showNotification: (message, type = 'success') => {
-        const alertDiv = document.createElement('div');
-        alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed top-0 start-50 translate-middle-x mt-3`;
-        alertDiv.style.zIndex = '9999';
-        alertDiv.innerHTML = `
-            ${message}
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        `;
-        
-        document.body.appendChild(alertDiv);
-        
-        setTimeout(() => {
-            alertDiv.remove();
-        }, 5000);
+    resetForm: (isEdit) => {
+        const form = document.getElementById("productForm");
+        if(form) form.reset();
+        if(UI.els.attrContainer) UI.els.attrContainer.innerHTML = "";
+        if(UI.els.variantWrapper) UI.els.variantWrapper.innerHTML = "";
+        if(UI.els.formTitle) UI.els.formTitle.innerText = isEdit ? "Cập nhật sản phẩm" : "Thêm Sản Phẩm Mới";
+        UI.renderMainImage(null);
     }
 };
