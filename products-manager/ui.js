@@ -125,7 +125,7 @@ export const UI = {
         if (!UI.els.attrContainer) return;
 
         const div = document.createElement("div");
-        div.className = "attr-row mb-3 p-3 border rounded bg-light";
+        div.className = "mb-3";
         if (attrId) div.dataset.attrId = attrId;
         if (Object.keys(valueIdMap).length) div.dataset.valueIdMap = JSON.stringify(valueIdMap);
         
@@ -134,18 +134,18 @@ export const UI = {
         ).join('');
 
         div.innerHTML = `
-            <div class="row g-2">
-                <div class="col-md-4">
+            <div class="row g-2 align-items-center">
+                <div class="col-md-3">
                     <select class="inp-attr-select form-select">
                         <option value="">-- Chọn thuộc tính --</option>
                         ${attrOptions}
                     </select>
                 </div>
-                <div class="col-md-7">
-                    <input type="text" class="inp-attr-vals form-control" value="${valuesVal}" placeholder="Nhập giá trị (ngăn cách phẩy)...">
+                <div class="col-md-8">
+                    <input type="text" class="inp-attr-vals form-control" value="${valuesVal}" placeholder="Nhập giá trị (ngăn cách phẩy). VD: Đỏ, Xanh, Vàng">
                 </div>
                 <div class="col-md-1">
-                    <button type="button" class="btn-remove btn btn-danger w-100">
+                    <button type="button" class="btn-remove btn btn-outline-danger w-100">
                         <i class="bi bi-x-lg"></i>
                     </button>
                 </div>
