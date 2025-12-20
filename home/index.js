@@ -7,7 +7,7 @@ let apiCategories = [];
 document.addEventListener("DOMContentLoaded", async () => {
   toggleLoading(true);
   try {
-    // 1. Load Navbar (Giữ nguyên cấu trúc cũ)
+    // 1. Load Navbar (Cấu hình thanh tìm kiếm và nút danh mục)
     await loadNavbar({
       centerHTML: `
         <div class="nav-cat-btn" id="catBtn">
@@ -15,12 +15,12 @@ document.addEventListener("DOMContentLoaded", async () => {
             <div class="cat-dropdown" id="catDropdown"></div>
         </div>
         <div style="flex:1; height:40px; background:#f5f5f5; border-radius:8px; padding:0 15px; display:flex; align-items:center; position:relative;">
-            <input type="text" class="nav-search-input" id="homeSearch" placeholder="Tìm sản phẩm...">
+            <input type="text" class="nav-search-input" id="homeSearch" placeholder="Tìm sản phẩm, thương hiệu...">
             <i class="fa-solid fa-magnifying-glass" style="color:#10B981; cursor:pointer;" id="homeSearchBtn"></i>
         </div>`,
     });
 
-    // 2. Gọi API
+    // 2. Gọi API lấy dữ liệu
     await fetchCategories();
     renderNavCategories();
     setupNavbarEvents();
@@ -39,7 +39,10 @@ async function fetchCategories() {
     if (res && res.success && Array.isArray(res.data)) {
       apiCategories = res.data;
     } else {
-      apiCategories = [{ id: "an-vat", name: "Đồ ăn vặt" }];
+      apiCategories = [
+        { id: "an-vat", name: "Đồ ăn vặt" },
+        { id: "nuoc-ngot", name: "Nước giải khát" },
+      ];
     }
   } catch (e) {
     console.error(e);
@@ -52,7 +55,7 @@ async function renderHomeSections() {
   if (!container) return;
   container.innerHTML = "";
 
-  // Inject CSS Grid (PC 6 cột, Mobile 2 cột) - Giữ cái này để mobile không bị lỗi
+  // [FIX] CSS Grid: PC 6 cột, Mobile 2 cột (Giữ lại cái này để mobile đẹp)
   const style = document.createElement("style");
   style.innerHTML = `
       .home-product-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 12px; }
@@ -84,7 +87,7 @@ async function renderHomeSections() {
           `
       );
     } else {
-      container.innerHTML = `<div style="text-align:center; padding:20px;">Chưa có sản phẩm nào</div>`;
+      container.innerHTML = `<div style="text-align:center; padding:20px; color:#666;">Chưa có sản phẩm nào</div>`;
     }
   } else {
     container.innerHTML = `<div style="text-align:center; color:red;">Lỗi tải: ${res?.message}</div>`;
