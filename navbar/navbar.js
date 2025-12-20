@@ -3,10 +3,19 @@ import { showDialog } from "../dialog/index.js";
 import { connectSse, subscribeTopic } from "../public/Sse.js";
 
 const noImage = "https://cdn-icons-png.flaticon.com/512/847/847969.png";
-let currentNotiIds = [];
+
+// Biến quản lý Notification Lazy Load
+let notiState = {
+  page: 0,
+  size: 10, // Load 10 cái một thôi cho nhẹ
+  hasMore: true,
+  isLoading: false,
+  isLoadedFirstTime: false, // Kiểm tra xem đã bấm vào chuông lần nào chưa
+};
 
 const navbarHTML = `
     <style>
+        /* CSS giữ nguyên như cũ cho đẹp */
         .navbar-component {
             background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px);
             height: 70px; width: 100%; position: fixed; top: 0; left: 0; z-index: 1000;
@@ -48,8 +57,8 @@ const navbarHTML = `
             display:flex; align-items:center; gap:12px; font-size:0.95rem; transition: 0.2s; 
         }
         .nb-dropdown a:hover, .nb-dropdown button:hover { background: #ECFDF5; color: #10B981; padding-left: 25px; }
-        
-        /* NOTIFICATION CSS */
+        .nb-dropdown i { width: 22px; text-align: center; color: #555; }
+
         .noti-header { padding: 15px; font-weight: bold; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; background: #fff; }
         .btn-clear-all { font-size: 0.8rem; color: #EF4444; cursor: pointer; text-decoration: underline; }
         .noti-list { max-height: 400px; overflow-y: auto; }
@@ -64,8 +73,9 @@ const navbarHTML = `
         .btn-del-noti:hover { color: #EF4444; }
         .empty-noti { padding: 30px; text-align: center; color: #999; font-style: italic; }
         
-        /* Ẩn link admin mặc định */
         .nb-admin-only { display: none !important; }
+        /* Loading spinner cho lazy load */
+        .noti-loading { text-align: center; padding: 10px; color: #10B981; font-size: 0.8rem; display: none; }
     </style>
 
     <nav class="navbar-component">
@@ -81,9 +91,12 @@ const navbarHTML = `
                 <div class="nb-icon-btn" id="nbNotiBtn">
                     <i class="fa-regular fa-bell"></i>
                     <span class="nb-badge" id="nbBadge" style="display:none">0</span>
+                    
                     <div class="nb-dropdown nb-noti-dropdown" id="nbNotiDropdown">
                         <div class="noti-header"><span>Thông báo</span><span class="btn-clear-all" id="btnClearAllNoti">Xóa tất cả</span></div>
-                        <div class="noti-list" id="nbNotiList"><div class="empty-noti"><i class="fa-solid fa-spinner fa-spin"></i> Đang tải...</div></div>
+                        <div class="noti-list" id="nbNotiList">
+                            </div>
+                        <div class="noti-loading" id="notiLoading"><i class="fa-solid fa-circle-notch fa-spin"></i> Đang tải thêm...</div>
                     </div>
                 </div>
             </div>
@@ -130,6 +143,7 @@ export async function loadNavbar(options = {}) {
     document.getElementById("nbCenterSlot").innerHTML = options.centerHTML;
 
   try {
+    // 1. Chỉ gọi Profile để lấy thông tin user (Bắt buộc)
     if (!userData.username) {
       const profile = await callAPI("/profile");
       if (profile && profile.success) {
@@ -147,24 +161,28 @@ export async function loadNavbar(options = {}) {
         userData.roleName = "GUEST";
       }
     }
+
+    // Render UI User
     if (userData.imageUrl)
       document.getElementById("nbAvatar").src = userData.imageUrl;
     if (userData.username)
       document.getElementById("nbUsername").textContent = userData.username;
     if (userData.roleName)
       document.getElementById("nbRole").textContent = userData.roleName;
-
-    // HIỂN THỊ MENU ADMIN
     if (userData.roleName === "ADMIN") {
       document
         .querySelectorAll(".nb-admin-only")
         .forEach((el) => el.style.setProperty("display", "flex", "important"));
     }
 
+    // 2. Nếu đã đăng nhập -> Kết nối SSE (Nhưng KHÔNG gọi API noti/cart ngay)
     if (userData.username && userData.username !== "Khách") {
-      await initNotificationSystem();
-      // [NEW] Cập nhật số giỏ hàng ngay khi load
-      window.updateCartCount();
+      await connectSse("/sse");
+      setupSSERealtime();
+
+      // Chỉ gọi hàm lấy số giỏ hàng lần đầu để hiển thị (nhẹ)
+      // Nếu backend cực gắt thì bỏ dòng này, chờ SSE báo mới hiện
+      getInitialCartCount();
     } else {
       document.getElementById("nbNotiList").innerHTML =
         '<div class="empty-noti">Đăng nhập để xem thông báo</div>';
@@ -175,78 +193,77 @@ export async function loadNavbar(options = {}) {
   setupEvents();
 }
 
-// --- HÀM UPDATE SỐ GIỎ HÀNG (TOÀN CỤC) ---
-window.updateCartCount = async () => {
-  try {
-    // [API] Kiểm tra API get giỏ hàng (/auth/carts)
-    const res = await callAPI("/auth/carts", "GET");
+// --- XỬ LÝ SSE REALTIME (QUAN TRỌNG) ---
+function setupSSERealtime() {
+  // 1. Lắng nghe Notification
+  subscribeTopic("notification", (data) => {
+    // data chính là object thông báo mới
+    const newNoti = data;
+    prependNotification(newNoti);
+
+    // Hiện chấm đỏ
+    const badge = document.getElementById("nbBadge");
+    badge.style.display = "block";
+    // Logic đếm số chưa đọc ở đây (nếu cần)
+  });
+
+  // 2. Lắng nghe Cart (Update: +1 hoặc -1)
+  subscribeTopic("cart", (data) => {
+    // Backend trả về: 1 (thêm) hoặc -1 (bớt)
+    const change = parseInt(data);
     const badge = document.getElementById("cartBadge");
 
-    if (res && res.success && Array.isArray(res.data) && res.data.length > 0) {
-      // Có hàng -> Hiện số
-      badge.innerText = res.data.length > 99 ? "99+" : res.data.length;
-      badge.style.display = "block";
-    } else {
-      // Giỏ rỗng -> Ẩn
-      badge.style.display = "none";
-    }
-  } catch (e) {
-    console.error("Lỗi giỏ hàng:", e);
-  }
-};
+    // Lấy số hiện tại
+    let currentCount = parseInt(badge.innerText) || 0;
+    let newCount = currentCount + change;
 
-// ... (Các hàm Notification: initNotificationSystem, setupEvents, renderNotiList... GIỮ NGUYÊN NHƯ CŨ) ...
-async function initNotificationSystem() {
-  try {
-    const res = await callAPI("/auth/notifications?page=0&size=20", "GET");
-    if (res && res.success && res.data && res.data.listData)
-      renderNotiList(res.data.listData);
-    else
-      document.getElementById("nbNotiList").innerHTML =
-        '<div class="empty-noti">Không có thông báo nào</div>';
+    if (newCount < 0) newCount = 0;
 
-    await connectSse("/sse");
-    subscribeTopic("notification", (data) => {
-      const newNoti = data;
-      prependNotification(newNoti);
-      const badge = document.getElementById("nbBadge");
-      let count = parseInt(badge.textContent) || 0;
-      updateBadge(count + 1);
-    });
-  } catch (err) {
-    console.warn("Lỗi SSE:", err);
-  }
+    badge.innerText = newCount > 99 ? "99+" : newCount;
+    badge.style.display = newCount > 0 ? "block" : "none";
+  });
 }
 
+// --- XỬ LÝ SỰ KIỆN (LAZY LOAD Ở ĐÂY) ---
 function setupEvents() {
   const notiBtn = document.getElementById("nbNotiBtn");
   const notiDropdown = document.getElementById("nbNotiDropdown");
+  const notiList = document.getElementById("nbNotiList");
+
+  // Click Chuông -> Mới gọi API (Lazy Load)
   if (notiBtn) {
-    notiBtn.onclick = (e) => {
+    notiBtn.onclick = async (e) => {
       e.stopPropagation();
       notiDropdown.classList.toggle("show");
       document.getElementById("nbUserDropdown").classList.remove("show");
-      if (notiDropdown.classList.contains("show")) updateBadge(0);
-    };
-  }
-  const clearAllBtn = document.getElementById("btnClearAllNoti");
-  if (clearAllBtn) {
-    clearAllBtn.onclick = async (e) => {
-      e.stopPropagation();
-      if (currentNotiIds.length === 0) return;
-      if (!confirm("Bạn có chắc muốn xóa HẾT thông báo không?")) return;
-      const res = await callAPI(
-        "/auth/notifications/delete",
-        "POST",
-        currentNotiIds
-      );
-      if (res && res.success) {
-        document.getElementById("nbNotiList").innerHTML =
-          '<div class="empty-noti">Không có thông báo nào</div>';
-        currentNotiIds = [];
+
+      // Tắt chấm đỏ khi mở
+      if (notiDropdown.classList.contains("show")) {
+        document.getElementById("nbBadge").style.display = "none";
+
+        // Nếu chưa load lần nào thì mới gọi API
+        if (!notiState.isLoadedFirstTime) {
+          await fetchNotifications();
+          notiState.isLoadedFirstTime = true;
+        }
       }
     };
   }
+
+  // Scroll cuối danh sách -> Load tiếp (Lazy Scroll)
+  if (notiList) {
+    notiList.addEventListener("scroll", () => {
+      if (
+        notiList.scrollTop + notiList.clientHeight >=
+        notiList.scrollHeight - 10
+      ) {
+        // Đã cuộn xuống đáy
+        fetchNotifications();
+      }
+    });
+  }
+
+  // Các sự kiện khác (User, Logout...)
   const userBtn = document.getElementById("nbUserMenu");
   const userDropdown = document.getElementById("nbUserDropdown");
   if (userBtn)
@@ -268,25 +285,87 @@ function setupEvents() {
         window.location.replace("../auth/login");
       });
     };
-}
 
-function renderNotiList(list) {
-  const notiList = document.getElementById("nbNotiList");
-  currentNotiIds = list.map((item) => item.id || item.notificationId);
-  if (!list.length) {
-    notiList.innerHTML = '<div class="empty-noti">Không có thông báo nào</div>';
-    return;
+  // Nút xóa tất cả
+  const clearAllBtn = document.getElementById("btnClearAllNoti");
+  if (clearAllBtn) {
+    clearAllBtn.onclick = async (e) => {
+      e.stopPropagation();
+      if (!confirm("Xóa tất cả thông báo?")) return;
+      const res = await callAPI("/auth/notifications/delete-all", "POST"); // Check lại API delete all
+      if (res && res.success) {
+        document.getElementById("nbNotiList").innerHTML =
+          '<div class="empty-noti">Không có thông báo nào</div>';
+      }
+    };
   }
-  notiList.innerHTML = list.map((item) => createNotiItemHTML(item)).join("");
-  const unread = list.filter((i) => !i.isRead).length;
-  updateBadge(unread > 0 ? unread : 0);
 }
 
+// --- HÀM GỌI API THÔNG BÁO (PHÂN TRANG) ---
+async function fetchNotifications() {
+  if (notiState.isLoading || !notiState.hasMore) return;
+
+  notiState.isLoading = true;
+  document.getElementById("notiLoading").style.display = "block";
+
+  try {
+    // Gọi API với page và size động
+    const res = await callAPI(
+      `/auth/notifications?page=${notiState.page}&size=${notiState.size}`,
+      "GET"
+    );
+
+    if (res && res.success && res.data && Array.isArray(res.data.listData)) {
+      const list = res.data.listData;
+
+      // Render danh sách
+      if (list.length > 0) {
+        const html = list.map((item) => createNotiItemHTML(item)).join("");
+
+        // Nếu là trang 0 thì ghi đè, trang sau thì nối thêm
+        const container = document.getElementById("nbNotiList");
+        if (notiState.page === 0) container.innerHTML = html;
+        else container.insertAdjacentHTML("beforeend", html);
+
+        notiState.page++; // Tăng page cho lần sau
+      } else {
+        if (notiState.page === 0)
+          document.getElementById("nbNotiList").innerHTML =
+            '<div class="empty-noti">Không có thông báo nào</div>';
+        notiState.hasMore = false; // Hết dữ liệu
+      }
+
+      // Check nếu backend trả về ít hơn size -> Hết dữ liệu
+      if (list.length < notiState.size) notiState.hasMore = false;
+    } else {
+      notiState.hasMore = false;
+    }
+  } catch (e) {
+    console.error("Lỗi tải thông báo:", e);
+  } finally {
+    notiState.isLoading = false;
+    document.getElementById("notiLoading").style.display = "none";
+  }
+}
+
+// --- HÀM LẤY SỐ GIỎ HÀNG (CHỈ GỌI 1 LẦN KHI LOAD) ---
+async function getInitialCartCount() {
+  try {
+    const res = await callAPI("/auth/carts", "GET");
+    const badge = document.getElementById("cartBadge");
+    if (res && res.success && Array.isArray(res.data) && res.data.length > 0) {
+      badge.innerText = res.data.length > 99 ? "99+" : res.data.length;
+      badge.style.display = "block";
+    }
+  } catch (e) {
+    console.error("Cart init error", e);
+  }
+}
+
+// --- UI HELPERS ---
 function prependNotification(item) {
   const notiList = document.getElementById("nbNotiList");
   if (notiList.querySelector(".empty-noti")) notiList.innerHTML = "";
-  const id = item.id || item.notificationId;
-  if (id) currentNotiIds.push(id);
   const html = createNotiItemHTML(item, true);
   notiList.insertAdjacentHTML("afterbegin", html);
 }
@@ -296,18 +375,16 @@ function createNotiItemHTML(item, isNew = false) {
   const msg = item.message || item.content || "";
   const time = item.createdTime
     ? new Date(item.createdTime).toLocaleString("vi-VN")
-    : "Vừa xong";
+    : "";
   const id = item.id || item.notificationId;
   return `
-        <div class="noti-item ${
-          isNew || !item.isRead ? "unread" : ""
-        }" id="noti-${id}">
+        <div class="noti-item ${isNew ? "unread" : ""}" id="noti-${id}">
             <div class="noti-content">
                 <div class="noti-title">${title}</div>
                 <div class="noti-msg">${msg}</div>
                 <div class="noti-time">${time}</div>
             </div>
-            <i class="fa-solid fa-xmark btn-del-noti" title="Xóa" onclick="deleteNoti('${id}', event)"></i>
+            <i class="fa-solid fa-xmark btn-del-noti" onclick="deleteNoti('${id}', event)"></i>
         </div>
     `;
 }
@@ -316,19 +393,6 @@ window.deleteNoti = async (id, e) => {
   e.stopPropagation();
   const item = document.getElementById(`noti-${id}`);
   if (item) item.remove();
+  // Gọi API xóa 1 cái (theo mảng ID)
   await callAPI("/auth/notifications/delete", "POST", [id]);
-  currentNotiIds = currentNotiIds.filter((i) => i !== id);
-  if (document.getElementById("nbNotiList").children.length === 0)
-    document.getElementById("nbNotiList").innerHTML =
-      '<div class="empty-noti">Không có thông báo nào</div>';
 };
-
-function updateBadge(count) {
-  const badge = document.getElementById("nbBadge");
-  if (count > 0) {
-    badge.textContent = count > 99 ? "99+" : count;
-    badge.style.display = "block";
-  } else {
-    badge.style.display = "none";
-  }
-}
