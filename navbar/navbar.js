@@ -331,15 +331,23 @@ function prependNotification(item) {
   notiList.insertAdjacentHTML("afterbegin", html);
 }
 
+// [UPDATE] Hàm tạo HTML item - Thêm Log để soi ID
 function createNotiItemHTML(item, isNew = false) {
+  // Debug: In ra xem nó là cái gì
+  console.log("Item noti:", item);
+
   const title = item.title || "Thông báo";
   const msg = item.message || item.content || "";
   const time = item.createdTime
     ? new Date(item.createdTime).toLocaleString("vi-VN")
     : "";
-  const id = item.id || item.notificationId;
 
-  // Lưu ý: ID được truyền vào hàm deleteNoti dưới dạng chuỗi
+  // [QUAN TRỌNG] Thử tất cả các trường hợp tên ID có thể xảy ra
+  // Bro mở Console xem log "Item noti" nó có trường gì thì sửa vào đây nhé
+  const id = item.id || item.notificationId || item.notification_id || item._id;
+
+  if (!id) console.error("KHÔNG TÌM THẤY ID CHO ITEM:", item);
+
   return `
         <div class="noti-item ${isNew ? "unread" : ""}" id="noti-${id}">
             <div class="noti-content">
@@ -352,46 +360,58 @@ function createNotiItemHTML(item, isNew = false) {
     `;
 }
 
-// [FIX QUAN TRỌNG] HÀM XÓA DÙNG FETCH TRỰC TIẾP
-// Đảm bảo gửi Mảng ["id"] chuẩn JSON
+// [UPDATE] Hàm xóa - Fix cứng lỗi JSON Array
 window.deleteNoti = async (id, e) => {
   e.stopPropagation();
 
-  // Log để kiểm tra (F12)
-  console.log("Đang xóa ID:", id);
-  console.log("Body gửi đi:", JSON.stringify([id]));
+  // 1. Kiểm tra ID đầu vào
+  if (!id || id === "undefined" || id === "null") {
+    alert("Lỗi: Không lấy được ID thông báo! F12 xem console.");
+    return;
+  }
 
-  // Xóa UI trước cho mượt
-  const item = document.getElementById(`noti-${id}`);
-  if (item) item.remove();
+  console.log("--- BẮT ĐẦU XÓA ---");
+  console.log("ID cần xóa:", id);
+
+  // 2. Xóa giao diện trước cho sướng mắt
+  const itemUI = document.getElementById(`noti-${id}`);
+  if (itemUI) itemUI.remove();
 
   try {
     const token =
       sessionStorage.getItem("token") || sessionStorage.getItem("accessToken");
 
-    // Dùng API_BASE_URL + Endpoint
-    const url = `${API_BASE_URL}/auth/notifications/delete`;
+    // 3. Gọi API (Lưu ý: Phải chạy trên Localhost mới gọi được Localhost)
+    const res = await fetch(
+      "http://localhost:8080/api/v1/auth/notifications/delete",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: "Bearer " + token,
+        },
+        // Ép kiểu Mảng JSON chuẩn đét
+        body: JSON.stringify([id]),
+      }
+    );
 
-    const res = await fetch(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: "Bearer " + token,
-      },
-      body: JSON.stringify([id]), // Gửi mảng ID
-    });
+    console.log("Trạng thái response:", res.status);
 
     if (!res.ok) {
-      console.error("Lỗi server:", await res.text());
-      alert("Xóa thất bại (Check console)");
+      const text = await res.text();
+      console.error("Lỗi Server trả về:", text);
+      // Nếu lỗi thì hiện lại thông báo (undo) - tuỳ chọn
+      alert("Server báo lỗi: " + text);
     } else {
-      console.log("Xóa thành công!");
+      console.log("Xóa thành công trên Server!");
     }
   } catch (err) {
-    console.error("Lỗi mạng:", err);
+    console.error("Lỗi kết nối (Chắc do Mixed Content hoặc tắt server):", err);
+    alert("Lỗi kết nối! Đừng test trên Github Pages, hãy dùng Localhost!");
   }
 
-  if (document.getElementById("nbNotiList").children.length === 0)
-    document.getElementById("nbNotiList").innerHTML =
-      '<div class="empty-noti">Không có thông báo nào</div>';
+  // Check lại list trống
+  const list = document.getElementById("nbNotiList");
+  if (list && list.children.length === 0)
+    list.innerHTML = '<div class="empty-noti">Không có thông báo nào</div>';
 };
