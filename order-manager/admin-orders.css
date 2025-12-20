@@ -1,3 +1,7 @@
+body {
+    background: linear-gradient(135deg, #6EE7B7, #3B82F6) !important;
+}
+
 /* Container chính */
 .admin-order-container {
     max-width: 1000px;
