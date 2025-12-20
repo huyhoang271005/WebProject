@@ -186,6 +186,7 @@ html, body {
     color: #EF4444;
     font-weight: 700;
     font-size: 1.1rem;
+    padding-right: 20px;
 }
 
 .item-unit {
@@ -195,6 +196,17 @@ html, body {
 }
 
 /* QUANTITY CONTROL */
+.qty-control {
+    display: flex;
+    align-items: center;
+    border: 1px solid #E5E7EB;
+    border-radius: 6px;
+    background: white;
+    height: 36px !important;
+    margin-top: 20px;
+    margin-right: 15px; /* Thêm khoảng cách nhỏ với nút xóa */
+}
+
 .qty-control {
     display: flex;
     align-items: center;
@@ -238,7 +250,6 @@ html, body {
     outline: none;
     background: transparent;
 }
-
 /* === RIGHT SECTION (SUMMARY) === */
 .summary-box {
     background: white;
@@ -365,21 +376,6 @@ html, body {
         margin-top: 10px;
         padding-top: 10px;
         border-top: 1px dashed #eee; /* Đường kẻ ngăn cách nhẹ */
-    }
-
-    /* Bộ nút tăng giảm số lượng */
-    .qty-control {
-        background: #f3f4f6;
-        border-radius: 4px;
-    }
-    
-    .qty-btn {
-        padding: 5px 12px; /* Nút to hơn cho dễ ấn */
-    }
-
-    .qty-input {
-        width: 40px;
-        background: transparent;
     }
 
     /* Nút xóa: Đưa lên góc trên cùng bên phải */
