@@ -14,105 +14,162 @@ let notiState = {
 };
 
 // CSS + HTML Navbar (Giữ nguyên)
+// ... (Phần import giữ nguyên) ...
+
+// ... (Phần import giữ nguyên) ...
+
 const navbarHTML = `
     <style>
-        .navbar-component { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); height: 70px; width: 100%; position: fixed; top: 0; left: 0; z-index: 1000; display: flex; align-items: center; justify-content: space-between; padding: 0 30px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
-        .nb-brand { font-size: 1.6rem; font-weight: 800; color: #10B981; text-decoration: none; display: flex; align-items: center; gap: 10px; min-width: 180px; }
-        #nbCenterSlot { flex: 1; display: flex; align-items: center; justify-content: center; margin: 0 20px; gap: 15px; }
-        #nbRightSlot { display: flex; align-items: center; gap: 20px; } 
-        .nb-icon-btn { position: relative; cursor: pointer; font-size: 1.2rem; color: #555; transition: 0.2s; display: flex; align-items: center; justify-content: center; text-decoration: none; }
-        .nb-icon-btn:hover { color: #10B981; transform: translateY(-2px); }
-        .nb-badge { position: absolute; top: -8px; right: -8px; background: #EF4444; color: white; font-size: 0.7rem; padding: 2px 5px; min-width: 18px; text-align: center; border-radius: 10px; font-weight: bold; border: 2px solid white; }
-        .nb-user-menu { position: relative; cursor: pointer; padding-left: 15px; border-left: 1px solid #eee; display: flex; align-items: center; gap: 10px; margin-left: 15px; }
-        .nb-avatar { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; border: 2px solid #E5E7EB; transition: 0.2s; }
-        .nb-dropdown { position: absolute; right: 0; top: 60px; background: white; width: 270px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); display: none; flex-direction: column; overflow: hidden; border: 1px solid #eee; animation: slideDown 0.2s ease; z-index: 1100; }
-        .nb-noti-dropdown { width: 380px; right: -80px; }
-        @keyframes slideDown { from{opacity:0; transform:translateY(10px)} to{opacity:1; transform:translateY(0)} }
+        /* --- CSS GỐC (PC) --- */
+        .navbar-component {
+            background: #fff; 
+            height: 80px; width: 100%; position: fixed; top: 0; left: 0; z-index: 1000;
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0 40px; box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            box-sizing: border-box; font-family: 'Segoe UI', sans-serif; transition: all 0.3s;
+        }
+        .nb-brand { font-size: 1.8rem; font-weight: 800; color: #10B981; text-decoration: none; display: flex; align-items: center; gap: 8px; min-width: 180px; }
+        
+        /* SEARCH BAR GIỮA */
+        #nbCenterSlot { flex: 1; display: flex; align-items: center; justify-content: center; margin: 0 40px; gap: 10px; max-width: 800px; }
+        
+        /* RIGHT ICONS */
+        .nb-right-wrapper { display: flex; align-items: center; gap: 15px; }
+        .nb-icon-btn { position: relative; cursor: pointer; font-size: 1.3rem; color: #555; width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; border-radius: 50%; transition: 0.2s; text-decoration: none; }
+        .nb-icon-btn:hover { background: #f3f4f6; color: #10B981; }
+        
+        .nb-badge { 
+            position: absolute; top: 5px; right: 5px; 
+            background: #ee4d2d; color: white; 
+            font-size: 0.7rem; padding: 2px 6px; border-radius: 10px; 
+            font-weight: bold; border: 2px solid white;
+        }
+
+        .nb-user-menu { cursor: pointer; display: flex; align-items: center; gap: 10px; margin-left: 10px; }
+        .nb-avatar { width: 42px; height: 42px; border-radius: 50%; object-fit: cover; border: 1px solid #ddd; }
+        
+        /* Dropdown & Noti CSS giữ nguyên như cũ cho gọn */
+        .nb-dropdown { position: absolute; right: 0; top: 70px; background: white; width: 260px; border-radius: 8px; box-shadow: 0 5px 20px rgba(0,0,0,0.15); display: none; flex-direction: column; overflow: hidden; border: 1px solid #eee; z-index: 1100; }
+        .nb-noti-dropdown { width: 360px; right: -80px; }
         .nb-dropdown.show { display: flex; }
-        .nb-dropdown a, .nb-dropdown button { padding: 12px 20px; text-decoration: none; color: #333; text-align: left; background: none; border: none; cursor: pointer; border-bottom: 1px solid #f9f9f9; display:flex; align-items:center; gap:12px; font-size:0.95rem; transition: 0.2s; }
-        .nb-dropdown a:hover, .nb-dropdown button:hover { background: #ECFDF5; color: #10B981; padding-left: 25px; }
-        .nb-dropdown i { width: 22px; text-align: center; color: #555; }
-        .noti-header { padding: 15px; font-weight: bold; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; background: #fff; }
-        .btn-clear-all { font-size: 0.8rem; color: #EF4444; cursor: pointer; text-decoration: underline; }
-        .noti-list { max-height: 400px; overflow-y: auto; }
-        .noti-item { padding: 15px; border-bottom: 1px solid #f0f0f0; transition: 0.2s; display: flex; gap: 10px; position: relative; background: white; }
-        .noti-item:hover { background: #f9fafb; }
-        .noti-item.unread { background: #ECFDF5; }
-        .noti-content { flex: 1; }
-        .noti-title { font-weight: bold; font-size: 0.9rem; color: #333; margin-bottom: 4px; }
-        .noti-msg { font-size: 0.85rem; color: #666; line-height: 1.3; }
-        .noti-time { font-size: 0.75rem; color: #999; margin-top: 5px; }
-        .btn-del-noti { color: #ccc; cursor: pointer; font-size: 0.9rem; padding: 5px; transition: 0.2s; align-self: flex-start; }
-        .btn-del-noti:hover { color: #EF4444; }
-        .empty-noti { padding: 30px; text-align: center; color: #999; font-style: italic; }
-        .noti-loading { text-align: center; padding: 10px; color: #10B981; font-size: 0.8rem; display: none; }
+        .nb-dropdown a, .nb-dropdown button { padding: 12px 20px; text-decoration: none; color: #333; text-align: left; background: none; border: none; cursor: pointer; border-bottom: 1px solid #f9f9f9; display:flex; align-items:center; gap:12px; font-size:0.95rem; }
+        .nb-dropdown a:hover, .nb-dropdown button:hover { background: #f9fafb; color: #10B981; }
         .nb-admin-only { display: none !important; }
-        @media (max-width: 768px) {
-        .navbar-component { padding: 0 10px; height: 60px; }
-        .nb-brand { font-size: 0; min-width: auto; } /* Ẩn chữ Tạp Hóa Xanh, giữ Logo */
-        .nb-brand i { font-size: 1.5rem; color: #10B981; } /* Hiện icon to lên */
-    
-        #nbCenterSlot { margin: 0 10px; }
-        #nbRightSlot { gap: 10px; }
-    
-        .nb-user-menu { margin-left: 5px; padding-left: 5px; }
-        .nb-avatar { width: 32px; height: 32px; }
-        .nb-username { display: none; } /* Ẩn tên user cho gọn */
         
-        /* Ẩn chữ 'Danh mục' nếu có */
-        .nav-cat-btn span { display: none; } 
-        .nav-cat-btn { padding: 0 5px; }
-        
-        /* Ô tìm kiếm nhỏ lại */
-        .nav-search-input { padding-left: 10px; font-size: 0.8rem; }
+        .noti-header { padding: 15px; font-weight: bold; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; }
+        .noti-list { max-height: 400px; overflow-y: auto; }
+        .noti-item { padding: 12px 15px; border-bottom: 1px solid #f0f0f0; display: flex; gap: 10px; position: relative; }
+        .noti-item.unread { background: #f0fdf4; }
+        .noti-content { flex: 1; }
+        .noti-title { font-weight: bold; font-size: 0.9rem; }
+        .noti-msg { font-size: 0.85rem; color: #666; }
+        .noti-loading { text-align: center; padding: 10px; display: none; }
+        .empty-noti { padding: 20px; text-align: center; color: #999; }
+        .btn-del-noti { cursor: pointer; color: #ccc; }
+
+        /* --- 🔥 MOBILE RESPONSIVE (MAGIC) 🔥 --- */
+        @media (max-width: 992px) {
+            .navbar-component {
+                padding: 10px 15px;
+                height: auto; /* Tự giãn chiều cao */
+                flex-wrap: wrap; /* Cho phép rớt dòng */
+                background: #fff;
+                border-bottom: 1px solid #eee;
+            }
+
+            /* HÀNG 1: Logo (Trái) + Icons (Phải) */
+            .nb-brand {
+                order: 1;
+                flex: 1; /* Chiếm hết chỗ trống bên trái */
+                font-size: 1.4rem;
+                min-width: auto;
+            }
+            
+            .nb-right-wrapper {
+                order: 2;
+                gap: 5px;
+            }
+            .nb-icon-btn { width: 38px; height: 38px; font-size: 1.2rem; }
+            .nb-user-menu { margin-left: 5px; }
+            .nb-avatar { width: 35px; height: 35px; }
+            /* Ẩn tên user trên mobile */
+            .nb-username, #nbRole { display: none; } 
+
+            /* HÀNG 2: Thanh tìm kiếm (Xuống dòng full width) */
+            #nbCenterSlot {
+                order: 3;
+                width: 100%;
+                margin: 10px 0 0 0; /* Cách hàng trên 10px */
+                padding: 0;
+                max-width: none;
+            }
+            
+            /* Tinh chỉnh ô input trong CenterSlot */
+            .nav-cat-btn { display: none; } /* Ẩn nút danh mục cho gọn */
+            
+            /* Styles cho ô input bên trong html center (được inject vào) */
+            #navbarSearchInput, #homeSearch {
+                height: 40px !important;
+                background: #f5f5f5 !important;
+                border: none !important;
+                border-radius: 4px !important;
+                font-size: 0.95rem !important;
+            }
+            
+            /* Notification Dropdown Mobile */
+            .nb-noti-dropdown {
+                position: fixed; top: 60px; left: 50%; transform: translateX(-50%);
+                width: 92vw; max-width: 400px; right: auto;
+                height: 80vh; border-radius: 8px; box-shadow: 0 0 50px rgba(0,0,0,0.2);
+            }
+        }
     </style>
 
     <nav class="navbar-component">
         <a href="../home/index.html" class="nb-brand"><i class="fa-solid fa-leaf"></i> Tạp Hóa Xanh</a>
+        
         <div id="nbCenterSlot"></div>
-        <div style="display:flex; align-items:center;">
-            <div id="nbRightSlot">
-                <a href="../cart/index.html" class="nb-icon-btn" title="Giỏ hàng">
-                    <i class="fa-solid fa-cart-shopping"></i>
-                    <span class="nb-badge" id="cartBadge" style="display:none">0</span>
-                </a>
-                <div class="nb-icon-btn" id="nbNotiBtn">
-                    <i class="fa-regular fa-bell"></i>
-                    <span class="nb-badge" id="nbBadge" style="display:none">0</span>
-                    <div class="nb-dropdown nb-noti-dropdown" id="nbNotiDropdown">
-                        <div class="noti-header"><span>Thông báo</span><span class="btn-clear-all" id="btnClearAllNoti">Xóa tất cả</span></div>
-                        <div class="noti-list" id="nbNotiList"></div>
-                        <div class="noti-loading" id="notiLoading"><i class="fa-solid fa-circle-notch fa-spin"></i> Đang tải thêm...</div>
-                    </div>
+        
+        <div class="nb-right-wrapper">
+            <a href="../cart/index.html" class="nb-icon-btn" title="Giỏ hàng">
+                <i class="fa-solid fa-cart-shopping"></i>
+                <span class="nb-badge" id="cartBadge" style="display:none">0</span>
+            </a>
+
+            <div class="nb-icon-btn" id="nbNotiBtn">
+                <i class="fa-regular fa-bell"></i>
+                <span class="nb-badge" id="nbBadge" style="display:none">0</span>
+                <div class="nb-dropdown nb-noti-dropdown" id="nbNotiDropdown">
+                    <div class="noti-header"><span>Thông báo</span><span class="btn-clear-all" id="btnClearAllNoti">Xóa tất cả</span></div>
+                    <div class="noti-list" id="nbNotiList"></div>
+                    <div class="noti-loading" id="notiLoading"><i class="fa-solid fa-circle-notch fa-spin"></i></div>
                 </div>
             </div>
 
             <div class="nb-user-menu" id="nbUserMenu">
                 <img src="${noImage}" class="nb-avatar" id="nbAvatar">
                 <div class="nb-dropdown" id="nbUserDropdown">
-                    <div style="padding:15px 20px; background:#f9f9f9; border-bottom:1px solid #eee;">
-                        <div style="font-weight:bold; color:#111;" id="nbUsername">Khách</div>
-                        <div style="font-size:0.8rem; color:#666;" id="nbRole">...</div>
+                    <div style="padding:15px; border-bottom:1px solid #eee; background:#fcfcfc">
+                        <div style="font-weight:bold" id="nbUsername">Khách</div>
+                        <div style="font-size:0.8rem; color:#666" id="nbRole">...</div>
                     </div>
-                    <a href="../profile"><i class="fa-regular fa-id-card"></i> Trang cá nhân</a>
-                    <a href="../session"><i class="fa-solid fa-laptop-medical"></i> Quản lý phiên</a>
+                    <a href="../profile"><i class="fa-regular fa-id-card"></i> Hồ sơ</a>
+                    <a href="../session"><i class="fa-solid fa-laptop-medical"></i> Phiên đăng nhập</a>
                     <a href="../contact"><i class="fa-solid fa-map-location-dot"></i> Địa chỉ</a>
-                    <div class="nb-admin-only" style="border-top: 1px solid #eee; margin-top:5px; padding-top:5px;"></div>
-                    <a href="../products-manager" class="nb-admin-only"><i class="fa-solid fa-box-open"></i> Quản lí sản phẩm</a>
-                    <a href="../catalog-management" class="nb-admin-only"><i class="fa-solid fa-layer-group"></i> Quản lí danh mục</a>
-                    <a href="../users" class="nb-admin-only"><i class="fa-solid fa-users"></i> Quản lí người dùng</a>
+                    <div class="nb-admin-only" style="border-top:1px solid #eee; margin:5px 0"></div>
+                    <a href="../products-manager" class="nb-admin-only"><i class="fa-solid fa-box-open"></i> QL Sản phẩm</a>
+                    <a href="../catalog-management" class="nb-admin-only"><i class="fa-solid fa-layer-group"></i> QL Danh mục</a>
+                    <a href="../users" class="nb-admin-only"><i class="fa-solid fa-users"></i> QL Người dùng</a>
                     <a href="../role-permission" class="nb-admin-only"><i class="fa-solid fa-user-shield"></i> Phân quyền</a>
-                    <a href="../notification" class="nb-admin-only"></i> Thông báo</a>
-                    <button id="nbLogout" style="color:#EF4444; border-top: 1px solid #eee; margin-top:5px;">
-                        <i class="fa-solid fa-right-from-bracket"></i> Đăng xuất
-                    </button>
+                    <a href="../notification" class="nb-admin-only"></i> Gửi thông báo</a>
+                    <button id="nbLogout" style="color:#e11d48; border-top:1px solid #eee; margin-top:5px"><i class="fa-solid fa-right-from-bracket"></i> Đăng xuất</button>
                 </div>
             </div>
         </div>
     </nav>
-    <div style="height: 70px; width: 100%; clear: both;"></div>
+    <div style="height: 80px; width: 100%; clear: both;" class="nav-spacer"></div>
+    <style>@media(max-width:992px){ .nav-spacer { height: 110px !important; } }</style>
 `;
-
 const userData = {
   imageUrl: sessionStorage.getItem("imageUrl"),
   username: sessionStorage.getItem("username"),
