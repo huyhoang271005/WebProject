@@ -81,21 +81,33 @@ function setupEventListeners() {
             UI.switchView('form');
         };
     }
+    
     const btnBack = document.getElementById("btnBackToList");
     if (btnBack) {
-        btnBack.onclick = () => { UI.switchView('list'); reloadData(); };
+        btnBack.onclick = () => { 
+            UI.switchView('list'); 
+            reloadData(); 
+        };
     }
+    
     const btnAddAttr = document.getElementById("btnAddAttr");
     if (btnAddAttr) {
-        btnAddAttr.onclick = () => { UI.addAttrRow("", "", null, null, [], {}, state.attributes); };
+        btnAddAttr.onclick = () => { 
+            UI.addAttrRow("", "", null, null, [], {}, state.attributes); 
+        };
     }
+    
     const btnGenVariants = document.getElementById("btnGenerateVariants");
     if (btnGenVariants) {
-        btnGenVariants.onclick = () => { handleCalcVariants(); };
+        btnGenVariants.onclick = () => { 
+            handleCalcVariants(); 
+        };
     }
+    
     if (UI.els.cateSelect) {
         UI.els.cateSelect.onchange = (e) => UI.renderBrands(state.brands, e.target.value);
     }
+    
     if (UI.els.mainImgInput) {
         UI.els.mainImgInput.onchange = (e) => {
             const file = e.target.files[0];
@@ -105,11 +117,14 @@ function setupEventListeners() {
             }
         };
     }
+    
     const form = document.getElementById("productForm");
     if (form) form.onsubmit = handleSave;
     
     const btnReset = document.getElementById("resetBtn");
-    if(btnReset) { btnReset.onclick = () => UI.resetForm(state.isEdit); }
+    if(btnReset) { 
+        btnReset.onclick = () => UI.resetForm(state.isEdit); 
+    }
 }
 
 // === CÁC HÀM GLOBAL ===
@@ -156,7 +171,6 @@ function setupGlobalFunctions() {
         UI.renderVariants(state.variants);
     };
 
-    // --- MỚI: HÀM ÁP DỤNG HÀNG LOẠT ---
     window.applyBulkInfo = () => {
         const pOrg = document.getElementById("bulk_price_org")?.value;
         const pSell = document.getElementById("bulk_price")?.value;
@@ -181,12 +195,6 @@ function handleCalcVariants() {
     state.variants = VariantLogic.generateVariants(attrs, basePrice, state.variants, basePriceOriginal);
     UI.renderVariants(state.variants);
 }
-
-// Thay thế hàm handleSave cũ trong index.js bằng hàm này:
-
-// Thay thế toàn bộ hàm handleSave trong file index.js
-
-// Thay thế toàn bộ hàm handleSave cũ trong index.js bằng hàm này:
 
 async function handleSave(e) {
     e.preventDefault();
@@ -220,12 +228,7 @@ async function handleSave(e) {
     };
 
     // 4. Build Attributes (Định nghĩa thuộc tính cho sản phẩm)
-    // Lưu lại danh sách Tên thuộc tính để lát dùng cho variant
-    const attributeNames = []; 
-
     currentAttrs.forEach(attr => {
-        attributeNames.push(attr.name); 
-        
         const attrValues = attr.values.map(v => ({ attributeValueName: v }));
         payload.attributes.push({ 
             attributeName: attr.name, 
@@ -234,18 +237,28 @@ async function handleSave(e) {
         });
     });
 
-    // 5. Build Variants (Danh sách biến thể)
-    // FIX: Chỉ gửi Tên thuộc tính và Giá trị, KHÔNG gửi ID vào đây để tránh xung đột
+    // 5. Build Variants (Danh sách biến thể) - ĐÃ FIX
     state.variants.forEach((v, idx) => {
         const imgKey = v.rawFile ? `image_variant_${idx}` : null;
         
-        // Map giá trị (VD: Đỏ) với Tên thuộc tính tương ứng (VD: Màu sắc)
+        // Tạo attributeValues với đầy đủ thông tin ID
         const variantAttrValues = v.comboValues.map((val, valIdx) => {
+            const attr = currentAttrs[valIdx];
+            if (!attr) {
+                console.error(`Không tìm thấy attribute tại index ${valIdx}`);
+                return null;
+            }
+            
+            const attrId = attr.id;
+            const valueId = attr.valueIdMap[val] || null;
+            
             return {
-                attributeName: attributeNames[valIdx], 
-                attributeValueName: val               
+                attributeId: attrId,
+                attributeValueId: valueId,
+                attributeName: attr.name,
+                attributeValueName: val
             };
-        });
+        }).filter(Boolean); // Loại bỏ các giá trị null
 
         payload.variants.push({
             price: v.price,
@@ -268,6 +281,12 @@ async function handleSave(e) {
     
     formData.append("productDTO", new Blob([JSON.stringify(payload)], { type: "application/json" }));
 
+    // DEBUG: In ra payload để kiểm tra
+    console.log("=== PAYLOAD DEBUG ===");
+    console.log("Payload JSON:", JSON.stringify(payload, null, 2));
+    console.log("Current Attrs:", currentAttrs);
+    console.log("===================");
+
     // 7. Gửi API
     try {
         const res = await ProductService.createProduct(formData);
@@ -275,11 +294,9 @@ async function handleSave(e) {
             if(typeof showDialog === 'function') await showDialog("success", "Thành công!");
             else alert("Thành công");
             
-            // Reset form và reload lại danh sách
             UI.switchView('list');
             reloadData();
         } else {
-             // Xử lý lỗi từ server trả về
              const errorMsg = res?.message || "Lỗi không xác định";
              if(typeof showDialog === 'function') await showDialog("error", errorMsg);
              else alert("Lỗi: " + errorMsg);
