@@ -261,3 +261,39 @@ button {
     background-color: var(--bg-soft) !important; /* Nền xanh nhạt khi di chuột */
     transform: translateX(-3px); /* Hiệu ứng lùi nhẹ sang trái */
 }
+
+/* --- CẤU HÌNH KHUNG BAO NGOÀI (LAYOUT) --- */
+/* Bạn hãy đảm bảo thẻ div bao ngoài cùng trong HTML của bạn có class="container" nhé */
+.container {
+    max-width: 1200px !important; /* Mở rộng tối đa 1200px (thay vì 800-900px cũ) */
+    width: 95%;                   /* Trên màn hình nhỏ thì chiếm 95% */
+    margin: 30px auto;            /* Căn giữa màn hình */
+    padding: 0 15px;              /* Cách lề trái phải một chút cho thoáng */
+}
+
+/* Tinh chỉnh lại Card cho hợp với khung rộng mới */
+.card {
+    width: 100%;                  /* Card dãn full theo khung container */
+    padding: 30px;                /* Tăng khoảng đệm bên trong cho thoáng */
+}
+
+/* Tinh chỉnh Form nhập liệu: Không cho nó dài thượt xấu xí */
+.form-container {
+    max-width: 800px;             /* Giới hạn chiều ngang của form nhập liệu */
+    margin: 30px auto 0;          /* Căn giữa form trong cái khung to */
+}
+
+/* --- RESPONSIVE CHO BẢNG DỮ LIỆU --- */
+/* Khi mở rộng màn hình, bảng sẽ tự dãn ra rất đẹp */
+table {
+    width: 100%;
+    table-layout: auto;           /* Để các cột tự căn chỉnh theo nội dung */
+}
+
+/* Cột Thao tác (Sửa/Xóa): Ép nó nhỏ gọn về bên phải */
+th:last-child, 
+td:last-child {
+    width: 100px;                 /* Cố định chiều rộng cột cuối */
+    text-align: center;           /* Căn giữa nút bấm */
+    white-space: nowrap;          /* Không xuống dòng */
+}
