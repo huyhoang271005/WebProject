@@ -2,7 +2,6 @@ import { loadNavbar } from "../navbar/navbar.js";
 import { callAPI } from "../public/api.js";
 import { toggleLoading } from "../public/loader.js";
 
-// Biến lưu danh mục
 let apiCategories = [];
 
 document.addEventListener("DOMContentLoaded", async () => {
@@ -15,13 +14,13 @@ document.addEventListener("DOMContentLoaded", async () => {
             <i class="fa-solid fa-bars"></i> <span>Danh mục</span>
             <div class="cat-dropdown" id="catDropdown"></div>
         </div>
-        <div style="position:relative;">
-            <input type="text" class="nav-search-input" id="homeSearch" placeholder="Tìm sản phẩm...">
+        <div style="position:relative; width: 100%; max-width: 500px;">
+            <input type="text" class="nav-search-input" id="homeSearch" placeholder="Tìm sản phẩm..." style="width:100%; padding-left:15px; border-radius:20px; border:1px solid #ddd; height:40px;">
             <i class="fa-solid fa-magnifying-glass" style="position:absolute; right:15px; top:50%; transform:translateY(-50%); color:#10B981; cursor:pointer;" id="homeSearchBtn"></i>
         </div>`,
     });
 
-    // 2. Gọi các API cần thiết
+    // 2. Gọi API
     await fetchCategories();
     renderNavCategories();
     setupNavbarEvents();
@@ -46,7 +45,7 @@ async function fetchCategories() {
       ];
     }
   } catch (e) {
-    console.error("Lỗi lấy danh mục:", e);
+    console.error("Lỗi danh mục:", e);
   }
 }
 
@@ -56,9 +55,8 @@ async function renderHomeSections() {
   if (!container) return;
   container.innerHTML = "";
 
-  // [FIX 1] Đổi API từ /auth/products sang /products để khách cũng xem được (tránh lỗi 500)
-  // Lấy size=15 để chia hết cho 5 cột (nhìn đẹp hơn)
-  const res = await callAPI("/products?page=0&size=15", "GET", null);
+  // [QUAN TRỌNG] Trả lại đúng đường dẫn cũ của ông: /auth/products
+  const res = await callAPI("/auth/products?page=0&size=15", "GET", null);
 
   if (res && res.success) {
     const listData = res.data?.listData || [];
@@ -71,9 +69,8 @@ async function renderHomeSections() {
                       <div class="section-title">
                         <i class="fa-solid fa-fire" style="color:#ee4d2d;"></i> GỢI Ý HÔM NAY
                       </div>
-                      <a href="../products/index.html" class="btn-see-more">Xem tất cả ></a>
+                      <a href="../products/index.html" style="color:#10b981; text-decoration:none;">Xem tất cả ></a>
                   </div>
-                  
                   <div class="product-grid-5">
                       ${listData.map((p) => createProductHTML(p)).join("")}
                   </div>
@@ -84,7 +81,14 @@ async function renderHomeSections() {
       container.innerHTML = `<div style="text-align:center; padding: 20px; color: #666;">Chưa có sản phẩm nào</div>`;
     }
   } else {
-    container.innerHTML = `<div style="text-align:center; color:red;">Lỗi tải: ${res?.message}</div>`;
+    // In lỗi ra màn hình cho dễ nhìn
+    container.innerHTML = `<div style="text-align:center; color:red; padding:20px;">
+        <h3>⚠️ Lỗi kết nối Server!</h3>
+        <p>Vui lòng kiểm tra lại đường dẫn API trong file <b>public/api.js</b></p>
+        <small>Chi tiết lỗi: ${
+          res?.message || "Không thể kết nối đến máy chủ"
+        }</small>
+      </div>`;
   }
 }
 
@@ -105,7 +109,6 @@ function createProductHTML(p) {
             <div style="position:absolute; top:0; right:0; background-color: rgba(255,212,36,.9); width:40px; height:36px; text-align:center; padding-top:4px; font-weight:700; font-size:0.75rem; z-index:2;">
                 <span style="color:#ee4d2d;">${percent}%</span>
                 <div style="color:white; text-transform:uppercase; font-size:0.6rem;">GIẢM</div>
-                <div style="position:absolute; bottom:-4px; left:0; border-width:0 20px 4px; border-style:solid; border-color:transparent rgba(255,212,36,.9); width:0;"></div>
             </div>`;
   }
 
@@ -123,9 +126,9 @@ function createProductHTML(p) {
                 <div style="margin-top:auto;">
                     <span class="p-price">${priceFormatted}</span>
                 </div>
-                <div class="p-meta" style="display:flex; align-items:center; justify-content:space-between; margin-top:8px;">
-                    <div class="p-rating" style="font-size:0.7rem; color:#ffce3d;">${starsHTML}</div>
-                    <div class="p-sold" style="font-size:0.75rem; color:#9ca3af;">Đã bán 99+</div>
+                <div style="display:flex; align-items:center; justify-content:space-between; margin-top:8px;">
+                    <div style="font-size:0.7rem; color:#ffce3d;">${starsHTML}</div>
+                    <div style="font-size:0.75rem; color:#9ca3af;">Đã bán 99+</div>
                 </div>
             </div>
         </div>
@@ -178,7 +181,7 @@ function renderNavCategories() {
   el.innerHTML = apiCategories
     .map(
       (c) => `
-        <a href="../products/index.html?cat=${c.id}"><i class="fa-solid fa-caret-right"></i> ${c.name}</a>
+        <a href="../products/index.html?cat=${c.id}" style="display:block; padding:10px; color:#333; text-decoration:none;"><i class="fa-solid fa-caret-right"></i> ${c.name}</a>
     `
     )
     .join("");
