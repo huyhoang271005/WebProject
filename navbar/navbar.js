@@ -7,6 +7,7 @@ let currentNotiIds = [];
 
 const navbarHTML = `
     <style>
+        /* ... (Giữ nguyên toàn bộ CSS cũ của bro) ... */
         .navbar-component {
             background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px);
             height: 70px; width: 100%; position: fixed; top: 0; left: 0; z-index: 1000;
@@ -33,7 +34,7 @@ const navbarHTML = `
         
         .nb-dropdown { 
             position: absolute; right: 0; top: 60px; background: white; 
-            width: 260px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); 
+            width: 280px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); 
             display: none; flex-direction: column; overflow: hidden; border: 1px solid #eee; 
             animation: slideDown 0.2s ease; z-index: 1100; 
         }
@@ -42,16 +43,15 @@ const navbarHTML = `
         @keyframes slideDown { from{opacity:0; transform:translateY(10px)} to{opacity:1; transform:translateY(0)} }
         .nb-dropdown.show { display: flex; }
         
-        /* Item dropdown đơn giản như cũ */
         .nb-dropdown a, .nb-dropdown button { 
             padding: 12px 20px; text-decoration: none; color: #333; text-align: left; 
             background: none; border: none; cursor: pointer; border-bottom: 1px solid #f9f9f9; 
             display:flex; align-items:center; gap:12px; font-size:0.95rem; transition: 0.2s; 
         }
         .nb-dropdown a:hover, .nb-dropdown button:hover { background: #ECFDF5; color: #10B981; padding-left: 25px; }
-        .nb-dropdown i { width: 20px; text-align: center; color: #666; } /* Icon căn giữa */
-        
-        /* Thông báo */
+        .nb-dropdown i { width: 22px; text-align: center; color: #555; } 
+
+        /* Notification CSS (Giữ nguyên) */
         .noti-header { padding: 15px; font-weight: bold; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; background: #fff; }
         .btn-clear-all { font-size: 0.8rem; color: #EF4444; cursor: pointer; text-decoration: underline; }
         .noti-list { max-height: 400px; overflow-y: auto; }
@@ -78,6 +78,7 @@ const navbarHTML = `
                     <i class="fa-solid fa-cart-shopping"></i>
                     <span class="nb-badge" id="cartBadge" style="display:none">0</span>
                 </a>
+
                 <div class="nb-icon-btn" id="nbNotiBtn">
                     <i class="fa-regular fa-bell"></i>
                     <span class="nb-badge" id="nbBadge" style="display:none">0</span>
@@ -95,14 +96,19 @@ const navbarHTML = `
                         <div style="font-weight:bold; color:#111;" id="nbUsername">Khách</div>
                         <div style="font-size:0.8rem; color:#666;" id="nbRole">...</div>
                     </div>
+                    
                     <a href="../profile"><i class="fa-regular fa-id-card"></i> Trang cá nhân</a>
                     <a href="../session"><i class="fa-solid fa-laptop-medical"></i> Quản lý phiên</a>
                     <a href="../contact"><i class="fa-solid fa-map-location-dot"></i> Địa chỉ</a>
                     
+                    <div class="nb-admin-only" style="border-top: 1px solid #eee; margin-top:5px; padding-top:5px;"></div>
+                    
                     <a href="../products-manager" class="nb-admin-only"><i class="fa-solid fa-box-open"></i> Quản lí sản phẩm</a>
+                    <a href="../categories-manager" class="nb-admin-only"><i class="fa-solid fa-layer-group"></i> Quản lí danh mục</a>
+                    <a href="../users-manager" class="nb-admin-only"><i class="fa-solid fa-users"></i> Quản lí người dùng</a>
                     <a href="../admin" class="nb-admin-only"><i class="fa-solid fa-user-shield"></i> Trang quản trị</a>
                     
-                    <button id="nbLogout" style="color:#EF4444; border-top: 1px solid #eee;">
+                    <button id="nbLogout" style="color:#EF4444; border-top: 1px solid #eee; margin-top:5px;">
                         <i class="fa-solid fa-right-from-bracket"></i> Đăng xuất
                     </button>
                 </div>
@@ -156,16 +162,48 @@ export async function loadNavbar(options = {}) {
         .forEach((el) => el.style.setProperty("display", "flex", "important"));
     }
 
-    if (userData.username && userData.username !== "Khách")
+    if (userData.username && userData.username !== "Khách") {
       await initNotificationSystem();
-    else
+
+      // [MỚI] Gọi cập nhật số lượng giỏ hàng ngay khi load trang
+      await window.updateCartCount();
+    } else {
       document.getElementById("nbNotiList").innerHTML =
         '<div class="empty-noti">Đăng nhập để xem thông báo</div>';
+    }
   } catch (e) {
     console.error("Navbar Error:", e);
   }
   setupEvents();
 }
+
+// --- [MỚI] HÀM CẬP NHẬT SỐ GIỎ HÀNG (Dùng chung toàn web) ---
+window.updateCartCount = async () => {
+  try {
+    // Giả định API lấy giỏ hàng là GET /auth/carts (trả về danh sách món)
+    const res = await callAPI("/auth/carts", "GET");
+
+    const badge = document.getElementById("cartBadge");
+    if (badge) {
+      if (
+        res &&
+        res.success &&
+        Array.isArray(res.data) &&
+        res.data.length > 0
+      ) {
+        // Có hàng -> Hiện số (đếm số món hoặc tổng số lượng tùy logic)
+        const count = res.data.length;
+        badge.innerText = count > 99 ? "99+" : count;
+        badge.style.display = "block";
+      } else {
+        // Giỏ rỗng -> Ẩn badge
+        badge.style.display = "none";
+      }
+    }
+  } catch (e) {
+    console.error("Lỗi cập nhật giỏ hàng:", e);
+  }
+};
 
 async function initNotificationSystem() {
   try {
@@ -190,6 +228,7 @@ async function initNotificationSystem() {
 }
 
 function setupEvents() {
+  // ... (Giữ nguyên các sự kiện click, logout, notification cũ) ...
   const notiBtn = document.getElementById("nbNotiBtn");
   const notiDropdown = document.getElementById("nbNotiDropdown");
   if (notiBtn) {
@@ -241,6 +280,7 @@ function setupEvents() {
     };
 }
 
+// ... (Các hàm renderNotiList, prependNotification, createNotiItemHTML, deleteNoti, updateBadge GIỮ NGUYÊN) ...
 function renderNotiList(list) {
   const notiList = document.getElementById("nbNotiList");
   currentNotiIds = list.map((item) => item.id || item.notificationId);
