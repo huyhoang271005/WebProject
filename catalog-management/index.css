@@ -11,6 +11,7 @@
 /* --- Cấu hình chung --- */
 body {
     background-color: #F3F4F6 !important; /* Nền xám nhạt hiện đại */
+    background: linear-gradient(135deg, #6EE7B7, #3B82F6) !important;
     font-family: 'Poppins', sans-serif;
 }
 

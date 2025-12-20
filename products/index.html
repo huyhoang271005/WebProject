@@ -4,6 +4,10 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Danh Sách Sản Phẩm - Tạp Hóa Xanh</title>
+    <link
+      rel="icon"
+      href="https://cdn-icons-png.flaticon.com/512/847/847969.png"
+    />
     <link rel="stylesheet" href="../dialog/index.css" />
     <link rel="stylesheet" href="../public/public.css" />
     <script
@@ -19,9 +23,7 @@
       body {
         display: block !important;
         width: 100% !important;
-        height: auto !important;
         min-height: 100vh;
-        overflow-y: auto !important;
         margin: 0 !important;
         padding: 0 !important;
         font-family: "Segoe UI", sans-serif;
@@ -33,32 +35,34 @@
       .main-container {
         padding-top: 20px;
         padding-bottom: 50px;
-        max-width: 1200px;
+        width: 95%;
+        max-width: 1500px;
         margin: 0 auto;
         display: flex;
         gap: 20px;
-        padding-left: 20px;
-        padding-right: 20px;
         position: relative;
         z-index: 1;
       }
 
+      /* SIDEBAR */
       .sidebar {
-        width: 260px;
+        width: 280px;
         flex-shrink: 0;
         background: white;
-        border-radius: 12px;
+        border-radius: 8px;
         padding: 20px;
-        height: fit-content;
         position: sticky;
         top: 90px;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+        height: fit-content;
+        min-height: 60vh;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
         border: 1px solid #f0f0f0;
-        z-index: 10;
+        z-index: 100;
+        transition: transform 0.3s ease;
       }
 
       .filter-group {
-        margin-bottom: 20px;
+        margin-bottom: 25px;
       }
       .filter-title {
         font-weight: 700;
@@ -71,32 +75,10 @@
         text-transform: uppercase;
       }
 
+      /* Search Box Sidebar */
       .sidebar-search-box {
         position: relative;
         width: 100%;
-        box-sizing: border-box;
-      }
-
-      /* 👇👇👇 ĐÂY LÀ CHỖ ĐÃ FIX 👇👇👇 */
-      .sidebar-search-box input {
-        width: 100% !important;
-        min-width: 0 !important; /* [QUAN TRỌNG] Hủy bỏ giới hạn 300px của public.css */
-        max-width: 100%;
-        padding: 10px 15px 10px 35px;
-        border: 1px solid #e5e7eb;
-        border-radius: 8px;
-        outline: none;
-        font-size: 0.9rem;
-        background: #f9fafb;
-        transition: 0.2s;
-        box-sizing: border-box !important;
-      }
-      /* 👆👆👆 ----------------------- 👆👆👆 */
-
-      .sidebar-search-box input:focus {
-        background: white;
-        border-color: #10b981;
-        box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
       }
       .sidebar-search-box i {
         position: absolute;
@@ -113,11 +95,11 @@
         margin: 0;
       }
       .cat-item {
-        padding: 10px 12px;
+        padding: 12px 15px;
         cursor: pointer;
         border-radius: 6px;
         transition: 0.2s;
-        margin-bottom: 2px;
+        margin-bottom: 4px;
         display: flex;
         align-items: center;
         gap: 10px;
@@ -136,6 +118,7 @@
         font-weight: 700;
       }
 
+      /* CONTENT */
       .product-content {
         flex: 1;
         min-width: 0;
@@ -143,64 +126,280 @@
       .page-header {
         background: white;
         padding: 15px 25px;
-        border-radius: 12px;
+        border-radius: 8px;
         margin-bottom: 20px;
         display: flex;
         justify-content: space-between;
         align-items: center;
         flex-wrap: wrap;
         gap: 15px;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
         border: 1px solid #f0f0f0;
       }
+
+      .ph-actions {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+      }
       .ph-title {
-        font-size: 1.25rem;
-        font-weight: 800;
+        font-size: 1.3rem;
+        font-weight: 700;
         color: #111827;
       }
-      .ph-sort select {
+
+      /* Mobile Filter Button (Mặc định ẩn) */
+      .mobile-filter-btn {
+        display: none;
         padding: 8px 15px;
+        background: white;
+        border: 1px solid #eee;
+        border-radius: 4px;
+        font-size: 0.9rem;
+        color: #555;
+        align-items: center;
+        gap: 5px;
+        cursor: pointer;
+      }
+
+      .ph-sort select {
+        padding: 8px 12px;
         border-radius: 6px;
         border: 1px solid #e5e7eb;
         outline: none;
         cursor: pointer;
+        font-size: 0.9rem;
       }
 
+      /* GRID SẢN PHẨM */
       .product-grid {
         display: grid;
-        grid-template-columns: repeat(4, 1fr);
-        gap: 15px;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 12px;
       }
 
-      @media (max-width: 1200px) {
+      /* PRODUCT CARD */
+      .product-card {
+        background: white;
+        border: 1px solid transparent;
+        border-radius: 4px;
+        overflow: hidden;
+        transition: transform 0.1s, box-shadow 0.1s;
+        cursor: pointer;
+        position: relative;
+        display: flex;
+        flex-direction: column;
+      }
+      .product-card:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        border-color: #ee4d2d;
+        z-index: 2;
+      }
+      .p-img {
+        width: 100%;
+        padding-top: 100%;
+        position: relative;
+        background: #fff;
+      }
+      .p-img img {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+      }
+      .p-info {
+        padding: 10px;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+      }
+      .p-name {
+        font-size: 0.95rem;
+        color: #333;
+        line-height: 1.3rem;
+        margin-bottom: 5px;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        min-height: 2.6rem;
+      }
+      .p-meta {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-top: auto;
+      }
+      .p-rating {
+        font-size: 0.75rem;
+        color: #ffce3d;
+      }
+      .p-sold {
+        font-size: 0.8rem;
+        color: #757575;
+      }
+
+      /* PAGINATION */
+      .pagination-wrapper {
+        margin-top: 30px;
+        display: flex;
+        justify-content: center;
+      }
+      .pagination-container {
+        display: flex;
+        gap: 5px;
+        background: white;
+        padding: 5px 10px;
+        border-radius: 20px;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+      }
+      .page-btn {
+        width: 32px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        cursor: pointer;
+        font-weight: 600;
+        font-size: 0.9rem;
+        transition: 0.2s;
+        color: #333;
+      }
+      .page-btn:hover:not(.disabled) {
+        color: #10b981;
+        background: #ecfdf5;
+      }
+      .page-btn.active {
+        background: #10b981;
+        color: white;
+      }
+      .page-btn.disabled {
+        opacity: 0.3;
+        cursor: default;
+      }
+      .page-dots {
+        padding: 0 5px;
+        color: #9ca3af;
+        line-height: 32px;
+      }
+
+      /* OVERLAY CHO MOBILE */
+      .sidebar-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 99;
+      }
+
+      /* RESPONSIVE */
+      @media (max-width: 1400px) {
+        .product-grid {
+          grid-template-columns: repeat(4, 1fr);
+        }
+      }
+      @media (max-width: 1100px) {
         .product-grid {
           grid-template-columns: repeat(3, 1fr);
         }
       }
+
+      /* Mobile & Tablet (< 992px) */
       @media (max-width: 992px) {
         .product-grid {
           grid-template-columns: repeat(2, 1fr);
-        }
+        } /* 2 cột */
+
+        /* Sidebar ẩn sang trái */
         .sidebar {
-          display: none;
+          position: fixed;
+          top: 0;
+          left: 0;
+          height: 100vh;
+          width: 80%;
+          max-width: 300px;
+          transform: translateX(-100%);
+          border-radius: 0;
+          overflow-y: auto;
+        }
+        .sidebar.active {
+          transform: translateX(0);
+        }
+        .sidebar-overlay.active {
+          display: block;
+        }
+        .mobile-filter-btn {
+          display: flex;
+        } /* Hiện nút Lọc */
+
+        .page-header {
+          flex-direction: column;
+          align-items: flex-start;
+          gap: 10px;
+        }
+        .ph-actions {
+          width: 100%;
+          justify-content: space-between;
         }
         .main-container {
-          flex-direction: column;
+          width: 100%;
+          padding: 10px;
+          padding-top: 20px;
         }
       }
     </style>
   </head>
   <body>
+    <div
+      class="sidebar-overlay"
+      id="sidebarOverlay"
+      onclick="toggleSidebar()"
+    ></div>
+
     <div class="main-container">
-      <aside class="sidebar">
+      <aside class="sidebar" id="mainSidebar">
+        <div
+          style="display: flex; justify-content: flex-end; margin-bottom: 10px"
+          class="d-lg-none"
+        >
+          <i
+            class="fa-solid fa-xmark"
+            style="font-size: 1.5rem; cursor: pointer; color: #666"
+            onclick="toggleSidebar()"
+          ></i>
+        </div>
+
         <div class="filter-group">
           <div class="filter-title">Tìm nhanh</div>
           <div class="sidebar-search-box">
             <i class="fa-solid fa-magnifying-glass"></i>
-            <input type="text" id="sidebarSearch" placeholder="Gõ tên món..." />
+            <input
+              type="text"
+              id="sidebarSearch"
+              placeholder="Gõ tên món..."
+              style="
+                width: 100% !important;
+                min-width: 0 !important;
+                max-width: 100% !important;
+                padding: 10px 10px 10px 35px;
+                border: 1px solid #e5e7eb;
+                border-radius: 6px;
+                outline: none;
+                box-sizing: border-box;
+              "
+            />
           </div>
         </div>
         <hr style="border: 0; border-top: 1px solid #f3f4f6; margin: 15px 0" />
+
         <div class="filter-group">
           <div class="filter-title">
             <i class="fa-solid fa-bars-staggered"></i> Danh mục
@@ -215,9 +414,16 @@
 
       <div class="product-content">
         <div class="page-header">
-          <div class="ph-title" id="pageTitle">Tất cả sản phẩm</div>
+          <div class="ph-actions">
+            <div class="ph-title" id="pageTitle">Tất cả sản phẩm</div>
+            <div class="mobile-filter-btn" onclick="toggleSidebar()">
+              <i class="fa-solid fa-filter"></i> Lọc
+            </div>
+          </div>
           <div class="ph-sort">
-            <span style="color: #666; margin-right: 5px">Sắp xếp:</span>
+            <span style="color: #666; margin-right: 5px; font-size: 0.9rem"
+              >Sắp xếp:</span
+            >
             <select>
               <option>Mới nhất</option>
               <option>Giá tăng dần</option>
@@ -225,7 +431,12 @@
             </select>
           </div>
         </div>
+
         <div class="product-grid" id="productGrid"></div>
+
+        <div class="pagination-wrapper">
+          <div id="pagination" class="pagination-container"></div>
+        </div>
       </div>
     </div>
     <script type="module" src="index.js"></script>

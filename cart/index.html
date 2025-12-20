@@ -58,9 +58,8 @@
 
     <script type="module" src="index.js"></script>
     <script type="module">
-        // Giả lập load Navbar nếu dự án bạn có
         import { loadNavbar } from '../navbar/navbar.js';
-        try { loadNavbar({}); } catch (e) { console.log("Chưa có navbar"); }
+        loadNavbar({}); 
     </script>
 </body>
 

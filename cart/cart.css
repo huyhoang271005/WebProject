@@ -132,34 +132,61 @@ html, body {
 
 /* --- STYLE CHO DROPDOWN PHÂN LOẠI --- */
 .variant-box {
-    margin-bottom: 8px;
     display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
+    flex-direction: column; /* Xếp dọc xuống cho thoáng */
+    gap: 10px;              /* Khoảng cách giữa 2 ô */
+    margin-top: 8px;
+    width: 100%;
 }
 
+/* --- Ô SELECT ĐÃ LÀM ĐẸP (ÁP DỤNG CHO CẢ MOBILE & PC) --- */
 .variant-select {
-    padding: 4px 8px;
-    border: 1px solid #E5E7EB;
-    border-radius: 4px;
-    background: #F9FAFB;
+    /* 1. Xóa giao diện mặc định xấu xí */
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+
+    /* 2. Kích thước & Font chữ */
+    width: 100%;            /* Luôn full chiều rộng để không bị cắt chữ */
+    max-width: 100%;        /* Đảm bảo không tràn ra ngoài */
+    padding: 10px 40px 10px 15px; /* Padding phải rộng để chứa mũi tên */
+    font-size: 14px;
+    font-weight: 500;
     color: #374151;
-    font-size: 0.85rem;
-    outline: none;
+    background-color: #fff;
+    
+    /* 3. Viền & Bo góc */
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    
+    /* 4. Mũi tên tùy chỉnh (SVG xịn) */
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+    background-position: right 10px center;
+    background-repeat: no-repeat;
+    background-size: 1.5em 1.5em;
+
     cursor: pointer;
-    transition: 0.2s;
-    width: auto !important;
-    max-width: 150px;
+    transition: all 0.2s ease-in-out;
 }
 
+/* Hiệu ứng khi di chuột */
 .variant-select:hover {
+    border-color: #10B981; /* Màu xanh lá khi hover */
+    background-color: #f9fafb;
+}
+
+/* Hiệu ứng khi bấm vào */
+.variant-select:focus {
     border-color: #10B981;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
 }
 
 .item-price {
     color: #EF4444;
     font-weight: 700;
     font-size: 1.1rem;
+    padding-right: 20px;
 }
 
 .item-unit {
@@ -169,6 +196,17 @@ html, body {
 }
 
 /* QUANTITY CONTROL */
+.qty-control {
+    display: flex;
+    align-items: center;
+    border: 1px solid #E5E7EB;
+    border-radius: 6px;
+    background: white;
+    height: 36px !important;
+    margin-top: 20px;
+    margin-right: 15px; /* Thêm khoảng cách nhỏ với nút xóa */
+}
+
 .qty-control {
     display: flex;
     align-items: center;
@@ -212,7 +250,6 @@ html, body {
     outline: none;
     background: transparent;
 }
-
 /* === RIGHT SECTION (SUMMARY) === */
 .summary-box {
     background: white;
@@ -289,13 +326,119 @@ html, body {
     min-width: 110px;        /* Đảm bảo cụm này luôn đủ rộng, không bị chèn ép */
 }
 
-/* Responsive */
-@media (max-width: 900px) {
+/* --- RESPONSIVE CHO ĐIỆN THOẠI (Màn hình nhỏ hơn 768px) --- */
+@media screen and (max-width: 768px) {
+    
+    /* 1. Thay đổi bố cục tổng thể: Xếp dọc thay vì xếp ngang */
     .cart-container {
-        grid-template-columns: 1fr;
+        flex-direction: column;
+        padding-bottom: 180px; /* Chừa khoảng trống dưới cùng để không bị che bởi thanh thanh toán */
     }
+
+    /* 2. Phần danh sách sản phẩm chiếm hết chiều rộng */
+    .cart-items-section {
+        width: 100%;
+        margin-right: 0;
+    }
+
+    /* 3. Tinh chỉnh từng dòng sản phẩm (Cart Item) */
+    .cart-item {
+        flex-wrap: wrap; /* Cho phép rớt dòng nếu chật */
+        position: relative; /* Để căn chỉnh nút xóa */
+        padding: 15px 10px;
+    }
+
+    /* Ảnh sản phẩm: Bé lại chút cho vừa */
     .item-img {
         width: 60px;
         height: 60px;
+        margin-right: 10px;
+    }
+
+    /* Thông tin sản phẩm: Chiếm phần còn lại */
+    .item-info {
+        flex: 1;
+        width: calc(100% - 100px); /* Trừ đi ảnh và checkbox */
+    }
+
+    .item-name {
+        font-size: 14px;
+        margin-bottom: 5px;
+        white-space: normal; /* Cho phép xuống dòng tên dài */
+    }
+
+    /* Khu vực nút bấm + Giá tiền: Đẩy xuống dòng mới */
+    .item-actions {
+        width: 100%;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 10px;
+        padding-top: 10px;
+        border-top: 1px dashed #eee; /* Đường kẻ ngăn cách nhẹ */
+    }
+
+    /* Nút xóa: Đưa lên góc trên cùng bên phải */
+    .delete-btn-wrapper {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+    }
+    
+    .delete-btn {
+        color: #9ca3af;
+        padding: 10px; /* Vùng bấm rộng hơn */
+    }
+
+    /* 4. THANH THANH TOÁN DÍNH Ở ĐÁY (Sticky Footer) */
+    .summary-box {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        z-index: 100;
+        border-radius: 20px 20px 0 0; /* Bo tròn 2 góc trên */
+        box-shadow: 0 -4px 20px rgba(0,0,0,0.1);
+        padding: 15px 20px;
+        margin: 0;
+        display: flex;
+        flex-direction: row; /* Xếp ngang: Tổng tiền bên trái, Nút mua bên phải */
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+
+    /* Ẩn bớt mấy cái tiêu đề rườm rà trong thanh thanh toán */
+    .summary-box .cart-header, 
+    .summary-row {
+        display: none; 
+    }
+
+    /* Chỉ hiện tổng tiền chốt hạ */
+    .summary-total {
+        flex-direction: column; /* Chữ "Tổng" trên, Số tiền dưới */
+        align-items: flex-start;
+        border: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .summary-total span:first-child {
+        font-size: 12px;
+        color: #666;
+    }
+
+    .summary-total .total-price {
+        font-size: 18px;
+        color: #ee4d2d;
+    }
+
+    /* Nút Mua hàng: Nổi bật ở góc phải */
+    .checkout-btn {
+        width: auto; /* Không full width nữa */
+        padding: 10px 30px;
+        margin: 0;
+        border-radius: 25px;
+        font-size: 14px;
     }
 }

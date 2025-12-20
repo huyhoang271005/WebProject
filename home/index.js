@@ -2,29 +2,26 @@ import { loadNavbar } from "../navbar/navbar.js";
 import { callAPI } from "../public/api.js";
 import { toggleLoading } from "../public/loader.js";
 
-// Danh mục tĩnh ở Home (chỉ để hiển thị icon cho đẹp)
-const CATEGORIES = [
-  { id: "an-vat", name: "Đồ ăn vặt", icon: "fa-cookie-bite" },
-  { id: "nuoc-ngot", name: "Nước giải khát", icon: "fa-bottle-water" },
-  { id: "dong-lanh", name: "Đồ đông lạnh", icon: "fa-snowflake" },
-  { id: "mi-tom", name: "Mì ăn liền", icon: "fa-bowl-rice" },
-  { id: "gia-dung", name: "Gia dụng", icon: "fa-pump-soap" },
-];
+let apiCategories = [];
 
 document.addEventListener("DOMContentLoaded", async () => {
   toggleLoading(true);
   try {
+    // 1. Load Navbar
     await loadNavbar({
       centerHTML: `
         <div class="nav-cat-btn" id="catBtn">
             <i class="fa-solid fa-bars"></i> <span>Danh mục</span>
             <div class="cat-dropdown" id="catDropdown"></div>
         </div>
-        <div style="position:relative;">
-            <input type="text" class="nav-search-input" id="homeSearch" placeholder="Tìm sản phẩm...">
+        <div style="position:relative; width: 100%; max-width: 500px;">
+            <input type="text" class="nav-search-input" id="homeSearch" placeholder="Tìm sản phẩm..." style="width:100%; padding-left:15px; border-radius:20px; border:1px solid #ddd; height:40px;">
             <i class="fa-solid fa-magnifying-glass" style="position:absolute; right:15px; top:50%; transform:translateY(-50%); color:#10B981; cursor:pointer;" id="homeSearchBtn"></i>
         </div>`,
     });
+
+    // 2. Gọi API
+    await fetchCategories();
     renderNavCategories();
     setupNavbarEvents();
     await renderHomeSections();
@@ -35,38 +32,66 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 });
 
+// API Danh mục
+async function fetchCategories() {
+  try {
+    const res = await callAPI("/categories", "GET", null);
+    if (res && res.success && Array.isArray(res.data)) {
+      apiCategories = res.data;
+    } else {
+      apiCategories = [
+        { id: "an-vat", name: "Đồ ăn vặt" },
+        { id: "nuoc-ngot", name: "Nước giải khát" },
+      ];
+    }
+  } catch (e) {
+    console.error("Lỗi danh mục:", e);
+  }
+}
+
+// Render Sản phẩm
 async function renderHomeSections() {
   const container = document.getElementById("homeContainer");
   if (!container) return;
   container.innerHTML = "";
 
-  const res = await callAPI("/auth/products?page=0&size=20", "GET", null);
+  // [QUAN TRỌNG] Trả lại đúng đường dẫn cũ của ông: /auth/products
+  const res = await callAPI("/auth/products?page=0&size=15", "GET", null);
 
   if (res && res.success) {
     const listData = res.data?.listData || [];
     if (listData.length > 0) {
-      const list = listData.slice(0, 10);
       container.insertAdjacentHTML(
         "beforeend",
         `
               <div class="category-section">
                   <div class="section-header">
-                      <div class="section-title"><i class="fa-solid fa-fire" style="color:#10B981"></i> Sản phẩm mới nhất</div>
-                      <a href="../products/index.html" class="btn-see-more">Xem tất cả <i class="fa-solid fa-arrow-right"></i></a>
+                      <div class="section-title">
+                        <i class="fa-solid fa-fire" style="color:#ee4d2d;"></i> GỢI Ý HÔM NAY
+                      </div>
+                      <a href="../products/index.html" style="color:#10b981; text-decoration:none;">Xem tất cả ></a>
                   </div>
                   <div class="product-grid-5">
-                      ${list.map((p) => createProductHTML(p)).join("")}
+                      ${listData.map((p) => createProductHTML(p)).join("")}
                   </div>
               </div>
           `
       );
     } else {
-      container.innerHTML = `<div style="text-align:center; padding:20px; color:#666;">Chưa có sản phẩm</div>`;
+      container.innerHTML = `<div style="text-align:center; padding: 20px; color: #666;">Chưa có sản phẩm nào</div>`;
     }
+  } else {
+    // In lỗi ra màn hình cho dễ nhìn
+    container.innerHTML = `<div style="text-align:center; color:red; padding:20px;">
+        <h3>⚠️ Lỗi kết nối Server!</h3>
+        <p>Vui lòng kiểm tra lại đường dẫn API trong file <b>public/api.js</b></p>
+        <small>Chi tiết lỗi: ${
+          res?.message || "Không thể kết nối đến máy chủ"
+        }</small>
+      </div>`;
   }
 }
 
-// Hàm giống hệt products/index.js
 function createProductHTML(p) {
   const imgUrl =
     p.imageUrl || "https://cdn-icons-png.flaticon.com/512/2748/2748558.png";
@@ -76,40 +101,34 @@ function createProductHTML(p) {
   }).format(p.price || 0);
 
   let discountBadge = "";
-  let originalPriceHTML = "";
-
   if (p.originalPrice && p.originalPrice > p.price) {
     const percent = Math.round(
       ((p.originalPrice - p.price) / p.originalPrice) * 100
     );
-    const originalFormatted = new Intl.NumberFormat("vi-VN", {
-      style: "currency",
-      currency: "VND",
-    }).format(p.originalPrice);
-    discountBadge = `<div style="position:absolute; top:0; right:0; background:#FFD424; color:#d0021b; padding:3px 6px; font-weight:800; font-size:0.7rem; border-bottom-left-radius:8px; z-index:2;">-${percent}%</div>`;
-    originalPriceHTML = `<span style="text-decoration:line-through; color:#9ca3af; font-size:0.75rem; margin-right:6px;">${originalFormatted}</span>`;
+    discountBadge = `
+            <div style="position:absolute; top:0; right:0; background-color: rgba(255,212,36,.9); width:40px; height:36px; text-align:center; padding-top:4px; font-weight:700; font-size:0.75rem; z-index:2;">
+                <span style="color:#ee4d2d;">${percent}%</span>
+                <div style="color:white; text-transform:uppercase; font-size:0.6rem;">GIẢM</div>
+            </div>`;
   }
 
-  const rating = p.ratingAvg || 5;
+  const rating = p.ratingAvg || 0;
   const starsHTML = renderStars(rating);
 
   return `
-        <div class="product-card" onclick="window.location.href='../product-detail/index.html?id=${p.productId}'" 
-             style="position:relative; border-radius:8px; border:1px solid #f3f4f6; overflow:hidden; background:white; transition:all 0.2s; cursor:pointer; box-shadow:0 1px 2px rgba(0,0,0,0.05);">
+        <div class="product-card" onclick="window.location.href='../product-detail/index.html?id=${p.productId}'">
             ${discountBadge}
-            <div class="p-img" style="height:160px; display:flex; align-items:center; justify-content:center; background:#fff; border-bottom:1px solid #f9f9f9;">
-                <img src="${imgUrl}" style="width:100%; height:100%; object-fit:contain; padding:10px;">
+            <div class="p-img">
+                <img src="${imgUrl}" alt="${p.productName}" loading="lazy">
             </div>
-            <div class="p-info" style="padding:10px;">
-                <div class="p-name" title="${p.productName}" style="font-size:0.9rem; font-weight:500; color:#333; margin-bottom:4px; height:36px; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; line-height:1.3;">
-                    ${p.productName}
+            <div class="p-info">
+                <div class="p-name" title="${p.productName}">${p.productName}</div>
+                <div style="margin-top:auto;">
+                    <span class="p-price">${priceFormatted}</span>
                 </div>
-                <div style="margin-bottom:6px; font-size:0.7rem; color:#fbbf24; display:flex; align-items:center;">
-                    ${starsHTML} <span style="color:#9ca3af; margin-left:4px;">(99+)</span>
-                </div>
-                <div style="display:flex; align-items:baseline;">
-                    ${originalPriceHTML}
-                    <span style="color:#ef4444; font-weight:700; font-size:1rem;">${priceFormatted}</span>
+                <div style="display:flex; align-items:center; justify-content:space-between; margin-top:8px;">
+                    <div style="font-size:0.7rem; color:#ffce3d;">${starsHTML}</div>
+                    <div style="font-size:0.75rem; color:#9ca3af;">Đã bán 99+</div>
                 </div>
             </div>
         </div>
@@ -117,12 +136,13 @@ function createProductHTML(p) {
 }
 
 function renderStars(rating) {
+  if (!rating) rating = 0;
   let html = "";
   for (let i = 1; i <= 5; i++) {
     if (i <= rating) html += '<i class="fa-solid fa-star"></i>';
     else if (i - 0.5 <= rating)
       html += '<i class="fa-solid fa-star-half-stroke"></i>';
-    else html += '<i class="fa-regular fa-star" style="color:#e5e7eb"></i>';
+    else html += '<i class="fa-regular fa-star" style="color:#d5d5d5"></i>';
   }
   return html;
 }
@@ -154,11 +174,15 @@ function setupNavbarEvents() {
       if (e.key === "Enter") doSearch();
     };
 }
+
 function renderNavCategories() {
   const el = document.getElementById("catDropdown");
-  if (el)
-    el.innerHTML = CATEGORIES.map(
-      (c) =>
-        `<a href="../products/index.html?cat=${c.id}"><i class="fa-solid ${c.icon}"></i> ${c.name}</a>`
-    ).join("");
+  if (!el) return;
+  el.innerHTML = apiCategories
+    .map(
+      (c) => `
+        <a href="../products/index.html?cat=${c.id}" style="display:block; padding:10px; color:#333; text-decoration:none;"><i class="fa-solid fa-caret-right"></i> ${c.name}</a>
+    `
+    )
+    .join("");
 }
