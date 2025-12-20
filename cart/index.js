@@ -63,7 +63,7 @@ async function loadCart(page = 0, size = 10) {
         const newData = res.data.listData || [];
         
         // Cập nhật cờ còn hàng hay không
-        hasMore = res.data.hasMore;
+        hasMore = res.data.hasNext;
 
         if (page === 0) {
             cartData = newData; // Gán mới
