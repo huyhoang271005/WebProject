@@ -2,6 +2,7 @@ import { loadNavbar } from "../navbar/navbar.js";
 import { callAPI } from "../public/api.js";
 import { toggleLoading } from "../public/loader.js";
 
+// [QUAN TRỌNG] Tên biến ở trang Home là apiCategories
 let apiCategories = [];
 
 document.addEventListener("DOMContentLoaded", async () => {
@@ -14,13 +15,13 @@ document.addEventListener("DOMContentLoaded", async () => {
             <i class="fa-solid fa-bars"></i> <span>Danh mục</span>
             <div class="cat-dropdown" id="catDropdown"></div>
         </div>
-        <div style="position:relative; width: 100%; max-width: 500px;">
-            <input type="text" class="nav-search-input" id="homeSearch" placeholder="Tìm sản phẩm..." style="width:100%; padding-left:15px; border-radius:20px; border:1px solid #ddd; height:40px;">
+        <div style="position:relative; width:100%; max-width:450px;">
+            <input type="text" class="nav-search-input" id="homeSearch" placeholder="Tìm sản phẩm...">
             <i class="fa-solid fa-magnifying-glass" style="position:absolute; right:15px; top:50%; transform:translateY(-50%); color:#10B981; cursor:pointer;" id="homeSearchBtn"></i>
         </div>`,
     });
 
-    // 2. Gọi API
+    // 2. Gọi các API cần thiết
     await fetchCategories();
     renderNavCategories();
     setupNavbarEvents();
@@ -32,7 +33,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 });
 
-// API Danh mục
+// [API] Danh mục (Public)
 async function fetchCategories() {
   try {
     const res = await callAPI("/categories", "GET", null);
@@ -45,18 +46,20 @@ async function fetchCategories() {
       ];
     }
   } catch (e) {
-    console.error("Lỗi danh mục:", e);
+    console.error("Lỗi lấy danh mục:", e);
   }
 }
 
-// Render Sản phẩm
+// [RENDER] Trang chủ
 async function renderHomeSections() {
   const container = document.getElementById("homeContainer");
   if (!container) return;
   container.innerHTML = "";
 
-  // [QUAN TRỌNG] Trả lại đúng đường dẫn cũ của ông: /auth/products
-  const res = await callAPI("/auth/products?page=0&size=15", "GET", null);
+  // [API] Lấy sản phẩm.
+  // [FIX 500 ERROR] Đổi thành /products (hoặc public endpoint) nếu /auth/products bị chặn khách
+  // Nếu server bro vẫn bắt auth thì giữ nguyên dòng này, nhưng nhớ phải login mới thấy data
+  const res = await callAPI("/products?page=0&size=15", "GET", null);
 
   if (res && res.success) {
     const listData = res.data?.listData || [];
@@ -64,31 +67,45 @@ async function renderHomeSections() {
       container.insertAdjacentHTML(
         "beforeend",
         `
-              <div class="category-section">
-                  <div class="section-header">
-                      <div class="section-title">
-                        <i class="fa-solid fa-fire" style="color:#ee4d2d;"></i> GỢI Ý HÔM NAY
-                      </div>
-                      <a href="../products/index.html" style="color:#10b981; text-decoration:none;">Xem tất cả ></a>
+          <div class="category-section">
+              <div class="section-header">
+                  <div class="section-title">
+                    <i class="fa-solid fa-fire" style="color:#ee4d2d; margin-right:5px;"></i> GỢI Ý HÔM NAY
                   </div>
-                  <div class="product-grid-5">
-                      ${listData.map((p) => createProductHTML(p)).join("")}
-                  </div>
+                  <a href="../products/index.html" class="btn-see-more">Xem tất cả ></a>
               </div>
-          `
+              
+              <div class="product-grid-5">
+                  ${listData.map((p) => createProductHTML(p)).join("")}
+              </div>
+          </div>
+      `
       );
     } else {
       container.innerHTML = `<div style="text-align:center; padding: 20px; color: #666;">Chưa có sản phẩm nào</div>`;
     }
   } else {
-    // In lỗi ra màn hình cho dễ nhìn
-    container.innerHTML = `<div style="text-align:center; color:red; padding:20px;">
-        <h3>⚠️ Lỗi kết nối Server!</h3>
-        <p>Vui lòng kiểm tra lại đường dẫn API trong file <b>public/api.js</b></p>
-        <small>Chi tiết lỗi: ${
-          res?.message || "Không thể kết nối đến máy chủ"
-        }</small>
-      </div>`;
+    // Fallback nếu API /products lỗi, thử lại /auth/products
+    console.log("Thử lại với Auth...");
+    const resAuth = await callAPI("/auth/products?page=0&size=15", "GET", null);
+    if (resAuth && resAuth.success) {
+      // Render lại (code lặp lại chút để fallback)
+      const list = resAuth.data?.listData || [];
+      container.insertAdjacentHTML(
+        "beforeend",
+        `
+            <div class="category-section">
+                <div class="section-header"><div class="section-title">GỢI Ý HÔM NAY</div><a href="../products/index.html">Xem tất cả ></a></div>
+                <div class="product-grid-5">${list
+                  .map((p) => createProductHTML(p))
+                  .join("")}</div>
+            </div>`
+      );
+    } else {
+      container.innerHTML = `<div style="text-align:center; color:red;">Lỗi tải: ${
+        res?.message || "Server Error"
+      }</div>`;
+    }
   }
 }
 
@@ -106,9 +123,10 @@ function createProductHTML(p) {
       ((p.originalPrice - p.price) / p.originalPrice) * 100
     );
     discountBadge = `
-            <div style="position:absolute; top:0; right:0; background-color: rgba(255,212,36,.9); width:40px; height:36px; text-align:center; padding-top:4px; font-weight:700; font-size:0.75rem; z-index:2;">
+            <div style="position:absolute; top:0; right:0; background-color: rgba(255,212,36,.9); width:36px; height:32px; text-align:center; padding-top:4px; font-weight:700; font-size:0.7rem; z-index:2;">
                 <span style="color:#ee4d2d;">${percent}%</span>
                 <div style="color:white; text-transform:uppercase; font-size:0.6rem;">GIẢM</div>
+                <div style="position:absolute; bottom:-4px; left:0; border-width:0 18px 4px; border-style:solid; border-color:transparent rgba(255,212,36,.9); width:0;"></div>
             </div>`;
   }
 
@@ -126,9 +144,9 @@ function createProductHTML(p) {
                 <div style="margin-top:auto;">
                     <span class="p-price">${priceFormatted}</span>
                 </div>
-                <div style="display:flex; align-items:center; justify-content:space-between; margin-top:8px;">
-                    <div style="font-size:0.7rem; color:#ffce3d;">${starsHTML}</div>
-                    <div style="font-size:0.75rem; color:#9ca3af;">Đã bán 99+</div>
+                <div class="p-meta" style="display:flex; align-items:center; justify-content:space-between; margin-top:5px; font-size:0.75rem; color:#777;">
+                    <div class="p-rating" style="color:#ffce3d;">${starsHTML}</div>
+                    <div class="p-sold">Đã bán 99+</div>
                 </div>
             </div>
         </div>
@@ -178,11 +196,15 @@ function setupNavbarEvents() {
 function renderNavCategories() {
   const el = document.getElementById("catDropdown");
   if (!el) return;
+  if (apiCategories.length === 0) {
+    el.innerHTML =
+      '<div style="padding:15px; text-align:center;">Đang tải...</div>';
+    return;
+  }
   el.innerHTML = apiCategories
     .map(
-      (c) => `
-        <a href="../products/index.html?cat=${c.id}" style="display:block; padding:10px; color:#333; text-decoration:none;"><i class="fa-solid fa-caret-right"></i> ${c.name}</a>
-    `
+      (c) =>
+        `<a href="../products/index.html?cat=${c.id}"><i class="fa-solid fa-caret-right"></i> ${c.name}</a>`
     )
     .join("");
 }
