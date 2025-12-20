@@ -30,7 +30,7 @@ export const VariantLogic = {
         return attributes;
     },
 
-    generateVariants: (attributes, basePrice, existingVariants = []) => {
+    generateVariants: (attributes, basePrice, existingVariants = [], basePriceOriginal = 0) => {
         if (!attributes.length) return [];
 
         const cartesian = (attrs) => {
@@ -57,7 +57,7 @@ export const VariantLogic = {
                 name: comboName,
                 comboValues: combo,
                 price: existing?.price || basePrice,
-                priceOriginal: existing?.priceOriginal || basePrice,
+                priceOriginal: existing?.priceOriginal || basePriceOriginal || basePrice,
                 stock: existing?.stock || 10,
                 imageName: existing?.imageName || "",
                 previewUrl: existing?.previewUrl || "",

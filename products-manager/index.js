@@ -48,15 +48,11 @@ async function reloadData() {
             const uiItem = {
                 productId: detail.productId,
                 productName: detail.productName,
-                
-                // ✅ SỬA: originalPrice thay vì priceOriginal
                 priceOriginal: detail.originalPrice,
-                
                 price: detail.price,
                 imageName: detail.imageName,
                 imageUrl: detail.imageUrl,
                 variants: productData.variants || [], 
-                
                 categoryName: cats.find(c => c.categoryId == detail.categoryId)?.categoryName || "-",
                 brandName: brands.find(b => b.brandId == detail.brandId)?.brandName || "-"
             };
@@ -91,8 +87,6 @@ function setupEventListeners() {
             state.currentMainImageUrl = "";
             
             UI.resetForm(false);
-            // Thêm 1 dòng thuộc tính mặc định
-            UI.addAttrRow("", "", handleCalcVariants, null, [], {}, state.attributes);
             UI.switchView('form');
         };
     }
@@ -109,15 +103,25 @@ function setupEventListeners() {
     // 3. Nút Thêm thuộc tính
     const btnAddAttr = document.getElementById("btnAddAttr");
     if (btnAddAttr) {
-        btnAddAttr.onclick = () => UI.addAttrRow("", "", handleCalcVariants, null, [], {}, state.attributes);
+        btnAddAttr.onclick = () => {
+            UI.addAttrRow("", "", null, null, [], {}, state.attributes);
+        };
     }
 
-    // 4. Sự kiện chọn danh mục -> load thương hiệu
+    // 4. Nút Tạo biến thể
+    const btnGenVariants = document.getElementById("btnGenerateVariants");
+    if (btnGenVariants) {
+        btnGenVariants.onclick = () => {
+            handleCalcVariants();
+        };
+    }
+
+    // 5. Sự kiện chọn danh mục -> load thương hiệu
     if (UI.els.cateSelect) {
         UI.els.cateSelect.onchange = (e) => UI.renderBrands(state.brands, e.target.value);
     }
 
-    // 5. Sự kiện chọn ảnh chính (Upload)
+    // 6. Sự kiện chọn ảnh chính (Upload)
     if (UI.els.mainImgInput) {
         UI.els.mainImgInput.onchange = (e) => {
             const file = e.target.files[0];
@@ -128,11 +132,11 @@ function setupEventListeners() {
         };
     }
 
-    // 6. Submit Form
+    // 7. Submit Form
     const form = document.getElementById("productForm");
     if (form) form.onsubmit = handleSave;
     
-    // 7. Nút Làm mới (Reset)
+    // 8. Nút Làm mới (Reset)
     const btnReset = document.getElementById("resetBtn");
     if(btnReset) {
         btnReset.onclick = () => UI.resetForm(state.isEdit);
@@ -143,7 +147,6 @@ function setupEventListeners() {
 function setupGlobalFunctions() {
     // Sửa sản phẩm
     window.editProduct = async (id) => {
-        // Lấy lại dữ liệu chi tiết mới nhất từ API
         const fullData = await ProductService.getProductById(id);
         
         if (!fullData || !fullData.productDetailDTO) return;
@@ -168,7 +171,6 @@ function setupGlobalFunctions() {
         if(document.getElementById("price")) 
             document.getElementById("price").value = detail.price;
         
-        // ✅ SỬA: originalPrice thay vì priceOriginal
         if(document.getElementById("priceOriginal")) 
             document.getElementById("priceOriginal").value = detail.originalPrice;
         
@@ -178,15 +180,12 @@ function setupGlobalFunctions() {
             UI.renderBrands(state.brands, detail.categoryId, detail.brandId);
         }
 
-        // --- XỬ LÝ ẢNH (Đã bỏ localhost cứng) ---
+        // Xử lý ảnh
         if(detail.imageUrl) {
             UI.renderMainImage(detail.imageUrl);
         } else if(detail.imageName) {
-            // Dùng đường dẫn tương đối, code tự tìm theo host hiện tại
             UI.renderMainImage(`/images/${detail.imageName}`);
         }
-
-        // TODO: Logic fill Attributes & Variants nếu cần
     };
 
     // Chọn ảnh variant
@@ -213,9 +212,9 @@ function setupGlobalFunctions() {
 function handleCalcVariants() {
     const attrs = VariantLogic.parseAttributesFromDOM();
     const basePrice = parseFloat(document.getElementById("price").value) || 0;
+    const basePriceOriginal = parseFloat(document.getElementById("priceOriginal").value) || 0;
     
-    // Gọi logic tạo variants
-    state.variants = VariantLogic.generateVariants(attrs, basePrice, state.variants);
+    state.variants = VariantLogic.generateVariants(attrs, basePrice, state.variants, basePriceOriginal);
     UI.renderVariants(state.variants);
 }
 
@@ -234,7 +233,9 @@ async function handleSave(e) {
             brandId: document.getElementById("brandId").value,
             imageName: state.currentMainImageUrl || "" 
         },
-        attributes: [], variants: [], variantValues: []
+        attributes: [], 
+        variants: [], 
+        variantValues: []
     };
 
     // Build attributes payload
@@ -253,6 +254,7 @@ async function handleSave(e) {
         const imgKey = v.rawFile ? `image_variant_${idx}` : null;
         payload.variants.push({
             price: v.price,
+            priceOriginal: v.priceOriginal || v.price,
             stock: v.stock,
             imageName: imgKey
         });
@@ -272,7 +274,7 @@ async function handleSave(e) {
 
     // Send API
     try {
-        const res = await ProductService.save(formData);
+        const res = await ProductService.createProduct(formData);
         if(res && res.success) {
             if(typeof showDialog === 'function') await showDialog("success", "Thành công!");
             else alert("Thành công");
