@@ -2,6 +2,7 @@ import { loadNavbar } from "../navbar/navbar.js";
 import { callAPI } from "../public/api.js";
 import { toggleLoading } from "../public/loader.js";
 
+// Biến lưu danh mục
 let apiCategories = [];
 
 document.addEventListener("DOMContentLoaded", async () => {
@@ -14,13 +15,13 @@ document.addEventListener("DOMContentLoaded", async () => {
             <i class="fa-solid fa-bars"></i> <span>Danh mục</span>
             <div class="cat-dropdown" id="catDropdown"></div>
         </div>
-        <div style="flex:1; height:40px; background:#f5f5f5; border-radius:8px; padding:0 15px; display:flex; align-items:center; position:relative;">
+        <div style="position:relative;">
             <input type="text" class="nav-search-input" id="homeSearch" placeholder="Tìm sản phẩm...">
-            <i class="fa-solid fa-magnifying-glass" style="color:#10B981; cursor:pointer;" id="homeSearchBtn"></i>
+            <i class="fa-solid fa-magnifying-glass" style="position:absolute; right:15px; top:50%; transform:translateY(-50%); color:#10B981; cursor:pointer;" id="homeSearchBtn"></i>
         </div>`,
     });
 
-    // 2. Load dữ liệu
+    // 2. Gọi các API cần thiết
     await fetchCategories();
     renderNavCategories();
     setupNavbarEvents();
@@ -32,79 +33,58 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 });
 
-// --- API DANH MỤC (Public) ---
+// API Danh mục
 async function fetchCategories() {
   try {
     const res = await callAPI("/categories", "GET", null);
     if (res && res.success && Array.isArray(res.data)) {
       apiCategories = res.data;
     } else {
-      apiCategories = [{ id: "an-vat", name: "Đồ ăn vặt" }];
+      apiCategories = [
+        { id: "an-vat", name: "Đồ ăn vặt" },
+        { id: "nuoc-ngot", name: "Nước giải khát" },
+      ];
     }
   } catch (e) {
-    console.error(e);
+    console.error("Lỗi lấy danh mục:", e);
   }
 }
 
-// --- RENDER SẢN PHẨM ---
+// Render Sản phẩm
 async function renderHomeSections() {
   const container = document.getElementById("homeContainer");
   if (!container) return;
   container.innerHTML = "";
 
-  // CSS Grid (PC 6 cột, Mobile 2 cột)
-  const style = document.createElement("style");
-  style.innerHTML = `
-      .home-product-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 12px; }
-      @media (max-width: 1200px) { .home-product-grid { grid-template-columns: repeat(4, 1fr); } }
-      @media (max-width: 768px) { .home-product-grid { grid-template-columns: repeat(2, 1fr); } }
-  `;
-  document.head.appendChild(style);
-
-  // [QUAN TRỌNG] Đổi API từ /auth/products sang /products (hoặc /public/products tùy backend)
-  // Nếu vẫn lỗi 500, hãy thử endpoint: /products
-  const res = await callAPI("/products?page=0&size=18", "GET", null);
+  // [FIX 1] Đổi API từ /auth/products sang /products để khách cũng xem được (tránh lỗi 500)
+  // Lấy size=15 để chia hết cho 5 cột (nhìn đẹp hơn)
+  const res = await callAPI("/products?page=0&size=15", "GET", null);
 
   if (res && res.success) {
-    const list = res.data?.listData || [];
-    if (list.length > 0) {
+    const listData = res.data?.listData || [];
+    if (listData.length > 0) {
       container.insertAdjacentHTML(
         "beforeend",
         `
-              <div class="category-section" style="background:white; padding:20px; border-radius:8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
-                  <div class="section-header" style="border-bottom:1px solid #eee; margin-bottom:15px; padding-bottom:10px; display:flex; justify-content:space-between; align-items:center;">
-                      <div class="section-title" style="color:#ee4d2d; font-weight:700; text-transform:uppercase; font-size:1.1rem;">
+              <div class="category-section">
+                  <div class="section-header">
+                      <div class="section-title">
                         <i class="fa-solid fa-fire" style="color:#ee4d2d;"></i> GỢI Ý HÔM NAY
                       </div>
-                      <a href="../products/index.html" style="color:#ee4d2d; text-decoration:none; font-size:0.9rem;">Xem tất cả ></a>
+                      <a href="../products/index.html" class="btn-see-more">Xem tất cả ></a>
                   </div>
-                  <div class="home-product-grid">
-                      ${list.map((p) => createProductHTML(p)).join("")}
+                  
+                  <div class="product-grid-5">
+                      ${listData.map((p) => createProductHTML(p)).join("")}
                   </div>
               </div>
           `
       );
     } else {
-      container.innerHTML = `<div style="text-align:center; padding:20px; color:#666;">Chưa có sản phẩm nào</div>`;
+      container.innerHTML = `<div style="text-align:center; padding: 20px; color: #666;">Chưa có sản phẩm nào</div>`;
     }
   } else {
-    // Nếu API /products lỗi, thử fallback về /auth/products (chữa cháy)
-    console.log("Thử lại với /auth/products...");
-    const retryRes = await callAPI(
-      "/auth/products?page=0&size=18",
-      "GET",
-      null
-    );
-    if (retryRes && retryRes.success) {
-      // ... (Render lại giống trên nếu retry thành công) ...
-      // Để code gọn, bro cứ test cái /products trước đã.
-      // Nếu lỗi 500 thì khả năng cao backend đang chặn Guest ở endpoint /auth/products.
-      container.innerHTML = `<div style="text-align:center; color:red;">Lỗi tải dữ liệu. Vui lòng thử lại sau.</div>`;
-    } else {
-      container.innerHTML = `<div style="text-align:center; color:red;">Lỗi tải: ${
-        res?.message || "Lỗi máy chủ (500)"
-      }</div>`;
-    }
+    container.innerHTML = `<div style="text-align:center; color:red;">Lỗi tải: ${res?.message}</div>`;
   }
 }
 
@@ -122,27 +102,46 @@ function createProductHTML(p) {
       ((p.originalPrice - p.price) / p.originalPrice) * 100
     );
     discountBadge = `
-            <div style="position:absolute; top:0; right:0; background:rgba(255,212,36,.95); width:36px; height:32px; text-align:center; padding-top:2px; font-weight:700; font-size:0.7rem; z-index:2;">
+            <div style="position:absolute; top:0; right:0; background-color: rgba(255,212,36,.9); width:40px; height:36px; text-align:center; padding-top:4px; font-weight:700; font-size:0.75rem; z-index:2;">
                 <span style="color:#ee4d2d;">${percent}%</span>
-                <div style="color:white; font-size:0.6rem;">GIẢM</div>
+                <div style="color:white; text-transform:uppercase; font-size:0.6rem;">GIẢM</div>
+                <div style="position:absolute; bottom:-4px; left:0; border-width:0 20px 4px; border-style:solid; border-color:transparent rgba(255,212,36,.9); width:0;"></div>
             </div>`;
   }
 
+  const rating = p.ratingAvg || 0;
+  const starsHTML = renderStars(rating);
+
   return `
-        <div class="product-card" onclick="window.location.href='../product-detail/index.html?id=${p.productId}'" 
-             style="background:white; cursor:pointer; position:relative; display:flex; flex-direction:column; border:1px solid transparent; transition:0.2s;">
+        <div class="product-card" onclick="window.location.href='../product-detail/index.html?id=${p.productId}'">
             ${discountBadge}
-            <div class="p-img" style="width:100%; padding-top:100%; position:relative;">
-                <img src="${imgUrl}" style="position:absolute; top:0; left:0; width:100%; height:100%; object-fit:contain;">
+            <div class="p-img">
+                <img src="${imgUrl}" alt="${p.productName}" loading="lazy">
             </div>
-            <div class="p-info" style="padding:8px;">
-                <div class="p-name" style="font-size:0.9rem; color:#333; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; height:2.4rem;">${p.productName}</div>
-                <div style="margin-top:5px; color:#ee4d2d; font-weight:600;">${priceFormatted}</div>
-                <div style="font-size:0.7rem; color:#888; margin-top:5px;">Đã bán 99+</div>
+            <div class="p-info">
+                <div class="p-name" title="${p.productName}">${p.productName}</div>
+                <div style="margin-top:auto;">
+                    <span class="p-price">${priceFormatted}</span>
+                </div>
+                <div class="p-meta" style="display:flex; align-items:center; justify-content:space-between; margin-top:8px;">
+                    <div class="p-rating" style="font-size:0.7rem; color:#ffce3d;">${starsHTML}</div>
+                    <div class="p-sold" style="font-size:0.75rem; color:#9ca3af;">Đã bán 99+</div>
+                </div>
             </div>
-            <style>.product-card:hover { border:1px solid #ee4d2d; box-shadow:0 2px 10px rgba(0,0,0,0.1); transform:translateY(-2px); }</style>
         </div>
     `;
+}
+
+function renderStars(rating) {
+  if (!rating) rating = 0;
+  let html = "";
+  for (let i = 1; i <= 5; i++) {
+    if (i <= rating) html += '<i class="fa-solid fa-star"></i>';
+    else if (i - 0.5 <= rating)
+      html += '<i class="fa-solid fa-star-half-stroke"></i>';
+    else html += '<i class="fa-regular fa-star" style="color:#d5d5d5"></i>';
+  }
+  return html;
 }
 
 function setupNavbarEvents() {
