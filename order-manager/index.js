@@ -142,7 +142,6 @@ window.processOrder = async (orderId, action, btnElement) => {
     btnElement.disabled = true;
 
     // --- GỌI API ---
-    // Backend bắt lỗi rồi nên cứ gọi thẳng
     const res = await callAPI('/auth/admin/orders', 'PUT', {
         orderId: orderId,
         orderStatus: action === 'APPROVE' ? 'PENDING' : 'REJECT'
