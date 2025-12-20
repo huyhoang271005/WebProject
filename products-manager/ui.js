@@ -1,10 +1,12 @@
 // ui.js
 export const UI = {
-    // Cache sẵn các Element để không phải getElementById nhiều lần
+    // Cache sẵn các Element
     els: {
         list: document.getElementById("view-list"),
         form: document.getElementById("view-form"),
-        tableBody: document.getElementById("productTableBody"),
+        
+        tableBody: document.getElementById("productTableBody"), 
+        
         cateSelect: document.getElementById("prodCate"),
         brandSelect: document.getElementById("prodBrand"),
         attrContainer: document.getElementById("attributes-container"),
@@ -16,7 +18,6 @@ export const UI = {
         mainImgInput: document.getElementById("mainImgInput")
     },
 
-    // Hàm chuyển đổi quan trọng nhất
     switchView: (viewName) => {
         if (viewName === 'list') {
             if(UI.els.list) UI.els.list.classList.remove('hidden');
@@ -27,13 +28,14 @@ export const UI = {
         }
     },
 
+    // --- HÀM RENDER ĐÃ ĐƯỢC CHỈNH SỬA ---
     renderTable: (products) => {
         if (!UI.els.tableBody) return;
 
         if (!products || !products.length) {
             UI.els.tableBody.innerHTML = `
                 <tr>
-                    <td colspan="5" style="text-align:center; padding: 20px;">
+                    <td colspan="6" style="text-align:center; padding: 20px;">
                         Không có dữ liệu
                     </td>
                 </tr>`;
@@ -43,31 +45,52 @@ export const UI = {
         const fmt = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' });
 
         UI.els.tableBody.innerHTML = products.map(p => {
-            // Xử lý ảnh (ưu tiên ảnh cloud, sau đó đến ảnh local)
+            // Xử lý ảnh (ưu tiên ảnh cloud/local)
             let imgUrl = "https://via.placeholder.com/50";
             if (p.imageUrl) imgUrl = p.imageUrl;
             else if (p.imageName) imgUrl = `http://localhost:8080/images/${p.imageName}`;
+
+            // Xử lý giá gốc (nếu null hoặc = 0 thì hiển thị gạch ngang)
+            const priceOriginalDisplay = p.priceOriginal 
+                ? fmt.format(p.priceOriginal) 
+                : '-';
+
+            // Đếm số loại
+            const variantCount = p.variants ? p.variants.length : 0;
+            const variantBadge = variantCount > 0 
+                ? `<span class="badge bg-info text-white">${variantCount} loại</span>` 
+                : `<span class="badge bg-secondary">Đơn thể</span>`;
 
             return `
             <tr>
                 <td>
                     <div style="display:flex; align-items:center; gap:10px">
-                        <img src="${imgUrl}" style="width:50px; height:50px; object-fit:cover; border-radius:4px">
+                        <img src="${imgUrl}" style="width:50px; height:50px; object-fit:cover; border-radius:4px; border: 1px solid #dee2e6;">
                         <strong>${p.productName}</strong>
                     </div>
                 </td>
+                
                 <td>
                     ${p.categoryName || '-'} <br>
-                    <small>${p.brandName || '-'}</small>
+                    <small class="text-muted">${p.brandName || '-'}</small>
                 </td>
-                <td style="color:red; font-weight:bold">${fmt.format(p.price)}</td>
-                <td><span class="badge">${p.variants ? p.variants.length : 0} loại</span></td>
+                
+                <td style="color: #999; text-decoration: line-through;">
+                    ${priceOriginalDisplay}
+                </td>
+
+                <td style="color:#d32f2f; font-weight:bold; font-size:1.1em">
+                    ${fmt.format(p.price)}
+                </td>
+
+                <td>${variantBadge}</td>
+
                 <td>
-                    <button onclick="window.editProduct('${p.productId}')" style="margin-right:5px">
-                        <i class="fa-solid fa-pen"></i>
+                    <button onclick="window.editProduct('${p.productId}')" class="btn btn-sm btn-light text-primary" title="Sửa">
+                        <i class="bi bi-pencil-square"></i>
                     </button>
-                    <button onclick="window.deleteProduct('${p.productId}')" style="color:red">
-                        <i class="fa-solid fa-trash"></i>
+                    <button onclick="window.deleteProduct('${p.productId}')" class="btn btn-sm btn-light text-danger" title="Xóa">
+                        <i class="bi bi-trash"></i>
                     </button>
                 </td>
             </tr>
@@ -88,7 +111,6 @@ export const UI = {
         });
     },
 
-    // Hàm hiển thị ảnh preview
     renderMainImage: (src) => {
         if (!UI.els.mainImgPreview) return;
         
@@ -103,7 +125,6 @@ export const UI = {
         }
     },
 
-    // Hàm thêm dòng thuộc tính
     addAttrRow: (nameVal = "", valuesVal = "", onInputCallback, attrId = null, valueIds = [], valueIdMap = {}, allAttributes = []) => {
         if (!UI.els.attrContainer) return;
 
@@ -112,7 +133,6 @@ export const UI = {
         if (attrId) div.dataset.attrId = attrId;
         if (Object.keys(valueIdMap).length) div.dataset.valueIdMap = JSON.stringify(valueIdMap);
         
-        // Tạo options cho select
         const attrOptions = allAttributes.map(attr => 
             `<option value="${attr.attributeId}" ${attrId === attr.attributeId ? 'selected' : ''}>${attr.attributeName}</option>`
         ).join('');
@@ -127,10 +147,11 @@ export const UI = {
             <div style="flex: 1;">
                 <input type="text" class="inp-attr-vals" value="${valuesVal}" placeholder="Nhập giá trị (ngăn cách phẩy)..." style="width:100%; padding:10px;">
             </div>
-            <button type="button" class="btn-remove"><i class="fa-solid fa-xmark"></i></button>
+            <button type="button" class="btn-remove btn btn-outline-danger" style="border:none">
+                <i class="bi bi-x-lg"></i>
+            </button>
         `;
 
-        // Gắn sự kiện
         const selectEl = div.querySelector(".inp-attr-select");
         const inputEl = div.querySelector(".inp-attr-vals");
         
@@ -138,7 +159,6 @@ export const UI = {
             const selectedAttr = allAttributes.find(a => a.attributeId === e.target.value);
             if(selectedAttr) {
                  div.dataset.attrId = selectedAttr.attributeId;
-                 // Nếu thuộc tính có sẵn giá trị định trước (VD: Size S, M, L)
                  if(selectedAttr.attributeValues && selectedAttr.attributeValues.length) {
                      inputEl.value = selectedAttr.attributeValues.map(v => v.attributeValueName).join(", ");
                  }
@@ -166,21 +186,22 @@ export const UI = {
             return `
             <div class="variant-item">
                 <div class="v-img-box" onclick="document.getElementById('v_file_${i}').click()">
-                    ${imgSrc ? `<img src="${imgSrc}" style="width:100%;height:100%;object-fit:cover">` : `<i class="fa-solid fa-camera"></i>`}
+                    ${imgSrc ? `<img src="${imgSrc}" style="width:100%;height:100%;object-fit:cover">` : `<i class="bi bi-camera" style="font-size:20px"></i>`}
                     <input type="file" id="v_file_${i}" hidden onchange="window.handleSelectVariantImage(${i}, this)">
                 </div>
                 <div class="v-name" style="flex:1; font-weight:bold">${v.name}</div>
                 <div class="v-inputs">
                     <input type="number" placeholder="Giá" value="${v.price}" onchange="window.updateVar(${i},'price',this.value)">
                     <input type="number" placeholder="Kho" value="${v.stock}" onchange="window.updateVar(${i},'stock',this.value)">
-                    <button onclick="window.removeVariant(${i})"><i class="fa-solid fa-trash"></i></button>
+                    <button onclick="window.removeVariant(${i})" class="btn btn-sm text-danger"><i class="bi bi-trash"></i></button>
                 </div>
             </div>`;
         }).join('');
     },
 
     resetForm: (isEdit) => {
-        document.getElementById("productForm").reset();
+        const form = document.getElementById("productForm");
+        if(form) form.reset();
         if(UI.els.attrContainer) UI.els.attrContainer.innerHTML = "";
         if(UI.els.variantWrapper) UI.els.variantWrapper.classList.add("hidden");
         if(UI.els.formTitle) UI.els.formTitle.innerText = isEdit ? "Cập nhật sản phẩm" : "Thêm sản phẩm";
