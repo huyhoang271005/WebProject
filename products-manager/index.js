@@ -42,27 +42,27 @@ async function reloadData() {
         // --- XỬ LÝ DỮ LIỆU ĐỂ HIỂN THỊ ---
         let productList = [];
         
-if (productData && productData.productDetailDTO) {
-    const detail = productData.productDetailDTO;
-    
-    const uiItem = {
-        productId: detail.productId,
-        productName: detail.productName,
-        
-        // --- THÊM DÒNG NÀY ---
-        priceOriginal: detail.priceOriginal, // Phải map dòng này thì UI mới có dữ liệu
-        
-        price: detail.price,
-        imageName: detail.imageName,
-        imageUrl: detail.imageUrl,
-        variants: productData.variants || [], 
-        
-        categoryName: cats.find(c => c.categoryId == detail.categoryId)?.categoryName || "-",
-        brandName: brands.find(b => b.brandId == detail.brandId)?.brandName || "-"
-    };
+        if (productData && productData.productDetailDTO) {
+            const detail = productData.productDetailDTO;
+            
+            const uiItem = {
+                productId: detail.productId,
+                productName: detail.productName,
+                
+                // ✅ SỬA: originalPrice thay vì priceOriginal
+                priceOriginal: detail.originalPrice,
+                
+                price: detail.price,
+                imageName: detail.imageName,
+                imageUrl: detail.imageUrl,
+                variants: productData.variants || [], 
+                
+                categoryName: cats.find(c => c.categoryId == detail.categoryId)?.categoryName || "-",
+                brandName: brands.find(b => b.brandId == detail.brandId)?.brandName || "-"
+            };
 
-    productList = [uiItem]; 
-}
+            productList = [uiItem]; 
+        }
 
         state.products = productList;
         UI.renderTable(state.products);
@@ -107,11 +107,10 @@ function setupEventListeners() {
     }
 
     // 3. Nút Thêm thuộc tính
-    const btnAddAttr = document.getElementById("btnAddAttr"); // Nếu HTML chưa có ID này thì bạn cần thêm vào nút "Thêm thuộc tính"
+    const btnAddAttr = document.getElementById("btnAddAttr");
     if (btnAddAttr) {
         btnAddAttr.onclick = () => UI.addAttrRow("", "", handleCalcVariants, null, [], {}, state.attributes);
     }
-    // Nếu trong HTML cũ nút này ko có ID, bro có thể tự tìm bằng class hoặc thêm ID vào file HTML.
 
     // 4. Sự kiện chọn danh mục -> load thương hiệu
     if (UI.els.cateSelect) {
@@ -142,18 +141,6 @@ function setupEventListeners() {
 
 // === CÁC HÀM GLOBAL (để gọi từ onclick HTML) ===
 function setupGlobalFunctions() {
-    // Xóa sản phẩm
-    window.deleteProduct = async (id) => {
-        // Ưu tiên dùng dialog đẹp, fallback về confirm thường
-        if(typeof showDialog === 'function') {
-            await showDialog("question", "Bạn có chắc muốn xóa?", async () => {
-                await performDelete(id);
-            });
-        } else {
-            if(confirm("Bạn có chắc muốn xóa?")) await performDelete(id);
-        }
-    };
-
     // Sửa sản phẩm
     window.editProduct = async (id) => {
         // Lấy lại dữ liệu chi tiết mới nhất từ API
@@ -172,10 +159,18 @@ function setupGlobalFunctions() {
         UI.switchView('form');
         
         // Fill data form cơ bản
-        if(document.getElementById("productName")) document.getElementById("productName").value = detail.productName;
-        if(document.getElementById("description")) document.getElementById("description").value = detail.description || "";
-        if(document.getElementById("price")) document.getElementById("price").value = detail.price;
-        if(document.getElementById("priceOriginal")) document.getElementById("priceOriginal").value = detail.priceOriginal;
+        if(document.getElementById("productName")) 
+            document.getElementById("productName").value = detail.productName;
+        
+        if(document.getElementById("description")) 
+            document.getElementById("description").value = detail.description || "";
+        
+        if(document.getElementById("price")) 
+            document.getElementById("price").value = detail.price;
+        
+        // ✅ SỬA: originalPrice thay vì priceOriginal
+        if(document.getElementById("priceOriginal")) 
+            document.getElementById("priceOriginal").value = detail.originalPrice;
         
         // Fill Select Category & Brand
         if(UI.els.cateSelect) {
@@ -191,7 +186,7 @@ function setupGlobalFunctions() {
             UI.renderMainImage(`/images/${detail.imageName}`);
         }
 
-        // TODO: Logic fill Attributes & Variants nếu cần (phần này giữ nguyên logic cũ hoặc phát triển thêm)
+        // TODO: Logic fill Attributes & Variants nếu cần
     };
 
     // Chọn ảnh variant
