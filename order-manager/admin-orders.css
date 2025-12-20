@@ -1,0 +1,196 @@
+/* Container chính */
+.admin-order-container {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+/* Card đơn hàng */
+.order-card {
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    background: #fff;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    transition: transform 0.2s;
+}
+
+.order-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+/* Header của Card (Mã đơn + Trạng thái) */
+.order-header {
+    padding: 15px 20px;
+    border-bottom: 1px solid #f0f0f0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #fafafa;
+    border-radius: 8px 8px 0 0;
+}
+
+.order-id {
+    font-weight: bold;
+    color: #333;
+}
+
+.order-id-full {
+    color: #999;
+    font-size: 0.85em;
+    font-weight: normal;
+    margin-left: 5px;
+}
+
+/* Badge trạng thái */
+.badge-status {
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.85em;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.status-waiting {
+    background: #fff3cd;
+    color: #856404;
+    border: 1px solid #ffeeba;
+}
+
+.status-pending {
+    background: #d1ecf1;
+    color: #0c5460;
+    border: 1px solid #bee5eb;
+}
+
+.status-other {
+    background: #e2e3e5;
+    color: #383d41;
+}
+
+/* Phần thân chứa danh sách sản phẩm */
+.order-body {
+    padding: 0 20px;
+}
+
+.order-item {
+    display: flex;
+    gap: 15px;
+    padding: 15px 0;
+    border-bottom: 1px dashed #eee;
+}
+
+.order-item:last-child {
+    border-bottom: none;
+}
+
+.item-img {
+    width: 60px;
+    height: 60px;
+    object-fit: cover;
+    border-radius: 6px;
+    border: 1px solid #eee;
+}
+
+.item-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.item-name {
+    font-weight: 600;
+    color: #2c3e50;
+    font-size: 1rem;
+}
+
+.item-variant {
+    font-size: 0.9em;
+    color: #7f8c8d;
+    margin-top: 4px;
+}
+
+.item-quantity-price {
+    text-align: right;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.item-calc {
+    color: #7f8c8d;
+    font-size: 0.9em;
+}
+
+.item-total {
+    font-weight: bold;
+    color: #2c3e50;
+}
+
+/* Footer (Tổng tiền + Nút bấm) */
+.order-footer {
+    padding: 15px 20px;
+    border-top: 1px solid #f0f0f0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #fff;
+    border-radius: 0 0 8px 8px;
+}
+
+.total-money-label {
+    font-weight: 600;
+    color: #333;
+}
+
+.total-money-value {
+    color: #d63031;
+    font-size: 1.2em;
+    font-weight: bold;
+    margin-left: 5px;
+}
+
+/* Các nút bấm */
+.action-buttons {
+    display: flex;
+    gap: 10px;
+}
+
+.btn-action {
+    padding: 8px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: background 0.2s;
+}
+
+.btn-approve {
+    background: #27ae60;
+    color: white;
+}
+
+.btn-approve:hover {
+    background: #219150;
+}
+
+.btn-reject {
+    background: #fff;
+    color: #e74c3c;
+    border: 1px solid #e74c3c;
+}
+
+.btn-reject:hover {
+    background: #fcebeb;
+}
+
+/* Loading Spinner */
+#loading-spinner {
+    text-align: center;
+    padding: 30px;
+    color: #666;
+    font-style: italic;
+    display: none; /* Mặc định ẩn */
+}
