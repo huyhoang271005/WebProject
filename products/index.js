@@ -2,7 +2,6 @@ import { loadNavbar } from "../navbar/navbar.js";
 import { callAPI } from "../public/api.js";
 import { toggleLoading } from "../public/loader.js";
 
-// [QUAN TRỌNG] Tên biến ở trang Products là categoriesData
 let categoriesData = [];
 let currentFilter = {
   keyword: null,
@@ -33,11 +32,10 @@ document.addEventListener("DOMContentLoaded", async () => {
   renderSidebarCategories();
   setupEvents();
   await fetchProducts();
-
   toggleLoading(false);
 });
 
-// [FIX] API danh mục mới: /categories (Không Auth)
+// [API] LẤY DANH MỤC: /categories (Public)
 async function fetchCategories() {
   try {
     const res = await callAPI("/categories", "GET", null);
@@ -54,6 +52,7 @@ async function fetchCategories() {
   }
 }
 
+// [API] LẤY SẢN PHẨM: /auth/products
 async function fetchProducts() {
   const grid = document.getElementById("productGrid");
   const pagination = document.getElementById("pagination");
@@ -86,14 +85,13 @@ async function fetchProducts() {
 
     if (res && res.success) {
       const list = res.data?.listData || [];
-      if (res.data?.totalPages !== undefined) {
+      if (res.data?.totalPages !== undefined)
         currentFilter.totalPages = res.data.totalPages;
-      } else {
+      else
         currentFilter.totalPages =
           list.length < currentFilter.size
             ? currentFilter.page + 1
             : currentFilter.page + 2;
-      }
 
       if (list.length > 0) {
         grid.innerHTML = list.map((p) => createProductHTML(p)).join("");
@@ -188,10 +186,8 @@ function renderPagination() {
   }" onclick="gotoPage(${
     curr - 1
   })"><i class="fa-solid fa-chevron-left"></i></div>`;
-
   let start = Math.max(0, curr - 2);
   let end = Math.min(total - 1, curr + 2);
-
   if (start > 0) {
     html += `<div class="page-btn" onclick="gotoPage(0)">1</div>`;
     if (start > 1) html += `<div class="page-dots">...</div>`;
@@ -207,7 +203,6 @@ function renderPagination() {
       total - 1
     })">${total}</div>`;
   }
-
   html += `<div class="page-btn ${
     curr >= total - 1 ? "disabled" : ""
   }" onclick="gotoPage(${
@@ -231,38 +226,33 @@ window.gotoPage = (page) => {
 function renderSidebarCategories() {
   const list = document.getElementById("catFilterList");
   if (!list) return;
-
   let html = `<li class="cat-item ${
     !currentFilter.categoryId ? "active" : ""
   }" onclick="changeCategory(null, this)"><i class="fa-solid fa-border-all"></i> Tất cả</li>`;
   html += categoriesData
     .map(
-      (c) => `
-        <li class="cat-item ${
+      (c) =>
+        `<li class="cat-item ${
           currentFilter.categoryId === c.id ? "active" : ""
-        }" onclick="changeCategory('${c.id}', this)">
-            <i class="fa-solid fa-caret-right"></i> ${c.name}
-        </li>
-    `
+        }" onclick="changeCategory('${
+          c.id
+        }', this)"><i class="fa-solid fa-caret-right"></i> ${c.name}</li>`
     )
     .join("");
   html += `<li class="cat-item ${
     currentFilter.categoryId === "other" ? "active" : ""
   }" onclick="changeCategory('other', this)"><i class="fa-solid fa-ellipsis"></i> Khác</li>`;
-
   list.innerHTML = html;
 }
 
 function setupEvents() {
   const navSearch = document.getElementById("navbarSearchInput");
   const sidebarSearch = document.getElementById("sidebarSearch");
-
   const doSearch = (val) => {
     currentFilter.keyword = val.trim();
     currentFilter.page = 0;
     fetchProducts();
   };
-
   if (navSearch)
     navSearch.onkeypress = (e) => {
       if (e.key === "Enter") doSearch(navSearch.value);
@@ -282,4 +272,14 @@ window.changeCategory = (catId, element) => {
   currentFilter.categoryId = catId;
   currentFilter.page = 0;
   fetchProducts();
+  // [FIX] Nếu đang ở mobile thì tự đóng sidebar khi chọn xong
+  if (window.innerWidth < 992) window.toggleSidebar();
+};
+
+// [FIX] Hàm bật tắt Sidebar Mobile
+window.toggleSidebar = () => {
+  const sidebar = document.getElementById("mainSidebar");
+  const overlay = document.getElementById("sidebarOverlay");
+  if (sidebar) sidebar.classList.toggle("active");
+  if (overlay) overlay.classList.toggle("active");
 };

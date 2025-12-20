@@ -33,7 +33,7 @@ jobs:
           elif [ "$BRANCH" = "tung" ]; then
             echo "folders=session home navbar products notification" >> $GITHUB_OUTPUT
           elif [ "$BRANCH" = "thanh" ]; then
-            echo "folders= catalog-management cart" >> $GITHUB_OUTPUT
+            echo "folders= catalog-management cart order-manager" >> $GITHUB_OUTPUT
           else
             echo "folders=" >> $GITHUB_OUTPUT
           fi

@@ -57,7 +57,16 @@ async function renderHomeSections() {
   if (!container) return;
   container.innerHTML = "";
 
-  // API lấy sản phẩm (Giữ nguyên /auth/products hoặc đổi thành /products tùy backend)
+  // Thêm CSS Responsive trực tiếp vào JS để khỏi sửa file CSS
+  const style = document.createElement("style");
+  style.innerHTML = `
+      .home-product-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; }
+      @media (max-width: 1200px) { .home-product-grid { grid-template-columns: repeat(4, 1fr); } }
+      @media (max-width: 768px) { .home-product-grid { grid-template-columns: repeat(2, 1fr); } } /* Mobile: 2 cột */
+  `;
+  document.head.appendChild(style);
+
+  // Gọi API
   const res = await callAPI("/auth/products?page=0&size=20", "GET", null);
 
   if (res && res.success) {
@@ -67,14 +76,15 @@ async function renderHomeSections() {
       container.insertAdjacentHTML(
         "beforeend",
         `
-              <div class="category-section" style="width:100%; background:white; padding:20px; border-radius:4px; margin-bottom:20px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+              <div class="category-section" style="width:100%; background:white; padding:15px; border-radius:4px; margin-bottom:20px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
                   <div class="section-header" style="border-bottom:1px solid #eee; margin-bottom:15px; padding-bottom:10px; display:flex; justify-content:space-between; align-items:center;">
-                      <div class="section-title" style="color:#ee4d2d; font-weight:700; text-transform:uppercase; font-size:1.1rem;">
+                      <div class="section-title" style="color:#ee4d2d; font-weight:700; text-transform:uppercase; font-size:1rem;">
                         <i class="fa-solid fa-fire" style="color:#ee4d2d; margin-right:5px;"></i> GỢI Ý HÔM NAY
                       </div>
-                      <a href="../products/index.html" style="color:#ee4d2d; text-decoration:none; font-size:0.9rem;">Xem tất cả ></a>
+                      <a href="../products/index.html" style="color:#ee4d2d; text-decoration:none; font-size:0.85rem;">Xem tất cả ></a>
                   </div>
-                  <div class="product-grid" style="display:grid; grid-template-columns: repeat(6, 1fr); gap:10px;">
+                  
+                  <div class="home-product-grid">
                       ${list.map((p) => createProductHTML(p)).join("")}
                   </div>
               </div>

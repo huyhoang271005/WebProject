@@ -47,6 +47,24 @@ const navbarHTML = `
         .empty-noti { padding: 30px; text-align: center; color: #999; font-style: italic; }
         .noti-loading { text-align: center; padding: 10px; color: #10B981; font-size: 0.8rem; display: none; }
         .nb-admin-only { display: none !important; }
+        @media (max-width: 768px) {
+        .navbar-component { padding: 0 10px; height: 60px; }
+        .nb-brand { font-size: 0; min-width: auto; } /* Ẩn chữ Tạp Hóa Xanh, giữ Logo */
+        .nb-brand i { font-size: 1.5rem; color: #10B981; } /* Hiện icon to lên */
+    
+        #nbCenterSlot { margin: 0 10px; }
+        #nbRightSlot { gap: 10px; }
+    
+        .nb-user-menu { margin-left: 5px; padding-left: 5px; }
+        .nb-avatar { width: 32px; height: 32px; }
+        .nb-username { display: none; } /* Ẩn tên user cho gọn */
+        
+        /* Ẩn chữ 'Danh mục' nếu có */
+        .nav-cat-btn span { display: none; } 
+        .nav-cat-btn { padding: 0 5px; }
+        
+        /* Ô tìm kiếm nhỏ lại */
+        .nav-search-input { padding-left: 10px; font-size: 0.8rem; }
     </style>
 
     <nav class="navbar-component">
