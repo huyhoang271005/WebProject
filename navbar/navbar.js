@@ -13,7 +13,7 @@ let notiState = {
   isLoadedFirstTime: false,
 };
 
-// CSS + HTML Navbar (Giữ nguyên giao diện chuẩn)
+// CSS + HTML Navbar (Giữ nguyên)
 const navbarHTML = `
     <style>
         .navbar-component { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); height: 70px; width: 100%; position: fixed; top: 0; left: 0; z-index: 1000; display: flex; align-items: center; justify-content: space-between; padding: 0 30px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
@@ -79,14 +79,12 @@ const navbarHTML = `
                     <a href="../profile"><i class="fa-regular fa-id-card"></i> Trang cá nhân</a>
                     <a href="../session"><i class="fa-solid fa-laptop-medical"></i> Quản lý phiên</a>
                     <a href="../contact"><i class="fa-solid fa-map-location-dot"></i> Địa chỉ</a>
-                    
                     <div class="nb-admin-only" style="border-top: 1px solid #eee; margin-top:5px; padding-top:5px;"></div>
                     <a href="../products-manager" class="nb-admin-only"><i class="fa-solid fa-box-open"></i> Quản lí sản phẩm</a>
                     <a href="../catalog-management" class="nb-admin-only"><i class="fa-solid fa-layer-group"></i> Quản lí danh mục</a>
                     <a href="../users" class="nb-admin-only"><i class="fa-solid fa-users"></i> Quản lí người dùng</a>
                     <a href="../role-permission" class="nb-admin-only"><i class="fa-solid fa-user-shield"></i> Phân quyền</a>
                     <a href="../notification" class="nb-admin-only"></i> Thông báo</a>
-                    
                     <button id="nbLogout" style="color:#EF4444; border-top: 1px solid #eee; margin-top:5px;">
                         <i class="fa-solid fa-right-from-bracket"></i> Đăng xuất
                     </button>
@@ -144,7 +142,7 @@ export async function loadNavbar(options = {}) {
     if (userData.username && userData.username !== "Khách") {
       await connectSse("/sse");
       setupSSERealtime();
-      window.updateCartCount(); // Chỉ load số giỏ hàng
+      window.updateCartCount();
     } else {
       document.getElementById("nbNotiList").innerHTML =
         '<div class="empty-noti">Đăng nhập để xem thông báo</div>';
@@ -155,7 +153,6 @@ export async function loadNavbar(options = {}) {
   setupEvents();
 }
 
-// --- SSE: REALTIME ---
 function setupSSERealtime() {
   subscribeTopic("notification", (data) => {
     const newNoti = data;
@@ -173,10 +170,8 @@ function setupSSERealtime() {
   });
 }
 
-// --- CART: CẬP NHẬT SỐ LƯỢNG ---
 window.updateCartCount = async () => {
   try {
-    // Dùng callAPI chuẩn, không hardcode localhost
     const res = await callAPI("/auth/carts", "GET");
     const badge = document.getElementById("cartBadge");
     if (res && res.success && Array.isArray(res.data) && res.data.length > 0) {
@@ -190,7 +185,6 @@ window.updateCartCount = async () => {
   }
 };
 
-// --- NOTIFICATION: LAZY LOAD ---
 async function fetchNotifications() {
   if (notiState.isLoading || !notiState.hasMore) return;
   notiState.isLoading = true;
@@ -258,14 +252,49 @@ function setupEvents() {
     });
   }
 
+  // [FIX] SỰ KIỆN NÚT XÓA TẤT CẢ
   const clearAllBtn = document.getElementById("btnClearAllNoti");
   if (clearAllBtn) {
     clearAllBtn.onclick = async (e) => {
       e.stopPropagation();
-      if (!confirm("Xóa tất cả thông báo?")) return;
-      // await callAPI("/auth/notifications/delete-all", "POST");
-      document.getElementById("nbNotiList").innerHTML =
-        '<div class="empty-noti">Không có thông báo nào</div>';
+      if (!confirm("Bạn có chắc muốn xóa HẾT thông báo ĐANG HIỂN THỊ không?"))
+        return;
+
+      // 1. Quét toàn bộ thông báo đang có trên DOM
+      const notiItems = document.querySelectorAll(".noti-item");
+      if (notiItems.length === 0) return;
+
+      // 2. Lấy danh sách ID
+      const idsToDelete = [];
+      notiItems.forEach((item) => {
+        // ID DOM có dạng: "noti-XXXXX" -> Cắt bỏ "noti-" lấy XXXXX
+        const domId = item.id;
+        if (domId && domId.startsWith("noti-")) {
+          idsToDelete.push(domId.replace("noti-", ""));
+        }
+      });
+
+      if (idsToDelete.length === 0) return;
+
+      console.log("Xóa tất cả các ID:", idsToDelete);
+
+      // 3. Gọi API xóa (Gửi mảng ID)
+      const res = await callAPI(
+        "/auth/notifications/delete",
+        "POST",
+        idsToDelete
+      );
+
+      if (res && res.success) {
+        document.getElementById("nbNotiList").innerHTML =
+          '<div class="empty-noti">Không có thông báo nào</div>';
+        // Reset lazy load để lần sau mở lại tải mới
+        notiState.page = 0;
+        notiState.hasMore = true;
+        notiState.isLoadedFirstTime = false;
+      } else {
+        alert("Lỗi xóa tất cả: " + (res?.message || "Lỗi server"));
+      }
     };
   }
 
@@ -306,7 +335,7 @@ function createNotiItemHTML(item, isNew = false) {
     ? new Date(item.createdTime).toLocaleString("vi-VN")
     : "";
 
-  // [FIX QUAN TRỌNG] Lấy đúng tên trường ID (userNotificationId)
+  // [FIX] Lấy đúng tên ID: userNotificationId
   const id = item.userNotificationId || item.id || item.notificationId;
 
   return `
@@ -321,20 +350,15 @@ function createNotiItemHTML(item, isNew = false) {
     `;
 }
 
-// [FIX CHUẨN] Xóa thông báo dùng callAPI (đã bỏ hardcode)
+// [FIX] Hàm xóa đơn lẻ (Dùng callAPI chuẩn)
 window.deleteNoti = async (id, e) => {
   e.stopPropagation();
-
-  // Debug
-  if (!id || id === "undefined") {
-    console.error("Lỗi: ID bị undefined");
-    return;
-  }
+  if (!id || id === "undefined") return;
 
   const item = document.getElementById(`noti-${id}`);
   if (item) item.remove();
 
-  // Gọi API thông qua hàm chung (callAPI sẽ tự ghép Base URL)
+  // Gửi mảng chứa 1 ID
   await callAPI("/auth/notifications/delete", "POST", [id]);
 
   if (document.getElementById("nbNotiList").children.length === 0)
