@@ -2,11 +2,13 @@ import { loadNavbar } from "../navbar/navbar.js";
 import { callAPI } from "../public/api.js";
 import { toggleLoading } from "../public/loader.js";
 
+// [QUAN TRỌNG] Tên biến ở trang Home là apiCategories
 let apiCategories = [];
 
 document.addEventListener("DOMContentLoaded", async () => {
   toggleLoading(true);
   try {
+    // 1. Load Navbar
     await loadNavbar({
       centerHTML: `
         <div class="nav-cat-btn" id="catBtn">
@@ -19,7 +21,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         </div>`,
     });
 
-    // [CHỐT API] Dùng /auth/categories (số nhiều)
+    // 2. Gọi các API cần thiết
     await fetchCategories();
     renderNavCategories();
     setupNavbarEvents();
@@ -31,21 +33,22 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 });
 
+// [FIX] API danh mục mới: /categories (Không Auth)
 async function fetchCategories() {
   try {
     const res = await callAPI("/categories", "GET", null);
-
     if (res && res.success && Array.isArray(res.data)) {
-      categoriesData = res.data;
+      // [FIX LỖI] Gán đúng vào biến apiCategories
+      apiCategories = res.data;
     } else {
-      // Fallback
-      categoriesData = [
+      // Fallback dữ liệu giả nếu lỗi
+      apiCategories = [
         { id: "an-vat", name: "Đồ ăn vặt" },
         { id: "nuoc-ngot", name: "Nước giải khát" },
       ];
     }
   } catch (e) {
-    console.error("Lỗi danh mục:", e);
+    console.error("Lỗi lấy danh mục:", e);
   }
 }
 
@@ -53,6 +56,8 @@ async function renderHomeSections() {
   const container = document.getElementById("homeContainer");
   if (!container) return;
   container.innerHTML = "";
+
+  // API lấy sản phẩm (Giữ nguyên /auth/products hoặc đổi thành /products tùy backend)
   const res = await callAPI("/auth/products?page=0&size=20", "GET", null);
 
   if (res && res.success) {
@@ -178,6 +183,7 @@ function renderNavCategories() {
       '<div style="padding:15px; text-align:center;">Đang tải...</div>';
     return;
   }
+  // [FIX] Link sang trang products
   el.innerHTML = apiCategories
     .map(
       (c) =>
