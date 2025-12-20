@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý đơn hàng</title>
+    <link rel="stylesheet" href="admin-orders.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="admin-order-container">
+        <h2>Quản lý duyệt đơn hàng</h2>
+        
+        <div id="order-list-container" class="order-list">
+            </div>
+
+        <div id="loading-spinner">
+            <i class="fas fa-spinner fa-spin"></i> Đang tải thêm đơn hàng...
+        </div>
+    </div>
+
+    <script type="module" src="index.js"></script>
+    <script type="module">
+        import { loadNavbar } from '../navbar/navbar.js';
+        loadNavbar({}); 
+    </script>
+</body>
+</html>
