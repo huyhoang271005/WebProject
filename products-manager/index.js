@@ -228,8 +228,31 @@ async function handleSave(e) {
     };
 
     // 4. Build Attributes (Định nghĩa thuộc tính cho sản phẩm)
+    // Đồng thời tạo map để lấy attributeValueId sau
+    const attrValueIdMap = {}; // Key: "attributeId-valueName", Value: attributeValueId
+    
     currentAttrs.forEach(attr => {
-        const attrValues = attr.values.map(v => ({ attributeValueName: v }));
+        const attrValues = attr.values.map(v => {
+            const existingValueId = attr.valueIdMap[v];
+            
+            // Nếu đã có ID sẵn (giá trị cũ từ DB)
+            if (existingValueId) {
+                attrValueIdMap[`${attr.id}-${v}`] = existingValueId;
+                return { 
+                    attributeValueId: existingValueId,
+                    attributeValueName: v 
+                };
+            }
+            
+            // Nếu là giá trị mới (user tự nhập), tạo temporary ID
+            const tempId = `temp_${Date.now()}_${Math.random()}`;
+            attrValueIdMap[`${attr.id}-${v}`] = tempId;
+            return { 
+                attributeValueName: v,
+                attributeValueId: tempId  // Backend sẽ tạo mới dựa vào tên
+            };
+        });
+        
         payload.attributes.push({ 
             attributeName: attr.name, 
             attributeValues: attrValues,
@@ -237,7 +260,7 @@ async function handleSave(e) {
         });
     });
 
-    // 5. Build Variants (Danh sách biến thể) - ĐÃ FIX
+    // 5. Build Variants (Danh sách biến thể)
     state.variants.forEach((v, idx) => {
         const imgKey = v.rawFile ? `image_variant_${idx}` : null;
         
@@ -250,7 +273,8 @@ async function handleSave(e) {
             }
             
             const attrId = attr.id;
-            const valueId = attr.valueIdMap[val] || null;
+            const mapKey = `${attrId}-${val}`;
+            const valueId = attrValueIdMap[mapKey];
             
             return {
                 attributeId: attrId,
@@ -258,7 +282,7 @@ async function handleSave(e) {
                 attributeName: attr.name,
                 attributeValueName: val
             };
-        }).filter(Boolean); // Loại bỏ các giá trị null
+        }).filter(Boolean);
 
         payload.variants.push({
             price: v.price,
