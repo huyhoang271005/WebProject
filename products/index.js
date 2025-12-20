@@ -44,11 +44,12 @@ document.addEventListener("DOMContentLoaded", async () => {
 // --- API: LẤY DANH MỤC (SỐ NHIỀU) ---
 async function fetchCategories() {
   try {
-    const res = await callAPI("/auth/categories", "GET", null);
+    const res = await callAPI("/categories", "GET", null);
+
     if (res && res.success && Array.isArray(res.data)) {
       categoriesData = res.data;
     } else {
-      // Dữ liệu giả nếu API tạch
+      // Fallback
       categoriesData = [
         { id: "an-vat", name: "Đồ ăn vặt" },
         { id: "nuoc-ngot", name: "Nước giải khát" },

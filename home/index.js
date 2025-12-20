@@ -33,17 +33,19 @@ document.addEventListener("DOMContentLoaded", async () => {
 
 async function fetchCategories() {
   try {
-    const res = await callAPI("/auth/categories", "GET", null);
+    const res = await callAPI("/categories", "GET", null);
+
     if (res && res.success && Array.isArray(res.data)) {
-      apiCategories = res.data;
+      categoriesData = res.data;
     } else {
-      apiCategories = [
+      // Fallback
+      categoriesData = [
         { id: "an-vat", name: "Đồ ăn vặt" },
         { id: "nuoc-ngot", name: "Nước giải khát" },
       ];
     }
   } catch (e) {
-    console.error(e);
+    console.error("Lỗi danh mục:", e);
   }
 }
 
