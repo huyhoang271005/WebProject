@@ -2,40 +2,39 @@
 export const UI = {
     // Cache sẵn các Element
     els: {
-        list: document.getElementById("view-list"),
-        form: document.getElementById("view-form"),
+        list: document.getElementById("listView"),        // ✅ SỬA
+        form: document.getElementById("createView"),      // ✅ SỬA
         
         tableBody: document.getElementById("productTableBody"), 
         
-        cateSelect: document.getElementById("prodCate"),
-        brandSelect: document.getElementById("prodBrand"),
-        attrContainer: document.getElementById("attributes-container"),
-        variantWrapper: document.getElementById("variants-wrapper"),
-        variantList: document.getElementById("variant-list"),
-        formTitle: document.getElementById("formTitle"),
-        mainImgPreview: document.getElementById("mainImgPreview"),
-        mainImgPlaceholder: document.getElementById("mainImgPlaceholder"),
-        mainImgInput: document.getElementById("mainImgInput")
+        cateSelect: document.getElementById("categoryId"),     // ✅ SỬA
+        brandSelect: document.getElementById("brandId"),       // ✅ SỬA
+        attrContainer: document.getElementById("attributesContainer"), // ✅ SỬA
+        variantWrapper: document.getElementById("variantsContainer"),  // ✅ SỬA
+        variantList: document.getElementById("variantsContainer"),     // ✅ SỬA
+        formTitle: document.querySelector("#createView h2"),  // ✅ SỬA
+        mainImgPreview: document.getElementById("mainImagePreview"),
+        mainImgPlaceholder: null,
+        mainImgInput: document.getElementById("mainImage")    // ✅ SỬA
     },
 
     switchView: (viewName) => {
         if (viewName === 'list') {
-            if(UI.els.list) UI.els.list.classList.remove('hidden');
-            if(UI.els.form) UI.els.form.classList.add('hidden');
+            if(UI.els.list) UI.els.list.classList.remove('d-none');
+            if(UI.els.form) UI.els.form.classList.add('d-none');
         } else {
-            if(UI.els.list) UI.els.list.classList.add('hidden');
-            if(UI.els.form) UI.els.form.classList.remove('hidden');
+            if(UI.els.list) UI.els.list.classList.add('d-none');
+            if(UI.els.form) UI.els.form.classList.remove('d-none');
         }
     },
 
-    // --- HÀM RENDER ĐÃ ĐƯỢC CHỈNH SỬA ---
     renderTable: (products) => {
         if (!UI.els.tableBody) return;
 
         if (!products || !products.length) {
             UI.els.tableBody.innerHTML = `
                 <tr>
-                    <td colspan="6" style="text-align:center; padding: 20px;">
+                    <td colspan="6" class="text-center py-5 text-muted">
                         Không có dữ liệu
                     </td>
                 </tr>`;
@@ -45,13 +44,13 @@ export const UI = {
         const fmt = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' });
 
         UI.els.tableBody.innerHTML = products.map(p => {
-            // Xử lý ảnh (ưu tiên ảnh cloud/local)
+            // Xử lý ảnh
             let imgUrl = "https://via.placeholder.com/50";
             if (p.imageUrl) imgUrl = p.imageUrl;
-            else if (p.imageName) imgUrl = `http://localhost:8080/images/${p.imageName}`;
+            else if (p.imageName) imgUrl = `/images/${p.imageName}`;
 
-            // Xử lý giá gốc (nếu null hoặc = 0 thì hiển thị gạch ngang)
-            const priceOriginalDisplay = p.priceOriginal 
+            // Xử lý giá gốc
+            const priceOriginalDisplay = (p.priceOriginal && p.priceOriginal > 0)
                 ? fmt.format(p.priceOriginal) 
                 : '-';
 
@@ -63,8 +62,8 @@ export const UI = {
 
             return `
             <tr>
-                <td>
-                    <div style="display:flex; align-items:center; gap:10px">
+                <td class="ps-4">
+                    <div class="d-flex align-items-center gap-3">
                         <img src="${imgUrl}" style="width:50px; height:50px; object-fit:cover; border-radius:4px; border: 1px solid #dee2e6;">
                         <strong>${p.productName}</strong>
                     </div>
@@ -85,11 +84,11 @@ export const UI = {
 
                 <td>${variantBadge}</td>
 
-                <td>
-                    <button onclick="window.editProduct('${p.productId}')" class="btn btn-sm btn-light text-primary" title="Sửa">
+                <td class="text-end pe-4">
+                    <button onclick="window.editProduct('${p.productId}')" class="btn btn-sm btn-outline-primary" title="Sửa">
                         <i class="bi bi-pencil-square"></i>
                     </button>
-                    <button onclick="window.deleteProduct('${p.productId}')" class="btn btn-sm btn-light text-danger" title="Xóa">
+                    <button onclick="window.deleteProduct('${p.productId}')" class="btn btn-sm btn-outline-danger" title="Xóa">
                         <i class="bi bi-trash"></i>
                     </button>
                 </td>
@@ -112,16 +111,13 @@ export const UI = {
     },
 
     renderMainImage: (src) => {
-        if (!UI.els.mainImgPreview) return;
+        const preview = document.getElementById("mainImagePreview");
+        if (!preview) return;
         
         if (src) {
-            UI.els.mainImgPreview.src = src;
-            UI.els.mainImgPreview.classList.remove("hidden");
-            if(UI.els.mainImgPlaceholder) UI.els.mainImgPlaceholder.classList.add("hidden");
+            preview.innerHTML = `<img src="${src}" class="img-fluid rounded" style="max-height: 300px;">`;
         } else {
-            UI.els.mainImgPreview.src = "";
-            UI.els.mainImgPreview.classList.add("hidden");
-            if(UI.els.mainImgPlaceholder) UI.els.mainImgPlaceholder.classList.remove("hidden");
+            preview.innerHTML = `<p class="text-muted">Chưa chọn ảnh</p>`;
         }
     },
 
@@ -129,7 +125,7 @@ export const UI = {
         if (!UI.els.attrContainer) return;
 
         const div = document.createElement("div");
-        div.className = "attr-row";
+        div.className = "attr-row mb-3 p-3 border rounded bg-light";
         if (attrId) div.dataset.attrId = attrId;
         if (Object.keys(valueIdMap).length) div.dataset.valueIdMap = JSON.stringify(valueIdMap);
         
@@ -138,18 +134,22 @@ export const UI = {
         ).join('');
 
         div.innerHTML = `
-            <div style="flex: 0 0 200px;">
-                <select class="inp-attr-select" style="width:100%; padding:10px;">
-                    <option value="">-- Chọn thuộc tính --</option>
-                    ${attrOptions}
-                </select>
+            <div class="row g-2">
+                <div class="col-md-4">
+                    <select class="inp-attr-select form-select">
+                        <option value="">-- Chọn thuộc tính --</option>
+                        ${attrOptions}
+                    </select>
+                </div>
+                <div class="col-md-7">
+                    <input type="text" class="inp-attr-vals form-control" value="${valuesVal}" placeholder="Nhập giá trị (ngăn cách phẩy)...">
+                </div>
+                <div class="col-md-1">
+                    <button type="button" class="btn-remove btn btn-danger w-100">
+                        <i class="bi bi-x-lg"></i>
+                    </button>
+                </div>
             </div>
-            <div style="flex: 1;">
-                <input type="text" class="inp-attr-vals" value="${valuesVal}" placeholder="Nhập giá trị (ngăn cách phẩy)..." style="width:100%; padding:10px;">
-            </div>
-            <button type="button" class="btn-remove btn btn-outline-danger" style="border:none">
-                <i class="bi bi-x-lg"></i>
-            </button>
         `;
 
         const selectEl = div.querySelector(".inp-attr-select");
@@ -173,38 +173,58 @@ export const UI = {
     },
 
     renderVariants: (variants) => {
-        if (!UI.els.variantWrapper || !UI.els.variantList) return;
+        if (!UI.els.variantWrapper) return;
 
         if (!variants.length) {
-            UI.els.variantWrapper.classList.add("hidden");
+            UI.els.variantWrapper.innerHTML = "";
             return;
         }
-        UI.els.variantWrapper.classList.remove("hidden");
         
-        UI.els.variantList.innerHTML = variants.map((v, i) => {
-            const imgSrc = v.previewUrl ? v.previewUrl : (v.imageUrl || "");
-            return `
-            <div class="variant-item">
-                <div class="v-img-box" onclick="document.getElementById('v_file_${i}').click()">
-                    ${imgSrc ? `<img src="${imgSrc}" style="width:100%;height:100%;object-fit:cover">` : `<i class="bi bi-camera" style="font-size:20px"></i>`}
-                    <input type="file" id="v_file_${i}" hidden onchange="window.handleSelectVariantImage(${i}, this)">
+        const html = `
+            <div class="card shadow-sm mb-4">
+                <div class="card-body">
+                    <h5 class="card-title text-primary mb-3">Danh sách phân loại</h5>
+                    <div id="variant-list">
+                        ${variants.map((v, i) => {
+                            const imgSrc = v.previewUrl ? v.previewUrl : (v.imageUrl || "");
+                            return `
+                            <div class="variant-item border rounded p-3 mb-3 bg-light">
+                                <div class="row align-items-center">
+                                    <div class="col-auto">
+                                        <div class="v-img-box border rounded" style="width:60px; height:60px; cursor:pointer; overflow:hidden; display:flex; align-items:center; justify-content:center;" onclick="document.getElementById('v_file_${i}').click()">
+                                            ${imgSrc ? `<img src="${imgSrc}" style="width:100%;height:100%;object-fit:cover">` : `<i class="bi bi-camera" style="font-size:20px"></i>`}
+                                            <input type="file" id="v_file_${i}" hidden onchange="window.handleSelectVariantImage(${i}, this)" accept="image/*">
+                                        </div>
+                                    </div>
+                                    <div class="col">
+                                        <strong>${v.name}</strong>
+                                    </div>
+                                    <div class="col-auto">
+                                        <div class="d-flex gap-2">
+                                            <input type="number" class="form-control form-control-sm" style="width:100px" placeholder="Giá" value="${v.price}" onchange="window.updateVar(${i},'price',this.value)">
+                                            <input type="number" class="form-control form-control-sm" style="width:100px" placeholder="Kho" value="${v.stock}" onchange="window.updateVar(${i},'stock',this.value)">
+                                            <button onclick="window.removeVariant(${i})" class="btn btn-sm btn-danger">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>`;
+                        }).join('')}
+                    </div>
                 </div>
-                <div class="v-name" style="flex:1; font-weight:bold">${v.name}</div>
-                <div class="v-inputs">
-                    <input type="number" placeholder="Giá" value="${v.price}" onchange="window.updateVar(${i},'price',this.value)">
-                    <input type="number" placeholder="Kho" value="${v.stock}" onchange="window.updateVar(${i},'stock',this.value)">
-                    <button onclick="window.removeVariant(${i})" class="btn btn-sm text-danger"><i class="bi bi-trash"></i></button>
-                </div>
-            </div>`;
-        }).join('');
+            </div>
+        `;
+        
+        UI.els.variantWrapper.innerHTML = html;
     },
 
     resetForm: (isEdit) => {
         const form = document.getElementById("productForm");
         if(form) form.reset();
         if(UI.els.attrContainer) UI.els.attrContainer.innerHTML = "";
-        if(UI.els.variantWrapper) UI.els.variantWrapper.classList.add("hidden");
-        if(UI.els.formTitle) UI.els.formTitle.innerText = isEdit ? "Cập nhật sản phẩm" : "Thêm sản phẩm";
+        if(UI.els.variantWrapper) UI.els.variantWrapper.innerHTML = "";
+        if(UI.els.formTitle) UI.els.formTitle.innerText = isEdit ? "Cập nhật sản phẩm" : "Thêm Sản Phẩm Mới";
         UI.renderMainImage(null);
     }
 };
