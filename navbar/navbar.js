@@ -114,9 +114,10 @@ const navbarHTML = `
                     
                     <div class="nb-admin-only" style="border-top: 1px solid #eee; margin-top:5px; padding-top:5px;"></div>
                     <a href="../products-manager" class="nb-admin-only"><i class="fa-solid fa-box-open"></i> Quản lí sản phẩm</a>
-                    <a href="../categories-manager" class="nb-admin-only"><i class="fa-solid fa-layer-group"></i> Quản lí danh mục</a>
-                    <a href="../users-manager" class="nb-admin-only"><i class="fa-solid fa-users"></i> Quản lí người dùng</a>
-                    <a href="../admin" class="nb-admin-only"><i class="fa-solid fa-user-shield"></i> Trang quản trị</a>
+                    <a href="../catalog-management" class="nb-admin-only"><i class="fa-solid fa-layer-group"></i> Quản lí danh mục</a>
+                    <a href="../users" class="nb-admin-only"><i class="fa-solid fa-users"></i> Quản lí người dùng</a>
+                    <a href="../role-permission" class="nb-admin-only"><i class="fa-solid fa-user-shield"></i> Phân quyền</a>
+                    <a href="../notification" class="nb-admin-only"></i> Thông báo</a>
                     
                     <button id="nbLogout" style="color:#EF4444; border-top: 1px solid #eee; margin-top:5px;">
                         <i class="fa-solid fa-right-from-bracket"></i> Đăng xuất
