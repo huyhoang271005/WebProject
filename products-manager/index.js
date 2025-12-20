@@ -182,21 +182,23 @@ function handleCalcVariants() {
     UI.renderVariants(state.variants);
 }
 
-// === SAVE (Có fix lỗi Logic) ===
+// Thay thế hàm handleSave cũ trong index.js bằng hàm này:
+
 async function handleSave(e) {
     e.preventDefault();
     
-    // 1. Lấy thuộc tính hiện tại
+    // 1. Lấy danh sách thuộc tính hiện tại từ giao diện (để lấy tên Attribute Name)
     const currentAttrs = VariantLogic.parseAttributesFromDOM();
 
-    // 2. CHECK LỖI: Có nhập thuộc tính mà chưa bấm "Tạo biến thể" (tức là variants rỗng)
+    // 2. CHECK LỖI: Có nhập thuộc tính mà chưa bấm "Tạo biến thể"
     if (currentAttrs.length > 0 && state.variants.length === 0) {
         const msg = "Bạn đã nhập thuộc tính nhưng chưa tạo danh sách biến thể.\nVui lòng nhấn nút 'Tạo biến thể' màu xanh trước khi lưu!";
         if(typeof showDialog === 'function') await showDialog("error", msg);
         else alert(msg);
-        return; // Dừng lại ngay, không gửi API
+        return; 
     }
 
+    // 3. Chuẩn bị Payload
     const payload = {
         productDetailDTO: {
             productId: state.isEdit ? state.currentId : null,
@@ -210,10 +212,16 @@ async function handleSave(e) {
         },
         attributes: [], 
         variants: [], 
-        variantValues: []
+        variantValues: [] // Cái này thường backend tự xử lý, nhưng cứ để mảng rỗng
     };
 
+    // 4. Build Attributes Payload (Giữ nguyên)
+    // Map tên thuộc tính để lát dùng (VD: ["Màu sắc", "Kích thước"])
+    const attributeNames = []; 
+
     currentAttrs.forEach(attr => {
+        attributeNames.push(attr.name); // Lưu lại tên để ghép vào variant
+        
         const attrValues = attr.values.map(v => ({ attributeValueName: v }));
         payload.attributes.push({ 
             attributeName: attr.name, 
@@ -222,16 +230,33 @@ async function handleSave(e) {
         });
     });
 
+    // 5. Build Variants Payload (SỬA ĐOẠN NÀY)
+    // Server cần biết Variant này có attributeValues nào
     state.variants.forEach((v, idx) => {
         const imgKey = v.rawFile ? `image_variant_${idx}` : null;
+        
+        // --- ĐOẠN QUAN TRỌNG MỚI THÊM ---
+        // Ghép giá trị variant (VD: "Đỏ", "XL") với tên thuộc tính (VD: "Màu sắc", "Size")
+        // v.comboValues là mảng ["Đỏ", "XL"]
+        // attributeNames là mảng ["Màu sắc", "Size"]
+        const variantAttrValues = v.comboValues.map((val, valIdx) => {
+            return {
+                attributeName: attributeNames[valIdx], // Lấy tên thuộc tính tương ứng
+                attributeValueName: val               // Lấy giá trị
+            };
+        });
+        // ----------------------------------
+
         payload.variants.push({
             price: v.price,
             priceOriginal: v.priceOriginal || v.price,
             stock: v.stock,
-            imageName: imgKey
+            imageName: imgKey,
+            attributeValues: variantAttrValues // <--- Gửi kèm cái này là hết lỗi
         });
     });
 
+    // 6. Đóng gói vào FormData và gửi đi
     const formData = new FormData();
     if(state.mainImageFile) {
         payload.productDetailDTO.imageName = "productImage";
@@ -241,6 +266,9 @@ async function handleSave(e) {
         if(v.rawFile) formData.append(`image_variant_${idx}`, v.rawFile);
     });
     
+    // Log ra xem thử payload chuẩn chưa (F12 để xem)
+    console.log("Payload gửi đi:", payload);
+
     formData.append("productDTO", new Blob([JSON.stringify(payload)], { type: "application/json" }));
 
     try {
