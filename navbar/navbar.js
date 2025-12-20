@@ -12,7 +12,7 @@ let notiState = {
   isLoadedFirstTime: false,
 };
 
-// CSS Navbar (Giữ nguyên giao diện Mobile Shopee xịn xò lúc nãy)
+// CSS Navbar (Giữ nguyên giao diện Mobile Shopee xịn xò)
 const navbarHTML = `
     <style>
         .navbar-component {
@@ -25,7 +25,15 @@ const navbarHTML = `
         .nb-right-wrapper { display: flex; align-items: center; gap: 15px; }
         .nb-icon-btn { position: relative; cursor: pointer; font-size: 1.3rem; color: #555; width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; border-radius: 50%; text-decoration: none; transition: 0.2s; }
         .nb-icon-btn:hover { background: #f3f4f6; color: #10B981; }
-        .nb-badge { position: absolute; top: 5px; right: 5px; background: #ee4d2d; color: white; font-size: 0.7rem; padding: 2px 6px; border-radius: 10px; font-weight: bold; border: 2px solid white; }
+        
+        /* Badge chỉnh lại flex để số căn giữa đẹp hơn */
+        .nb-badge { 
+            position: absolute; top: 5px; right: 5px; background: #ee4d2d; color: white; 
+            font-size: 0.7rem; padding: 0 5px; height: 16px; min-width: 16px; border-radius: 10px; 
+            font-weight: bold; border: 2px solid white; display: none;
+            align-items: center; justify-content: center;
+        }
+        
         .nb-user-menu { cursor: pointer; display: flex; align-items: center; gap: 10px; margin-left: 10px; }
         .nb-avatar { width: 42px; height: 42px; border-radius: 50%; object-fit: cover; border: 1px solid #ddd; }
         
@@ -64,7 +72,7 @@ const navbarHTML = `
         <div class="nb-right-wrapper">
             <a href="../cart/index.html" class="nb-icon-btn" title="Giỏ hàng">
                 <i class="fa-solid fa-cart-shopping"></i>
-                <span class="nb-badge" id="cartBadge" style="display:none">0</span>
+                <span class="nb-badge" id="cartBadge">0</span>
             </a>
             <div class="nb-icon-btn" id="nbNotiBtn">
                 <i class="fa-regular fa-bell"></i>
@@ -146,11 +154,39 @@ export async function loadNavbar(options = {}) {
 
       await connectSse("/sse");
       setupSSERealtime();
-      const c = await callAPI("/auth/carts", "GET");
-      if (c && c.success && c.data.length > 0) {
-        const b = document.getElementById("cartBadge");
-        b.innerText = c.data.length > 99 ? "99+" : c.data.length;
-        b.style.display = "block";
+
+      // [FIX MỚI] LOGIC ĐẾM GIỎ HÀNG CHUẨN
+      try {
+        const cartRes = await callAPI("/auth/carts", "GET");
+        if (
+          cartRes &&
+          cartRes.success &&
+          cartRes.data &&
+          Array.isArray(cartRes.data.listData)
+        ) {
+          let totalItems = 0;
+          // Duyệt từng sản phẩm để đếm item con
+          cartRes.data.listData.forEach((product) => {
+            if (
+              product.cartItemDTOList &&
+              Array.isArray(product.cartItemDTOList)
+            ) {
+              totalItems += product.cartItemDTOList.length;
+            }
+          });
+
+          const b = document.getElementById("cartBadge");
+          if (b) {
+            if (totalItems > 0) {
+              b.innerText = totalItems > 99 ? "99+" : totalItems;
+              b.style.display = "flex"; // Hiện badge
+            } else {
+              b.style.display = "none";
+            }
+          }
+        }
+      } catch (err) {
+        console.error("Cart Error:", err);
       }
     } else {
       document.getElementById("nbNotiList").innerHTML =
@@ -168,16 +204,21 @@ function setupSSERealtime() {
     document.getElementById("nbBadge").style.display = "block";
   });
   subscribeTopic("cart", (data) => {
+    // SSE báo thay đổi thì load lại API cho chắc, hoặc cộng trừ tùy logic
+    // Ở đây đơn giản là load lại Navbar (nhưng sẽ hơi nặng), tốt nhất là cập nhật số hiển thị
+    // Tạm thời giữ logic cộng dồn cũ, nhưng nên reload lại cart items thì chuẩn hơn
     const change = parseInt(data);
     const b = document.getElementById("cartBadge");
-    let newCount = (parseInt(b.innerText) || 0) + change;
-    if (newCount < 0) newCount = 0;
-    b.innerText = newCount > 99 ? "99+" : newCount;
-    b.style.display = newCount > 0 ? "block" : "none";
+    if (b) {
+      let newCount = (parseInt(b.innerText) || 0) + change;
+      if (newCount < 0) newCount = 0;
+      b.innerText = newCount > 99 ? "99+" : newCount;
+      b.style.display = newCount > 0 ? "flex" : "none";
+    }
   });
 }
 
-// === CÁC HÀM XỬ LÝ THÔNG BÁO (GIỮ NGUYÊN) ===
+// === CÁC HÀM XỬ LÝ THÔNG BÁO ===
 async function fetchNotifications() {
   if (notiState.isLoading || !notiState.hasMore) return;
   notiState.isLoading = true;
