@@ -198,6 +198,22 @@ function setupGlobalFunctions() {
         }
     };
 
+window.applyBulkInfo = () => {
+    const pOrg = document.getElementById("bulk_price_org")?.value;
+    const pSell = document.getElementById("bulk_price")?.value;
+    const stock = document.getElementById("bulk_stock")?.value;
+
+    // Duyệt qua tất cả variants và gán giá trị nếu ô nhập có dữ liệu
+    state.variants.forEach(v => {
+        if (pOrg) v.priceOriginal = parseFloat(pOrg);
+        if (pSell) v.price = parseFloat(pSell);
+        if (stock) v.stock = parseInt(stock);
+    });
+
+    // Render lại bảng để thấy thay đổi
+    UI.renderVariants(state.variants);
+};
+
     window.updateVar = (i, field, value) => {
         if(state.variants[i]) state.variants[i][field] = value;
     };

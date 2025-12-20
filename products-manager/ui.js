@@ -172,108 +172,106 @@ export const UI = {
         UI.els.attrContainer.appendChild(div);
     },
 
-    renderVariants: (variants) => {
-        if (!UI.els.variantWrapper) return;
+    // Thay thế hàm renderVariants trong file ui.js
+renderVariants: (variants) => {
+    if (!UI.els.variantWrapper) return;
 
-        if (!variants.length) {
-            UI.els.variantWrapper.innerHTML = "";
-            return;
-        }
-        
-        const html = `
-            <div class="card shadow-sm mb-4">
-                <div class="card-body">
-                    <h5 class="card-title text-primary mb-3">
-                        <i class="bi bi-grid-3x3-gap me-2"></i>Danh sách biến thể 
-                        <span class="badge bg-info">${variants.length}</span>
-                    </h5>
-                    
-                    <div id="variant-list">
-                        ${variants.map((v, i) => {
-                            const imgSrc = v.previewUrl ? v.previewUrl : (v.imageUrl || "");
-                            return `
-                            <div class="card mb-3 border">
-                                <div class="card-body">
-                                    <div class="row g-3 align-items-center">
-                                        <!-- Ảnh -->
-                                        <div class="col-auto">
-                                            <div class="position-relative">
-                                                <div class="border rounded" 
-                                                     style="width:80px; height:80px; cursor:pointer; overflow:hidden; display:flex; align-items:center; justify-content:center; background:#f8f9fa;" 
-                                                     onclick="document.getElementById('v_file_${i}').click()">
-                                                    ${imgSrc 
-                                                        ? `<img src="${imgSrc}" style="width:100%;height:100%;object-fit:cover">` 
-                                                        : `<div class="text-center text-muted">
-                                                               <i class="bi bi-camera d-block" style="font-size:24px"></i>
-                                                               <small style="font-size:10px">Chọn ảnh</small>
-                                                           </div>`
-                                                    }
-                                                </div>
-                                                <input type="file" id="v_file_${i}" hidden onchange="window.handleSelectVariantImage(${i}, this)" accept="image/*">
-                                            </div>
-                                        </div>
-                                        
-                                        <!-- Tên biến thể -->
-                                        <div class="col-md-2">
-                                            <label class="form-label text-muted small mb-1">Tên biến thể</label>
-                                            <div class="fw-bold">${v.name}</div>
-                                        </div>
-                                        
-                                        <!-- Giá gốc -->
-                                        <div class="col-md-2">
-                                            <label class="form-label text-muted small mb-1">Giá gốc</label>
-                                            <input type="number" 
-                                                   class="form-control form-control-sm" 
-                                                   placeholder="0" 
-                                                   value="${v.priceOriginal || v.price}" 
-                                                   onchange="window.updateVar(${i},'priceOriginal',this.value)">
-                                        </div>
-                                        
-                                        <!-- Giá bán -->
-                                        <div class="col-md-2">
-                                            <label class="form-label text-muted small mb-1">Giá bán</label>
-                                            <input type="number" 
-                                                   class="form-control form-control-sm" 
-                                                   placeholder="0" 
-                                                   value="${v.price}" 
-                                                   onchange="window.updateVar(${i},'price',this.value)">
-                                        </div>
-                                        
-                                        <!-- Kho -->
-                                        <div class="col-md-2">
-                                            <label class="form-label text-muted small mb-1">Số lượng kho</label>
-                                            <input type="number" 
-                                                   class="form-control form-control-sm" 
-                                                   placeholder="0" 
-                                                   value="${v.stock}" 
-                                                   onchange="window.updateVar(${i},'stock',this.value)">
-                                        </div>
-                                        
-                                        <!-- Nút xóa -->
-                                        <div class="col-auto">
-                                            <label class="form-label text-muted small mb-1 d-block">&nbsp;</label>
-                                            <button onclick="window.removeVariant(${i})" 
-                                                    class="btn btn-sm btn-outline-danger" 
-                                                    title="Xóa biến thể">
-                                                <i class="bi bi-trash"></i>
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>`;
-                        }).join('')}
-                    </div>
-                    
-                    <div class="alert alert-info mb-0 mt-3">
-                        <i class="bi bi-info-circle me-2"></i>
-                        <small>Các biến thể được tạo tự động từ thuộc tính. Bạn có thể chỉnh sửa giá, kho và ảnh cho từng biến thể.</small>
+    if (!variants.length) {
+        UI.els.variantWrapper.innerHTML = "";
+        return;
+    }
+
+    // Phần HTML cho thanh "Áp dụng cho tất cả"
+    const bulkActionHTML = `
+        <div class="card bg-light mb-3 border-primary border-opacity-25">
+            <div class="card-body py-2">
+                <div class="row g-2 align-items-end">
+                    <div class="col-auto"><strong class="text-primary small">Thiết lập hàng loạt:</strong></div>
+                    <div class="col"><input type="number" id="bulk_price_org" class="form-control form-control-sm" placeholder="Giá gốc chung"></div>
+                    <div class="col"><input type="number" id="bulk_price" class="form-control form-control-sm" placeholder="Giá bán chung"></div>
+                    <div class="col"><input type="number" id="bulk_stock" class="form-control form-control-sm" placeholder="Kho chung"></div>
+                    <div class="col-auto">
+                        <button type="button" class="btn btn-sm btn-primary" onclick="window.applyBulkInfo()">Áp dụng</button>
                     </div>
                 </div>
             </div>
-        `;
-        
-        UI.els.variantWrapper.innerHTML = html;
-    },
+        </div>
+    `;
+
+    // Phần HTML cho Bảng biến thể
+    const tableHTML = `
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover align-middle">
+                <thead class="table-light text-center small text-muted">
+                    <tr>
+                        <th style="width: 80px;">Ảnh</th>
+                        <th class="text-start">Tên biến thể</th>
+                        <th style="width: 150px;">Giá gốc</th>
+                        <th style="width: 150px;">Giá bán</th>
+                        <th style="width: 100px;">Kho</th>
+                        <th style="width: 50px;">Xóa</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${variants.map((v, i) => {
+                        const imgSrc = v.previewUrl ? v.previewUrl : (v.imageUrl || "");
+                        return `
+                        <tr>
+                            <td class="text-center">
+                                <div style="width: 48px; height: 48px; margin: 0 auto; cursor: pointer; border: 1px dashed #ccc; border-radius: 4px; overflow: hidden; position: relative;"
+                                     onclick="document.getElementById('v_file_${i}').click()"
+                                     class="bg-white hover-shadow">
+                                    
+                                    ${imgSrc 
+                                        ? `<img src="${imgSrc}" style="width:100%; height:100%; object-fit:cover;">` 
+                                        : `<div class="d-flex align-items-center justify-content-center h-100 text-muted"><i class="bi bi-camera"></i></div>`
+                                    }
+                                </div>
+                                <input type="file" id="v_file_${i}" hidden onchange="window.handleSelectVariantImage(${i}, this)" accept="image/*">
+                            </td>
+
+                            <td>
+                                <strong>${v.name}</strong>
+                                <div class="small text-muted">${v.comboValues.join(" / ")}</div>
+                            </td>
+
+                            <td>
+                                <input type="number" class="form-control form-control-sm" 
+                                    value="${v.priceOriginal}" 
+                                    onchange="window.updateVar(${i},'priceOriginal',this.value)" placeholder="0">
+                            </td>
+
+                            <td>
+                                <input type="number" class="form-control form-control-sm fw-bold text-danger" 
+                                    value="${v.price}" 
+                                    onchange="window.updateVar(${i},'price',this.value)" placeholder="0">
+                            </td>
+
+                            <td>
+                                <input type="number" class="form-control form-control-sm text-center" 
+                                    value="${v.stock}" 
+                                    onchange="window.updateVar(${i},'stock',this.value)" placeholder="0">
+                            </td>
+
+                            <td class="text-center">
+                                <button type="button" onclick="window.removeVariant(${i})" class="btn btn-sm btn-outline-danger border-0">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        `;
+                    }).join('')}
+                </tbody>
+            </table>
+        </div>
+    `;
+
+    UI.els.variantWrapper.innerHTML = `
+        <h6 class="fw-bold mb-3">Danh sách biến thể (${variants.length})</h6>
+        ${bulkActionHTML}
+        ${tableHTML}
+    `;
+},
 
     resetForm: (isEdit) => {
         const form = document.getElementById("productForm");
