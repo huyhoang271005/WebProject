@@ -4,20 +4,47 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Quản lý đơn hàng</title>
-    <link rel="stylesheet" href="admin-orders.css">
+    <link rel="stylesheet" href="admin-orders.css"> 
     <link rel="stylesheet" href="../dialog/index.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
-    <div class="admin-order-container">
-        <h2>Quản lý duyệt đơn hàng</h2>
+    
+    <div class="container admin-order-container">
         
-        <div id="order-list-container" class="order-list">
+        <div class="card">
+            <h2>Quản lý duyệt đơn hàng</h2>
+            
+            <div class="tabs-container">
+                <button class="tab-btn active" onclick="filterStatus('ALL')">Tất cả</button>
+                <button class="tab-btn" onclick="filterStatus('WAITING')">Chờ xác nhận</button>
+                <button class="tab-btn" onclick="filterStatus('SHIPPING')">Đang giao</button>
+                <button class="tab-btn" onclick="filterStatus('COMPLETED')">Hoàn thành</button>
+                <button class="tab-btn" onclick="filterStatus('CANCELLED')">Đã hủy</button>
             </div>
 
-        <div id="loading-spinner">
-            <i class="fas fa-spinner fa-spin"></i> Đang tải thêm đơn hàng...
+            <div class="table-wrapper">
+                <table class="order-table">
+                    <thead>
+                        <tr>
+                            <th>Mã Đơn</th>
+                            <th>Khách hàng</th>
+                            <th style="width: 35%;">Sản phẩm</th> <th>Tổng tiền</th>
+                            <th>Trạng thái</th>
+                            <th>Ngày tạo</th>
+                            <th>Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody id="orderList"> 
+                        </tbody>
+                </table>
+            </div>
+
+            <div id="loading-spinner" style="display: none; text-align: center; padding: 20px;">
+                <i class="fas fa-spinner fa-spin"></i> Đang tải dữ liệu...
+            </div>
         </div>
+
     </div>
 
     <script type="module" src="index.js"></script>
