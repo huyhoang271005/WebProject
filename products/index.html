@@ -40,6 +40,7 @@
         z-index: 1;
       }
 
+      /* SIDEBAR */
       .sidebar {
         width: 280px;
         flex-shrink: 0;
@@ -52,8 +53,10 @@
         min-height: 60vh;
         box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
         border: 1px solid #f0f0f0;
-        z-index: 10;
+        z-index: 100;
+        transition: transform 0.3s ease;
       }
+
       .filter-group {
         margin-bottom: 25px;
       }
@@ -68,27 +71,10 @@
         text-transform: uppercase;
       }
 
+      /* Search Box Sidebar */
       .sidebar-search-box {
         position: relative;
         width: 100%;
-      }
-      .sidebar-search-box input {
-        width: 100% !important;
-        min-width: 0 !important;
-        max-width: 100%;
-        padding: 10px 10px 10px 35px;
-        border: 1px solid #e5e7eb;
-        border-radius: 6px;
-        outline: none;
-        font-size: 0.95rem;
-        background: #f9fafb;
-        transition: 0.2s;
-        box-sizing: border-box !important;
-      }
-      .sidebar-search-box input:focus {
-        background: white;
-        border-color: #10b981;
-        box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
       }
       .sidebar-search-box i {
         position: absolute;
@@ -128,6 +114,7 @@
         font-weight: 700;
       }
 
+      /* CONTENT */
       .product-content {
         flex: 1;
         min-width: 0;
@@ -145,11 +132,32 @@
         box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
         border: 1px solid #f0f0f0;
       }
+
+      .ph-actions {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+      }
       .ph-title {
         font-size: 1.3rem;
         font-weight: 700;
         color: #111827;
       }
+
+      /* Mobile Filter Button (Mặc định ẩn) */
+      .mobile-filter-btn {
+        display: none;
+        padding: 8px 15px;
+        background: white;
+        border: 1px solid #eee;
+        border-radius: 4px;
+        font-size: 0.9rem;
+        color: #555;
+        align-items: center;
+        gap: 5px;
+        cursor: pointer;
+      }
+
       .ph-sort select {
         padding: 8px 12px;
         border-radius: 6px;
@@ -159,39 +167,14 @@
         font-size: 0.9rem;
       }
 
+      /* GRID SẢN PHẨM */
       .product-grid {
         display: grid;
         grid-template-columns: repeat(5, 1fr);
         gap: 12px;
       }
-      @media (max-width: 1400px) {
-        .product-grid {
-          grid-template-columns: repeat(4, 1fr);
-        }
-      }
-      @media (max-width: 1100px) {
-        .product-grid {
-          grid-template-columns: repeat(3, 1fr);
-        }
-      }
-      @media (max-width: 992px) {
-        .product-grid {
-          grid-template-columns: repeat(3, 1fr);
-        }
-        .sidebar {
-          display: none;
-        }
-        .main-container {
-          width: 100%;
-          padding: 10px;
-        }
-      }
-      @media (max-width: 600px) {
-        .product-grid {
-          grid-template-columns: repeat(2, 1fr);
-        }
-      }
 
+      /* PRODUCT CARD */
       .product-card {
         background: white;
         border: 1px solid transparent;
@@ -256,6 +239,7 @@
         color: #757575;
       }
 
+      /* PAGINATION */
       .pagination-wrapper {
         margin-top: 30px;
         display: flex;
@@ -299,11 +283,96 @@
         color: #9ca3af;
         line-height: 32px;
       }
+
+      /* OVERLAY CHO MOBILE */
+      .sidebar-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 99;
+      }
+
+      /* RESPONSIVE */
+      @media (max-width: 1400px) {
+        .product-grid {
+          grid-template-columns: repeat(4, 1fr);
+        }
+      }
+      @media (max-width: 1100px) {
+        .product-grid {
+          grid-template-columns: repeat(3, 1fr);
+        }
+      }
+
+      /* Mobile & Tablet (< 992px) */
+      @media (max-width: 992px) {
+        .product-grid {
+          grid-template-columns: repeat(2, 1fr);
+        } /* 2 cột */
+
+        /* Sidebar ẩn sang trái */
+        .sidebar {
+          position: fixed;
+          top: 0;
+          left: 0;
+          height: 100vh;
+          width: 80%;
+          max-width: 300px;
+          transform: translateX(-100%);
+          border-radius: 0;
+          overflow-y: auto;
+        }
+        .sidebar.active {
+          transform: translateX(0);
+        }
+        .sidebar-overlay.active {
+          display: block;
+        }
+        .mobile-filter-btn {
+          display: flex;
+        } /* Hiện nút Lọc */
+
+        .page-header {
+          flex-direction: column;
+          align-items: flex-start;
+          gap: 10px;
+        }
+        .ph-actions {
+          width: 100%;
+          justify-content: space-between;
+        }
+        .main-container {
+          width: 100%;
+          padding: 10px;
+          padding-top: 20px;
+        }
+      }
     </style>
   </head>
   <body>
+    <div
+      class="sidebar-overlay"
+      id="sidebarOverlay"
+      onclick="toggleSidebar()"
+    ></div>
+
     <div class="main-container">
-      <aside class="sidebar">
+      <aside class="sidebar" id="mainSidebar">
+        <div
+          style="display: flex; justify-content: flex-end; margin-bottom: 10px"
+          class="d-lg-none"
+        >
+          <i
+            class="fa-solid fa-xmark"
+            style="font-size: 1.5rem; cursor: pointer; color: #666"
+            onclick="toggleSidebar()"
+          ></i>
+        </div>
+
         <div class="filter-group">
           <div class="filter-title">Tìm nhanh</div>
           <div class="sidebar-search-box">
@@ -316,12 +385,17 @@
                 width: 100% !important;
                 min-width: 0 !important;
                 max-width: 100% !important;
-                box-sizing: border-box !important;
+                padding: 10px 10px 10px 35px;
+                border: 1px solid #e5e7eb;
+                border-radius: 6px;
+                outline: none;
+                box-sizing: border-box;
               "
             />
           </div>
         </div>
         <hr style="border: 0; border-top: 1px solid #f3f4f6; margin: 15px 0" />
+
         <div class="filter-group">
           <div class="filter-title">
             <i class="fa-solid fa-bars-staggered"></i> Danh mục
@@ -336,7 +410,12 @@
 
       <div class="product-content">
         <div class="page-header">
-          <div class="ph-title" id="pageTitle">Tất cả sản phẩm</div>
+          <div class="ph-actions">
+            <div class="ph-title" id="pageTitle">Tất cả sản phẩm</div>
+            <div class="mobile-filter-btn" onclick="toggleSidebar()">
+              <i class="fa-solid fa-filter"></i> Lọc
+            </div>
+          </div>
           <div class="ph-sort">
             <span style="color: #666; margin-right: 5px; font-size: 0.9rem"
               >Sắp xếp:</span
@@ -348,7 +427,9 @@
             </select>
           </div>
         </div>
+
         <div class="product-grid" id="productGrid"></div>
+
         <div class="pagination-wrapper">
           <div id="pagination" class="pagination-container"></div>
         </div>
