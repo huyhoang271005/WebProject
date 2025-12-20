@@ -183,27 +183,78 @@ export const UI = {
         const html = `
             <div class="card shadow-sm mb-4">
                 <div class="card-body">
-                    <h5 class="card-title text-primary mb-3">Danh sách phân loại</h5>
+                    <h5 class="card-title text-primary mb-3">
+                        <i class="bi bi-grid-3x3-gap me-2"></i>Danh sách biến thể 
+                        <span class="badge bg-info">${variants.length}</span>
+                    </h5>
+                    
                     <div id="variant-list">
                         ${variants.map((v, i) => {
                             const imgSrc = v.previewUrl ? v.previewUrl : (v.imageUrl || "");
                             return `
-                            <div class="variant-item border rounded p-3 mb-3 bg-light">
-                                <div class="row align-items-center">
-                                    <div class="col-auto">
-                                        <div class="v-img-box border rounded" style="width:60px; height:60px; cursor:pointer; overflow:hidden; display:flex; align-items:center; justify-content:center;" onclick="document.getElementById('v_file_${i}').click()">
-                                            ${imgSrc ? `<img src="${imgSrc}" style="width:100%;height:100%;object-fit:cover">` : `<i class="bi bi-camera" style="font-size:20px"></i>`}
-                                            <input type="file" id="v_file_${i}" hidden onchange="window.handleSelectVariantImage(${i}, this)" accept="image/*">
+                            <div class="card mb-3 border">
+                                <div class="card-body">
+                                    <div class="row g-3 align-items-center">
+                                        <!-- Ảnh -->
+                                        <div class="col-auto">
+                                            <div class="position-relative">
+                                                <div class="border rounded" 
+                                                     style="width:80px; height:80px; cursor:pointer; overflow:hidden; display:flex; align-items:center; justify-content:center; background:#f8f9fa;" 
+                                                     onclick="document.getElementById('v_file_${i}').click()">
+                                                    ${imgSrc 
+                                                        ? `<img src="${imgSrc}" style="width:100%;height:100%;object-fit:cover">` 
+                                                        : `<div class="text-center text-muted">
+                                                               <i class="bi bi-camera d-block" style="font-size:24px"></i>
+                                                               <small style="font-size:10px">Chọn ảnh</small>
+                                                           </div>`
+                                                    }
+                                                </div>
+                                                <input type="file" id="v_file_${i}" hidden onchange="window.handleSelectVariantImage(${i}, this)" accept="image/*">
+                                            </div>
                                         </div>
-                                    </div>
-                                    <div class="col">
-                                        <strong>${v.name}</strong>
-                                    </div>
-                                    <div class="col-auto">
-                                        <div class="d-flex gap-2">
-                                            <input type="number" class="form-control form-control-sm" style="width:100px" placeholder="Giá" value="${v.price}" onchange="window.updateVar(${i},'price',this.value)">
-                                            <input type="number" class="form-control form-control-sm" style="width:100px" placeholder="Kho" value="${v.stock}" onchange="window.updateVar(${i},'stock',this.value)">
-                                            <button onclick="window.removeVariant(${i})" class="btn btn-sm btn-danger">
+                                        
+                                        <!-- Tên biến thể -->
+                                        <div class="col-md-2">
+                                            <label class="form-label text-muted small mb-1">Tên biến thể</label>
+                                            <div class="fw-bold">${v.name}</div>
+                                        </div>
+                                        
+                                        <!-- Giá gốc -->
+                                        <div class="col-md-2">
+                                            <label class="form-label text-muted small mb-1">Giá gốc</label>
+                                            <input type="number" 
+                                                   class="form-control form-control-sm" 
+                                                   placeholder="0" 
+                                                   value="${v.priceOriginal || v.price}" 
+                                                   onchange="window.updateVar(${i},'priceOriginal',this.value)">
+                                        </div>
+                                        
+                                        <!-- Giá bán -->
+                                        <div class="col-md-2">
+                                            <label class="form-label text-muted small mb-1">Giá bán</label>
+                                            <input type="number" 
+                                                   class="form-control form-control-sm" 
+                                                   placeholder="0" 
+                                                   value="${v.price}" 
+                                                   onchange="window.updateVar(${i},'price',this.value)">
+                                        </div>
+                                        
+                                        <!-- Kho -->
+                                        <div class="col-md-2">
+                                            <label class="form-label text-muted small mb-1">Số lượng kho</label>
+                                            <input type="number" 
+                                                   class="form-control form-control-sm" 
+                                                   placeholder="0" 
+                                                   value="${v.stock}" 
+                                                   onchange="window.updateVar(${i},'stock',this.value)">
+                                        </div>
+                                        
+                                        <!-- Nút xóa -->
+                                        <div class="col-auto">
+                                            <label class="form-label text-muted small mb-1 d-block">&nbsp;</label>
+                                            <button onclick="window.removeVariant(${i})" 
+                                                    class="btn btn-sm btn-outline-danger" 
+                                                    title="Xóa biến thể">
                                                 <i class="bi bi-trash"></i>
                                             </button>
                                         </div>
@@ -211,6 +262,11 @@ export const UI = {
                                 </div>
                             </div>`;
                         }).join('')}
+                    </div>
+                    
+                    <div class="alert alert-info mb-0 mt-3">
+                        <i class="bi bi-info-circle me-2"></i>
+                        <small>Các biến thể được tạo tự động từ thuộc tính. Bạn có thể chỉnh sửa giá, kho và ảnh cho từng biến thể.</small>
                     </div>
                 </div>
             </div>
