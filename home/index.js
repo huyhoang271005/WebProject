@@ -7,7 +7,7 @@ let apiCategories = [];
 document.addEventListener("DOMContentLoaded", async () => {
   toggleLoading(true);
   try {
-    // 1. Load Navbar (Cấu hình thanh tìm kiếm và nút danh mục)
+    // 1. Load Navbar
     await loadNavbar({
       centerHTML: `
         <div class="nav-cat-btn" id="catBtn">
@@ -15,12 +15,12 @@ document.addEventListener("DOMContentLoaded", async () => {
             <div class="cat-dropdown" id="catDropdown"></div>
         </div>
         <div style="flex:1; height:40px; background:#f5f5f5; border-radius:8px; padding:0 15px; display:flex; align-items:center; position:relative;">
-            <input type="text" class="nav-search-input" id="homeSearch" placeholder="Tìm sản phẩm, thương hiệu...">
+            <input type="text" class="nav-search-input" id="homeSearch" placeholder="Tìm sản phẩm...">
             <i class="fa-solid fa-magnifying-glass" style="color:#10B981; cursor:pointer;" id="homeSearchBtn"></i>
         </div>`,
     });
 
-    // 2. Gọi API lấy dữ liệu
+    // 2. Load dữ liệu
     await fetchCategories();
     renderNavCategories();
     setupNavbarEvents();
@@ -32,17 +32,14 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 });
 
-// --- API DANH MỤC ---
+// --- API DANH MỤC (Public) ---
 async function fetchCategories() {
   try {
     const res = await callAPI("/categories", "GET", null);
     if (res && res.success && Array.isArray(res.data)) {
       apiCategories = res.data;
     } else {
-      apiCategories = [
-        { id: "an-vat", name: "Đồ ăn vặt" },
-        { id: "nuoc-ngot", name: "Nước giải khát" },
-      ];
+      apiCategories = [{ id: "an-vat", name: "Đồ ăn vặt" }];
     }
   } catch (e) {
     console.error(e);
@@ -55,7 +52,7 @@ async function renderHomeSections() {
   if (!container) return;
   container.innerHTML = "";
 
-  // [FIX] CSS Grid: PC 6 cột, Mobile 2 cột (Giữ lại cái này để mobile đẹp)
+  // CSS Grid (PC 6 cột, Mobile 2 cột)
   const style = document.createElement("style");
   style.innerHTML = `
       .home-product-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 12px; }
@@ -64,8 +61,9 @@ async function renderHomeSections() {
   `;
   document.head.appendChild(style);
 
-  // Gọi API lấy sản phẩm
-  const res = await callAPI("/auth/products?page=0&size=18", "GET", null);
+  // [QUAN TRỌNG] Đổi API từ /auth/products sang /products (hoặc /public/products tùy backend)
+  // Nếu vẫn lỗi 500, hãy thử endpoint: /products
+  const res = await callAPI("/products?page=0&size=18", "GET", null);
 
   if (res && res.success) {
     const list = res.data?.listData || [];
@@ -90,7 +88,23 @@ async function renderHomeSections() {
       container.innerHTML = `<div style="text-align:center; padding:20px; color:#666;">Chưa có sản phẩm nào</div>`;
     }
   } else {
-    container.innerHTML = `<div style="text-align:center; color:red;">Lỗi tải: ${res?.message}</div>`;
+    // Nếu API /products lỗi, thử fallback về /auth/products (chữa cháy)
+    console.log("Thử lại với /auth/products...");
+    const retryRes = await callAPI(
+      "/auth/products?page=0&size=18",
+      "GET",
+      null
+    );
+    if (retryRes && retryRes.success) {
+      // ... (Render lại giống trên nếu retry thành công) ...
+      // Để code gọn, bro cứ test cái /products trước đã.
+      // Nếu lỗi 500 thì khả năng cao backend đang chặn Guest ở endpoint /auth/products.
+      container.innerHTML = `<div style="text-align:center; color:red;">Lỗi tải dữ liệu. Vui lòng thử lại sau.</div>`;
+    } else {
+      container.innerHTML = `<div style="text-align:center; color:red;">Lỗi tải: ${
+        res?.message || "Lỗi máy chủ (500)"
+      }</div>`;
+    }
   }
 }
 

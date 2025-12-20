@@ -12,7 +12,6 @@
     ></script>
 
     <style>
-      /* Reset */
       body,
       html {
         margin: 0;
@@ -21,27 +20,26 @@
         font-family: "Segoe UI", sans-serif;
       }
 
-      /* [FIX 1] KHUNG BAO BỌC: Giúp Banner và Sản phẩm thẳng hàng, không bị tràn lề */
+      /* KHUNG BAO BỌC: Giúp nội dung thẳng hàng, không bị tràn */
       .main-container {
-        max-width: 1200px; /* Chiều rộng chuẩn Shopee PC */
-        margin: 20px auto; /* Căn giữa màn hình */
-        padding: 0 10px; /* Cách lề trái phải một chút */
+        max-width: 1200px;
+        margin: 20px auto;
+        padding: 0 10px;
         min-height: 80vh;
       }
 
-      /* Banner Tĩnh (Code cũ) */
+      /* Banner Tĩnh (Code cũ của bro) */
       .banner-img {
         width: 100%;
         height: auto;
-        border-radius: 8px;
+        border-radius: 10px;
         display: block;
         margin-bottom: 20px;
         box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
         object-fit: cover;
-        /* Nếu bro muốn banner cao cố định thì thêm height vào đây */
       }
 
-      /* [FIX 2] CSS CHO NÚT DANH MỤC TRÊN NAVBAR (Để nó không bị vỡ như ảnh bro gửi) */
+      /* Navbar Search & Dropdown fix */
       .nav-cat-btn {
         display: flex;
         align-items: center;
@@ -51,7 +49,6 @@
         cursor: pointer;
         color: #555;
         font-weight: 600;
-        font-size: 0.95rem;
         border-right: 1px solid #eee;
         margin-right: 10px;
         position: relative;
@@ -62,7 +59,6 @@
         background: #f9f9f9;
       }
 
-      /* Dropdown Menu (Mặc định ẩn) */
       .cat-dropdown {
         position: absolute;
         top: 100%;
@@ -73,14 +69,14 @@
         box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15);
         min-width: 200px;
         z-index: 1100;
-        display: none; /* Ẩn đi */
+        display: none;
         flex-direction: column;
-        overflow: hidden;
         margin-top: 5px;
+        overflow: hidden;
       }
       .cat-dropdown.show {
         display: flex;
-      } /* Hiện khi có class show */
+      }
 
       .cat-dropdown a {
         padding: 10px 15px;
@@ -99,14 +95,12 @@
         padding-left: 20px;
       }
 
-      /* Search Input */
       .nav-search-input {
         border: none;
         outline: none;
         background: transparent;
         width: 100%;
         height: 100%;
-        font-size: 0.95rem;
       }
     </style>
   </head>
@@ -115,7 +109,7 @@
       <img
         src="https://img.freepik.com/free-vector/flat-supermarket-twitch-banner_23-2149361816.jpg?w=1380"
         class="banner-img"
-        alt="Banner Khuyến Mãi"
+        alt="Banner"
       />
 
       <div id="homeContainer"></div>
