@@ -207,6 +207,7 @@ html, body {
     width: 120px !important; /* Bạn có thể chỉnh 100px hoặc 110px tùy ý */
     /* Ngăn không cho nó bị dãn theo flexbox */
     flex-grow: 0;
+    overflow: hidden;
 }
 
 .qty-btn {
@@ -230,7 +231,8 @@ html, body {
 }
 
 .qty-input {
-    width: 40px;
+    flex:1;
+    width: auto;
     height: 100%;
     border: none;
     border-left: 1px solid #E5E7EB;
