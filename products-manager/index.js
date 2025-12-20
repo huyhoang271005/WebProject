@@ -29,21 +29,54 @@ let state = {
 
 async function reloadData() {
     try {
-        const [prods, cats, brands, attrs] = await Promise.all([
-            ProductService.getAll(),
+        // ID của sản phẩm bạn muốn hiển thị (lấy từ file JSON bạn gửi)
+        const targetId = "0af4a625-3409-4539-9121-cb811ec4bf32";
+
+        // Thay đổi: Gọi getProductById thay vì getAll
+        const [productData, cats, brands, attrs] = await Promise.all([
+            ProductService.getProductById(targetId), // Sử dụng hàm có sẵn trong service
             ProductService.getCategories(),
             ProductService.getBrands(),
             ProductService.getAttributes()
         ]);
 
-        state.products = prods || [];
+        // --- XỬ LÝ DỮ LIỆU ĐỂ UI HIỂU ---
+        let productList = [];
+        
+        // Kiểm tra nếu có dữ liệu trả về đúng cấu trúc JSON backend
+        if (productData && productData.productDetailDTO) {
+            const detail = productData.productDetailDTO;
+            
+            // Tạo ra object phẳng mà UI.js cần (gộp detail và variants)
+            const uiItem = {
+                productId: detail.productId,
+                productName: detail.productName,
+                price: detail.price,
+                // Các trường hiển thị khác
+                imageName: detail.imageName,
+                imageUrl: detail.imageUrl,
+                // UI cần variants để đếm số lượng (variants.length)
+                variants: productData.variants || [], 
+                // Tên danh mục/thương hiệu (hiện tại backend trả về null trong JSON mẫu, 
+                // nên tạm thời để trống hoặc map từ list categories nếu cần)
+                categoryName: "-", 
+                brandName: "-"
+            };
+
+            // Quan trọng: Bỏ vào mảng [] vì renderTable dùng .map()
+            productList = [uiItem]; 
+        }
+
+        // Gán vào state
+        state.products = productList;
         state.categories = cats || [];
         state.brands = brands || [];
         state.attributes = attrs || [];
 
+        // Render ra bảng
         UI.renderTable(state.products);
         
-        // Render danh mục vào select
+        // Render danh mục vào select (giữ nguyên logic cũ)
         if (UI.els.cateSelect) {
             UI.els.cateSelect.innerHTML = `<option value="">-- Chọn danh mục --</option>`;
             state.categories.forEach(c => {
