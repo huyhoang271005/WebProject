@@ -3,12 +3,6 @@ import { showDialog } from "../dialog/index.js";
 import { connectSse, subscribeTopic } from "../public/Sse.js";
 
 const noImage = "https://cdn-icons-png.flaticon.com/512/847/847969.png";
-let currentNotiIds = []; // Biến lưu danh sách ID đang hiển thị
-
-// [QUAN TRỌNG] Cấu hình đường dẫn API gốc
-// Nếu bro chạy local thì để localhost, nếu deploy thì phải đổi thành domain thật
-// Cách tốt nhất là lấy từ file config chung, nhưng tạm thời bro sửa ở đây:
-const API_BASE_URL = "http://localhost:8080/api/v1";
 
 // Quản lý trạng thái Lazy Load
 let notiState = {
@@ -19,52 +13,25 @@ let notiState = {
   isLoadedFirstTime: false,
 };
 
-// ... (Phần CSS và HTML navbarHTML GIỮ NGUYÊN KHÔNG ĐỔI) ...
+// CSS + HTML Navbar (Giữ nguyên giao diện chuẩn)
 const navbarHTML = `
     <style>
-        .navbar-component {
-            background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px);
-            height: 70px; width: 100%; position: fixed; top: 0; left: 0; z-index: 1000;
-            display: flex; align-items: center; justify-content: space-between;
-            padding: 0 30px; box-shadow: 0 4px 20px rgba(0,0,0,0.05);
-            box-sizing: border-box; font-family: 'Segoe UI', sans-serif;
-        }
+        .navbar-component { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); height: 70px; width: 100%; position: fixed; top: 0; left: 0; z-index: 1000; display: flex; align-items: center; justify-content: space-between; padding: 0 30px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
         .nb-brand { font-size: 1.6rem; font-weight: 800; color: #10B981; text-decoration: none; display: flex; align-items: center; gap: 10px; min-width: 180px; }
         #nbCenterSlot { flex: 1; display: flex; align-items: center; justify-content: center; margin: 0 20px; gap: 15px; }
         #nbRightSlot { display: flex; align-items: center; gap: 20px; } 
-
         .nb-icon-btn { position: relative; cursor: pointer; font-size: 1.2rem; color: #555; transition: 0.2s; display: flex; align-items: center; justify-content: center; text-decoration: none; }
         .nb-icon-btn:hover { color: #10B981; transform: translateY(-2px); }
-        
-        .nb-badge { 
-            position: absolute; top: -8px; right: -8px; 
-            background: #EF4444; color: white; 
-            font-size: 0.7rem; padding: 2px 5px; min-width: 18px; text-align: center;
-            border-radius: 10px; font-weight: bold; border: 2px solid white;
-        }
-
+        .nb-badge { position: absolute; top: -8px; right: -8px; background: #EF4444; color: white; font-size: 0.7rem; padding: 2px 5px; min-width: 18px; text-align: center; border-radius: 10px; font-weight: bold; border: 2px solid white; }
         .nb-user-menu { position: relative; cursor: pointer; padding-left: 15px; border-left: 1px solid #eee; display: flex; align-items: center; gap: 10px; margin-left: 15px; }
         .nb-avatar { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; border: 2px solid #E5E7EB; transition: 0.2s; }
-        
-        .nb-dropdown { 
-            position: absolute; right: 0; top: 60px; background: white; 
-            width: 270px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); 
-            display: none; flex-direction: column; overflow: hidden; border: 1px solid #eee; 
-            animation: slideDown 0.2s ease; z-index: 1100; 
-        }
+        .nb-dropdown { position: absolute; right: 0; top: 60px; background: white; width: 270px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); display: none; flex-direction: column; overflow: hidden; border: 1px solid #eee; animation: slideDown 0.2s ease; z-index: 1100; }
         .nb-noti-dropdown { width: 380px; right: -80px; }
-        
         @keyframes slideDown { from{opacity:0; transform:translateY(10px)} to{opacity:1; transform:translateY(0)} }
         .nb-dropdown.show { display: flex; }
-        
-        .nb-dropdown a, .nb-dropdown button { 
-            padding: 12px 20px; text-decoration: none; color: #333; text-align: left; 
-            background: none; border: none; cursor: pointer; border-bottom: 1px solid #f9f9f9; 
-            display:flex; align-items:center; gap:12px; font-size:0.95rem; transition: 0.2s; 
-        }
+        .nb-dropdown a, .nb-dropdown button { padding: 12px 20px; text-decoration: none; color: #333; text-align: left; background: none; border: none; cursor: pointer; border-bottom: 1px solid #f9f9f9; display:flex; align-items:center; gap:12px; font-size:0.95rem; transition: 0.2s; }
         .nb-dropdown a:hover, .nb-dropdown button:hover { background: #ECFDF5; color: #10B981; padding-left: 25px; }
         .nb-dropdown i { width: 22px; text-align: center; color: #555; }
-
         .noti-header { padding: 15px; font-weight: bold; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; background: #fff; }
         .btn-clear-all { font-size: 0.8rem; color: #EF4444; cursor: pointer; text-decoration: underline; }
         .noti-list { max-height: 400px; overflow-y: auto; }
@@ -79,7 +46,6 @@ const navbarHTML = `
         .btn-del-noti:hover { color: #EF4444; }
         .empty-noti { padding: 30px; text-align: center; color: #999; font-style: italic; }
         .noti-loading { text-align: center; padding: 10px; color: #10B981; font-size: 0.8rem; display: none; }
-        
         .nb-admin-only { display: none !important; }
     </style>
 
@@ -92,15 +58,12 @@ const navbarHTML = `
                     <i class="fa-solid fa-cart-shopping"></i>
                     <span class="nb-badge" id="cartBadge" style="display:none">0</span>
                 </a>
-
                 <div class="nb-icon-btn" id="nbNotiBtn">
                     <i class="fa-regular fa-bell"></i>
                     <span class="nb-badge" id="nbBadge" style="display:none">0</span>
-                    
                     <div class="nb-dropdown nb-noti-dropdown" id="nbNotiDropdown">
                         <div class="noti-header"><span>Thông báo</span><span class="btn-clear-all" id="btnClearAllNoti">Xóa tất cả</span></div>
-                        <div class="noti-list" id="nbNotiList">
-                            </div>
+                        <div class="noti-list" id="nbNotiList"></div>
                         <div class="noti-loading" id="notiLoading"><i class="fa-solid fa-circle-notch fa-spin"></i> Đang tải thêm...</div>
                     </div>
                 </div>
@@ -113,7 +76,6 @@ const navbarHTML = `
                         <div style="font-weight:bold; color:#111;" id="nbUsername">Khách</div>
                         <div style="font-size:0.8rem; color:#666;" id="nbRole">...</div>
                     </div>
-                    
                     <a href="../profile"><i class="fa-regular fa-id-card"></i> Trang cá nhân</a>
                     <a href="../session"><i class="fa-solid fa-laptop-medical"></i> Quản lý phiên</a>
                     <a href="../contact"><i class="fa-solid fa-map-location-dot"></i> Địa chỉ</a>
@@ -182,7 +144,7 @@ export async function loadNavbar(options = {}) {
     if (userData.username && userData.username !== "Khách") {
       await connectSse("/sse");
       setupSSERealtime();
-      getInitialCartCount();
+      window.updateCartCount(); // Chỉ load số giỏ hàng
     } else {
       document.getElementById("nbNotiList").innerHTML =
         '<div class="empty-noti">Đăng nhập để xem thông báo</div>';
@@ -193,6 +155,7 @@ export async function loadNavbar(options = {}) {
   setupEvents();
 }
 
+// --- SSE: REALTIME ---
 function setupSSERealtime() {
   subscribeTopic("notification", (data) => {
     const newNoti = data;
@@ -210,19 +173,24 @@ function setupSSERealtime() {
   });
 }
 
-async function getInitialCartCount() {
+// --- CART: CẬP NHẬT SỐ LƯỢNG ---
+window.updateCartCount = async () => {
   try {
+    // Dùng callAPI chuẩn, không hardcode localhost
     const res = await callAPI("/auth/carts", "GET");
     const badge = document.getElementById("cartBadge");
     if (res && res.success && Array.isArray(res.data) && res.data.length > 0) {
       badge.innerText = res.data.length > 99 ? "99+" : res.data.length;
       badge.style.display = "block";
+    } else {
+      badge.style.display = "none";
     }
   } catch (e) {
     console.error("Cart error", e);
   }
-}
+};
 
+// --- NOTIFICATION: LAZY LOAD ---
 async function fetchNotifications() {
   if (notiState.isLoading || !notiState.hasMore) return;
   notiState.isLoading = true;
@@ -295,7 +263,7 @@ function setupEvents() {
     clearAllBtn.onclick = async (e) => {
       e.stopPropagation();
       if (!confirm("Xóa tất cả thông báo?")) return;
-      // await callAPI("/auth/notifications/delete-all", "POST"); // Bỏ comment nếu backend có api này
+      // await callAPI("/auth/notifications/delete-all", "POST");
       document.getElementById("nbNotiList").innerHTML =
         '<div class="empty-noti">Không có thông báo nào</div>';
     };
@@ -331,22 +299,15 @@ function prependNotification(item) {
   notiList.insertAdjacentHTML("afterbegin", html);
 }
 
-// [UPDATE] Hàm tạo HTML item - Thêm Log để soi ID
 function createNotiItemHTML(item, isNew = false) {
-  // Debug: In ra xem nó là cái gì
-  console.log("Item noti:", item);
-
   const title = item.title || "Thông báo";
   const msg = item.message || item.content || "";
   const time = item.createdTime
     ? new Date(item.createdTime).toLocaleString("vi-VN")
     : "";
 
-  // [QUAN TRỌNG] Thử tất cả các trường hợp tên ID có thể xảy ra
-  // Bro mở Console xem log "Item noti" nó có trường gì thì sửa vào đây nhé
-  const id = item.id || item.notificationId || item.notification_id || item._id;
-
-  if (!id) console.error("KHÔNG TÌM THẤY ID CHO ITEM:", item);
+  // [FIX QUAN TRỌNG] Lấy đúng tên trường ID (userNotificationId)
+  const id = item.userNotificationId || item.id || item.notificationId;
 
   return `
         <div class="noti-item ${isNew ? "unread" : ""}" id="noti-${id}">
@@ -360,58 +321,23 @@ function createNotiItemHTML(item, isNew = false) {
     `;
 }
 
-// [UPDATE] Hàm xóa - Fix cứng lỗi JSON Array
+// [FIX CHUẨN] Xóa thông báo dùng callAPI (đã bỏ hardcode)
 window.deleteNoti = async (id, e) => {
   e.stopPropagation();
 
-  // 1. Kiểm tra ID đầu vào
-  if (!id || id === "undefined" || id === "null") {
-    alert("Lỗi: Không lấy được ID thông báo! F12 xem console.");
+  // Debug
+  if (!id || id === "undefined") {
+    console.error("Lỗi: ID bị undefined");
     return;
   }
 
-  console.log("--- BẮT ĐẦU XÓA ---");
-  console.log("ID cần xóa:", id);
+  const item = document.getElementById(`noti-${id}`);
+  if (item) item.remove();
 
-  // 2. Xóa giao diện trước cho sướng mắt
-  const itemUI = document.getElementById(`noti-${id}`);
-  if (itemUI) itemUI.remove();
+  // Gọi API thông qua hàm chung (callAPI sẽ tự ghép Base URL)
+  await callAPI("/auth/notifications/delete", "POST", [id]);
 
-  try {
-    const token =
-      sessionStorage.getItem("token") || sessionStorage.getItem("accessToken");
-
-    // 3. Gọi API (Lưu ý: Phải chạy trên Localhost mới gọi được Localhost)
-    const res = await fetch(
-      "http://localhost:8080/api/v1/auth/notifications/delete",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: "Bearer " + token,
-        },
-        // Ép kiểu Mảng JSON chuẩn đét
-        body: JSON.stringify([id]),
-      }
-    );
-
-    console.log("Trạng thái response:", res.status);
-
-    if (!res.ok) {
-      const text = await res.text();
-      console.error("Lỗi Server trả về:", text);
-      // Nếu lỗi thì hiện lại thông báo (undo) - tuỳ chọn
-      alert("Server báo lỗi: " + text);
-    } else {
-      console.log("Xóa thành công trên Server!");
-    }
-  } catch (err) {
-    console.error("Lỗi kết nối (Chắc do Mixed Content hoặc tắt server):", err);
-    alert("Lỗi kết nối! Đừng test trên Github Pages, hãy dùng Localhost!");
-  }
-
-  // Check lại list trống
-  const list = document.getElementById("nbNotiList");
-  if (list && list.children.length === 0)
-    list.innerHTML = '<div class="empty-noti">Không có thông báo nào</div>';
+  if (document.getElementById("nbNotiList").children.length === 0)
+    document.getElementById("nbNotiList").innerHTML =
+      '<div class="empty-noti">Không có thông báo nào</div>';
 };
