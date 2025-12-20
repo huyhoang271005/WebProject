@@ -50,7 +50,7 @@ export const ProductLogic = {
         return { isValid: errors.length === 0, errors: errors };
     },
 
-    // [FIXED] Format Data: Đảm bảo không có null key trong attributeValues
+    // [FIXED] Format Data: Nhúng attributeValues vào trong Variant
     formatProductData: (formData, selectedAttributes, variants) => {
         const productDetailDTO = {
             productId: null,
@@ -65,54 +65,28 @@ export const ProductLogic = {
             createdAt: null, updatedAt: null
         };
 
-        // Attributes - Chỉ gửi những attribute có giá trị hợp lệ
+        // Attributes
         const attributes = selectedAttributes.map(attr => {
             if (!attr.values || attr.values.length === 0) return null;
             return {
                 attributeId: attr.attributeId || null,
                 attributeName: attr.attributeName,
                 attributeValues: attr.values.map(v => ({
+                    // Check ID tạm (có dấu _) thì gửi null để tạo mới
                     attributeValueId: (v.id && String(v.id).indexOf('_') === -1) ? v.id : null, 
                     attributeValueName: v.name
                 }))
             };
         }).filter(a => a !== null);
 
-        // Variants - KEY FIX: Đảm bảo attributeValues luôn có đủ attributeId
+        // Variants
         const formattedVariants = variants.map((variant, index) => {
-            // Tạo Map để nhóm values theo attributeId
-            const valuesByAttribute = {};
-            
-            if (variant.combination && variant.combination.length > 0) {
-                variant.combination.forEach(combo => {
-                    const attrId = combo.attributeId;
-                    if (!attrId) return; // Bỏ qua nếu không có attributeId
-                    
-                    if (!valuesByAttribute[attrId]) {
-                        valuesByAttribute[attrId] = {
-                            attributeId: attrId,
-                            values: []
-                        };
-                    }
-                    
-                    // Chỉ thêm value nếu có ID hợp lệ hoặc có name
-                    const valueId = (combo.valueId && String(combo.valueId).indexOf('_') === -1) ? combo.valueId : null;
-                    if (valueId || combo.valueName) {
-                        valuesByAttribute[attrId].values.push({
-                            attributeValueId: valueId,
-                            attributeValueName: combo.valueName
-                        });
-                    }
-                });
-            }
-
-            // Chuyển Map thành Array và đảm bảo format đúng
-            const attributeValues = Object.values(valuesByAttribute)
-                .filter(group => group.values.length > 0) // Chỉ lấy nhóm có values
-                .map(group => ({
-                    attributeId: group.attributeId,
-                    attributeValues: group.values
-                }));
+            // Tạo danh sách giá trị con
+            const valuesInside = variant.combination.map(combo => ({
+                attributeId: combo.attributeId,
+                attributeValueId: (combo.valueId && String(combo.valueId).indexOf('_') === -1) ? combo.valueId : null,
+                attributeValueName: combo.valueName
+            }));
 
             return {
                 variantId: (variant.variantId && String(variant.variantId).indexOf('variant_gen') === -1) ? variant.variantId : null,
@@ -121,25 +95,23 @@ export const ProductLogic = {
                 originalPrice: parseFloat(variant.priceOriginal) || parseFloat(formData.priceOriginal),
                 price: parseFloat(variant.price) || parseFloat(formData.price),
                 stock: parseInt(variant.stock) || 0,
-                sold: 0, 
-                active: true,
-                attributeValues: attributeValues
+                sold: 0, active: true,
+                
+                attributeValues: valuesInside
             };
         });
 
-        // Variant Values - Giữ để tương thích ngược
+        // Variant Values (Vẫn giữ để tương thích ngược nếu backend cần)
         const variantValues = [];
-        variants.forEach((variant) => {
+        variants.forEach((variant, variantIndex) => {
             if (variant.combination && variant.combination.length > 0) {
                 variant.combination.forEach(combo => {
-                    if (combo.attributeId) { // Chỉ thêm nếu có attributeId hợp lệ
-                        variantValues.push({
-                            variantId: variant.variantId || null,
-                            attributeId: combo.attributeId,
-                            attributeValueId: (combo.valueId && String(combo.valueId).indexOf('_') === -1) ? combo.valueId : null,
-                            attributeValueName: combo.valueName
-                        });
-                    }
+                    variantValues.push({
+                        variantId: variant.variantId || null, // Backend sẽ tự map nếu null
+                        attributeId: combo.attributeId,
+                        attributeValueId: (combo.valueId && String(combo.valueId).indexOf('_') === -1) ? combo.valueId : null,
+                        attributeValueName: combo.valueName
+                    });
                 });
             }
         });
