@@ -82,12 +82,15 @@ const navbarHTML = `
                     <a href="../profile"><i class="fa-regular fa-id-card"></i> Hồ sơ</a>
                     <a href="../session"><i class="fa-solid fa-laptop-medical"></i> Phiên đăng nhập</a>
                     <a href="../contact"><i class="fa-solid fa-map-location-dot"></i> Địa chỉ</a>
+                    <a href="../orders"></i> Đơn hàng của tôi</a>
                     <div class="nb-admin-only" style="border-top:1px solid #eee; margin:5px 0"></div>
                     <a href="../products-manager" class="nb-admin-only"><i class="fa-solid fa-box-open"></i> QL Sản phẩm</a>
                     <a href="../catalog-management" class="nb-admin-only"><i class="fa-solid fa-layer-group"></i> QL Danh mục</a>
                     <a href="../users" class="nb-admin-only"><i class="fa-solid fa-users"></i> QL Người dùng</a>
                     <a href="../role-permission" class="nb-admin-only"><i class="fa-solid fa-user-shield"></i> Phân quyền</a>
+                    <a href="../order-manager" class="nb-admin-only"></i> Quản lí đơn hàng</a>
                     <a href="../notification" class="nb-admin-only"></i> Gửi thông báo</a>
+                    
                     <button id="nbLogout" style="color:#e11d48; border-top:1px solid #eee; margin-top:5px"><i class="fa-solid fa-right-from-bracket"></i> Đăng xuất</button>
                 </div>
             </div>
