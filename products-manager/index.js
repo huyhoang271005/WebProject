@@ -25,9 +25,7 @@ let state = {
 
 async function reloadData() {
     try {
-        // ID sản phẩm đang test
-        const targetId = "6786aedf-aa81-44ef-b28f-06abff1b5c1c";
-
+        const targetId = "6786aedf-aa81-44ef-b28f-06abff1b5c1c"; // ID Test
         const [productData, cats, brands, attrs] = await Promise.all([
             ProductService.getProductById(targetId),
             ProductService.getCategories(),
@@ -39,12 +37,9 @@ async function reloadData() {
         state.brands = brands || [];
         state.attributes = attrs || [];
 
-        // --- XỬ LÝ DỮ LIỆU ĐỂ HIỂN THỊ ---
         let productList = [];
-        
         if (productData && productData.productDetailDTO) {
             const detail = productData.productDetailDTO;
-            
             const uiItem = {
                 productId: detail.productId,
                 productName: detail.productName,
@@ -56,14 +51,12 @@ async function reloadData() {
                 categoryName: cats.find(c => c.categoryId == detail.categoryId)?.categoryName || "-",
                 brandName: brands.find(b => b.brandId == detail.brandId)?.brandName || "-"
             };
-
             productList = [uiItem]; 
         }
 
         state.products = productList;
         UI.renderTable(state.products);
         
-        // Render Select Danh mục
         if (UI.els.cateSelect) {
             UI.els.cateSelect.innerHTML = `<option value="">-- Chọn danh mục --</option>`;
             state.categories.forEach(c => {
@@ -76,7 +69,6 @@ async function reloadData() {
 }
 
 function setupEventListeners() {
-    // 1. Nút mở form thêm mới
     const btnAdd = document.getElementById("btnOpenCreate");
     if (btnAdd) {
         btnAdd.onclick = () => {
@@ -85,43 +77,25 @@ function setupEventListeners() {
             state.variants = [];
             state.mainImageFile = null;
             state.currentMainImageUrl = "";
-            
             UI.resetForm(false);
             UI.switchView('form');
         };
     }
-
-    // 2. Nút Quay lại
     const btnBack = document.getElementById("btnBackToList");
     if (btnBack) {
-        btnBack.onclick = () => {
-            UI.switchView('list');
-            reloadData();
-        };
+        btnBack.onclick = () => { UI.switchView('list'); reloadData(); };
     }
-
-    // 3. Nút Thêm thuộc tính
     const btnAddAttr = document.getElementById("btnAddAttr");
     if (btnAddAttr) {
-        btnAddAttr.onclick = () => {
-            UI.addAttrRow("", "", null, null, [], {}, state.attributes);
-        };
+        btnAddAttr.onclick = () => { UI.addAttrRow("", "", null, null, [], {}, state.attributes); };
     }
-
-    // 4. Nút Tạo biến thể
     const btnGenVariants = document.getElementById("btnGenerateVariants");
     if (btnGenVariants) {
-        btnGenVariants.onclick = () => {
-            handleCalcVariants();
-        };
+        btnGenVariants.onclick = () => { handleCalcVariants(); };
     }
-
-    // 5. Sự kiện chọn danh mục -> load thương hiệu
     if (UI.els.cateSelect) {
         UI.els.cateSelect.onchange = (e) => UI.renderBrands(state.brands, e.target.value);
     }
-
-    // 6. Sự kiện chọn ảnh chính (Upload)
     if (UI.els.mainImgInput) {
         UI.els.mainImgInput.onchange = (e) => {
             const file = e.target.files[0];
@@ -131,64 +105,39 @@ function setupEventListeners() {
             }
         };
     }
-
-    // 7. Submit Form
     const form = document.getElementById("productForm");
     if (form) form.onsubmit = handleSave;
     
-    // 8. Nút Làm mới (Reset)
     const btnReset = document.getElementById("resetBtn");
-    if(btnReset) {
-        btnReset.onclick = () => UI.resetForm(state.isEdit);
-    }
+    if(btnReset) { btnReset.onclick = () => UI.resetForm(state.isEdit); }
 }
 
-// === CÁC HÀM GLOBAL (để gọi từ onclick HTML) ===
+// === CÁC HÀM GLOBAL ===
 function setupGlobalFunctions() {
-    // Sửa sản phẩm
     window.editProduct = async (id) => {
         const fullData = await ProductService.getProductById(id);
-        
         if (!fullData || !fullData.productDetailDTO) return;
         const detail = fullData.productDetailDTO;
-
         state.isEdit = true;
         state.currentId = id;
         state.variants = []; 
         state.mainImageFile = null;
         state.currentMainImageUrl = detail.imageName || "";
-
         UI.resetForm(true);
         UI.switchView('form');
         
-        // Fill data form cơ bản
-        if(document.getElementById("productName")) 
-            document.getElementById("productName").value = detail.productName;
-        
-        if(document.getElementById("description")) 
-            document.getElementById("description").value = detail.description || "";
-        
-        if(document.getElementById("price")) 
-            document.getElementById("price").value = detail.price;
-        
-        if(document.getElementById("priceOriginal")) 
-            document.getElementById("priceOriginal").value = detail.originalPrice;
-        
-        // Fill Select Category & Brand
+        if(document.getElementById("productName")) document.getElementById("productName").value = detail.productName;
+        if(document.getElementById("description")) document.getElementById("description").value = detail.description || "";
+        if(document.getElementById("price")) document.getElementById("price").value = detail.price;
+        if(document.getElementById("priceOriginal")) document.getElementById("priceOriginal").value = detail.originalPrice;
         if(UI.els.cateSelect) {
             UI.els.cateSelect.value = detail.categoryId;
             UI.renderBrands(state.brands, detail.categoryId, detail.brandId);
         }
-
-        // Xử lý ảnh
-        if(detail.imageUrl) {
-            UI.renderMainImage(detail.imageUrl);
-        } else if(detail.imageName) {
-            UI.renderMainImage(`/images/${detail.imageName}`);
-        }
+        if(detail.imageUrl) UI.renderMainImage(detail.imageUrl);
+        else if(detail.imageName) UI.renderMainImage(`/images/${detail.imageName}`);
     };
 
-    // Chọn ảnh variant
     window.handleSelectVariantImage = (index, input) => {
         const file = input.files[0];
         if (file && state.variants[index]) {
@@ -198,22 +147,6 @@ function setupGlobalFunctions() {
         }
     };
 
-window.applyBulkInfo = () => {
-    const pOrg = document.getElementById("bulk_price_org")?.value;
-    const pSell = document.getElementById("bulk_price")?.value;
-    const stock = document.getElementById("bulk_stock")?.value;
-
-    // Duyệt qua tất cả variants và gán giá trị nếu ô nhập có dữ liệu
-    state.variants.forEach(v => {
-        if (pOrg) v.priceOriginal = parseFloat(pOrg);
-        if (pSell) v.price = parseFloat(pSell);
-        if (stock) v.stock = parseInt(stock);
-    });
-
-    // Render lại bảng để thấy thay đổi
-    UI.renderVariants(state.variants);
-};
-
     window.updateVar = (i, field, value) => {
         if(state.variants[i]) state.variants[i][field] = value;
     };
@@ -222,9 +155,24 @@ window.applyBulkInfo = () => {
         state.variants.splice(i, 1);
         UI.renderVariants(state.variants);
     };
+
+    // --- MỚI: HÀM ÁP DỤNG HÀNG LOẠT ---
+    window.applyBulkInfo = () => {
+        const pOrg = document.getElementById("bulk_price_org")?.value;
+        const pSell = document.getElementById("bulk_price")?.value;
+        const stock = document.getElementById("bulk_stock")?.value;
+
+        if (!pOrg && !pSell && !stock) return;
+
+        state.variants.forEach(v => {
+            if (pOrg) v.priceOriginal = parseFloat(pOrg);
+            if (pSell) v.price = parseFloat(pSell);
+            if (stock) v.stock = parseInt(stock);
+        });
+        UI.renderVariants(state.variants);
+    };
 }
 
-// Tính toán biến thể từ thuộc tính
 function handleCalcVariants() {
     const attrs = VariantLogic.parseAttributesFromDOM();
     const basePrice = parseFloat(document.getElementById("price").value) || 0;
@@ -234,10 +182,21 @@ function handleCalcVariants() {
     UI.renderVariants(state.variants);
 }
 
-// Lưu (Create / Update)
+// === SAVE (Có fix lỗi Logic) ===
 async function handleSave(e) {
     e.preventDefault();
     
+    // 1. Lấy thuộc tính hiện tại
+    const currentAttrs = VariantLogic.parseAttributesFromDOM();
+
+    // 2. CHECK LỖI: Có nhập thuộc tính mà chưa bấm "Tạo biến thể" (tức là variants rỗng)
+    if (currentAttrs.length > 0 && state.variants.length === 0) {
+        const msg = "Bạn đã nhập thuộc tính nhưng chưa tạo danh sách biến thể.\nVui lòng nhấn nút 'Tạo biến thể' màu xanh trước khi lưu!";
+        if(typeof showDialog === 'function') await showDialog("error", msg);
+        else alert(msg);
+        return; // Dừng lại ngay, không gửi API
+    }
+
     const payload = {
         productDetailDTO: {
             productId: state.isEdit ? state.currentId : null,
@@ -254,8 +213,6 @@ async function handleSave(e) {
         variantValues: []
     };
 
-    // Build attributes payload
-    const currentAttrs = VariantLogic.parseAttributesFromDOM();
     currentAttrs.forEach(attr => {
         const attrValues = attr.values.map(v => ({ attributeValueName: v }));
         payload.attributes.push({ 
@@ -265,7 +222,6 @@ async function handleSave(e) {
         });
     });
 
-    // Build variants payload
     state.variants.forEach((v, idx) => {
         const imgKey = v.rawFile ? `image_variant_${idx}` : null;
         payload.variants.push({
@@ -276,7 +232,6 @@ async function handleSave(e) {
         });
     });
 
-    // FormData
     const formData = new FormData();
     if(state.mainImageFile) {
         payload.productDetailDTO.imageName = "productImage";
@@ -288,13 +243,11 @@ async function handleSave(e) {
     
     formData.append("productDTO", new Blob([JSON.stringify(payload)], { type: "application/json" }));
 
-    // Send API
     try {
         const res = await ProductService.createProduct(formData);
         if(res && res.success) {
             if(typeof showDialog === 'function') await showDialog("success", "Thành công!");
             else alert("Thành công");
-            
             UI.switchView('list');
             reloadData();
         } else {
