@@ -186,13 +186,15 @@ function handleCalcVariants() {
 
 // Thay thế toàn bộ hàm handleSave trong file index.js
 
+// Thay thế toàn bộ hàm handleSave cũ trong index.js bằng hàm này:
+
 async function handleSave(e) {
     e.preventDefault();
     
-    // 1. Lấy danh sách thuộc tính từ giao diện
+    // 1. Lấy dữ liệu thuộc tính từ giao diện
     const currentAttrs = VariantLogic.parseAttributesFromDOM();
 
-    // 2. CHECK: Nhập thuộc tính mà quên bấm nút "Tạo biến thể"
+    // 2. CHECK AN TOÀN: Có nhập thuộc tính mà chưa bấm "Tạo biến thể"
     if (currentAttrs.length > 0 && state.variants.length === 0) {
         const msg = "⚠️ Bạn chưa tạo biến thể!\nVui lòng nhấn nút màu xanh 'Tạo biến thể' trước khi lưu.";
         if(typeof showDialog === 'function') await showDialog("error", msg);
@@ -200,7 +202,7 @@ async function handleSave(e) {
         return; 
     }
 
-    // 3. Chuẩn bị Payload
+    // 3. Chuẩn bị khung Payload
     const payload = {
         productDetailDTO: {
             productId: state.isEdit ? state.currentId : null,
@@ -217,16 +219,12 @@ async function handleSave(e) {
         variantValues: []
     };
 
-    // 4. Build Attributes Payload & Tạo Map để tra cứu ID
-    // Chúng ta cần lưu lại cả ID và Name để lát ghép vào variant
-    const attrMap = []; 
+    // 4. Build Attributes (Định nghĩa thuộc tính cho sản phẩm)
+    // Lưu lại danh sách Tên thuộc tính để lát dùng cho variant
+    const attributeNames = []; 
 
     currentAttrs.forEach(attr => {
-        // Lưu metadata để dùng cho variant bên dưới
-        attrMap.push({
-            id: attr.id,    // ID của thuộc tính (nếu chọn từ dropdown)
-            name: attr.name // Tên thuộc tính
-        });
+        attributeNames.push(attr.name); 
         
         const attrValues = attr.values.map(v => ({ attributeValueName: v }));
         payload.attributes.push({ 
@@ -236,17 +234,16 @@ async function handleSave(e) {
         });
     });
 
-    // 5. Build Variants Payload (FIX QUAN TRỌNG TẠI ĐÂY)
+    // 5. Build Variants (Danh sách biến thể)
+    // FIX: Chỉ gửi Tên thuộc tính và Giá trị, KHÔNG gửi ID vào đây để tránh xung đột
     state.variants.forEach((v, idx) => {
         const imgKey = v.rawFile ? `image_variant_${idx}` : null;
         
-        // Ghép đầy đủ thông tin: ID, Name, Value cho backend
+        // Map giá trị (VD: Đỏ) với Tên thuộc tính tương ứng (VD: Màu sắc)
         const variantAttrValues = v.comboValues.map((val, valIdx) => {
-            const meta = attrMap[valIdx]; // Lấy thông tin thuộc tính tương ứng vị trí
             return {
-                attributeId: meta.id || null, // Gửi kèm ID nếu có
-                attributeName: meta.name,     // Gửi kèm Tên
-                attributeValueName: val       // Giá trị (Đỏ, XL...)
+                attributeName: attributeNames[valIdx], 
+                attributeValueName: val               
             };
         });
 
@@ -255,11 +252,11 @@ async function handleSave(e) {
             priceOriginal: v.priceOriginal || v.price,
             stock: v.stock,
             imageName: imgKey,
-            attributeValues: variantAttrValues // <--- Backend cần cái này đầy đủ
+            attributeValues: variantAttrValues 
         });
     });
 
-    // 6. Gửi dữ liệu
+    // 6. Đóng gói FormData
     const formData = new FormData();
     if(state.mainImageFile) {
         payload.productDetailDTO.imageName = "productImage";
@@ -269,23 +266,23 @@ async function handleSave(e) {
         if(v.rawFile) formData.append(`image_variant_${idx}`, v.rawFile);
     });
     
-    // Log ra để kiểm tra
-    console.log("🔥 Payload chuẩn bị gửi:", JSON.stringify(payload, null, 2));
-
     formData.append("productDTO", new Blob([JSON.stringify(payload)], { type: "application/json" }));
 
+    // 7. Gửi API
     try {
         const res = await ProductService.createProduct(formData);
         if(res && res.success) {
             if(typeof showDialog === 'function') await showDialog("success", "Thành công!");
             else alert("Thành công");
+            
+            // Reset form và reload lại danh sách
             UI.switchView('list');
             reloadData();
         } else {
-             // In lỗi chi tiết từ server nếu có
-             console.error("Server Error Detail:", res);
-             if(typeof showDialog === 'function') await showDialog("error", res?.message || "Lỗi lưu sản phẩm");
-             else alert("Lỗi: " + (res?.message || "Kiểm tra lại dữ liệu"));
+             // Xử lý lỗi từ server trả về
+             const errorMsg = res?.message || "Lỗi không xác định";
+             if(typeof showDialog === 'function') await showDialog("error", errorMsg);
+             else alert("Lỗi: " + errorMsg);
         }
     } catch(err) {
         console.error(err);
