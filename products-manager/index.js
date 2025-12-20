@@ -30,7 +30,7 @@ let state = {
 async function reloadData() {
     try {
         // ID của sản phẩm bạn muốn hiển thị (lấy từ file JSON bạn gửi)
-        const targetId = "0af4a625-3409-4539-9121-cb811ec4bf32";
+        const targetId = "6786aedf-aa81-44ef-b28f-06abff1b5c1c";
 
         // Thay đổi: Gọi getProductById thay vì getAll
         const [productData, cats, brands, attrs] = await Promise.all([
@@ -76,7 +76,6 @@ async function reloadData() {
         // Render ra bảng
         UI.renderTable(state.products);
         
-        // Render danh mục vào select (giữ nguyên logic cũ)
         if (UI.els.cateSelect) {
             UI.els.cateSelect.innerHTML = `<option value="">-- Chọn danh mục --</option>`;
             state.categories.forEach(c => {
