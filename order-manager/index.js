@@ -135,7 +135,6 @@ window.updateStatus = async (orderId, newStatus) => {
 
     if (!confirm(msg)) return;
 
-    try {
         const endpoint = `/auth/admin/orders/${orderId}`;
         
         // 👇 QUAN TRỌNG NHẤT: Gửi status trần, KHÔNG bọc object, KHÔNG stringify
@@ -167,10 +166,6 @@ window.updateStatus = async (orderId, newStatus) => {
         } else {
             alert(res.message || "Lỗi cập nhật từ Server");
         }
-    } catch (e) {
-        console.error(e);
-        alert("Lỗi hệ thống: " + e.message);
-    }
 };
 // ============================================================
 // 4. BỘ LỌC VÀ HELPER
