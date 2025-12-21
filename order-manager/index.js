@@ -73,7 +73,7 @@ function renderOrders(listData) {
         // Case 1: Đơn mới (WAITING hoặc PENDING)
         if (st === 'WAITING' || st === 'PENDING') {
             actionButtons = `
-                <button class="btn-approve" onclick="updateStatus('${order.orderId}', 'DELIVERING')" title="Duyệt đơn này">
+                <button class="btn-approve" onclick="updateStatus('${order.orderId}', 'CONFIRMED')" title="Duyệt đơn này">
                     <i class="fa-solid fa-truck-fast"></i> Duyệt đơn
                 </button>
                 <button class="btn-reject" onclick="updateStatus('${order.orderId}', 'CANCELED')" title="Hủy đơn này">
@@ -84,7 +84,7 @@ function renderOrders(listData) {
         // Case 2: Đang giao (DELIVERING)
         else if (st === 'DELIVERING') {
             actionButtons = `
-                <button class="btn-approve" style="background-color:#3B82F6;" onclick="updateStatus('${order.orderId}', 'DELIVERED')" title="Xác nhận khách đã nhận">
+                <button class="btn-approve" style="background-color:#3B82F6;" onclick="updateStatus('${order.orderId}', 'CONFIRMED')" title="Xác nhận khách đã nhận">
                     <i class="fa-solid fa-check-double"></i> Đã giao
                 </button>
             `;
@@ -135,13 +135,8 @@ window.updateStatus = async (orderId, newStatus) => {
 
     if (!confirm(msg)) return;
         const endpoint = `/auth/admin/orders/${orderId}`;
-        let statusToSend = newStatus;
-        if (newStatus === 'DELIVERING') {
-            statusToSend = 'CONFIRMED'; 
-        }
-
         // Vẫn gửi biến trần (callAPI tự đóng gói JSON)
-        const body = statusToSend; 
+        const body = newStatus; 
 
         console.log(`Đang gửi PATCH: ${endpoint} -> Gửi: ${body} (Mong muốn: ${newStatus})`);
 
