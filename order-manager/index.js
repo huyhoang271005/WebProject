@@ -84,7 +84,7 @@ function renderOrders(listData) {
         // Case 2: Đang giao (DELIVERING)
         else if (st === 'DELIVERING') {
             actionButtons = `
-                <button class="btn-approve" style="background-color:#3B82F6;" onclick="updateStatus('${order.orderId}', 'CONFIRMED')" title="Xác nhận khách đã nhận">
+                <button class="btn-approve" style="background-color:#3B82F6;" onclick="updateStatus('${order.orderId}', 'DELIVERED')" title="Xác nhận khách đã nhận">
                     <i class="fa-solid fa-check-double"></i> Đã giao
                 </button>
             `;
