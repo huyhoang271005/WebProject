@@ -74,7 +74,7 @@ function renderOrders(listData) {
         let actionButtons = '';
         const st = order.orderStatus; 
 
-        // 1. CHỜ XÁC NHẬN (PENDING/WAITING) -> Duyệt sang DELIVERING
+        // 1. CHỜ XÁC NHẬN (WAITING/PENDING) -> Nút Duyệt sang DELIVERING
         if (st === 'WAITING' || st === 'PENDING') {
             actionButtons = `
                 <button class="btn-approve" onclick="updateStatus('${order.orderId}', 'DELIVERING')" title="Duyệt & Giao hàng">
@@ -85,7 +85,7 @@ function renderOrders(listData) {
                 </button>
             `;
         } 
-        // 2. ĐANG GIAO (DELIVERING) -> Xác nhận DELIVERED
+        // 2. ĐANG GIAO (DELIVERING) -> Nút Xác nhận DELIVERED
         else if (st === 'DELIVERING') {
             actionButtons = `
                 <button class="btn-approve" style="background-color:#3B82F6;" onclick="updateStatus('${order.orderId}', 'DELIVERED')" title="Xác nhận đã giao">
@@ -93,6 +93,7 @@ function renderOrders(listData) {
                 </button>
             `;
         }
+        // Các trạng thái DELIVERED, CANCELED không hiện nút
         
         // 3. Render HTML
         const tr = document.createElement("tr");
@@ -137,23 +138,24 @@ function renderMiniProducts(items) {
 }
 
 // ============================================================
-// 3. CẬP NHẬT TRẠNG THÁI (ĐÃ SỬA THEO API PATCH MỚI)
+// 3. CẬP NHẬT TRẠNG THÁI (SỬA LỖI JSON ERROR)
 // ============================================================
 window.updateStatus = async (orderId, newStatus) => {
     let msg = "Bạn có chắc chắn chuyển trạng thái đơn này?";
-    if (newStatus === 'CANCELED') msg = "CẢNH BÁO: Hủy đơn hàng này?";
+    if (newStatus === 'CANCELED') msg = "CẢNH BÁO: Bạn muốn HỦY đơn hàng này?";
 
     if (!confirm(msg)) return;
 
     try {
-        // [QUAN TRỌNG] Thay đổi endpoint và method theo ảnh Postman
-        // Method: PATCH
-        // URL: /auth/admin/orders/{id}
-        // Body: { "orderStatus": "STATUS_MOI" }
-        
+        // Endpoint: /auth/admin/orders/{id}
         const endpoint = `/auth/admin/orders/${orderId}`;
-        const body = { orderStatus: newStatus };
+        
+        // --- SỬA LỖI Ở ĐÂY ---
+        // Thay vì gửi body là object { orderStatus: ... }
+        // Ta gửi trực tiếp chuỗi trạng thái vì Backend dùng @RequestBody Enum
+        const body = newStatus; 
 
+        // Gọi API PATCH
         const res = await callAPI(endpoint, 'PATCH', body);
 
         if (res.success) {
@@ -162,22 +164,24 @@ window.updateStatus = async (orderId, newStatus) => {
             // Reload lại tab hiện tại
             const activeBtn = document.querySelector('.tab-btn.active');
             let currentFilter = 'WAITING';
+            
             if (activeBtn) {
-                // Map lại text trên nút sang mã status để reload
                 const text = activeBtn.innerText;
                 if(text === 'Chờ xác nhận') currentFilter = 'WAITING';
                 else if(text === 'Đang giao') currentFilter = 'DELIVERING';
                 else if(text === 'Hoàn thành') currentFilter = 'DELIVERED';
                 else if(text === 'Đã hủy') currentFilter = 'CANCELED';
             }
+            
             loadOrders(currentFilter);
             closeModal();
         } else {
-            alert(res.message || "Lỗi cập nhật trạng thái");
+            // Đôi khi success=false nhưng message trả về từ backend lại là lỗi cụ thể
+            alert(res.message || "Lỗi cập nhật: Backend từ chối dữ liệu");
         }
     } catch (e) {
         console.error(e);
-        alert("Lỗi server: " + e.message);
+        alert("Lỗi hệ thống: " + e.message);
     }
 };
 
@@ -195,15 +199,31 @@ function getStatusBadge(status) {
     let cls = 'bg-gray-100 text-gray-800'; 
     let lbl = s;
 
-    // Mapping các trạng thái "cần thiết"
+    // Chỉ dùng các trạng thái: PENDING/WAITING, DELIVERING, DELIVERED, CANCELED
     switch (s) {
         case 'WAITING': 
-        case 'PENDING':   cls = 'badge-yellow'; lbl = 'Chờ xác nhận'; break;
-        case 'DELIVERING': cls = 'badge-blue';   lbl = 'Đang giao'; break;
+        case 'PENDING':   
+            cls = 'badge-yellow'; 
+            lbl = 'Chờ xác nhận'; 
+            break;
+            
+        case 'DELIVERING': 
+            cls = 'badge-blue';   
+            lbl = 'Đang giao'; 
+            break;
+            
         case 'DELIVERED': 
-        case 'COMPLETED': cls = 'badge-green';  lbl = 'Hoàn thành'; break;
+        case 'COMPLETED': // Dự phòng nếu backend trả về COMPLETED
+            cls = 'badge-green';  
+            lbl = 'Hoàn thành'; 
+            break;
+            
         case 'CANCELED': 
-        case 'REJECTED':  cls = 'badge-red';    lbl = 'Đã hủy'; break;
+        case 'CANCELLED': // Dự phòng spelling 2 chữ L
+        case 'REJECTED':  
+            cls = 'badge-red';    
+            lbl = 'Đã hủy'; 
+            break;
     }
     return `<span class="status-badge ${cls}">${lbl}</span>`;
 }
