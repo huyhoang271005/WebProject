@@ -127,7 +127,7 @@ function renderMiniProducts(items) {
 }
 
 // ============================================================
-// 3. CẬP NHẬT TRẠNG THÁI (QUAN TRỌNG: FIX LỖI JSON)
+// 3. CẬP NHẬT TRẠNG THÁI (FIX LỖI QUAN TRỌNG)
 // ============================================================
 window.updateStatus = async (orderId, newStatus) => {
     let msg = "Bạn có chắc chắn chuyển trạng thái đơn này?";
@@ -138,9 +138,9 @@ window.updateStatus = async (orderId, newStatus) => {
     try {
         const endpoint = `/auth/admin/orders/${orderId}`;
         
-        // [FIX LỖI START_OBJECT]
-        // Backend cần String Enum, nên ta gửi trực tiếp chuỗi, KHÔNG bọc trong {}
-        const body = newStatus; 
+        // 👇👇👇 SỬA Ở ĐÂY 👇👇👇
+        // Thêm JSON.stringify vào để đóng gói chuỗi thành "STATUS"
+        const body = JSON.stringify(newStatus); 
 
         console.log(`Đang gửi PATCH: ${endpoint} với body:`, body);
 
@@ -150,7 +150,7 @@ window.updateStatus = async (orderId, newStatus) => {
         if (res.success) {
             alert("Thành công!");
             
-            // Reload lại đúng tab hiện tại để thấy đơn biến mất (hoặc chuyển trạng thái)
+            // Reload lại đúng tab hiện tại
             const activeBtn = document.querySelector('.tab-btn.active');
             let currentFilter = 'WAITING';
             if (activeBtn) {
@@ -170,7 +170,6 @@ window.updateStatus = async (orderId, newStatus) => {
         alert("Lỗi hệ thống: " + e.message);
     }
 };
-
 // ============================================================
 // 4. BỘ LỌC VÀ HELPER
 // ============================================================
