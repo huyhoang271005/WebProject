@@ -29,7 +29,7 @@ async function loadOrders() {
 
     try {
         // Gọi API lấy danh sách đơn hàng
-        const res = await callAPI('/auth/orders', 'GET'); 
+        const res = await callAPI('/auth/admin/orders/WAITING', 'GET'); 
         
         if (res.success) {
             allOrders = res.data.listData || [];
@@ -159,8 +159,7 @@ window.updateStatus = async (orderId, newStatus) => {
     try {
         // Gọi API cập nhật (PUT)
         // Lưu ý: Cấu trúc body này phụ thuộc vào Backend quy định. 
-        // Nếu Backend nhận qua URL param thì sửa thành: callAPI(`/auth/orders/${orderId}?status=${newStatus}`, 'PUT')
-        const res = await callAPI(`/auth/orders`, 'PUT', {
+        const res = await callAPI(`/auth/admin/orders/WAITING`, 'PUT', {
             orderId: orderId,
             orderStatus: newStatus
         });
