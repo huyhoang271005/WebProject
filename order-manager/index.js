@@ -127,40 +127,39 @@ function renderMiniProducts(items) {
 }
 
 // ============================================================
-// 3. CẬP NHẬT TRẠNG THÁI (FIX LỖI & GIỮ NGUYÊN TAB)
+// 3. CẬP NHẬT TRẠNG THÁI (FIX THEO LOGIC CỦA NHÓM TRƯỞNG)
 // ============================================================
 window.updateStatus = async (orderId, newStatus) => {
     let msg = "Bạn có chắc chắn chuyển trạng thái đơn này?";
     if (newStatus === 'CANCELED') msg = "CẢNH BÁO: Bạn sắp HỦY đơn hàng này?";
 
     if (!confirm(msg)) return;
-
         const endpoint = `/auth/admin/orders/${orderId}`;
-        
-        // 👇 QUAN TRỌNG NHẤT: Gửi status trần, KHÔNG bọc object, KHÔNG stringify
-        // Hàm callAPI của bạn sẽ tự xử lý phần còn lại.
-        const body = newStatus; 
+        let statusToSend = newStatus;
+        if (newStatus === 'DELIVERING') {
+            statusToSend = 'CONFIRMED'; 
+        }
 
-        // Gọi API
+        // Vẫn gửi biến trần (callAPI tự đóng gói JSON)
+        const body = statusToSend; 
+
+        console.log(`Đang gửi PATCH: ${endpoint} -> Gửi: ${body} (Mong muốn: ${newStatus})`);
+
         const res = await callAPI(endpoint, 'PATCH', body);
 
         if (res.success) {
             alert("Thành công!");
             
-            // 👇 LOGIC RELOAD: Giữ nguyên tab đang đứng
+            // Logic reload giữ nguyên tab
             const activeBtn = document.querySelector('.tab-btn.active');
             let currentFilter = 'WAITING';
-            
             if (activeBtn) {
                 const text = activeBtn.innerText.trim();
-                // Map lại text sang status code để gọi loadOrders
                 if(text === 'Chờ xác nhận') currentFilter = 'WAITING';
                 else if(text === 'Đang giao') currentFilter = 'DELIVERING';
                 else if(text === 'Hoàn thành') currentFilter = 'DELIVERED';
                 else if(text === 'Đã hủy') currentFilter = 'CANCELED';
             }
-            
-            // Tải lại danh sách hiện tại -> Đơn vừa duyệt sẽ biến mất khỏi list này
             loadOrders(currentFilter);
             closeModal();
         } else {
