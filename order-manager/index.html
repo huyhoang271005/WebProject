@@ -1,14 +1,16 @@
 <!DOCTYPE html>
 <html lang="vi">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Quản lý đơn hàng - Tạp Hóa Xanh</title>
-    
+
     <link rel="stylesheet" href="admin-orders.css">
-    
+
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
+
 <body>
 
     <div class="admin-order-container">
@@ -16,11 +18,11 @@
             <h2>Quản lý duyệt đơn hàng</h2>
 
             <div class="tabs-container">
-                <button class="tab-btn active" onclick="filterStatus('ALL')">Tất cả</button>
-                <button class="tab-btn" onclick="filterStatus('WAITING')">Chờ xác nhận</button>
-                <button class="tab-btn" onclick="filterStatus('SHIPPING')">Đang giao</button>
-                <button class="tab-btn" onclick="filterStatus('COMPLETED')">Hoàn thành</button>
-                <button class="tab-btn" onclick="filterStatus('CANCELLED')">Đã hủy</button>
+                <button class="tab-btn" onclick="filterStatus('ALL')">Tất cả</button>
+                <button class="tab-btn active" onclick="filterStatus('WAITING')">Chờ xác nhận</button>
+                <button class="tab-btn" onclick="filterStatus('DELIVERING')">Đang giao</button>
+                <button class="tab-btn" onclick="filterStatus('DELIVERED')">Hoàn thành</button>
+                <button class="tab-btn" onclick="filterStatus('CANCELED')">Đã hủy</button>
             </div>
 
             <div class="table-wrapper">
@@ -37,7 +39,7 @@
                         </tr>
                     </thead>
                     <tbody id="orderList">
-                        </tbody>
+                    </tbody>
                 </table>
             </div>
 
@@ -53,14 +55,15 @@
                 <h3>Chi tiết đơn hàng <span id="modalOrderId" style="color:#10B981;">#...</span></h3>
                 <span class="close-btn" onclick="closeModal()">&times;</span>
             </div>
-            
+
             <div class="modal-body">
                 <div class="info-section">
                     <h4><i class="fa-solid fa-user-tag"></i> Thông tin giao hàng</h4>
                     <div class="info-grid">
                         <div><strong>Người nhận:</strong> <span id="modalCustomerName">...</span></div>
                         <div><strong>Số điện thoại:</strong> <span id="modalPhone">...</span></div>
-                        <div style="grid-column: span 2;"><strong>Địa chỉ:</strong> <span id="modalAddress">...</span></div>
+                        <div style="grid-column: span 2;"><strong>Địa chỉ:</strong> <span id="modalAddress">...</span>
+                        </div>
                         <div><strong>Ngày đặt:</strong> <span id="modalDate">...</span></div>
                         <div><strong>Trạng thái:</strong> <span id="modalStatus">...</span></div>
                     </div>
@@ -79,10 +82,10 @@
                                 </tr>
                             </thead>
                             <tbody id="modalProductList">
-                                </tbody>
+                            </tbody>
                         </table>
                     </div>
-                    
+
                     <div class="modal-total">
                         Tổng thanh toán: <span id="modalTotalMoney">0 đ</span>
                     </div>
@@ -90,7 +93,8 @@
             </div>
 
             <div class="modal-footer" style="padding: 15px; text-align: right; border-top: 1px solid #eee;">
-                <button onclick="closeModal()" style="padding: 8px 20px; border: 1px solid #ddd; background: white; border-radius: 4px; cursor: pointer;">Đóng</button>
+                <button onclick="closeModal()"
+                    style="padding: 8px 20px; border: 1px solid #ddd; background: white; border-radius: 4px; cursor: pointer;">Đóng</button>
             </div>
         </div>
     </div>
@@ -101,4 +105,5 @@
         loadNavbar({}); 
     </script>
 </body>
+
 </html>
