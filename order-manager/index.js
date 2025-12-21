@@ -4,13 +4,15 @@ const money = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND
 let allOrders = []; 
 
 document.addEventListener("DOMContentLoaded", async () => {
-    // Mặc định load tab đầu tiên (Chờ xác nhận)
-    // Sếp bảo ưu tiên PENDING, nhưng data cũ là WAITING nên mình sẽ load cả 2 hoặc ưu tiên WAITING nếu data chưa đổi
+    // 1. Mặc định load tab "Chờ xác nhận" (WAITING)
     await loadOrders('WAITING');
     
-    // Active UI tab Chờ xác nhận
+    // 2. Đảm bảo UI active đúng tab đầu tiên
     const tabs = document.querySelectorAll('.tab-btn');
-    if(tabs[1]) tabs[1].classList.add('active'); // Tab thứ 2
+    if(tabs.length > 0) {
+        tabs.forEach(t => t.classList.remove('active'));
+        if(tabs[0]) tabs[0].classList.add('active'); 
+    }
 
     // Xử lý đóng modal
     window.onclick = (event) => {
@@ -30,14 +32,8 @@ async function loadOrders(status) {
     tbody.innerHTML = "";
 
     try {
-        let endpoint = `/auth/admin/orders/${status}`;
-        
-        // Fix tạm nếu status là ALL mà chưa có API
-        if (status === 'ALL') {
-             console.log("Đang load tất cả (demo)");
-             // endpoint = `/auth/admin/orders`; 
-        }
-
+        // Endpoint chuẩn: /auth/admin/orders/{STATUS}
+        const endpoint = `/auth/admin/orders/${status}`;
         const res = await callAPI(endpoint, 'GET'); 
         
         if (res.success) {
@@ -56,7 +52,7 @@ async function loadOrders(status) {
 }
 
 // ============================================================
-// 2. RENDER BẢNG (LOGIC NÚT BẤM THEO STATUS)
+// 2. RENDER BẢNG
 // ============================================================
 function renderOrders(listData) {
     const tbody = document.getElementById("orderList");
@@ -69,15 +65,15 @@ function renderOrders(listData) {
 
     listData.forEach(order => {
         const totalAmount = order.orderItemDTOList.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-        
-        // --- LOGIC HIỂN THỊ NÚT BẤM ---
-        let actionButtons = '';
         const st = order.orderStatus; 
+        
+        // --- LOGIC HIỂN THỊ NÚT BẤM (Dựa theo Enum Backend) ---
+        let actionButtons = '';
 
-        // 1. CHỜ XÁC NHẬN (WAITING/PENDING) -> Nút Duyệt sang DELIVERING
+        // Case 1: Đơn mới (WAITING hoặc PENDING)
         if (st === 'WAITING' || st === 'PENDING') {
             actionButtons = `
-                <button class="btn-approve" onclick="updateStatus('${order.orderId}', 'DELIVERING')" title="Duyệt & Giao hàng">
+                <button class="btn-approve" onclick="updateStatus('${order.orderId}', 'DELIVERING')" title="Duyệt đơn này">
                     <i class="fa-solid fa-truck-fast"></i> Duyệt đơn
                 </button>
                 <button class="btn-reject" onclick="updateStatus('${order.orderId}', 'CANCELED')" title="Hủy đơn này">
@@ -85,24 +81,20 @@ function renderOrders(listData) {
                 </button>
             `;
         } 
-        // 2. ĐANG GIAO (DELIVERING) -> Nút Xác nhận DELIVERED
+        // Case 2: Đang giao (DELIVERING)
         else if (st === 'DELIVERING') {
             actionButtons = `
-                <button class="btn-approve" style="background-color:#3B82F6;" onclick="updateStatus('${order.orderId}', 'DELIVERED')" title="Xác nhận đã giao">
+                <button class="btn-approve" style="background-color:#3B82F6;" onclick="updateStatus('${order.orderId}', 'DELIVERED')" title="Xác nhận khách đã nhận">
                     <i class="fa-solid fa-check-double"></i> Đã giao
                 </button>
             `;
         }
-        // Các trạng thái DELIVERED, CANCELED không hiện nút
         
-        // 3. Render HTML
         const tr = document.createElement("tr");
         tr.innerHTML = `
             <td><span class="order-id">#${order.orderId.substring(0, 8)}</span></td>
             <td>
-                <div class="customer-info">
-                    <strong>${order.contactName || 'Khách lẻ'}</strong>
-                </div>
+                <div class="customer-info"><strong>${order.contactName || 'Khách lẻ'}</strong></div>
             </td>
             <td>${renderMiniProducts(order.orderItemDTOList)}</td>
             <td class="total-price">${money.format(totalAmount)}</td>
@@ -111,9 +103,7 @@ function renderOrders(listData) {
             <td style="text-align: right;">
                 <div class="action-group">
                     ${actionButtons}
-                    <button class="view-btn" onclick="viewDetail('${order.orderId}')" title="Xem chi tiết">
-                        <i class="fa-solid fa-eye"></i>
-                    </button>
+                    <button class="view-btn" onclick="viewDetail('${order.orderId}')"><i class="fa-solid fa-eye"></i></button>
                 </div>
             </td>
         `;
@@ -121,7 +111,6 @@ function renderOrders(listData) {
     });
 }
 
-// Helper render sản phẩm
 function renderMiniProducts(items) {
     if (!items) return "";
     let html = items.slice(0, 2).map(item => `
@@ -138,46 +127,43 @@ function renderMiniProducts(items) {
 }
 
 // ============================================================
-// 3. CẬP NHẬT TRẠNG THÁI (SỬA LỖI JSON ERROR)
+// 3. CẬP NHẬT TRẠNG THÁI (QUAN TRỌNG: FIX LỖI JSON)
 // ============================================================
 window.updateStatus = async (orderId, newStatus) => {
     let msg = "Bạn có chắc chắn chuyển trạng thái đơn này?";
-    if (newStatus === 'CANCELED') msg = "CẢNH BÁO: Bạn muốn HỦY đơn hàng này?";
+    if (newStatus === 'CANCELED') msg = "CẢNH BÁO: Bạn sắp HỦY đơn hàng này?";
 
     if (!confirm(msg)) return;
 
     try {
-        // Endpoint: /auth/admin/orders/{id}
         const endpoint = `/auth/admin/orders/${orderId}`;
         
-        // --- SỬA LỖI Ở ĐÂY ---
-        // Thay vì gửi body là object { orderStatus: ... }
-        // Ta gửi trực tiếp chuỗi trạng thái vì Backend dùng @RequestBody Enum
+        // [FIX LỖI START_OBJECT]
+        // Backend cần String Enum, nên ta gửi trực tiếp chuỗi, KHÔNG bọc trong {}
         const body = newStatus; 
 
-        // Gọi API PATCH
+        console.log(`Đang gửi PATCH: ${endpoint} với body:`, body);
+
+        // Gọi API
         const res = await callAPI(endpoint, 'PATCH', body);
 
         if (res.success) {
-            alert("Cập nhật thành công!");
+            alert("Thành công!");
             
-            // Reload lại tab hiện tại
+            // Reload lại đúng tab hiện tại để thấy đơn biến mất (hoặc chuyển trạng thái)
             const activeBtn = document.querySelector('.tab-btn.active');
             let currentFilter = 'WAITING';
-            
             if (activeBtn) {
-                const text = activeBtn.innerText;
+                const text = activeBtn.innerText.trim();
                 if(text === 'Chờ xác nhận') currentFilter = 'WAITING';
                 else if(text === 'Đang giao') currentFilter = 'DELIVERING';
                 else if(text === 'Hoàn thành') currentFilter = 'DELIVERED';
                 else if(text === 'Đã hủy') currentFilter = 'CANCELED';
             }
-            
             loadOrders(currentFilter);
             closeModal();
         } else {
-            // Đôi khi success=false nhưng message trả về từ backend lại là lỗi cụ thể
-            alert(res.message || "Lỗi cập nhật: Backend từ chối dữ liệu");
+            alert(res.message || "Lỗi cập nhật từ Server");
         }
     } catch (e) {
         console.error(e);
@@ -199,40 +185,19 @@ function getStatusBadge(status) {
     let cls = 'bg-gray-100 text-gray-800'; 
     let lbl = s;
 
-    // Chỉ dùng các trạng thái: PENDING/WAITING, DELIVERING, DELIVERED, CANCELED
+    // Mapping đúng với Enum Backend
     switch (s) {
-        case 'WAITING': 
-        case 'PENDING':   
-            cls = 'badge-yellow'; 
-            lbl = 'Chờ xác nhận'; 
-            break;
-            
-        case 'DELIVERING': 
-            cls = 'badge-blue';   
-            lbl = 'Đang giao'; 
-            break;
-            
-        case 'DELIVERED': 
-        case 'COMPLETED': // Dự phòng nếu backend trả về COMPLETED
-            cls = 'badge-green';  
-            lbl = 'Hoàn thành'; 
-            break;
-            
-        case 'CANCELED': 
-        case 'CANCELLED': // Dự phòng spelling 2 chữ L
-        case 'REJECTED':  
-            cls = 'badge-red';    
-            lbl = 'Đã hủy'; 
-            break;
+        case 'WAITING': case 'PENDING': cls = 'badge-yellow'; lbl = 'Chờ xác nhận'; break;
+        case 'DELIVERING': cls = 'badge-blue'; lbl = 'Đang giao'; break;
+        case 'DELIVERED': cls = 'badge-green'; lbl = 'Hoàn thành'; break;
+        case 'CANCELED': case 'REJECTED': cls = 'badge-red'; lbl = 'Đã hủy'; break;
     }
     return `<span class="status-badge ${cls}">${lbl}</span>`;
 }
 
-// Giữ nguyên hàm viewDetail (như cũ)
 window.viewDetail = (orderId) => {
     const order = allOrders.find(o => o.orderId === orderId);
     if (!order) return;
-
     document.getElementById("modalOrderId").innerText = "#" + order.orderId;
     document.getElementById("modalCustomerName").innerText = order.contactName || "Khách lẻ";
     document.getElementById("modalPhone").innerText = order.phone || "---";
@@ -245,10 +210,7 @@ window.viewDetail = (orderId) => {
             <td>
                 <div style="display:flex; align-items:center; gap:10px;">
                     <img src="${item.imageUrl || 'https://via.placeholder.com/40'}" style="width:40px; height:40px; object-fit:cover; border-radius:4px;">
-                    <div>
-                        <div style="font-weight:600;">${item.productName}</div>
-                        <div style="font-size:12px; color:#666;">${item.attributeValues ? item.attributeValues.join(' - ') : ''}</div>
-                    </div>
+                    <div><div style="font-weight:600;">${item.productName}</div><div style="font-size:12px; color:#666;">${item.attributeValues ? item.attributeValues.join(' - ') : ''}</div></div>
                 </div>
             </td>
             <td>${money.format(item.price)}</td>
@@ -260,7 +222,6 @@ window.viewDetail = (orderId) => {
     document.getElementById("modalProductList").innerHTML = listHtml;
     const total = order.orderItemDTOList.reduce((sum, i) => sum + (i.price * i.quantity), 0);
     document.getElementById("modalTotalMoney").innerText = money.format(total);
-
     document.getElementById("detailModal").style.display = "flex";
 };
 window.closeModal = () => document.getElementById("detailModal").style.display = "none";
