@@ -138,14 +138,12 @@ window.updateStatus = async (orderId, newStatus) => {
     try {
         const endpoint = `/auth/admin/orders/${orderId}`;
         
-        // 👇👇👇 SỬA Ở ĐÂY 👇👇👇
-        // Thêm JSON.stringify vào để đóng gói chuỗi thành "STATUS"
-        const body = JSON.stringify(newStatus); 
+        const body = newStatus; 
 
         console.log(`Đang gửi PATCH: ${endpoint} với body:`, body);
 
         // Gọi API
-        const res = await callAPI(endpoint, 'PATCH', body);
+        const res = await callAPI(endpoint, 'PATCH');
 
         if (res.success) {
             alert("Thành công!");
