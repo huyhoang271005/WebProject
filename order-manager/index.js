@@ -143,7 +143,7 @@ window.updateStatus = async (orderId, newStatus) => {
         console.log(`Đang gửi PATCH: ${endpoint} với body:`, body);
 
         // Gọi API
-        const res = await callAPI(endpoint, 'PATCH');
+        const res = await callAPI(endpoint, 'PATCH', body);
 
         if (res.success) {
             alert("Thành công!");
