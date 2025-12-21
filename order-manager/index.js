@@ -127,7 +127,7 @@ function renderMiniProducts(items) {
 }
 
 // ============================================================
-// 3. CẬP NHẬT TRẠNG THÁI (FIX LỖI QUAN TRỌNG)
+// 3. CẬP NHẬT TRẠNG THÁI (FIX LỖI & GIỮ NGUYÊN TAB)
 // ============================================================
 window.updateStatus = async (orderId, newStatus) => {
     let msg = "Bạn có chắc chắn chuyển trạng thái đơn này?";
@@ -138,9 +138,9 @@ window.updateStatus = async (orderId, newStatus) => {
     try {
         const endpoint = `/auth/admin/orders/${orderId}`;
         
+        // 👇 QUAN TRỌNG NHẤT: Gửi status trần, KHÔNG bọc object, KHÔNG stringify
+        // Hàm callAPI của bạn sẽ tự xử lý phần còn lại.
         const body = newStatus; 
-
-        console.log(`Đang gửi PATCH: ${endpoint} với body:`, body);
 
         // Gọi API
         const res = await callAPI(endpoint, 'PATCH', body);
@@ -148,16 +148,20 @@ window.updateStatus = async (orderId, newStatus) => {
         if (res.success) {
             alert("Thành công!");
             
-            // Reload lại đúng tab hiện tại
+            // 👇 LOGIC RELOAD: Giữ nguyên tab đang đứng
             const activeBtn = document.querySelector('.tab-btn.active');
             let currentFilter = 'WAITING';
+            
             if (activeBtn) {
                 const text = activeBtn.innerText.trim();
+                // Map lại text sang status code để gọi loadOrders
                 if(text === 'Chờ xác nhận') currentFilter = 'WAITING';
                 else if(text === 'Đang giao') currentFilter = 'DELIVERING';
                 else if(text === 'Hoàn thành') currentFilter = 'DELIVERED';
                 else if(text === 'Đã hủy') currentFilter = 'CANCELED';
             }
+            
+            // Tải lại danh sách hiện tại -> Đơn vừa duyệt sẽ biến mất khỏi list này
             loadOrders(currentFilter);
             closeModal();
         } else {
