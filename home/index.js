@@ -2,7 +2,6 @@ import { loadNavbar } from "../navbar/navbar.js";
 import { callAPI } from "../public/api.js";
 import { toggleLoading } from "../public/loader.js";
 
-// [QUAN TRỌNG] Tên biến ở trang Home là apiCategories
 let apiCategories = [];
 
 document.addEventListener("DOMContentLoaded", async () => {
@@ -15,13 +14,13 @@ document.addEventListener("DOMContentLoaded", async () => {
             <i class="fa-solid fa-bars"></i> <span>Danh mục</span>
             <div class="cat-dropdown" id="catDropdown"></div>
         </div>
-        <div style="position:relative;">
+        <div style="position:relative; width:100%; max-width:450px;">
             <input type="text" class="nav-search-input" id="homeSearch" placeholder="Tìm sản phẩm...">
             <i class="fa-solid fa-magnifying-glass" style="position:absolute; right:15px; top:50%; transform:translateY(-50%); color:#10B981; cursor:pointer;" id="homeSearchBtn"></i>
         </div>`,
     });
 
-    // 2. Gọi các API cần thiết
+    // 2. Gọi API
     await fetchCategories();
     renderNavCategories();
     setupNavbarEvents();
@@ -33,68 +32,57 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 });
 
-// [FIX] API danh mục mới: /categories (Không Auth)
+// API Danh mục
 async function fetchCategories() {
   try {
     const res = await callAPI("/categories", "GET", null);
     if (res && res.success && Array.isArray(res.data)) {
-      // [FIX LỖI] Gán đúng vào biến apiCategories
       apiCategories = res.data;
     } else {
-      // Fallback dữ liệu giả nếu lỗi
       apiCategories = [
         { id: "an-vat", name: "Đồ ăn vặt" },
         { id: "nuoc-ngot", name: "Nước giải khát" },
       ];
     }
   } catch (e) {
-    console.error("Lỗi lấy danh mục:", e);
+    console.error("Lỗi danh mục:", e);
   }
 }
 
+// Render Sản phẩm
 async function renderHomeSections() {
   const container = document.getElementById("homeContainer");
   if (!container) return;
   container.innerHTML = "";
 
-  // Thêm CSS Responsive trực tiếp vào JS để khỏi sửa file CSS
-  const style = document.createElement("style");
-  style.innerHTML = `
-      .home-product-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; }
-      @media (max-width: 1200px) { .home-product-grid { grid-template-columns: repeat(4, 1fr); } }
-      @media (max-width: 768px) { .home-product-grid { grid-template-columns: repeat(2, 1fr); } } /* Mobile: 2 cột */
-  `;
-  document.head.appendChild(style);
-
-  // Gọi API
-  const res = await callAPI("/auth/products?page=0&size=20", "GET", null);
+  // [CHỐT] Chỉ gọi duy nhất 1 API này (Đã test thành công)
+  const res = await callAPI("/auth/products?page=0&size=15", "GET", null);
 
   if (res && res.success) {
     const listData = res.data?.listData || [];
     if (listData.length > 0) {
-      const list = listData.slice(0, 12);
       container.insertAdjacentHTML(
         "beforeend",
         `
-              <div class="category-section" style="width:100%; background:white; padding:15px; border-radius:4px; margin-bottom:20px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
-                  <div class="section-header" style="border-bottom:1px solid #eee; margin-bottom:15px; padding-bottom:10px; display:flex; justify-content:space-between; align-items:center;">
-                      <div class="section-title" style="color:#ee4d2d; font-weight:700; text-transform:uppercase; font-size:1rem;">
-                        <i class="fa-solid fa-fire" style="color:#ee4d2d; margin-right:5px;"></i> GỢI Ý HÔM NAY
-                      </div>
-                      <a href="../products/index.html" style="color:#ee4d2d; text-decoration:none; font-size:0.85rem;">Xem tất cả ></a>
+          <div class="category-section">
+              <div class="section-header">
+                  <div class="section-title">
+                    <i class="fa-solid fa-fire" style="color:#ee4d2d; margin-right:5px;"></i> GỢI Ý HÔM NAY
                   </div>
-                  
-                  <div class="home-product-grid">
-                      ${list.map((p) => createProductHTML(p)).join("")}
-                  </div>
+                  <a href="../products/index.html" class="btn-see-more">Xem tất cả ></a>
               </div>
-          `
+              <div class="product-grid-5">
+                  ${listData.map((p) => createProductHTML(p)).join("")}
+              </div>
+          </div>
+      `
       );
     } else {
       container.innerHTML = `<div style="text-align:center; padding: 20px; color: #666;">Chưa có sản phẩm nào</div>`;
     }
   } else {
-    container.innerHTML = `<div style="text-align:center; color:red;">Lỗi tải: ${res?.message}</div>`;
+    // Nếu lỗi thì báo lỗi luôn chứ không thử lại nữa
+    container.innerHTML = `<div style="text-align:center; color:red;">Lỗi tải dữ liệu: ${res?.message}</div>`;
   }
 }
 
@@ -123,22 +111,17 @@ function createProductHTML(p) {
   const starsHTML = renderStars(rating);
 
   return `
-        <div class="product-card" onclick="window.location.href='../product-detail/index.html?id=${p.productId}'" 
-             style="background:white; border:1px solid transparent; border-radius:2px; overflow:hidden; cursor:pointer; position:relative; display:flex; flex-direction:column; transition:transform 0.1s, border-color 0.1s; box-shadow:0 1px 2px rgba(0,0,0,0.1);">
+        <div class="product-card" onclick="window.location.href='../product-detail/index.html?id=${p.productId}'">
             ${discountBadge}
-            <div class="p-img" style="width:100%; padding-top:100%; position:relative; background:#f9f9f9;">
-                <img src="${imgUrl}" style="position:absolute; top:0; left:0; width:100%; height:100%; object-fit:cover;">
+            <div class="p-img">
+                <img src="${imgUrl}" alt="${p.productName}" loading="lazy">
             </div>
-            <div class="p-info" style="padding:8px; flex:1; display:flex; flex-direction:column; justify-content:space-between;">
-                <div class="p-name" title="${p.productName}" style="font-size:0.85rem; color:#333; line-height:1.1rem; margin-bottom:5px; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; min-height:2.2rem;">
-                    ${p.productName}
-                </div>
-                <div style="margin-top:auto;">
-                    <span style="color:#ee4d2d; font-size:1rem; font-weight:600;">${priceFormatted}</span>
-                </div>
-                <div class="p-meta" style="display:flex; align-items:center; justify-content:space-between; margin-top:5px;">
-                    <div class="p-rating" style="font-size:0.6rem; color:#ffce3d;">${starsHTML}</div>
-                    <div class="p-sold" style="font-size:0.7rem; color:#757575;">Đã bán 99+</div>
+            <div class="p-info">
+                <div class="p-name" title="${p.productName}">${p.productName}</div>
+                <div class="p-price">${priceFormatted}</div>
+                <div class="p-meta" style="display:flex; align-items:center; justify-content:space-between; margin-top:5px; font-size:0.75rem; color:#777;">
+                    <div class="p-rating" style="color:#ffce3d;">${starsHTML}</div>
+                    <div class="p-sold">Đã bán 99+</div>
                 </div>
             </div>
         </div>
@@ -193,7 +176,6 @@ function renderNavCategories() {
       '<div style="padding:15px; text-align:center;">Đang tải...</div>';
     return;
   }
-  // [FIX] Link sang trang products
   el.innerHTML = apiCategories
     .map(
       (c) =>
