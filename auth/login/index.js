@@ -41,7 +41,7 @@ loginBtn.addEventListener('click', async () => {
         
     }
     else {
-        if(!result.data.verifiedEmail || !result.data.verifiedDevice){
+        if(result.data.verifiedEmail === false || result.data.verifiedDevice === false){
             status = 'question';
             await showDialog(status, result.message, async () => await verify(result.data, username), 
             status == 'error' || status == 'success' ? 'Đồng ý': 'Gửi email xác thực');
