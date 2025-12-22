@@ -38,16 +38,15 @@ loginBtn.addEventListener('click', async () => {
                 statusDiv.textContent += err.error + '\n';
             });
         }
-        else if (!result.data){
-            status = 'error';
-        }
-        else {
-            status = 'question';
-        }
-        await showDialog(status, result.message, async () => await verify(result.data, username), 
-        status == 'error' || status == 'success' ? 'Đồng ý': 'Gửi email xác thực');
+        
     }
     else {
+        if(!result.data.verifiedEmail || !result.data.verifiedDevice){
+            status = 'question';
+            await showDialog(status, result.message, async () => await verify(result.data, username), 
+            status == 'error' || status == 'success' ? 'Đồng ý': 'Gửi email xác thực');
+            return;
+        }
         if(rememberUser.checked){
             localStorage.setItem('rememberUser', 'true');
         }
