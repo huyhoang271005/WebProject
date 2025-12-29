@@ -11,12 +11,11 @@ const state = {
     mainImageFile: null
 };
 
-// --- INIT ---
+// --- KHỞI TẠO ---
 (async () => {
     console.log("🚀 System Start");
     UI.switchView('form');
     
-    // Load dữ liệu nền song song
     await Promise.all([
         ProductService.getCategories().then(res => { state.categories = res; UI.renderCategories(res); }),
         ProductService.getBrands().then(res => { state.brands = res; UI.renderBrands(res); }),
@@ -26,7 +25,7 @@ const state = {
     setupEvents();
 })();
 
-// --- EVENTS ---
+// --- SỰ KIỆN ---
 function setupEvents() {
     document.getElementById("categoryId").onchange = (e) => UI.renderBrands(state.brands, e.target.value);
 
@@ -54,7 +53,7 @@ function setupEvents() {
     document.getElementById("productForm").onsubmit = handleSubmit;
 }
 
-// --- SUBMIT HANDLER ---
+// --- XỬ LÝ SUBMIT (ĐÃ SỬA LỖI) ---
 async function handleSubmit(e) {
     e.preventDefault();
     console.log("📤 Đang xử lý submit...");
@@ -71,12 +70,11 @@ async function handleSubmit(e) {
     // 2. Lấy attributes hiện tại từ màn hình
     const currentAttrs = VariantLogic.parseAttributesFromDOM();
     
-    // Check: Nếu có variants nhưng attributes trên màn hình bị xóa hết -> Lỗi
+    // ⚠️ CHECK AN TOÀN: Nếu có biến thể nhưng attributes trên màn hình bị xóa -> Báo lỗi
     if (state.variants.length > 0 && currentAttrs.length === 0) {
-         return alert("Lỗi: Bạn đã xóa các thuộc tính. Vui lòng nhấn 'Tạo biến thể' lại trước khi lưu!");
+         return alert("Lỗi: Bạn đã xóa các dòng thuộc tính. Vui lòng nhấn nút 'Tạo biến thể' lại trước khi lưu!");
     }
     
-    // Check: Có attributes nhưng chưa tạo variants
     if (currentAttrs.length > 0 && state.variants.length === 0) {
         return alert("Bạn đã nhập thuộc tính nhưng chưa nhấn nút 'Tạo biến thể'!");
     }
@@ -104,7 +102,6 @@ async function handleSubmit(e) {
         };
 
         // --- BƯỚC 1: Map Attributes ---
-        // Backend cần danh sách thuộc tính (VD: Màu sắc, Size)
         payload.attributes = currentAttrs.map(attr => ({
             attributeId: attr.id,
             attributeName: attr.name,
@@ -115,7 +112,6 @@ async function handleSubmit(e) {
         }));
 
         // --- BƯỚC 2: Map Variants (Quan trọng) ---
-        // Duyệt qua từng variant để map dữ liệu
         for (let i = 0; i < state.variants.length; i++) {
             const v = state.variants[i];
             
@@ -127,16 +123,16 @@ async function handleSubmit(e) {
                 if (!parentAttr) return null;
 
                 return {
-                    attributeId: parentAttr.id,          // ✅ Gửi ID thuộc tính (bắt buộc)
-                    attributeName: parentAttr.name,      // Gửi tên
-                    attributeValueName: valName,         // Gửi giá trị (VD: Đỏ)
+                    attributeId: parentAttr.id,          // ✅ Gửi ID thuộc tính
+                    attributeName: parentAttr.name,      // ✅ Gửi tên thuộc tính
+                    attributeValueName: valName,         // ✅ Gửi giá trị (VD: Đỏ)
                     attributeValueId: parentAttr.valueIdMap?.[valName] || null
                 };
-            }).filter(item => item !== null); // Lọc bỏ null
+            }).filter(item => item !== null); 
 
-            // KIỂM TRA AN TOÀN: Nếu variant không có attributeValues nào -> Báo lỗi ngay
+            // ⚠️ CHECK LỖI: Nếu map xong mà rỗng -> Có nghĩa là dữ liệu sai lệch
             if (mappedAttributeValues.length === 0 && currentAttrs.length > 0) {
-                throw new Error(`Dữ liệu biến thể "${v.name}" bị lỗi. Vui lòng nhấn nút "Tạo biến thể" lại!`);
+                throw new Error(`Dữ liệu biến thể "${v.name}" bị lỗi (mất thông tin cha). Vui lòng nhấn nút "Tạo biến thể" lại!`);
             }
 
             payload.variants.push({
@@ -172,7 +168,6 @@ async function handleSubmit(e) {
             state.variants = [];
             state.mainImageFile = null;
         } else {
-            // Hiển thị lỗi chi tiết từ backend trả về
             const serverMsg = res?.message || "Lỗi không xác định";
             const detailMsg = res?.data?.[0]?.message || res?.data?.[0]?.error || "";
             alert(`❌ Tạo thất bại: ${serverMsg}\n${detailMsg}`);
