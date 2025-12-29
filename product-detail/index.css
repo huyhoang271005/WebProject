@@ -281,3 +281,18 @@ body {
 .hidden {
     display: none;
 }
+
+.error-text {
+    color: #ee4d2d;
+    background-color: #fff5f5;
+    padding: 8px 12px;
+    border-radius: 2px;
+    margin-left: 110px;
+    display: flex;
+    align-items: center;
+}
+@media (max-width: 768px) {
+    .error-text {
+        margin-left: 0;
+    }
+}
