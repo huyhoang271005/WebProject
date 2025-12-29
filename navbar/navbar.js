@@ -132,7 +132,7 @@ export async function loadNavbar(options = {}) {
 
   // 1. Kiểm tra sessionCache (Giữ SessionStorage như bro muốn)
   const cached = sessionStorage.getItem("homeData");
-  if (sessionStorage.getItem("hasCache")) {
+  if (!sessionStorage.getItem("hasCache")) {
     sessionStorage.setItem("hasCache", "false");
   }
   let hasCache = sessionStorage.getItem("hasCache");
