@@ -7,7 +7,7 @@ export const ProductService = {
         const at = await callAPI("/attributes");
         if(ct.success && br.success && at.success){
             return {
-                categories: ct.data.listDatal,
+                categories: ct.data.listData,
                 brands: br.data.listData,
                 attributes: at.data.listData
             }
