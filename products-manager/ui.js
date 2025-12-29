@@ -1,12 +1,10 @@
 // ui.js
 export const UI = {
-    // Cache sẵn các Element quan trọng
+    // Cache sẵn các Element để đỡ query nhiều lần
     els: {
         list: document.getElementById("listView"),
         form: document.getElementById("createView"),
-        
         tableBody: document.getElementById("productTableBody"), 
-        
         cateSelect: document.getElementById("categoryId"),
         brandSelect: document.getElementById("brandId"),
         attrContainer: document.getElementById("attributesContainer"),
@@ -16,45 +14,41 @@ export const UI = {
         mainImgInput: document.getElementById("mainImage")
     },
 
-    // Chuyển đổi giữa màn hình Danh sách và Màn hình Form
+    // --- 1. CHUYỂN ĐỔI MÀN HÌNH (QUAN TRỌNG) ---
     switchView: (viewName) => {
-        const listView = document.getElementById("listView");
-        const createView = document.getElementById("createView");
+        const listEl = document.getElementById("listView");
+        const formEl = document.getElementById("createView");
 
         if (viewName === 'list') {
-            if(listView) listView.classList.remove('d-none');
-            if(createView) createView.classList.add('d-none');
+            if(listEl) listEl.classList.remove('d-none');
+            if(formEl) formEl.classList.add('d-none');
         } else {
-            if(listView) listView.classList.add('d-none');
-            if(createView) createView.classList.remove('d-none');
+            if(listEl) listEl.classList.add('d-none');
+            if(formEl) formEl.classList.remove('d-none');
         }
     },
 
-    // Render bảng sản phẩm
+    // --- 2. RENDER BẢNG DANH SÁCH ---
     renderTable: (products) => {
         const tbody = document.getElementById("productTableBody");
         if (!tbody) return;
 
         if (!products || !products.length) {
-            tbody.innerHTML = `
-                <tr>
-                    <td colspan="6" class="text-center py-5 text-muted">
-                        Không có dữ liệu hoặc chưa tải được sản phẩm
-                    </td>
-                </tr>`;
+            tbody.innerHTML = `<tr><td colspan="6" class="text-center py-5 text-muted">Không có dữ liệu</td></tr>`;
             return;
         }
 
         const fmt = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' });
 
         tbody.innerHTML = products.map(p => {
+            // Xử lý ảnh: Ưu tiên imageUrl, fallback sang imageName
             let imgUrl = "https://via.placeholder.com/50";
             if (p.imageUrl) imgUrl = p.imageUrl;
-            else if (p.imageName) imgUrl = `/images/${p.imageName}`;
+            else if (p.imageName) imgUrl = `/images/${p.imageName}`; // Đường dẫn ảnh local nếu có
 
-            const priceOriginalDisplay = (p.originalPrice && p.originalPrice > 0)
-                ? fmt.format(p.originalPrice) 
-                : '-';
+            // Xử lý giá gốc (Backend trả về OriginalPrice hoặc originalPrice)
+            const pOrg = p.OriginalPrice || p.originalPrice || 0;
+            const priceOriginalDisplay = pOrg > 0 ? fmt.format(pOrg) : '-';
 
             const variantCount = p.variants ? p.variants.length : 0;
             const variantBadge = variantCount > 0 
@@ -81,35 +75,41 @@ export const UI = {
         }).join('');
     },
 
+    // --- 3. RENDER SELECT BRANDS ---
     renderBrands: (brands, cateId, selectedBrandId = null) => {
         const brandSelect = document.getElementById("brandId");
         if (!brandSelect) return;
+        
         brandSelect.innerHTML = `<option value="">-- Chọn thương hiệu --</option>`;
         
-        if (!cateId) return;
-        
-        // Filter brand theo categoryId (chú ý kiểu dữ liệu string/number)
-        const filtered = brands.filter(b => b.categoryId == cateId);
-        
-        (filtered.length ? filtered : []).forEach(b => {
+        // Nếu API categories chưa có categoryId hoặc user chưa chọn -> vẫn hiện all hoặc ẩn tùy logic
+        // Ở đây ta hiển thị brand theo category nếu có chọn cateId
+        let filtered = brands;
+        if (cateId) {
+            filtered = brands.filter(b => b.categoryId == cateId);
+        }
+
+        filtered.forEach(b => {
             const selected = (selectedBrandId && b.brandId == selectedBrandId) ? 'selected' : '';
             brandSelect.innerHTML += `<option value="${b.brandId}" ${selected}>${b.brandName}</option>`;
         });
     },
 
+    // --- 4. RENDER ẢNH PREVIEW ---
     renderMainImage: (src) => {
         const preview = document.getElementById("mainImagePreview");
         if (!preview) return;
-        if (src) preview.innerHTML = `<img src="${src}" class="img-fluid rounded" style="max-height: 200px; border: 1px solid #ddd; padding: 4px;">`;
+        if (src) preview.innerHTML = `<img src="${src}" class="img-fluid rounded shadow-sm" style="max-height: 200px;">`;
         else preview.innerHTML = ``;
     },
 
+    // --- 5. THÊM DÒNG THUỘC TÍNH (QUAN TRỌNG CHO LOGIC.JS) ---
     addAttrRow: (nameVal = "", valuesVal = "", onInputCallback, attrId = null, valueIds = [], valueIdMap = {}, allAttributes = []) => {
         const container = document.getElementById("attributesContainer");
         if (!container) return;
         
         const div = document.createElement("div");
-        div.className = "mb-3 attr-row"; 
+        div.className = "mb-3 attr-row"; // Class này logic.js sẽ tìm
         if (attrId) div.dataset.attrId = attrId;
         if (Object.keys(valueIdMap).length) div.dataset.valueIdMap = JSON.stringify(valueIdMap);
         
@@ -133,29 +133,27 @@ export const UI = {
                 </div>
             </div>`;
 
+        // Gán sự kiện
         const selectEl = div.querySelector(".inp-attr-select");
         const inputEl = div.querySelector(".inp-attr-vals");
         
+        // Khi chọn tên thuộc tính có sẵn
         selectEl.onchange = (e) => {
+            // Logic tìm attributeId để gán vào dataset
             const selectedAttr = allAttributes.find(a => a.attributeId == e.target.value);
             if(selectedAttr) {
                  div.dataset.attrId = selectedAttr.attributeId;
-                 // Nếu chọn attribute có sẵn, tự điền value mẫu nếu muốn
-                 // if(selectedAttr.attributeValues && selectedAttr.attributeValues.length) {
-                 //    inputEl.value = selectedAttr.attributeValues.map(v => v.attributeValueName).join(", ");
-                 // }
+                 // Tùy chọn: Tự điền giá trị gợi ý nếu muốn
             } else {
                  delete div.dataset.attrId;
             }
-            if(onInputCallback) onInputCallback();
-        }
+        };
         
-        inputEl.oninput = () => { if(onInputCallback) onInputCallback(); };
-        div.querySelector(".btn-remove").onclick = () => { div.remove(); if(onInputCallback) onInputCallback(); };
-        
+        div.querySelector(".btn-remove").onclick = () => { div.remove(); };
         container.appendChild(div);
     },
 
+    // --- 6. RENDER BIẾN THỂ ---
     renderVariants: (variants) => {
         const wrapper = document.getElementById("variantsContainer");
         if (!wrapper) return;
@@ -165,37 +163,35 @@ export const UI = {
             return;
         }
 
-        // HTML Thanh thao tác hàng loạt
+        // HTML Bulk Edit (Sửa hàng loạt)
         const bulkActionHTML = `
-            <div class="card bg-light mb-3 border-primary border-opacity-25">
+            <div class="card bg-light mb-3 border-secondary border-opacity-25">
                 <div class="card-body py-2">
                     <div class="row g-2 align-items-end">
-                        <div class="col-auto"><strong class="text-primary small"><i class="bi bi-layers-fill me-1"></i>Thiết lập hàng loạt:</strong></div>
+                        <div class="col-auto"><strong class="text-primary small"><i class="bi bi-gear-fill me-1"></i>Thiết lập nhanh:</strong></div>
                         <div class="col"><input type="number" id="bulk_price_org" class="form-control form-control-sm" placeholder="Giá gốc chung"></div>
                         <div class="col"><input type="number" id="bulk_price" class="form-control form-control-sm" placeholder="Giá bán chung"></div>
                         <div class="col"><input type="number" id="bulk_stock" class="form-control form-control-sm" placeholder="Kho chung"></div>
                         <div class="col-auto">
-                            <button type="button" class="btn btn-sm btn-primary" onclick="window.applyBulkInfo()">
-                                <i class="bi bi-check2-all"></i> Áp dụng
-                            </button>
+                            <button type="button" class="btn btn-sm btn-primary" onclick="window.applyBulkInfo()">Áp dụng</button>
                         </div>
                     </div>
                 </div>
             </div>
         `;
 
-        // HTML Bảng danh sách
+        // HTML Table
         const tableHTML = `
             <div class="table-responsive">
                 <table class="table table-bordered table-hover align-middle mb-0" style="font-size: 14px;">
-                    <thead class="table-light text-center text-muted">
+                    <thead class="table-light text-center">
                         <tr>
                             <th style="width: 60px;">Ảnh</th>
-                            <th class="text-start">Tên phân loại</th>
-                            <th style="width: 140px;">Giá gốc (₫)</th>
-                            <th style="width: 140px;">Giá bán (₫)</th>
+                            <th class="text-start">Phân loại hàng</th>
+                            <th style="width: 130px;">Giá gốc (₫)</th>
+                            <th style="width: 130px;">Giá bán (₫)</th>
                             <th style="width: 100px;">Kho</th>
-                            <th style="width: 50px;"><i class="bi bi-trash"></i></th>
+                            <th style="width: 50px;">Xóa</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -220,22 +216,22 @@ export const UI = {
                                 </td>
                                 <td>
                                     <input type="number" class="form-control form-control-sm" 
-                                        value="${v.priceOriginal}" 
+                                        value="${v.priceOriginal || 0}" 
                                         onchange="window.updateVar(${i},'priceOriginal',this.value)" placeholder="0">
                                 </td>
                                 <td>
                                     <input type="number" class="form-control form-control-sm fw-bold text-success" 
-                                        value="${v.price}" 
+                                        value="${v.price || 0}" 
                                         onchange="window.updateVar(${i},'price',this.value)" placeholder="0">
                                 </td>
                                 <td>
                                     <input type="number" class="form-control form-control-sm text-center" 
-                                        value="${v.stock}" 
+                                        value="${v.stock || 0}" 
                                         onchange="window.updateVar(${i},'stock',this.value)" placeholder="0">
                                 </td>
                                 <td class="text-center">
                                     <button type="button" onclick="window.removeVariant(${i})" class="btn btn-sm btn-link text-danger p-0">
-                                        <i class="bi bi-x-circle-fill" style="font-size: 1.2rem;"></i>
+                                        <i class="bi bi-x-circle-fill"></i>
                                     </button>
                                 </td>
                             </tr>`;
