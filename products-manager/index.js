@@ -3,7 +3,6 @@ import { ProductService } from "./service.js";
 import { VariantLogic } from "./logic.js";
 import { UI } from "./ui.js";
 
-// STATE
 let state = {
     categories: [],
     brands: [],
@@ -12,15 +11,13 @@ let state = {
     mainImageFile: null
 };
 
-// 1. KHOI TAO
 (async function init() {
-    // --- CHAN VONG LAP REFRESH TOKEN ---
     const originalFetch = window.fetch;
     window.fetch = async (...args) => {
         const response = await originalFetch(...args);
         if (response.status === 401) {
             if (args[0].includes("refresh-token") || args[0].includes("auth/login")) {
-                console.error("Force Logout: Token loop detected.");
+                console.error("Force Logout.");
                 localStorage.clear();
                 window.location.href = "/login.html";
                 return Promise.reject("Force Logout");
@@ -28,39 +25,31 @@ let state = {
         }
         return response;
     };
-    // -----------------------------------
 
     setupEventListeners();
-
-    // TAI DU LIEU TUAN TU (Fix loi spam refresh token)
     await loadBaseData(); 
     
-    // Mac dinh vao man hinh them moi
     UI.switchView('form');
     UI.resetForm(false);
 })();
 
-// HAM TAI DU LIEU LAN LUOT
 async function loadBaseData() {
     try {
         console.log("Bat dau tai du lieu nen...");
 
-        // 1. Tai Categories
         const cats = await ProductService.getCategories();
         state.categories = cats || [];
         console.log("Loaded Categories:", state.categories.length);
 
-        // 2. Tai Brands (Chi chay khi Categories da xong)
         const brands = await ProductService.getBrands();
         state.brands = brands || [];
         console.log("Loaded Brands:", state.brands.length);
 
-        // 3. Tai Attributes (Chi chay khi Brands da xong)
         const attrs = await ProductService.getAttributes();
         state.attributes = attrs || [];
         console.log("Loaded Attributes:", state.attributes.length);
 
-        // Render Select Danh muc ngay sau khi co du lieu
+        // 1. Render Categories
         if (UI.els.cateSelect) {
             UI.els.cateSelect.innerHTML = `<option value="">-- Chon danh muc --</option>`;
             state.categories.forEach(c => {
@@ -68,12 +57,15 @@ async function loadBaseData() {
             });
         }
 
+        // 2. Render Brands NGAY LAP TUC (Hien thi tat ca brand khi chua chon danh muc)
+        // De nguoi dung thay duoc data ke ca khi chua chon danh muc
+        UI.renderBrands(state.brands, null); 
+
     } catch (e) {
         console.error("Loi tai du lieu:", e);
     }
 }
 
-// 2. SU KIEN
 function setupEventListeners() {
     const btnReset = document.getElementById("resetBtn");
     if(btnReset) btnReset.onclick = () => { UI.resetForm(false); state.variants = []; state.mainImageFile = null; };
@@ -84,7 +76,14 @@ function setupEventListeners() {
     const btnGenVariants = document.getElementById("btnGenerateVariants");
     if (btnGenVariants) btnGenVariants.onclick = () => { handleCalcVariants(); };
     
-    if (UI.els.cateSelect) UI.els.cateSelect.onchange = (e) => UI.renderBrands(state.brands, e.target.value);
+    // Khi chon danh muc -> Loc lai Brand
+    if (UI.els.cateSelect) {
+        UI.els.cateSelect.onchange = (e) => {
+            const cateId = e.target.value;
+            console.log("Da chon danh muc ID:", cateId);
+            UI.renderBrands(state.brands, cateId);
+        };
+    }
     
     if (UI.els.mainImgInput) {
         UI.els.mainImgInput.onchange = (e) => {
@@ -108,16 +107,11 @@ function handleCalcVariants() {
     UI.renderVariants(state.variants);
 }
 
-// 3. XU LY LUU (CREATE)
 async function handleSave(e) {
     e.preventDefault();
-    
     if (state.variants.length === 0) {
         const currentAttrs = VariantLogic.parseAttributesFromDOM();
-        if (currentAttrs.length > 0) {
-            alert("Ban da nhap thuoc tinh nhung chua nhan Tao bien the!");
-            return;
-        }
+        if (currentAttrs.length > 0) return alert("Chua nhan Tao bien the!");
     }
 
     const submitBtn = document.getElementById("submitBtn");
@@ -128,7 +122,6 @@ async function handleSave(e) {
     try {
         const currentAttrs = VariantLogic.parseAttributesFromDOM();
         
-        // Chuan bi Payload (Khop voi JSON Backend)
         const payload = {
             productDetailDTO: {
                 productId: null,
@@ -140,29 +133,18 @@ async function handleSave(e) {
                 brandId: document.getElementById("brandId").value,
                 imageName: "productImage"
             },
-            attributes: [], 
-            variants: [], 
-            variantValues: []
+            attributes: [], variants: [], variantValues: []
         };
 
-        // Xu ly Attributes
         currentAttrs.forEach((attr, attrIdx) => {
             const attributeId = attr.id ? attr.id : null; 
-            const attrValues = attr.values.map((v) => {
-                const existingValueId = attr.valueIdMap ? attr.valueIdMap[v] : null;
-                return { 
-                    attributeValueId: existingValueId,
-                    attributeValueName: v 
-                };
-            });
-            payload.attributes.push({ 
-                attributeId: attributeId, 
-                attributeName: attr.name, 
-                attributeValues: attrValues
-            });
+            const attrValues = attr.values.map((v) => ({ 
+                attributeValueId: attr.valueIdMap ? attr.valueIdMap[v] : null,
+                attributeValueName: v 
+            }));
+            payload.attributes.push({ attributeId, attributeName: attr.name, attributeValues: attrValues });
         });
 
-        // Xu ly Variants
         state.variants.forEach((v, idx) => {
             const imgKey = v.rawFile ? `image_variant_${idx}` : null;
             payload.variants.push({
@@ -177,36 +159,29 @@ async function handleSave(e) {
 
         const formData = new FormData();
         if(state.mainImageFile) formData.append("productImage", state.mainImageFile);
-        
-        state.variants.forEach((v, idx) => {
-            if(v.rawFile) formData.append(`image_variant_${idx}`, v.rawFile);
-        });
-        
+        state.variants.forEach((v, idx) => { if(v.rawFile) formData.append(`image_variant_${idx}`, v.rawFile); });
         formData.append("productDTO", new Blob([JSON.stringify(payload)], { type: "application/json" }));
 
-        // Gui API
         const res = await ProductService.createProduct(formData);
         
         if(res && res.success) {
-            alert("Them san pham thanh cong!");
+            alert("Thanh cong!");
             UI.resetForm(false);
             state.variants = [];
             state.mainImageFile = null;
         } else {
-             const errorMsg = res?.message || "Loi server";
-             alert("That bai: " + errorMsg);
+             alert("Loi: " + (res?.message || "Server error"));
         }
-
     } catch(err) {
         console.error(err);
-        alert("Loi he thong: " + err.message);
+        alert("Loi: " + err.message);
     } finally {
         if(submitBtn) submitBtn.disabled = false;
         if(spinner) spinner.classList.add("d-none");
     }
 }
 
-// Global functions
+// Global
 window.applyBulkInfo = () => {
     const pOrg = document.getElementById("bulk_price_org")?.value;
     const pSell = document.getElementById("bulk_price")?.value;
