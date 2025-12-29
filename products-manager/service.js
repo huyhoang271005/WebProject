@@ -1,22 +1,29 @@
 import { callAPI } from '../public/api.js';
-
+let categories, brands, attributes;
 export const ProductService = {
     // Lấy danh sách categories
+    getInfo: async()=>{
+        const ct = await callAPI("categories");
+        const br = await callAPI("brands");
+        const at = await callAPI("attributes");
+        if(ct.success && br.success && at.success){
+            categories = ct.data.listDatal;
+            brands = br.data.listData;
+            attributes = at.data.listData;
+        }
+    },
     getCategories: async () => {
-        const res = await callAPI(`/categories`, "GET");
-        return res?.data?.listData || [];
+        return categories;
     },
 
     // Lấy danh sách brands
     getBrands: async () => {
-        const res = await callAPI(`/brands`, "GET");
-        return res?.data?.listData || [];
+        return brands;
     },
 
     // Lấy danh sách attributes
     getAttributes: async () => {
-        const res = await callAPI(`/attributes`, "GET");
-        return res?.data?.listData || [];
+        return attributes;
     },
 
     getProductById: async (id) => {

@@ -27,12 +27,11 @@ async function reloadData() {
     try {
         // ID Test giả định, thực tế bạn có thể bỏ hoặc xử lý logic khác
         const targetId = "6786aedf-aa81-44ef-b28f-06abff1b5c1c"; 
-        const [productData, cats, brands, attrs] = await Promise.all([
-            ProductService.getProductById(targetId),
-            ProductService.getCategories(),
-            ProductService.getBrands(),
-            ProductService.getAttributes()
-        ]);
+        const [productData] = await ProductService.getProductById(targetId);
+        await ProductService.getInfo()
+        const cats = ProductService.getCategories;
+        const brands = ProductService.getBrands;
+        const attrs = ProductService.getAttributes;
 
         state.categories = cats || [];
         state.brands = brands || [];
@@ -238,9 +237,7 @@ async function handleSave(e) {
             // Kiểm tra xem giá trị này đã có ID trong database chưa (trường hợp sửa sản phẩm cũ)
             const existingValueId = attr.valueIdMap[v];
             
-            // LOGIC MỚI: Không dùng temp ID nữa
-            // Nếu có ID cũ -> Dùng ID cũ.
-            // Nếu không (mới nhập) -> Gán thẳng là NULL để Backend tự tạo.
+
             const finalId = existingValueId ? existingValueId : null;
             
             // Lưu vào map để lát nữa Step 5 dùng lại
