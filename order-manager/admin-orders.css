@@ -1,200 +1,368 @@
+/* === 1. CẤU HÌNH CHUNG === */
 body {
     background: linear-gradient(135deg, #6EE7B7, #3B82F6) !important;
+    font-family: 'Poppins', sans-serif;
+    min-height: 100vh;
 }
 
-/* Container chính */
 .admin-order-container {
-    max-width: 1000px;
-    margin: 0 auto;
-    padding: 20px;
+    max-width: 1200px; /* Mở rộng chiều ngang cho bảng */
+    margin: 30px auto;
+    padding: 0 15px;
 }
 
-/* Card đơn hàng */
-.order-card {
-    border: 1px solid #e0e0e0;
-    border-radius: 8px;
-    margin-bottom: 20px;
-    background: #fff;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-    transition: transform 0.2s;
+/* === 2. KHUNG CARD CHÍNH (NỀN TRẮNG) === */
+.card {
+    background-color: white;
+    border-radius: 16px;
+    padding: 25px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
 }
 
-.order-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+.card h2 {
+    color: #059669; /* Xanh lá đậm */
+    text-transform: uppercase;
+    font-weight: 700;
+    margin-bottom: 25px;
+    border-bottom: 2px dashed #A7F3D0;
+    padding-bottom: 10px;
 }
 
-/* Header của Card (Mã đơn + Trạng thái) */
-.order-header {
-    padding: 15px 20px;
-    border-bottom: 1px solid #f0f0f0;
+/* === 3. THANH TABS (BỘ LỌC TRẠNG THÁI) === */
+.tabs-container {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background-color: #fafafa;
-    border-radius: 8px 8px 0 0;
+    gap: 10px;
+    margin-bottom: 20px;
+    flex-wrap: wrap; /* Tự xuống dòng trên mobile */
 }
 
-.order-id {
-    font-weight: bold;
-    color: #333;
+.tab-btn {
+    padding: 8px 24px;
+    border-radius: 50px; /* Bo tròn hình viên thuốc */
+    border: 1px solid #E5E7EB;
+    background-color: white;
+    color: #6B7280;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 14px;
 }
 
-.order-id-full {
-    color: #999;
-    font-size: 0.85em;
-    font-weight: normal;
-    margin-left: 5px;
+.tab-btn:hover {
+    background-color: #F3F4F6;
+    color: #10B981;
+    border-color: #10B981;
 }
 
-/* Badge trạng thái */
-.badge-status {
-    padding: 6px 12px;
-    border-radius: 20px;
-    font-size: 0.85em;
+/* Nút đang được chọn */
+.tab-btn.active {
+    background: linear-gradient(135deg, #10B981, #059669);
+    color: white;
+    border: none;
+    box-shadow: 0 4px 10px rgba(16, 185, 129, 0.3);
+}
+
+/* === 4. BẢNG DỮ LIỆU (TABLE) === */
+.table-wrapper {
+    overflow-x: auto; /* Cho phép cuộn ngang nếu bảng quá rộng */
+    border-radius: 12px;
+    border: 1px solid #E5E7EB;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 900px; /* Đảm bảo bảng không bị bóp méo */
+}
+
+th {
+    background-color: #10B981; /* Màu xanh chủ đạo */
+    color: white;
+    padding: 15px;
+    text-align: left;
     font-weight: 600;
     text-transform: uppercase;
+    font-size: 13px;
+    white-space: nowrap;
 }
 
-.status-waiting {
-    background: #fff3cd;
-    color: #856404;
-    border: 1px solid #ffeeba;
+td {
+    padding: 12px 15px;
+    border-bottom: 1px solid #F3F4F6;
+    color: #374151;
+    vertical-align: middle; /* Căn giữa theo chiều dọc */
 }
 
-.status-pending {
-    background: #d1ecf1;
-    color: #0c5460;
-    border: 1px solid #bee5eb;
+tr:hover td {
+    background-color: #F9FAFB; /* Highlight dòng khi di chuột */
 }
 
-.status-other {
-    background: #e2e3e5;
-    color: #383d41;
+/* Cột tổng tiền */
+.total-price {
+    font-weight: 700;
+    color: #EF4444; /* Màu đỏ */
+    font-size: 15px;
 }
 
-/* Phần thân chứa danh sách sản phẩm */
-.order-body {
-    padding: 0 20px;
+/* Mã đơn hàng */
+.order-id {
+    font-family: monospace;
+    background: #F3F4F6;
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 12px;
+    color: #4B5563;
+    font-weight: 600;
 }
 
-.order-item {
+/* === 5. HIỂN THỊ SẢN PHẨM NHỎ (MINI PRODUCT) === */
+.mini-product {
     display: flex;
-    gap: 15px;
-    padding: 15px 0;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 8px;
+    padding-bottom: 8px;
     border-bottom: 1px dashed #eee;
 }
 
-.order-item:last-child {
+.mini-product:last-child {
     border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
 }
 
-.item-img {
-    width: 60px;
-    height: 60px;
-    object-fit: cover;
+.mini-product img {
+    width: 45px;
+    height: 45px;
     border-radius: 6px;
+    object-fit: cover;
     border: 1px solid #eee;
 }
 
-.item-info {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-}
-
-.item-name {
+.p-name {
+    font-size: 13px;
     font-weight: 600;
-    color: #2c3e50;
-    font-size: 1rem;
+    color: #1F2937;
+    line-height: 1.2;
 }
 
-.item-variant {
-    font-size: 0.9em;
-    color: #7f8c8d;
-    margin-top: 4px;
+.p-variant {
+    font-size: 11px;
+    color: #6B7280;
+    margin-top: 2px;
 }
 
-.item-quantity-price {
-    text-align: right;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
+.p-qty {
+    font-size: 12px;
+    font-weight: 700;
+    color: #059669; /* Số lượng màu xanh */
+    margin-top: 2px;
 }
 
-.item-calc {
-    color: #7f8c8d;
-    font-size: 0.9em;
+.more-items {
+    font-size: 12px;
+    color: #6B7280;
+    font-style: italic;
+    margin-top: 5px;
+    padding-left: 5px;
 }
 
-.item-total {
-    font-weight: bold;
-    color: #2c3e50;
+/* === 6. BADGE TRẠNG THÁI (MÀU SẮC) === */
+.status-badge {
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 700;
+    white-space: nowrap;
+    display: inline-block;
 }
 
-/* Footer (Tổng tiền + Nút bấm) */
-.order-footer {
-    padding: 15px 20px;
-    border-top: 1px solid #f0f0f0;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background-color: #fff;
-    border-radius: 0 0 8px 8px;
-}
+.badge-yellow { background-color: #FEF3C7; color: #D97706; } /* Waiting */
+.badge-orange { background-color: #FFEDD5; color: #C2410C; } /* Pending */
+.badge-blue   { background-color: #DBEAFE; color: #2563EB; } /* Shipping */
+.badge-green  { background-color: #D1FAE5; color: #059669; } /* Success */
+.badge-red    { background-color: #FEE2E2; color: #DC2626; } /* Cancelled */
 
-.total-money-label {
-    font-weight: 600;
-    color: #333;
-}
-
-.total-money-value {
-    color: #d63031;
-    font-size: 1.2em;
-    font-weight: bold;
-    margin-left: 5px;
-}
-
-/* Các nút bấm */
-.action-buttons {
-    display: flex;
-    gap: 10px;
-}
-
-.btn-action {
-    padding: 8px 20px;
+/* === 7. NÚT THAO TÁC === */
+.view-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background-color: #E0F2FE;
+    color: #0284C7;
     border: none;
-    border-radius: 4px;
     cursor: pointer;
-    font-weight: 600;
-    transition: background 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.view-btn:hover {
+    background-color: #0284C7;
+    color: white;
+    transform: scale(1.1);
+}
+/* --- 8. GROUP NÚT THAO TÁC (DUYỆT/HỦY) TRÊN BẢNG --- */
+.action-group {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    justify-content: flex-end; /* Căn các nút về bên phải */
 }
 
 .btn-approve {
-    background: #27ae60;
+    background-color: #10B981; /* Màu xanh lá (Duyệt) */
     color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    transition: background 0.2s;
 }
 
 .btn-approve:hover {
-    background: #219150;
+    background-color: #059669;
 }
 
 .btn-reject {
-    background: #fff;
-    color: #e74c3c;
-    border: 1px solid #e74c3c;
+    background-color: #EF4444; /* Màu đỏ (Hủy) */
+    color: white;
+    border: none;
+    padding: 6px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 12px;
+    transition: background 0.2s;
 }
 
 .btn-reject:hover {
-    background: #fcebeb;
+    background-color: #DC2626;
 }
 
-/* Loading Spinner */
-#loading-spinner {
-    text-align: center;
-    padding: 30px;
-    color: #666;
-    font-style: italic;
-    display: none; /* Mặc định ẩn */
+/* --- 9. MODAL CHI TIẾT (QUAN TRỌNG: ĐỂ NỔI LÊN GIỮA MÀN HÌNH) --- */
+.modal-overlay {
+    position: fixed;       /* Bắt buộc: Để nổi lên trên cùng */
+    top: 0; 
+    left: 0;
+    width: 100%; 
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5); /* Nền đen mờ */
+    z-index: 9999;         /* Đè lên mọi thứ */
+    
+    /* Căn giữa hộp nội dung */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    
+    /* Hiệu ứng hiện ra */
+    animation: fadeIn 0.25s ease-out;
+}
+
+.modal-content {
+    background: white;
+    width: 90%;
+    max-width: 800px;      /* Độ rộng tối đa */
+    border-radius: 12px;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    max-height: 90vh;      /* Không cao quá màn hình */
+}
+
+/* Header Modal */
+.modal-header {
+    padding: 15px 20px;
+    background-color: #F9FAFB;
+    border-bottom: 1px solid #E5E7EB;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-header h3 {
+    margin: 0;
+    font-size: 16px;
+    color: #1F2937;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.close-btn {
+    font-size: 28px;
+    color: #9CA3AF;
+    cursor: pointer;
+    line-height: 1;
+}
+.close-btn:hover { color: #EF4444; }
+
+/* Body Modal (Cho phép cuộn) */
+.modal-body {
+    padding: 20px;
+    overflow-y: auto;
+}
+
+/* Các phần thông tin trong Modal */
+.info-section {
+    margin-bottom: 25px;
+}
+
+.info-section h4 {
+    margin: 0 0 15px 0;
+    color: #059669;
+    font-size: 14px;
+    border-bottom: 1px dashed #E5E7EB;
+    padding-bottom: 8px;
+    text-transform: uppercase;
+}
+
+.info-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr; /* Chia 2 cột */
+    gap: 15px;
+    font-size: 14px;
+    color: #374151;
+}
+
+/* Bảng trong Modal */
+.modal-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+}
+
+.modal-table th {
+    background-color: #F3F4F6;
+    color: #4B5563;
+    padding: 10px;
+    text-align: left;
+    font-weight: 600;
+    border-bottom: 2px solid #E5E7EB;
+}
+
+.modal-table td {
+    padding: 10px;
+    border-bottom: 1px solid #F3F4F6;
+    color: #1F2937;
+}
+
+/* Tổng tiền trong Modal */
+.modal-total {
+    text-align: right;
+    margin-top: 20px;
+    font-size: 16px;
+    font-weight: 700;
+    color: #EF4444;
+}
+
+/* Hiệu ứng Fade In */
+@keyframes fadeIn {
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
 }

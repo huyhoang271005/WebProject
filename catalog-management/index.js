@@ -218,8 +218,3 @@ await loadPage(async () => {
     updateUI();
     await loadData();
 });
-
-// Xử lý nút Quay lại
-document.getElementById('backBtn').addEventListener('click', () => {
-    window.history.back();
-});

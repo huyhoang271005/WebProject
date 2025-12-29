@@ -1,24 +1,18 @@
 import { callAPI } from '../public/api.js';
-
 export const ProductService = {
     // Lấy danh sách categories
-    getCategories: async () => {
-        const res = await callAPI(`/categories`, "GET");
-        return res?.data?.listData || [];
+    getInfo: async()=>{
+        const ct = await callAPI("/categories");
+        const br = await callAPI("/brands");
+        const at = await callAPI("/attributes");
+        if(ct.success && br.success && at.success){
+            return {
+                categories: ct.data.listData,
+                brands: br.data.listData,
+                attributes: at.data.listData
+            }
+        }
     },
-
-    // Lấy danh sách brands
-    getBrands: async () => {
-        const res = await callAPI(`/brands`, "GET");
-        return res?.data?.listData || [];
-    },
-
-    // Lấy danh sách attributes
-    getAttributes: async () => {
-        const res = await callAPI(`/attributes`, "GET");
-        return res?.data?.listData || [];
-    },
-
     getProductById: async (id) => {
         try {
             const res = await callAPI(`/auth/admin/products/${id}`, "GET");
