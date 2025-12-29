@@ -40,20 +40,36 @@ async function loadBaseData() {
     try {
         console.log("Bat dau tai du lieu nen...");
 
-        // 1. Tải lần lượt để tránh lỗi token
-        const cats = await ProductService.getCategories();
-        state.categories = cats || [];
-        console.log("Categories loaded:", state.categories.length);
+        // 1. Load từng loại data riêng biệt với try-catch để tránh bị dừng
+        try {
+            const cats = await ProductService.getCategories();
+            state.categories = cats || [];
+            console.log("Categories loaded:", state.categories.length);
+        } catch (e) {
+            console.error("Loi load categories:", e);
+            state.categories = [];
+        }
 
-        const brands = await ProductService.getBrands();
-        state.brands = brands || [];
-        console.log("Brands loaded:", state.brands.length);
+        try {
+            const brands = await ProductService.getBrands();
+            state.brands = brands || [];
+            console.log("Brands loaded:", state.brands.length);
+            console.log("Brands data:", state.brands); // Debug: xem cấu trúc data
+        } catch (e) {
+            console.error("Loi load brands:", e);
+            state.brands = [];
+        }
 
-        const attrs = await ProductService.getAttributes();
-        state.attributes = attrs || [];
-        console.log("Attributes loaded:", state.attributes.length);
+        try {
+            const attrs = await ProductService.getAttributes();
+            state.attributes = attrs || [];
+            console.log("Attributes loaded:", state.attributes.length);
+        } catch (e) {
+            console.error("Loi load attributes:", e);
+            state.attributes = [];
+        }
 
-        // 2. Render dữ liệu vào Select Box ngay lập tức
+        // 2. Render dữ liệu vào Select Box
         if (UI.els.cateSelect) {
             UI.els.cateSelect.innerHTML = `<option value="">-- Chon danh muc --</option>`;
             state.categories.forEach(c => {
@@ -61,11 +77,12 @@ async function loadBaseData() {
             });
         }
 
-        // Render Brands ngay (hiển thị tất cả khi chưa chọn danh mục)
-        UI.renderBrands(state.brands, null);
+        // Render Brands (hiển thị tất cả khi chưa chọn category)
+        console.log("Goi renderBrands voi:", state.brands.length, "brands");
+        UI.renderBrands(state.brands, ""); // Truyền "" thay vì null
 
     } catch (e) {
-        console.error("Loi tai du lieu:", e);
+        console.error("Loi tai du lieu tong the:", e);
     }
 }
 

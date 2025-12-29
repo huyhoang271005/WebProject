@@ -24,24 +24,40 @@ export const UI = {
         }
     },
 
-    renderBrands: (brands, cateId, selectedBrandId = null) => {
+    renderBrands: (brands, cateId = "", selectedBrandId = null) => {
         const brandSelect = document.getElementById("brandId");
-        if (!brandSelect) return;
+        if (!brandSelect) {
+            console.error("Khong tim thay brandId select element");
+            return;
+        }
         
+        console.log("renderBrands called:", { 
+            brandsCount: brands?.length, 
+            cateId, 
+            selectedBrandId 
+        });
+
         brandSelect.innerHTML = `<option value="">-- Chon thuong hieu --</option>`;
 
-        if (!brands || brands.length === 0) return;
+        if (!brands || brands.length === 0) {
+            console.warn("Brands array trong hoac null");
+            return;
+        }
 
         let filtered = brands;
         
-        // Lọc brand theo category (chuyển về string để so sánh an toàn)
-        if (cateId && cateId !== "") {
+        // Lọc brand theo category
+        if (cateId && cateId !== "" && cateId !== null) {
             const cateIdStr = String(cateId);
             filtered = brands.filter(b => {
                 const bCateId = b.categoryId || b.category_id;
-                // Nếu brand không có categoryId thì cho hiện luôn, ngược lại thì phải khớp
-                return !bCateId || String(bCateId) === cateIdStr;
+                // Nếu brand không có categoryId thì hiển thị
+                if (!bCateId) return true;
+                return String(bCateId) === cateIdStr;
             });
+            console.log("Filtered brands:", filtered.length);
+        } else {
+            console.log("Hien thi tat ca brands:", brands.length);
         }
 
         filtered.forEach(b => {
@@ -52,8 +68,12 @@ export const UI = {
             if (id && name) {
                 const isSelected = (selectedBrandId && String(id) === String(selectedBrandId)) ? 'selected' : '';
                 brandSelect.innerHTML += `<option value="${id}" ${isSelected}>${name}</option>`;
+            } else {
+                console.warn("Brand khong hop le:", b);
             }
         });
+
+        console.log("Rendered", filtered.length, "brands vao dropdown");
     },
 
     renderMainImage: (src) => {
@@ -200,8 +220,10 @@ export const UI = {
         if(formTitle) formTitle.innerText = isEdit ? "Cap nhat san pham" : "Them San Pham Moi";
         UI.renderMainImage(null);
         
-        // Reset brand select
+        // Reset brand select về mặc định
         const brandSelect = document.getElementById("brandId");
-        if (brandSelect) brandSelect.innerHTML = `<option value="">-- Chon thuong hieu --</option>`;
+        if (brandSelect) {
+            brandSelect.innerHTML = `<option value="">-- Chon thuong hieu --</option>`;
+        }
     }
 };
