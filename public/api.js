@@ -13,7 +13,6 @@ export async function callAPI(endpoint, method = "GET", data = null, isMultipart
 async function callAPIWithRetry(endpoint, method, data, isMultipart, alreadyRefreshed) {
     try {
         const options = { method, headers: { "Accept": "*/*" } };
-        options.headers["ngrok-skip-browser-warning"] = `26763`;
         if (!endpoint.startsWith("/auth")) {
             if(!authState.accessToken){
                 const result = await refreshAccessToken();

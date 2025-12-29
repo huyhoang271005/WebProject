@@ -14,8 +14,7 @@ export async function connectSse(endpoint) {
 
     es = new EventSourcePlus(`${API_BASE}${endpoint}`, {
         headers: {
-            'Authorization': `Bearer ${authState.accessToken}`,
-            'ngrok-skip-browser-warning': '2710'
+            'Authorization': `Bearer ${authState.accessToken}`
         }
     });
 
