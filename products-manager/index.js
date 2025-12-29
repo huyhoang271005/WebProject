@@ -16,7 +16,7 @@ let state = {
 (async function init() {
     console.log("🚀 Khởi động hệ thống...");
     
-    // Chặn vòng lặp refresh token
+    // Chặn vòng lặp refresh token (Giữ nguyên logic cũ của bạn)
     const originalFetch = window.fetch;
     window.fetch = async (...args) => {
         const response = await originalFetch(...args);
@@ -60,14 +60,6 @@ async function loadBaseData() {
     try {
         const brands = await ProductService.getBrands();
         state.brands = brands;
-        console.log("✅ Brands:", state.brands.length);
-        
-        // Debug: Xem cấu trúc brand đầu tiên
-        if (state.brands.length > 0) {
-            console.log("📋 Brand mẫu:", state.brands[0]);
-        }
-        
-        // Render tất cả brands (chưa lọc)
         UI.renderBrands(state.brands, "");
     } catch (e) {
         console.error("❌ Lỗi load brands:", e);
@@ -79,11 +71,6 @@ async function loadBaseData() {
         const attributes = await ProductService.getAttributes();
         state.attributes = attributes;
         console.log("✅ Attributes:", state.attributes.length);
-        
-        // Debug: Xem cấu trúc attribute đầu tiên
-        if (state.attributes.length > 0) {
-            console.log("📋 Attribute mẫu:", state.attributes[0]);
-        }
     } catch (e) {
         console.error("❌ Lỗi load attributes:", e);
         state.attributes = [];
@@ -171,7 +158,7 @@ function handleGenerateVariants() {
     UI.renderVariants(state.variants);
 }
 
-// ========== XỬ LÝ SUBMIT ==========
+// ========== XỬ LÝ SUBMIT (ĐÃ SỬA LỖI LOGIC TẠI ĐÂY) ==========
 async function handleSubmit(e) {
     e.preventDefault();
     
@@ -204,8 +191,10 @@ async function handleSubmit(e) {
         return;
     }
     
-    // Nếu có attributes nhưng chưa tạo variants
+    // Lấy thông tin thuộc tính hiện tại để mapping
     const currentAttrs = VariantLogic.parseAttributesFromDOM();
+    
+    // Nếu có attributes nhưng chưa tạo variants
     if (currentAttrs.length > 0 && state.variants.length === 0) {
         alert("Vui lòng nhấn 'Tạo biến thể' trước khi lưu!");
         return;
@@ -218,7 +207,6 @@ async function handleSubmit(e) {
     if (spinner) spinner.classList.remove("d-none");
     
     try {
-        // Build payload theo format API của bạn
         const payload = {
             productDetailDTO: {
                 productId: null,
@@ -232,28 +220,15 @@ async function handleSubmit(e) {
             },
             attributes: [],
             variants: [],
-            variantValues: []
+            variantValues: [] // Có thể backend không dùng, nhưng giữ lại cho đúng struct
         };
         
-        // Parse attributes và tạo values mới nếu chưa có
-        const attributeValueMapping = {}; // { "Đỏ": "val_id_1", "S": "val_id_2" }
-        
+        // 1. Parse attributes
         currentAttrs.forEach(attr => {
-            const attributeValues = attr.values.map(valueName => {
-                // Kiểm tra xem value này có ID sẵn không (từ DB)
-                const existingValueId = attr.valueIdMap ? attr.valueIdMap[valueName] : null;
-                
-                // Nếu có ID sẵn -> dùng luôn
-                // Nếu không -> để null, backend sẽ tự tạo mới
-                if (existingValueId) {
-                    attributeValueMapping[valueName] = existingValueId;
-                }
-                
-                return {
-                    attributeValueId: existingValueId, // null = tạo mới
-                    attributeValueName: valueName
-                };
-            });
+            const attributeValues = attr.values.map(valueName => ({
+                attributeValueId: attr.valueIdMap?.[valueName] || null,
+                attributeValueName: valueName
+            }));
             
             payload.attributes.push({
                 attributeId: attr.id,
@@ -262,46 +237,34 @@ async function handleSubmit(e) {
             });
         });
         
-        console.log("🗺️ Attribute Value Mapping:", attributeValueMapping);
-        
-        // Parse variants - QUAN TRỌNG: attributeValues phải là ARRAY STRING IDs
+        // 2. Parse variants & Fix lỗi "Missing attribute values"
         state.variants.forEach((variant, idx) => {
             const imgKey = variant.rawFile ? `image_variant_${idx}` : null;
             
-            // Với mỗi variant, cần list các attribute value names
-            // Backend sẽ map dựa trên index trong attributes array
-            // VD: variant "Đỏ - S" với attributes ["Màu sắc", "Kích thước"]
-            //     -> attributeValues = ["Đỏ", "S"] (theo thứ tự attributes)
+            // LOGIC MỚI: Map từng giá trị trong comboValues về đúng attributeId
+            // variant.comboValues: ["Đỏ", "XL"]
+            // currentAttrs: [{id: 10, name: "Màu"}, {id: 11, name: "Size"}]
             
-            const variantAttrValues = variant.comboValues.map((valueName, attrIdx) => {
-                // Tìm attribute tương ứng
-                const attr = currentAttrs[attrIdx];
-                
-                // Nếu có ID sẵn -> dùng ID
-                if (attributeValueMapping[valueName]) {
-                    return attributeValueMapping[valueName];
-                }
-                
-                // Nếu không có ID -> trả về tên, backend sẽ tìm/tạo
-                return valueName;
+            const mappedAttributeValues = variant.comboValues.map((valName, valIndex) => {
+                const parentAttr = currentAttrs[valIndex]; // Tìm thuộc tính cha tương ứng vị trí
+                return {
+                    attributeId: parentAttr.id,          // ID của thuộc tính (VD: 10)
+                    attributeValueName: valName,         // Giá trị (VD: Đỏ)
+                    attributeValueId: parentAttr.valueIdMap?.[valName] || null // ID giá trị nếu có
+                };
             });
-            
-            console.log(`📦 Variant ${idx} (${variant.name}):`, {
-                comboValues: variant.comboValues,
-                attributeValues: variantAttrValues
-            });
-            
+
             payload.variants.push({
                 variantId: null,
                 price: variant.price,
                 originalPrice: variant.priceOriginal,
                 stock: variant.stock,
                 imageName: imgKey,
-                attributeValues: variantAttrValues // Array of IDs hoặc Names
+                attributeValues: mappedAttributeValues // ✅ Gửi object đầy đủ thay vì mảng string
             });
         });
         
-        console.log("📦 Payload:", payload);
+        console.log("📦 Payload đã fix:", payload);
         
         // Build FormData
         const formData = new FormData();
@@ -326,8 +289,6 @@ async function handleSubmit(e) {
         
         if (response && response.success) {
             alert("✅ Tạo sản phẩm thành công!");
-            
-            // Reset form
             UI.resetForm(false);
             state.variants = [];
             state.mainImageFile = null;
@@ -339,14 +300,12 @@ async function handleSubmit(e) {
         console.error("❌ Lỗi submit:", error);
         alert("❌ Lỗi hệ thống: " + error.message);
     } finally {
-        // Re-enable button
         if (submitBtn) submitBtn.disabled = false;
         if (spinner) spinner.classList.add("d-none");
     }
 }
 
 // ========== GLOBAL FUNCTIONS ==========
-// Áp dụng thông tin hàng loạt cho variants
 window.applyBulkInfo = () => {
     const priceOrg = document.getElementById("bulk_price_org")?.value;
     const price = document.getElementById("bulk_price")?.value;
@@ -359,30 +318,24 @@ window.applyBulkInfo = () => {
     });
     
     UI.renderVariants(state.variants);
-    console.log("✅ Đã áp dụng thông tin hàng loạt");
 };
 
-// Chọn ảnh cho variant
 window.handleSelectVariantImage = (index, input) => {
     const file = input.files[0];
     if (file && state.variants[index]) {
         state.variants[index].rawFile = file;
         state.variants[index].previewUrl = URL.createObjectURL(file);
         UI.renderVariants(state.variants);
-        console.log(`📷 Đã chọn ảnh cho variant ${index}:`, file.name);
     }
 };
 
-// Cập nhật giá trị variant
 window.updateVar = (index, field, value) => {
     if (state.variants[index]) {
         state.variants[index][field] = field === 'stock' ? parseInt(value) : parseFloat(value);
     }
 };
 
-// Xóa variant
 window.removeVariant = (index) => {
     state.variants.splice(index, 1);
     UI.renderVariants(state.variants);
-    console.log(`🗑️ Đã xóa variant ${index}`);
 };
