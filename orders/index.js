@@ -384,12 +384,30 @@ function calculateOrderTotal(order) {
  */
 window.viewOrderDetail = async (orderIndex) => {
     const order = filteredOrders[orderIndex];
-    if (!order) {
+    if (!order || !order.orderId) {
         showNotification('Không tìm thấy đơn hàng', 'error');
         return;
     }
 
-    showOrderDetailModal(order, orderIndex);
+    try {
+        if (typeof toggleLoading === 'function') toggleLoading(true);
+        const response = await callAPI(`/auth/orders/${order.orderId}`, 'GET');
+        if (response.success && response.data) {
+            const detailOrder = {
+                ...order,
+                ...response.data,
+                orderId: order.orderId
+            };
+            showOrderDetailModal(detailOrder, orderIndex);
+        } else {
+            showOrderDetailModal(order, orderIndex);
+        }
+    } catch (error) {
+        console.error('Lỗi load chi tiết đơn hàng:', error);
+        showOrderDetailModal(order, orderIndex);
+    } finally {
+        if (typeof toggleLoading === 'function') toggleLoading(false);
+    }
 };
 
 /**
