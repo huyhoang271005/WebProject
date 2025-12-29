@@ -2,9 +2,9 @@ import { callAPI } from '../public/api.js';
 export const ProductService = {
     // Lấy danh sách categories
     getInfo: async()=>{
-        const ct = await callAPI("categories");
-        const br = await callAPI("brands");
-        const at = await callAPI("attributes");
+        const ct = await callAPI("/categories");
+        const br = await callAPI("/brands");
+        const at = await callAPI("/attributes");
         if(ct.success && br.success && at.success){
             return {
                 categories: ct.data.listDatal,
