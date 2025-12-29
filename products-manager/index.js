@@ -25,10 +25,9 @@ let state = {
 
 async function reloadData() {
     try {
-        // ID Test giả định, thực tế bạn có thể bỏ hoặc xử lý logic khác
         const targetId = "6786aedf-aa81-44ef-b28f-06abff1b5c1c"; 
         const productData = await ProductService.getProductById(targetId);
-        const info = await ProductService.getInfo()
+        const info = await ProductService.getInfo();
 
         state.categories = info.categories;
         state.brands = info.brands;
@@ -40,7 +39,7 @@ async function reloadData() {
             const uiItem = {
                 productId: detail.productId,
                 productName: detail.productName,
-                priceOriginal: detail.originalPrice,
+                priceOriginal: detail.OriginalPrice || detail.originalPrice, 
                 price: detail.price,
                 imageName: detail.imageName,
                 imageUrl: detail.imageUrl,
@@ -141,7 +140,9 @@ function setupGlobalFunctions() {
         if(document.getElementById("productName")) document.getElementById("productName").value = detail.productName;
         if(document.getElementById("description")) document.getElementById("description").value = detail.description || "";
         if(document.getElementById("price")) document.getElementById("price").value = detail.price;
-        if(document.getElementById("priceOriginal")) document.getElementById("priceOriginal").value = detail.originalPrice;
+        // Gán giá trị vào Input có ID là OriginalPrice
+        if(document.getElementById("OriginalPrice")) document.getElementById("OriginalPrice").value = detail.OriginalPrice || detail.originalPrice;
+        
         if(UI.els.cateSelect) {
             UI.els.cateSelect.value = detail.categoryId;
             UI.renderBrands(state.brands, detail.categoryId, detail.brandId);
@@ -176,6 +177,7 @@ function setupGlobalFunctions() {
         if (!pOrg && !pSell && !stock) return;
 
         state.variants.forEach(v => {
+            // Trong state vẫn giữ tên camelCase để xử lý logic nội bộ
             if (pOrg) v.priceOriginal = parseFloat(pOrg);
             if (pSell) v.price = parseFloat(pSell);
             if (stock) v.stock = parseInt(stock);
@@ -187,20 +189,19 @@ function setupGlobalFunctions() {
 function handleCalcVariants() {
     const attrs = VariantLogic.parseAttributesFromDOM();
     const basePrice = parseFloat(document.getElementById("price").value) || 0;
-    const basePriceOriginal = parseFloat(document.getElementById("priceOriginal").value) || 0;
+    // Lấy từ input OriginalPrice
+    const basePriceOriginal = parseFloat(document.getElementById("OriginalPrice")?.value) || 0;
     
     state.variants = VariantLogic.generateVariants(attrs, basePrice, state.variants, basePriceOriginal);
     UI.renderVariants(state.variants);
 }
 
-// === LOGIC SAVE ĐÃ CẬP NHẬT ===
+// === LOGIC SAVE ĐÃ CẬP NHẬT KEY JSON ===
 async function handleSave(e) {
     e.preventDefault();
     
-    // 1. Lấy dữ liệu thuộc tính từ giao diện
     const currentAttrs = VariantLogic.parseAttributesFromDOM();
 
-    // 2. CHECK AN TOÀN
     if (currentAttrs.length > 0 && state.variants.length === 0) {
         const msg = "⚠️ Bạn chưa tạo biến thể!\nVui lòng nhấn nút màu xanh 'Tạo biến thể' trước khi lưu.";
         if(typeof showDialog === 'function') await showDialog("error", msg);
@@ -208,14 +209,14 @@ async function handleSave(e) {
         return; 
     }
 
-    // 3. Chuẩn bị khung Payload
     const payload = {
         productDetailDTO: {
             productId: state.isEdit ? state.currentId : null,
             productName: document.getElementById("productName").value,
             description: document.getElementById("description").value,
             price: parseFloat(document.getElementById("price").value) || 0,
-            priceOriginal: parseFloat(document.getElementById("priceOriginal").value) || 0,
+            // SỬA TÊN KEY JSON THÀNH OriginalPrice
+            OriginalPrice: parseFloat(document.getElementById("OriginalPrice").value) || 0,
             categoryId: document.getElementById("categoryId").value, 
             brandId: document.getElementById("brandId").value,
             imageName: state.currentMainImageUrl || "" 
@@ -225,24 +226,15 @@ async function handleSave(e) {
         variantValues: []
     };
 
-    // 4. Build Attributes (Định nghĩa thuộc tính cho sản phẩm)
-    // Map này dùng để tra cứu ID ở bước 5
     const attrValueIdMap = {}; 
-    
     currentAttrs.forEach(attr => {
         const attrValues = attr.values.map(v => {
-            // Kiểm tra xem giá trị này đã có ID trong database chưa (trường hợp sửa sản phẩm cũ)
             const existingValueId = attr.valueIdMap[v];
-            
-
             const finalId = existingValueId ? existingValueId : null;
-            
-            // Lưu vào map để lát nữa Step 5 dùng lại
             attrValueIdMap[`${attr.id}-${v}`] = finalId;
-            
             return { 
                 attributeValueName: v,
-                attributeValueId: finalId // Gửi NULL hoặc UUID thật
+                attributeValueId: finalId
             };
         });
         
@@ -253,29 +245,19 @@ async function handleSave(e) {
         });
     });
 
-    // 5. Build Variants (Danh sách biến thể)
     state.variants.forEach((v, idx) => {
         const imgKey = v.rawFile ? `image_variant_${idx}` : null;
         
-        // Tạo attributeValues với đầy đủ thông tin ID
         const variantAttrValues = v.comboValues.map((val, valIdx) => {
             const attr = currentAttrs[valIdx];
-            if (!attr) {
-                console.error(`Không tìm thấy attribute tại index ${valIdx}`);
-                return null;
-            }
-            
+            if (!attr) return null;
             const attrId = attr.id;
-            // Key để tìm trong Map
             const mapKey = `${attrId}-${val}`;
-            
-            // Lấy ID từ map ở bước 4.
-            // Nếu là giá trị mới thì nó tự động lấy ra NULL (vì nãy mình gán null rồi)
             const valueId = attrValueIdMap[mapKey];
             
             return {
                 attributeId: attrId,
-                attributeValueId: valueId, // Gọn gàng, chính xác logic backend
+                attributeValueId: valueId,
                 attributeName: attr.name,
                 attributeValueName: val
             };
@@ -283,14 +265,14 @@ async function handleSave(e) {
 
         payload.variants.push({
             price: v.price,
-            priceOriginal: v.priceOriginal || v.price,
+            // SỬA TÊN KEY JSON CHO BIẾN THỂ THÀNH OriginalPrice
+            OriginalPrice: v.priceOriginal || v.price,
             stock: v.stock,
             imageName: imgKey,
             attributeValues: variantAttrValues 
         });
     });
 
-    // 6. Đóng gói FormData
     const formData = new FormData();
     if(state.mainImageFile) {
         payload.productDetailDTO.imageName = "productImage";
@@ -302,17 +284,14 @@ async function handleSave(e) {
     
     formData.append("productDTO", new Blob([JSON.stringify(payload)], { type: "application/json" }));
 
-    // DEBUG: In ra để kiểm tra
     console.log("=== PAYLOAD DEBUG ===");
     console.log("Payload JSON:", JSON.stringify(payload, null, 2));
 
-    // 7. Gửi API
     try {
         const res = await ProductService.createProduct(formData);
         if(res && res.success) {
             if(typeof showDialog === 'function') await showDialog("success", "Thành công!");
             else alert("Thành công");
-            
             UI.switchView('list');
             reloadData();
         } else {
