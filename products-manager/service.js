@@ -1,5 +1,4 @@
 import { callAPI } from '../public/api.js';
-let categories, brands, attributes;
 export const ProductService = {
     // Lấy danh sách categories
     getInfo: async()=>{

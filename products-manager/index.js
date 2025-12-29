@@ -27,7 +27,7 @@ async function reloadData() {
     try {
         // ID Test giả định, thực tế bạn có thể bỏ hoặc xử lý logic khác
         const targetId = "6786aedf-aa81-44ef-b28f-06abff1b5c1c"; 
-        const [productData] = await ProductService.getProductById(targetId);
+        const productData = await ProductService.getProductById(targetId);
         const info = await ProductService.getInfo()
 
         state.categories = info.categories;
