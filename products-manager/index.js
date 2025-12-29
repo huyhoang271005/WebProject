@@ -46,7 +46,7 @@ async function reloadData() {
                 imageUrl: detail.imageUrl,
                 variants: productData.variants || [], 
                 categoryName: state.categories.find(c => c.categoryId == detail.categoryId)?.categoryName || "-",
-                brandName: brands.find(b => b.brandId == detail.brandId)?.brandName || "-"
+                brandName: state.brands.find(b => b.brandId == detail.brandId)?.brandName || "-"
             };
             productList = [uiItem]; 
         }
