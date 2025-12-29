@@ -1,9 +1,10 @@
 import { callAPI } from "../public/api.js";
-// Import hàm showDialog từ file dialog CŨ của bro
 import { showDialog } from "../dialog/index.js";
 import { connectSse, subscribeTopic } from "../public/Sse.js";
 
 const noImage = "https://cdn-icons-png.flaticon.com/512/847/847969.png";
+
+// State quản lý thông báo (chỉ dùng khi bấm vào xem)
 let notiState = {
   page: 0,
   size: 10,
@@ -12,7 +13,7 @@ let notiState = {
   isLoadedFirstTime: false,
 };
 
-// CSS Navbar (Giữ nguyên giao diện Mobile Shopee xịn xò)
+// CSS Navbar (Giữ nguyên giao diện đẹp của bro)
 const navbarHTML = `
     <style>
         .navbar-component {
@@ -26,7 +27,6 @@ const navbarHTML = `
         .nb-icon-btn { position: relative; cursor: pointer; font-size: 1.3rem; color: #555; width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; border-radius: 50%; text-decoration: none; transition: 0.2s; }
         .nb-icon-btn:hover { background: #f3f4f6; color: #10B981; }
         
-        /* Badge chỉnh lại flex để số căn giữa đẹp hơn */
         .nb-badge { 
             position: absolute; top: 5px; right: 5px; background: #ee4d2d; color: white; 
             font-size: 0.7rem; padding: 0 5px; height: 16px; min-width: 16px; border-radius: 10px; 
@@ -50,7 +50,6 @@ const navbarHTML = `
         .btn-del-noti { cursor: pointer; color: #ccc; }
         .btn-clear-all { font-size: 0.8rem; color: #EF4444; cursor: pointer; text-decoration: underline; }
 
-        /* MOBILE RESPONSIVE */
         @media (max-width: 992px) {
             .navbar-component { padding: 10px 15px; height: auto; flex-wrap: wrap; }
             .nb-brand { order: 1; flex: 1; font-size: 1.4rem; min-width: auto; }
@@ -60,8 +59,6 @@ const navbarHTML = `
             .nb-avatar { width: 35px; height: 35px; }
             .nb-username, #nbRole { display: none; } 
             #nbCenterSlot { order: 3; width: 100%; margin: 10px 0 0 0; padding: 0; max-width: none; }
-            #navbarSearchInput, #homeSearch { height: 40px !important; background: #f5f5f5 !important; border: none !important; border-radius: 4px !important; }
-            .nav-cat-btn { display: none; }
             .nb-noti-dropdown { position: fixed; top: 60px; left: 50%; transform: translateX(-50%); width: 92vw; height: 80vh; max-width: 400px; right: auto; }
         }
     </style>
@@ -85,8 +82,11 @@ const navbarHTML = `
             </div>
             <div class="nb-user-menu" id="nbUserMenu">
                 <img src="${noImage}" class="nb-avatar" id="nbAvatar">
+                <div style="margin-left:5px">
+                    <div style="font-weight:600; font-size:0.9rem;" id="nbUsername">Khách</div>
+                    <div style="font-size:0.75rem; color:#888;" id="nbRole">GUEST</div>
+                </div>
                 <div class="nb-dropdown" id="nbUserDropdown">
-                    <div style="padding:15px; border-bottom:1px solid #eee; background:#fcfcfc"><div style="font-weight:bold" id="nbUsername">Khách</div><div style="font-size:0.8rem; color:#666" id="nbRole">...</div></div>
                     <a href="../profile"><i class="fa-regular fa-id-card"></i> Hồ sơ</a>
                     <a href="../session"><i class="fa-solid fa-laptop-medical"></i> Phiên đăng nhập</a>
                     <a href="../contact"><i class="fa-solid fa-map-location-dot"></i> Địa chỉ</a>
@@ -108,10 +108,13 @@ const navbarHTML = `
     <style>@media(max-width:992px){ .nav-spacer { height: 110px !important; } }</style>
 `;
 
-const userData = {
-  imageUrl: sessionStorage.getItem("imageUrl"),
-  username: sessionStorage.getItem("username"),
-  roleName: sessionStorage.getItem("roleName"),
+// Biến global lưu data Home
+let homeData = {
+  imageUrl: noImage,
+  username: "Khách",
+  roleName: "GUEST",
+  readNotifications: 0,
+  cartsCount: 0,
 };
 
 export async function loadNavbar(options = {}) {
@@ -121,104 +124,204 @@ export async function loadNavbar(options = {}) {
   if (options.centerHTML)
     document.getElementById("nbCenterSlot").innerHTML = options.centerHTML;
 
-  try {
-    if (!userData.username) {
-      const profile = await callAPI("/profile");
-      if (profile && profile.success) {
-        const user = profile.data;
-        Object.assign(userData, {
-          imageUrl: user.imageUrl || noImage,
-          username: user.username,
-          roleName: user.roleName,
-        });
-        sessionStorage.setItem("imageUrl", userData.imageUrl);
-        sessionStorage.setItem("username", userData.username);
-        sessionStorage.setItem("roleName", userData.roleName);
-      } else {
-        userData.username = "Khách";
-        userData.roleName = "GUEST";
-      }
+  // 1. Kiểm tra session xem có dữ liệu Home chưa
+  const cached = sessionStorage.getItem("homeData");
+  if (cached) {
+    try {
+      homeData = JSON.parse(cached);
+      updateNavbarUI(homeData); // Render ngay lập tức từ cache
+    } catch (e) {
+      console.error("Lỗi parse homeData từ session", e);
     }
-
-    if (userData.imageUrl)
-      document.getElementById("nbAvatar").src = userData.imageUrl;
-    if (userData.username !== "Khách") {
-      document.getElementById("nbUsername").textContent = userData.username;
-      document.getElementById("nbRole").textContent = userData.roleName;
-      if (userData.roleName === "ADMIN")
-        document
-          .querySelectorAll(".nb-admin-only")
-          .forEach((el) =>
-            el.style.setProperty("display", "flex", "important")
-          );
-
-      await connectSse("/sse");
-      setupSSERealtime();
-
-      // [FIX MỚI] LOGIC ĐẾM GIỎ HÀNG CHUẨN
-      try {
-        const cartRes = await callAPI("/auth/carts", "GET");
-        if (
-          cartRes &&
-          cartRes.success &&
-          cartRes.data &&
-          Array.isArray(cartRes.data.listData)
-        ) {
-          let totalItems = 0;
-          // Duyệt từng sản phẩm để đếm item con
-          cartRes.data.listData.forEach((product) => {
-            if (
-              product.cartItemDTOList &&
-              Array.isArray(product.cartItemDTOList)
-            ) {
-              totalItems += product.cartItemDTOList.length;
-            }
-          });
-
-          const b = document.getElementById("cartBadge");
-          if (b) {
-            if (totalItems > 0) {
-              b.innerText = totalItems > 99 ? "99+" : totalItems;
-              b.style.display = "flex"; // Hiện badge
-            } else {
-              b.style.display = "none";
-            }
-          }
-        }
-      } catch (err) {
-        console.error("Cart Error:", err);
-      }
-    } else {
-      document.getElementById("nbNotiList").innerHTML =
-        '<div style="padding:20px; text-align:center; color:#999">Đăng nhập để xem thông báo</div>';
-    }
-  } catch (e) {
-    console.error("Navbar Error:", e);
   }
+
+  // 2. Gọi API /home để lấy dữ liệu mới nhất (nếu chưa có hoặc muốn refresh ngầm)
+  // Nếu bro muốn tiết kiệm tối đa, có thể thêm điều kiện !cached mới gọi
+  try {
+    // Giả sử API là /home, bro đổi lại cho đúng nếu là /auth/home
+    const res = await callAPI("/home", "GET");
+
+    if (res && res.success && res.data) {
+      // Cập nhật biến global
+      homeData = res.data;
+      // Lưu vào session theo yêu cầu
+      sessionStorage.setItem("homeData", JSON.stringify(homeData));
+      // Cập nhật UI
+      updateNavbarUI(homeData);
+
+      // Kết nối SSE sau khi có dữ liệu user
+      if (homeData.username !== "Khách") {
+        await connectSse("/sse");
+        setupSSERealtime();
+      }
+    }
+  } catch (err) {
+    console.error("Lỗi tải thông tin Home:", err);
+  }
+
   setupEvents();
 }
 
+/**
+ * Hàm cập nhật giao diện Navbar dựa trên homeData
+ */
+function updateNavbarUI(data) {
+  if (!data) return;
+
+  // Avatar & Info
+  document.getElementById("nbAvatar").src = data.imageUrl || noImage;
+  if (data.username && data.username !== "Khách") {
+    document.getElementById("nbUsername").textContent = data.username;
+    document.getElementById("nbRole").textContent = data.roleName;
+
+    // Hiện menu Admin nếu có quyền
+    if (data.roleName === "ADMIN") {
+      document
+        .querySelectorAll(".nb-admin-only")
+        .forEach((el) => el.style.setProperty("display", "flex", "important"));
+    }
+  }
+
+  // Cart Badge
+  const cartBadge = document.getElementById("cartBadge");
+  if (data.cartsCount > 0) {
+    cartBadge.innerText = data.cartsCount > 99 ? "99+" : data.cartsCount;
+    cartBadge.style.display = "flex";
+  } else {
+    cartBadge.style.display = "none";
+  }
+
+  // Notification Badge
+  const notiBadge = document.getElementById("nbBadge");
+  // Backend trả về "readNotifications", tôi map nó vào badge (thường là unread)
+  if (data.readNotifications > 0) {
+    notiBadge.innerText =
+      data.readNotifications > 99 ? "99+" : data.readNotifications;
+    notiBadge.style.display = "flex";
+  } else {
+    notiBadge.style.display = "none";
+  }
+}
+
+/**
+ * Xử lý Realtime SSE
+ */
 function setupSSERealtime() {
+  // 1. Notification: Nhận tin nhắn -> Hiện badge + thêm vào list (nếu đang mở)
   subscribeTopic("notification", (data) => {
-    prependNotification(data);
-    document.getElementById("nbBadge").style.display = "block";
+    // Tăng số lượng thông báo trên badge
+    homeData.readNotifications = (homeData.readNotifications || 0) + 1;
+    updateNavbarUI(homeData); // Cập nhật badge
+    sessionStorage.setItem("homeData", JSON.stringify(homeData)); // Lưu session
+
+    // Nếu dropdown đang mở thì render thêm item
+    const notiList = document.getElementById("nbNotiList");
+    if (document.getElementById("nbNotiDropdown").classList.contains("show")) {
+      prependNotification(data);
+    }
   });
+
+  // 2. Cart: Nhận số int (+1, -1, +5...) -> Cộng dồn vào cartsCount
   subscribeTopic("cart", (data) => {
-    // SSE báo thay đổi thì load lại API cho chắc, hoặc cộng trừ tùy logic
-    // Ở đây đơn giản là load lại Navbar (nhưng sẽ hơi nặng), tốt nhất là cập nhật số hiển thị
-    // Tạm thời giữ logic cộng dồn cũ, nhưng nên reload lại cart items thì chuẩn hơn
     const change = parseInt(data);
-    const b = document.getElementById("cartBadge");
-    if (b) {
-      let newCount = (parseInt(b.innerText) || 0) + change;
+    if (!isNaN(change)) {
+      // Cộng dồn
+      let newCount = (homeData.cartsCount || 0) + change;
       if (newCount < 0) newCount = 0;
-      b.innerText = newCount > 99 ? "99+" : newCount;
-      b.style.display = newCount > 0 ? "flex" : "none";
+
+      homeData.cartsCount = newCount;
+
+      // Cập nhật UI & Session
+      updateNavbarUI(homeData);
+      sessionStorage.setItem("homeData", JSON.stringify(homeData));
     }
   });
 }
 
-// === CÁC HÀM XỬ LÝ THÔNG BÁO ===
+// === CÁC HÀM XỬ LÝ SỰ KIỆN ===
+function setupEvents() {
+  const userDropdown = document.getElementById("nbUserDropdown");
+  const notiDropdown = document.getElementById("nbNotiDropdown");
+  const notiList = document.getElementById("nbNotiList");
+
+  // Click Avatar -> Toggle User Menu
+  document.getElementById("nbUserMenu").onclick = (e) => {
+    e.stopPropagation();
+    userDropdown.classList.toggle("show");
+    notiDropdown.classList.remove("show");
+  };
+
+  // Click Bell -> Toggle Noti Menu & Load Data (Lazy Load)
+  document.getElementById("nbNotiBtn").onclick = async (e) => {
+    e.stopPropagation();
+    notiDropdown.classList.toggle("show");
+    userDropdown.classList.remove("show");
+
+    if (notiDropdown.classList.contains("show")) {
+      // Ẩn badge khi đã xem
+      // document.getElementById("nbBadge").style.display = "none";
+      // (Tùy logic: có thể giữ badge đến khi đọc từng cái, hoặc ẩn luôn)
+
+      // Lazy load: Nếu chưa load lần nào thì mới gọi API
+      if (!notiState.isLoadedFirstTime) {
+        await fetchNotifications();
+        notiState.isLoadedFirstTime = true;
+      }
+    }
+  };
+
+  // Scroll Infinite cho Notification
+  if (notiList) {
+    notiList.addEventListener("scroll", () => {
+      if (
+        notiList.scrollTop + notiList.clientHeight >=
+        notiList.scrollHeight - 10
+      )
+        fetchNotifications();
+    });
+  }
+
+  // Click Logout
+  const logoutBtn = document.getElementById("nbLogout");
+  if (logoutBtn) {
+    logoutBtn.onclick = async () => {
+      await showDialog(
+        "question",
+        "Bạn có chắc chắn muốn đăng xuất không?",
+        async () => {
+          await callAPI("/logout");
+          sessionStorage.clear();
+          // Xóa luôn localStorage nếu có lưu token ở đó
+          // localStorage.removeItem("accessToken");
+          window.location.replace("../auth/login");
+        },
+        "Đăng xuất",
+        true
+      );
+    };
+  }
+
+  // Đóng dropdown khi click ra ngoài
+  document.addEventListener("click", () => {
+    userDropdown.classList.remove("show");
+    notiDropdown.classList.remove("show");
+  });
+
+  // Nút xóa tất cả thông báo
+  const clearAllBtn = document.getElementById("btnClearAllNoti");
+  if (clearAllBtn) {
+    clearAllBtn.onclick = async (e) => {
+      e.stopPropagation();
+      if (!confirm("Xóa tất cả thông báo?")) return;
+      // Gọi API xóa (nếu có)
+      // await callAPI("/auth/notifications/delete-all", "POST");
+      document.getElementById("nbNotiList").innerHTML =
+        '<div class="empty-noti" style="padding:20px;text-align:center;color:#999">Không có thông báo nào</div>';
+    };
+  }
+}
+
+// === CÁC HÀM API NOTIFICATION (GIỮ NGUYÊN LOGIC CŨ) ===
 async function fetchNotifications() {
   if (notiState.isLoading || !notiState.hasMore) return;
   notiState.isLoading = true;
@@ -240,7 +343,7 @@ async function fetchNotifications() {
       } else {
         if (notiState.page === 0)
           document.getElementById("nbNotiList").innerHTML =
-            '<div class="empty-noti">Không có thông báo nào</div>';
+            '<div class="empty-noti" style="padding:20px;text-align:center;color:#999">Không có thông báo nào</div>';
         notiState.hasMore = false;
       }
       if (list.length < notiState.size) notiState.hasMore = false;
@@ -257,7 +360,10 @@ async function fetchNotifications() {
 
 function prependNotification(item) {
   const notiList = document.getElementById("nbNotiList");
-  if (notiList.querySelector(".empty-noti")) notiList.innerHTML = "";
+  // Nếu đang hiện "Không có thông báo" thì xóa đi
+  const emptyMsg = notiList.querySelector(".empty-noti");
+  if (emptyMsg) emptyMsg.remove();
+
   const html = createNotiItemHTML(item, true);
   notiList.insertAdjacentHTML("afterbegin", html);
 }
@@ -273,94 +379,21 @@ function createNotiItemHTML(item, isNew = false) {
   return `
         <div class="noti-item ${isNew ? "unread" : ""}" id="noti-${id}">
             <div class="noti-content">
-                <div class="noti-title">${title}</div>
-                <div class="noti-msg">${msg}</div>
-                <div class="noti-time">${time}</div>
+                <div class="noti-title" style="font-weight:600;font-size:0.95rem">${title}</div>
+                <div class="noti-msg" style="font-size:0.9rem;color:#555">${msg}</div>
+                <div class="noti-time" style="font-size:0.75rem;color:#999;margin-top:4px">${time}</div>
             </div>
             <i class="fa-solid fa-xmark btn-del-noti" onclick="deleteNoti('${id}', event)"></i>
         </div>
     `;
 }
 
+// Hàm global để gọi từ HTML onclick
 window.deleteNoti = async (id, e) => {
   e.stopPropagation();
   if (!id || id === "undefined") return;
   const item = document.getElementById(`noti-${id}`);
   if (item) item.remove();
+  // Gọi API xóa
   await callAPI("/auth/notifications/delete", "POST", [id]);
-  if (document.getElementById("nbNotiList").children.length === 0)
-    document.getElementById("nbNotiList").innerHTML =
-      '<div class="empty-noti">Không có thông báo nào</div>';
 };
-
-// === SỰ KIỆN ===
-function setupEvents() {
-  const userDropdown = document.getElementById("nbUserDropdown");
-  const notiDropdown = document.getElementById("nbNotiDropdown");
-  const notiList = document.getElementById("nbNotiList");
-
-  document.getElementById("nbUserMenu").onclick = (e) => {
-    e.stopPropagation();
-    userDropdown.classList.toggle("show");
-    notiDropdown.classList.remove("show");
-  };
-
-  document.getElementById("nbNotiBtn").onclick = async (e) => {
-    e.stopPropagation();
-    notiDropdown.classList.toggle("show");
-    userDropdown.classList.remove("show");
-    if (notiDropdown.classList.contains("show")) {
-      document.getElementById("nbBadge").style.display = "none";
-      if (!notiState.isLoadedFirstTime) {
-        await fetchNotifications();
-        notiState.isLoadedFirstTime = true;
-      }
-    }
-  };
-
-  if (notiList) {
-    notiList.addEventListener("scroll", () => {
-      if (
-        notiList.scrollTop + notiList.clientHeight >=
-        notiList.scrollHeight - 10
-      )
-        fetchNotifications();
-    });
-  }
-
-  const clearAllBtn = document.getElementById("btnClearAllNoti");
-  if (clearAllBtn) {
-    clearAllBtn.onclick = async (e) => {
-      e.stopPropagation();
-      if (!confirm("Xóa tất cả?")) return; // Dùng confirm thường vì dialog chưa export hàm confirm riêng
-      // Logic xóa tất cả...
-      document.getElementById("nbNotiList").innerHTML =
-        '<div class="empty-noti">Không có thông báo nào</div>';
-    };
-  }
-
-  document.addEventListener("click", () => {
-    userDropdown.classList.remove("show");
-    notiDropdown.classList.remove("show");
-  });
-
-  // [QUAN TRỌNG] GỌI HÀM SHOWDIALOG THEO ĐÚNG CẤU TRÚC CỦA BRO
-  const logoutBtn = document.getElementById("nbLogout");
-  if (logoutBtn) {
-    logoutBtn.onclick = async () => {
-      // Hàm của bro: showDialog(status, message, callback, contentButton, dismiss)
-      await showDialog(
-        "question", // status
-        "Bạn có chắc chắn muốn đăng xuất không?", // message
-        async () => {
-          // callback
-          await callAPI("/logout");
-          sessionStorage.clear();
-          window.location.replace("../auth/login");
-        },
-        "Đăng xuất", // contentButton (chữ trên nút)
-        true // dismiss
-      );
-    };
-  }
-}
