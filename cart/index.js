@@ -56,7 +56,7 @@ async function loadCart(page = 0, size = 10) {
 
     // --- GỌI API ---
     // Không bọc try-catch nữa, tin tưởng vào Backend/callAPI
-    const res = await callAPI(`/auth/carts?page=${page}&size=${size}`, 'GET');
+    const res = await callAPI(`/carts?page=${page}&size=${size}`, 'GET');
     
     // Kiểm tra kết quả trả về
     if (res && res.success) { 
@@ -221,7 +221,7 @@ window.del = async (id) => {
     // ⚠️ QUAN TRỌNG: Bạn hãy xem trong Postman cái Request "POST DeleteCart" nó có URL là gì
     // Ví dụ: /auth/carts/delete hay /auth/carts/remove-multiple
     // Tôi đang để tạm là '/auth/carts/delete', bạn sửa lại cho đúng nhé!
-    const res = await callAPI('/auth/carts/delete', 'POST', [id]); 
+    const res = await callAPI('/carts/delete', 'POST', [id]); 
     
     if(res.success) {
         cartData.forEach(p => p.cartItemDTOList = p.cartItemDTOList.filter(i => i.cartItemId !== id));
@@ -239,7 +239,7 @@ window.deleteSelected = async () => {
 
     // Gọi API POST gửi danh sách lên
     // ⚠️ URL ở đây cũng phải giống URL bên trên
-    const res = await callAPI('/auth/carts/delete', 'POST', listIds);
+    const res = await callAPI('/carts/delete', 'POST', listIds);
 
     if(res.success) {
         // Xóa thành công trên server -> Xóa trong RAM
@@ -268,7 +268,7 @@ window.modQty = async (id, delta, manualVal) => {
         if(isNaN(newQ) || newQ < 1) return window.del(id);
         if(newQ > v.stock) { await showDialog("error", `Kho còn ${v.stock}`); render(); return; }
 
-        if((await callAPI('/auth/carts', 'PUT', { cartItemId: id, variantId: item.variantId, quantity: newQ })).success) {
+        if((await callAPI('/carts', 'PUT', { cartItemId: id, variantId: item.variantId, quantity: newQ })).success) {
             item.quantity = newQ; render();
         } else { await showDialog("error", "Lỗi cập nhật"); render(); }
     } finally { busy = false; }
@@ -318,7 +318,7 @@ window.changeVar = async (el) => {
             }
 
             // Bước B: Cập nhật dòng đích (duplicateItem) lên số lượng tổng
-            const resUpdate = await callAPI('/auth/carts', 'PUT', { 
+            const resUpdate = await callAPI('/carts', 'PUT', { 
                 cartItemId: duplicateItem.cartItemId, 
                 variantId: duplicateItem.variantId, 
                 quantity: newTotalQty 
@@ -326,7 +326,7 @@ window.changeVar = async (el) => {
 
             if (resUpdate.success) {
                 // Bước C: Xóa dòng hiện tại (currentItem) vì đã cộng dồn sang kia rồi
-                const resDelete = await callAPI('/auth/carts/delete', 'POST', [currentItem.cartItemId]);
+                const resDelete = await callAPI('/carts/delete', 'POST', [currentItem.cartItemId]);
                 if (resDelete.success) {
                     // === CẬP NHẬT GIAO DIỆN TỨC THÌ (KHÔNG CẦN RELOAD) ===
                     // 1. Xóa item hiện tại khỏi dữ liệu cục bộ
@@ -351,7 +351,7 @@ window.changeVar = async (el) => {
             // >>> TRƯỜNG HỢP 2: KHÔNG TRÙNG -> ĐỔI BÌNH THƯỜNG <<<
             console.log("Không trùng -> Đổi biến thể bình thường");
             
-            const res = await callAPI('/auth/carts', 'PUT', { 
+            const res = await callAPI('/carts', 'PUT', { 
                 cartItemId: currentItem.cartItemId, 
                 variantId: newV.variantId, 
                 quantity: currentItem.quantity 
