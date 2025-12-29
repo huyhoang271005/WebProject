@@ -24,39 +24,35 @@ export const UI = {
         }
     },
 
-    // --- SUA LOGIC RENDER BRANDS ---
     renderBrands: (brands, cateId, selectedBrandId = null) => {
         const brandSelect = document.getElementById("brandId");
         if (!brandSelect) return;
         
-        // Reset option dau tien
         brandSelect.innerHTML = `<option value="">-- Chon thuong hieu --</option>`;
 
-        if (!brands || brands.length === 0) {
-            console.log("UI: Khong co du lieu brands de hien thi");
-            return;
-        }
+        if (!brands || brands.length === 0) return;
 
         let filtered = brands;
         
-        // Chi loc khi co cateId duoc chon
+        // Lọc brand theo category (chuyển về string để so sánh an toàn)
         if (cateId && cateId !== "") {
-            // Chuyen ve String het de so sanh cho chac chan (tranh loi so vs chuoi)
             const cateIdStr = String(cateId);
             filtered = brands.filter(b => {
-                // Kiem tra xem brand co truong categoryId khong
-                if (!b.categoryId) return true; // Neu data loi khong co categoryId thi cu hien ra
-                return String(b.categoryId) === cateIdStr;
+                const bCateId = b.categoryId || b.category_id;
+                // Nếu brand không có categoryId thì cho hiện luôn, ngược lại thì phải khớp
+                return !bCateId || String(bCateId) === cateIdStr;
             });
         }
 
-        // Log de debug xem loc con lai bao nhieu
-        console.log(`UI: Render brands. Total: ${brands.length}, Filtered by Cate(${cateId}): ${filtered.length}`);
-
         filtered.forEach(b => {
-            // So sanh ID brand de set selected
-            const isSelected = (selectedBrandId && String(b.brandId) === String(selectedBrandId)) ? 'selected' : '';
-            brandSelect.innerHTML += `<option value="${b.brandId}" ${isSelected}>${b.brandName}</option>`;
+            // Tự động nhận diện key ID và Name
+            const id = b.brandId || b.id || b._id;
+            const name = b.brandName || b.name || b.brand_name;
+            
+            if (id && name) {
+                const isSelected = (selectedBrandId && String(id) === String(selectedBrandId)) ? 'selected' : '';
+                brandSelect.innerHTML += `<option value="${id}" ${isSelected}>${name}</option>`;
+            }
         });
     },
 
@@ -204,7 +200,7 @@ export const UI = {
         if(formTitle) formTitle.innerText = isEdit ? "Cap nhat san pham" : "Them San Pham Moi";
         UI.renderMainImage(null);
         
-        // Reset luon brand select ve trang thai trong
+        // Reset brand select
         const brandSelect = document.getElementById("brandId");
         if (brandSelect) brandSelect.innerHTML = `<option value="">-- Chon thuong hieu --</option>`;
     }

@@ -8,10 +8,12 @@ let state = {
     brands: [],
     attributes: [],
     variants: [],
-    mainImageFile: null
+    mainImageFile: null,
+    products: []
 };
 
 (async function init() {
+    // Chặn vòng lặp refresh token (Anti-loop patch)
     const originalFetch = window.fetch;
     window.fetch = async (...args) => {
         const response = await originalFetch(...args);
@@ -29,6 +31,7 @@ let state = {
     setupEventListeners();
     await loadBaseData(); 
     
+    // Mặc định vào màn hình thêm mới
     UI.switchView('form');
     UI.resetForm(false);
 })();
@@ -37,19 +40,20 @@ async function loadBaseData() {
     try {
         console.log("Bat dau tai du lieu nen...");
 
+        // 1. Tải lần lượt để tránh lỗi token
         const cats = await ProductService.getCategories();
         state.categories = cats || [];
-        console.log("Loaded Categories:", state.categories.length);
+        console.log("Categories loaded:", state.categories.length);
 
         const brands = await ProductService.getBrands();
         state.brands = brands || [];
-        console.log("Loaded Brands:", state.brands.length);
+        console.log("Brands loaded:", state.brands.length);
 
         const attrs = await ProductService.getAttributes();
         state.attributes = attrs || [];
-        console.log("Loaded Attributes:", state.attributes.length);
+        console.log("Attributes loaded:", state.attributes.length);
 
-        // 1. Render Categories
+        // 2. Render dữ liệu vào Select Box ngay lập tức
         if (UI.els.cateSelect) {
             UI.els.cateSelect.innerHTML = `<option value="">-- Chon danh muc --</option>`;
             state.categories.forEach(c => {
@@ -57,9 +61,8 @@ async function loadBaseData() {
             });
         }
 
-        // 2. Render Brands NGAY LAP TUC (Hien thi tat ca brand khi chua chon danh muc)
-        // De nguoi dung thay duoc data ke ca khi chua chon danh muc
-        UI.renderBrands(state.brands, null); 
+        // Render Brands ngay (hiển thị tất cả khi chưa chọn danh mục)
+        UI.renderBrands(state.brands, null);
 
     } catch (e) {
         console.error("Loi tai du lieu:", e);
@@ -76,12 +79,10 @@ function setupEventListeners() {
     const btnGenVariants = document.getElementById("btnGenerateVariants");
     if (btnGenVariants) btnGenVariants.onclick = () => { handleCalcVariants(); };
     
-    // Khi chon danh muc -> Loc lai Brand
+    // Khi chọn danh mục -> Lọc lại Brand
     if (UI.els.cateSelect) {
         UI.els.cateSelect.onchange = (e) => {
-            const cateId = e.target.value;
-            console.log("Da chon danh muc ID:", cateId);
-            UI.renderBrands(state.brands, cateId);
+            UI.renderBrands(state.brands, e.target.value);
         };
     }
     
@@ -109,6 +110,7 @@ function handleCalcVariants() {
 
 async function handleSave(e) {
     e.preventDefault();
+    
     if (state.variants.length === 0) {
         const currentAttrs = VariantLogic.parseAttributesFromDOM();
         if (currentAttrs.length > 0) return alert("Chua nhan Tao bien the!");
@@ -162,9 +164,11 @@ async function handleSave(e) {
         state.variants.forEach((v, idx) => { if(v.rawFile) formData.append(`image_variant_${idx}`, v.rawFile); });
         formData.append("productDTO", new Blob([JSON.stringify(payload)], { type: "application/json" }));
 
+        // Gọi service của bạn
         const res = await ProductService.createProduct(formData);
         
-        if(res && res.success) {
+        // Kiểm tra kết quả (Tuỳ thuộc API của bạn trả về success hay không)
+        if(res && (res.success || res.status === 200)) {
             alert("Thanh cong!");
             UI.resetForm(false);
             state.variants = [];
@@ -172,16 +176,17 @@ async function handleSave(e) {
         } else {
              alert("Loi: " + (res?.message || "Server error"));
         }
+
     } catch(err) {
         console.error(err);
-        alert("Loi: " + err.message);
+        alert("Loi he thong: " + err.message);
     } finally {
         if(submitBtn) submitBtn.disabled = false;
         if(spinner) spinner.classList.add("d-none");
     }
 }
 
-// Global
+// Global functions cho các nút trong bảng variants
 window.applyBulkInfo = () => {
     const pOrg = document.getElementById("bulk_price_org")?.value;
     const pSell = document.getElementById("bulk_price")?.value;
