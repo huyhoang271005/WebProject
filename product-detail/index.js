@@ -186,16 +186,9 @@ function findMatchingVariant() {
     if (found) {
         currentVariant = found;
         updateUIForVariant(found);
-
-        if (found.stock > 0) {
-            showNotification(`Tìm thấy sản phẩm! Còn ${found.stock} sản phẩm`, 'success');
-        } else {
-            showNotification("Rất tiếc, sản phẩm này đã hết hàng", 'warning');
-        }
     } else {
         currentVariant = null;
         updateStockDisplay(0);
-        showNotification("Không tìm thấy sản phẩm với tùy chọn này", 'warning');
     }
 }
 
@@ -359,26 +352,34 @@ function setupEventListeners() {
     // Buy Now Button
     document.getElementById('btnBuyNow').addEventListener('click', () => {
         if (!validateSelection()) return;
-
-        const quantity = parseInt(input.value);
-
+        const quantity = parseInt(document.getElementById('inputQuantity').value);
         // Confirm before proceeding
         showNotification(`Đang chuyển đến trang thanh toán...`, 'info');
 
+        const selectedAttrNames = [];
+        document.querySelectorAll('.attribute-row').forEach(row => {
+            const activeBtn = row.querySelector('.attr-item.active');
+            if (activeBtn) selectedAttrNames.push(activeBtn.innerText);
+        });
+
+        const buyNowData = {
+            variantId: currentVariant.variantId,
+            quantity: quantity,
+            productName: productDetail.productName,
+            price: currentVariant.price,
+            thumbnail: currentVariant.imageUrl || productDetail.imageUrl,
+            variantName: selectedAttrNames.join(' - ')
+        };
+
+        // 4. Quan trọng: Dọn dẹp dữ liệu cũ để tránh nhầm lẫn luồng
+        localStorage.removeItem("checkoutItems"); // Xóa dữ liệu chờ từ giỏ hàng (nếu có)
+
+        // 5. Lưu dữ liệu mua ngay vào sessionStorage (dữ liệu tạm thời phiên làm việc)
+        sessionStorage.setItem('buyNowData', JSON.stringify(buyNowData));
+
+        // 6. Redirect
         setTimeout(() => {
-            // Navigate to checkout page with product info
-            const checkoutData = {
-                variantId: currentVariant.variantId,
-                quantity: quantity,
-                productName: productDetail.productName,
-                price: currentVariant.price
-            };
-
-            // Store in sessionStorage for checkout page
-            sessionStorage.setItem('checkoutData', JSON.stringify(checkoutData));
-
-            // Redirect to checkout
-            window.location.href = '/WebProject/checkout';
+            window.location.href = '../checkout/index.html'; // Điều chỉnh đường dẫn đúng file của bạn
         }, 500);
     });
 }
