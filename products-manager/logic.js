@@ -1,6 +1,9 @@
 // logic.js
 export const VariantLogic = {
-    // Parse attributes từ DOM
+    /**
+     * Quét DOM để lấy danh sách thuộc tính người dùng đã nhập
+     * Trả về: Array [{ id, name, values: [], valueIdMap: {} }]
+     */
     parseAttributesFromDOM: () => {
         const rows = document.querySelectorAll(".attr-row");
         const attributes = [];
@@ -9,23 +12,23 @@ export const VariantLogic = {
             const selectEl = row.querySelector(".inp-attr-select");
             const inputEl = row.querySelector(".inp-attr-vals");
             
-            // Lấy attribute name từ select
+            // Lấy ID và Tên thuộc tính
             let attrId = null;
             let attrName = "";
             
-            if (selectEl && selectEl.value !== "") {
+            if (selectEl && selectEl.value) {
                 attrId = selectEl.value;
                 attrName = selectEl.options[selectEl.selectedIndex].text;
             }
             
-            // Lấy values từ input
+            // Lấy các giá trị (VD: Đỏ, Xanh)
             const valsStr = inputEl ? inputEl.value.trim() : "";
             
             if (attrId && attrName && valsStr) {
                 const values = valsStr.split(",").map(v => v.trim()).filter(v => v !== "");
                 
                 if (values.length > 0) {
-                    // Lấy valueIdMap từ dataset (nếu có sẵn)
+                    // Lấy map ID của value nếu có sẵn (từ dataset)
                     const valueIdMap = row.dataset.valueIdMap ? JSON.parse(row.dataset.valueIdMap) : {};
                     
                     attributes.push({ 
@@ -41,11 +44,16 @@ export const VariantLogic = {
         return attributes;
     },
 
-    // Generate tất cả variants từ attributes
-    generateVariants: (attributes, basePrice, existingVariants = [], basePriceOriginal = 0) => {
+    /**
+     * Tạo tổ hợp biến thể (Cartesian Product)
+     * attributes: Input từ hàm parse
+     * basePrice: Giá bán chung
+     * baseOriginalPrice: Giá gốc chung
+     */
+    generateVariants: (attributes, basePrice, baseOriginalPrice, existingVariants = []) => {
         if (!attributes.length) return [];
 
-        // Tạo cartesian product
+        // Hàm đệ quy tạo tổ hợp
         const cartesian = (attrs) => {
             if (attrs.length === 0) return [];
             if (attrs.length === 1) return attrs[0].values.map(v => [v]);
@@ -61,24 +69,28 @@ export const VariantLogic = {
                     restCombos.forEach(c => result.push([v, ...c]));
                 }
             });
-            
             return result;
         };
 
         const combinations = cartesian(attributes);
 
+        // Map tổ hợp thành object variant
         return combinations.map((combo, idx) => {
             const comboName = combo.join(" - ");
+            // Giữ lại thông tin nếu variant này đã tồn tại (người dùng đã sửa giá/kho)
             const existing = existingVariants.find(v => v.name === comboName);
             
             return {
-                id: existing?.id || `new_${Date.now()}_${idx}`,
+                tempId: existing?.tempId || `new_${Date.now()}_${idx}`, // ID tạm để UI dùng
                 name: comboName,
-                comboValues: combo,
-                attributeIds: attributes.map(a => a.id),
+                comboValues: combo, // Mảng giá trị ["Đỏ", "L"]
+                
+                // Các trường dữ liệu gửi lên server
                 price: existing?.price || basePrice || 0,
-                priceOriginal: existing?.priceOriginal || basePriceOriginal || basePrice || 0,
-                stock: existing?.stock || 10,
+                priceOriginal: existing?.priceOriginal || baseOriginalPrice || 0,
+                stock: existing?.stock || 0,
+                
+                // Xử lý ảnh
                 imageName: existing?.imageName || null,
                 previewUrl: existing?.previewUrl || null,
                 rawFile: existing?.rawFile || null

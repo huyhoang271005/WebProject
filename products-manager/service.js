@@ -1,58 +1,57 @@
-import { callAPI } from '../public/api.js';
+// service.js
+import { callAPI } from './api.js'; 
 
 export const ProductService = {
-    // Lấy danh sách categories
+    // Lấy danh sách danh mục
     getCategories: async () => {
-        const res = await callAPI(`/categories`, "GET");
-        console.log("Categories Response:", res);
-        
-        if (res?.success && res?.data?.listData) {
-            return res.data.listData;
+        try {
+            const res = await callAPI(`/categories`, "GET");
+            return (res && res.success) ? res.data.listData : [];
+        } catch (e) {
+            console.error("Lỗi lấy categories", e);
+            return [];
         }
-        return [];
     },
 
-    // Lấy danh sách brands
+    // Lấy danh sách thương hiệu
     getBrands: async () => {
-        const res = await callAPI(`/brands`, "GET");
-        console.log("Brands Response:", res);
-        
-        if (res?.success && res?.data?.listData) {
-            return res.data.listData;
+        try {
+            const res = await callAPI(`/brands`, "GET");
+            return (res && res.success) ? res.data.listData : [];
+        } catch (e) {
+            console.error("Lỗi lấy brands", e);
+            return [];
         }
-        return [];
     },
 
-    // Lấy danh sách attributes
+    // Lấy danh sách thuộc tính có sẵn
     getAttributes: async () => {
-        const res = await callAPI(`/attributes`, "GET");
-        console.log("Attributes Response:", res);
-        
-        if (res?.success && res?.data?.listData) {
-            return res.data.listData;
+        try {
+            const res = await callAPI(`/attributes`, "GET");
+            return (res && res.success) ? res.data.listData : [];
+        } catch (e) {
+            console.error("Lỗi lấy attributes", e);
+            return [];
         }
-        return [];
     },
 
-    // Lấy chi tiết sản phẩm
     getProductById: async (id) => {
         try {
             const res = await callAPI(`/auth/admin/products/${id}`, "GET");
-            console.log("Product Detail Response:", res);
-            
-            if (res?.success && res?.data) {
+            if (res && res.success) {
                 return res.data;
             }
             return null;
-        } catch (error) {
-            console.error("Lỗi lấy chi tiết sản phẩm:", error);
+        } catch (e) {
+            console.error("Lỗi lấy chi tiết sản phẩm:", e);
             return null;
         }
     },
 
-    // Tạo sản phẩm mới
+    // Tạo sản phẩm mới (Multipart/form-data)
     createProduct: async (formData) => {
-        const res = await callAPI(`/auth/admin/products`, "POST", formData, true);
+        // Lưu ý: callAPI cần hỗ trợ upload file (không set Content-Type JSON thủ công)
+        const res = await callAPI(`/auth/admin/products`, "POST", formData, true); 
         return res;
     }
 };

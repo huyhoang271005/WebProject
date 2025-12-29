@@ -1,290 +1,147 @@
 // ui.js
 export const UI = {
     els: {
-        list: document.getElementById("listView"),
-        form: document.getElementById("createView"),
         cateSelect: document.getElementById("categoryId"),
         brandSelect: document.getElementById("brandId"),
         attrContainer: document.getElementById("attributesContainer"),
         variantWrapper: document.getElementById("variantsContainer"),
-        formTitle: document.querySelector("#createView h2"),
-        mainImgPreview: document.getElementById("mainImagePreview"),
-        mainImgInput: document.getElementById("mainImage")
+        mainImgPreview: document.getElementById("mainImagePreview")
     },
 
     switchView: (viewName) => {
         const listEl = document.getElementById("listView");
         const formEl = document.getElementById("createView");
-        
         if (viewName === 'list') {
-            if(listEl) listEl.classList.remove('d-none');
-            if(formEl) formEl.classList.add('d-none');
+            listEl?.classList.remove('d-none');
+            formEl?.classList.add('d-none');
         } else {
-            if(listEl) listEl.classList.add('d-none');
-            if(formEl) formEl.classList.remove('d-none');
+            listEl?.classList.add('d-none');
+            formEl?.classList.remove('d-none');
         }
     },
 
-    // Render categories vào select
     renderCategories: (categories) => {
-        const cateSelect = document.getElementById("categoryId");
-        if (!cateSelect) return;
-        
-        console.log("Rendering categories:", categories.length);
-        cateSelect.innerHTML = `<option value="">-- Chọn danh mục --</option>`;
-        
-        categories.forEach(c => {
-            cateSelect.innerHTML += `<option value="${c.categoryId}">${c.categoryName}</option>`;
-        });
+        const el = document.getElementById("categoryId");
+        if (!el) return;
+        el.innerHTML = `<option value="">-- Chọn danh mục --</option>` + 
+            categories.map(c => `<option value="${c.categoryId}">${c.categoryName}</option>`).join('');
     },
 
-    // Render brands vào select (có lọc theo category)
-    renderBrands: (allBrands, selectedCateId = "", selectedBrandId = null) => {
-        const brandSelect = document.getElementById("brandId");
-        if (!brandSelect) {
-            console.error("Không tìm thấy brandId select");
-            return;
-        }
+    renderBrands: (allBrands, selectedCateId = "") => {
+        const el = document.getElementById("brandId");
+        if (!el) return;
         
-        console.log("Rendering brands:", {
-            total: allBrands.length,
-            selectedCateId,
-            selectedBrandId
-        });
-        
-        brandSelect.innerHTML = `<option value="">-- Chọn thương hiệu --</option>`;
-        
-        if (!allBrands || allBrands.length === 0) {
-            console.warn("Brands array trống");
-            return;
-        }
-
-        // Lọc brands theo category
+        // Lọc brand theo categoryId (nếu brand có trường categoryId)
         let filtered = allBrands;
-        
-        if (selectedCateId && selectedCateId !== "") {
-            filtered = allBrands.filter(b => {
-                const bCateId = b.categoryId;
-                // Nếu brand không có categoryId thì hiển thị
-                if (!bCateId) return true;
-                return String(bCateId) === String(selectedCateId);
-            });
-            console.log("Filtered brands:", filtered.length);
+        if (selectedCateId) {
+            filtered = allBrands.filter(b => !b.categoryId || String(b.categoryId) === String(selectedCateId));
         }
 
-        // Render options
-        filtered.forEach(b => {
-            const isSelected = (selectedBrandId && String(b.brandId) === String(selectedBrandId)) ? 'selected' : '';
-            brandSelect.innerHTML += `<option value="${b.brandId}" ${isSelected}>${b.brandName}</option>`;
-        });
-
-        console.log("✅ Đã render", filtered.length, "brands vào dropdown");
+        el.innerHTML = `<option value="">-- Chọn thương hiệu --</option>` + 
+            filtered.map(b => `<option value="${b.brandId}">${b.brandName}</option>`).join('');
     },
 
-    // Render ảnh chính
     renderMainImage: (src) => {
-        const preview = document.getElementById("mainImagePreview");
-        if (!preview) return;
-        
-        if (src) {
-            preview.innerHTML = `<img src="${src}" class="img-fluid rounded shadow-sm" style="max-height: 200px;">`;
-        } else {
-            preview.innerHTML = ``;
-        }
+        const el = document.getElementById("mainImagePreview");
+        if (el) el.innerHTML = src ? `<img src="${src}" class="img-fluid rounded shadow-sm" style="max-height: 200px;">` : ``;
     },
 
-    // Thêm 1 dòng attribute
-    addAttrRow: (selectedAttrId = "", valuesStr = "", allAttributes = []) => {
+    addAttrRow: (allAttributes = []) => {
         const container = document.getElementById("attributesContainer");
-        if (!container) return;
-        
         const div = document.createElement("div");
-        div.className = "mb-3 attr-row";
-        if (selectedAttrId) div.dataset.attrId = selectedAttrId;
+        div.className = "mb-3 attr-row border-bottom pb-3";
         
-        // Build options từ allAttributes
-        const attrOptions = allAttributes.map(attr => {
-            const selected = (selectedAttrId === attr.attributeId) ? 'selected' : '';
-            return `<option value="${attr.attributeId}" ${selected}>${attr.attributeName}</option>`;
-        }).join('');
+        const options = allAttributes.map(a => `<option value="${a.attributeId}">${a.attributeName}</option>`).join('');
 
         div.innerHTML = `
             <div class="row g-2 align-items-center">
                 <div class="col-md-3">
                     <select class="inp-attr-select form-select">
                         <option value="">-- Chọn thuộc tính --</option>
-                        ${attrOptions}
+                        ${options}
                     </select>
                 </div>
                 <div class="col-md-8">
-                    <input type="text" class="inp-attr-vals form-control" value="${valuesStr}" 
-                           placeholder="Nhập giá trị (ngăn cách bởi dấu phay). VD: Đỏ, Xanh, Vàng">
+                    <input type="text" class="inp-attr-vals form-control" 
+                           placeholder="Nhập giá trị ngăn cách dấu phẩy (VD: Đỏ, Xanh)">
                 </div>
                 <div class="col-md-1">
-                    <button type="button" class="btn-remove btn btn-outline-danger w-100">Xóa</button>
+                    <button type="button" class="btn-remove btn btn-outline-danger w-100"><i class="bi bi-trash"></i></button>
                 </div>
             </div>`;
 
-        // Event: Khi chọn attribute
+        // Sự kiện khi chọn attribute: tự động điền value gợi ý
         const selectEl = div.querySelector(".inp-attr-select");
         selectEl.onchange = (e) => {
-            const selectedAttr = allAttributes.find(a => a.attributeId === e.target.value);
-            if (selectedAttr) {
-                div.dataset.attrId = selectedAttr.attributeId;
+            const attr = allAttributes.find(a => a.attributeId === e.target.value);
+            if (attr) {
+                // Lưu map ID của values vào dataset để Logic đọc
+                const valueIdMap = {};
+                attr.attributeValues?.forEach(v => valueIdMap[v.attributeValueName] = v.attributeValueId);
+                div.dataset.valueIdMap = JSON.stringify(valueIdMap);
                 
-                // Tự động điền values nếu attribute có sẵn values
-                if (selectedAttr.attributeValues && selectedAttr.attributeValues.length > 0) {
-                    const inputEl = div.querySelector(".inp-attr-vals");
-                    const existingVals = inputEl.value.trim();
-                    
-                    if (!existingVals) {
-                        const valueNames = selectedAttr.attributeValues.map(v => v.attributeValueName).join(", ");
-                        inputEl.value = valueNames;
-                        
-                        // Lưu valueIdMap
-                        const valueIdMap = {};
-                        selectedAttr.attributeValues.forEach(v => {
-                            valueIdMap[v.attributeValueName] = v.attributeValueId;
-                        });
-                        div.dataset.valueIdMap = JSON.stringify(valueIdMap);
-                    }
-                }
-            } else {
-                delete div.dataset.attrId;
+                // Gợi ý values vào input (nếu muốn)
+                // const inputEl = div.querySelector(".inp-attr-vals");
+                // if (!inputEl.value) inputEl.value = attr.attributeValues.map(v => v.attributeValueName).join(", ");
             }
         };
-        
-        // Event: Xóa dòng
+
         div.querySelector(".btn-remove").onclick = () => div.remove();
-        
         container.appendChild(div);
     },
 
-    // Render danh sách variants
     renderVariants: (variants) => {
         const wrapper = document.getElementById("variantsContainer");
         if (!wrapper) return;
 
-        if (!variants || !variants.length) {
+        if (!variants.length) {
             wrapper.innerHTML = "";
             return;
         }
 
-        const bulkActionHTML = `
-            <div class="card bg-light mb-3">
-                <div class="card-body py-2">
-                    <div class="row g-2 align-items-end">
-                        <div class="col-auto"><strong>Thiết lập nhanh:</strong></div>
-                        <div class="col">
-                            <input type="number" id="bulk_price_org" class="form-control form-control-sm" 
-                                   placeholder="Giá gốc" min="0" step="1000">
-                        </div>
-                        <div class="col">
-                            <input type="number" id="bulk_price" class="form-control form-control-sm" 
-                                   placeholder="Giá bán" min="0" step="1000">
-                        </div>
-                        <div class="col">
-                            <input type="number" id="bulk_stock" class="form-control form-control-sm" 
-                                   placeholder="Kho" min="0">
-                        </div>
-                        <div class="col-auto">
-                            <button type="button" class="btn btn-sm btn-primary" 
-                                    onclick="window.applyBulkInfo()">Áp dụng</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        `;
+        const header = `
+            <div class="d-flex gap-2 mb-3 bg-light p-2 rounded">
+                <input type="number" id="bulk_org" class="form-control form-control-sm" placeholder="Giá gốc chung">
+                <input type="number" id="bulk_price" class="form-control form-control-sm" placeholder="Giá bán chung">
+                <input type="number" id="bulk_stock" class="form-control form-control-sm" placeholder="Kho chung">
+                <button type="button" class="btn btn-sm btn-primary text-nowrap" onclick="window.applyBulk()">Áp dụng</button>
+            </div>`;
 
-        const tableHTML = `
-            <div class="table-responsive">
-                <table class="table table-bordered table-hover align-middle mb-0" style="font-size: 14px;">
-                    <thead class="table-light text-center">
-                        <tr>
-                            <th style="width: 60px;">Ảnh</th>
-                            <th class="text-start">Phân loại</th>
-                            <th style="width: 130px;">Giá gốc</th>
-                            <th style="width: 130px;">Giá bán</th>
-                            <th style="width: 100px;">Kho</th>
-                            <th style="width: 50px;">Xóa</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${variants.map((v, i) => {
-                            const imgSrc = v.previewUrl || v.imageUrl || "";
-                            return `
-                            <tr>
-                                <td class="text-center">
-                                    <div style="width: 48px; height: 48px; margin: 0 auto; cursor: pointer; 
-                                                border: 1px dashed #adb5bd; border-radius: 4px; overflow: hidden;
-                                                display: flex; align-items: center; justify-content: center;"
-                                         onclick="document.getElementById('v_file_${i}').click()">
-                                        ${imgSrc ? 
-                                            `<img src="${imgSrc}" style="width:100%; height:100%; object-fit:cover;">` : 
-                                            `<span style="color: #adb5bd; font-size: 20px;">+</span>`
-                                        }
-                                    </div>
-                                    <input type="file" id="v_file_${i}" hidden 
-                                           onchange="window.handleSelectVariantImage(${i}, this)" 
-                                           accept="image/*">
-                                </td>
-                                <td>
-                                    <strong>${v.name}</strong>
-                                    <div class="small text-muted">${v.comboValues.join(" • ")}</div>
-                                </td>
-                                <td>
-                                    <input type="number" class="form-control form-control-sm" 
-                                           value="${v.priceOriginal || 0}" min="0" step="1000"
-                                           onchange="window.updateVar(${i},'priceOriginal',this.value)">
-                                </td>
-                                <td>
-                                    <input type="number" class="form-control form-control-sm fw-bold" 
-                                           value="${v.price || 0}" min="0" step="1000"
-                                           onchange="window.updateVar(${i},'price',this.value)">
-                                </td>
-                                <td>
-                                    <input type="number" class="form-control form-control-sm text-center" 
-                                           value="${v.stock || 0}" min="0"
-                                           onchange="window.updateVar(${i},'stock',this.value)">
-                                </td>
-                                <td class="text-center">
-                                    <button type="button" onclick="window.removeVariant(${i})" 
-                                            class="btn btn-sm btn-link text-danger p-0">
-                                        <i class="bi bi-trash"></i>
-                                    </button>
-                                </td>
-                            </tr>`;
-                        }).join('')}
-                    </tbody>
-                </table>
-            </div>
-        `;
+        const rows = variants.map((v, i) => `
+            <tr>
+                <td class="text-center">
+                    <div style="width:40px; height:40px; cursor:pointer; border:1px dashed #ccc; overflow:hidden"
+                         onclick="document.getElementById('file_v_${i}').click()">
+                        ${v.previewUrl ? `<img src="${v.previewUrl}" class="w-100 h-100 object-fit-cover">` : `<span class="small text-muted">+</span>`}
+                    </div>
+                    <input type="file" id="file_v_${i}" hidden onchange="window.setVarImg(${i}, this)">
+                </td>
+                <td><strong>${v.name}</strong></td>
+                <td><input type="number" class="form-control form-control-sm" value="${v.priceOriginal}" onchange="window.updateVar(${i}, 'priceOriginal', this.value)"></td>
+                <td><input type="number" class="form-control form-control-sm" value="${v.price}" onchange="window.updateVar(${i}, 'price', this.value)"></td>
+                <td><input type="number" class="form-control form-control-sm" value="${v.stock}" onchange="window.updateVar(${i}, 'stock', this.value)"></td>
+                <td><button type="button" class="btn btn-sm text-danger" onclick="window.removeVar(${i})"><i class="bi bi-trash"></i></button></td>
+            </tr>
+        `).join('');
 
         wrapper.innerHTML = `
-            <div class="card shadow-sm mb-4">
-                <div class="card-header bg-white">
-                    <strong>Danh sách phân loại (${variants.length})</strong>
+            <div class="card shadow-sm"><div class="card-body">
+                <h5>Danh sách phân loại (${variants.length})</h5>
+                ${header}
+                <div class="table-responsive">
+                    <table class="table table-bordered align-middle">
+                        <thead class="table-light"><tr><th>Ảnh</th><th>Tên</th><th>Giá gốc</th><th>Giá bán</th><th>Kho</th><th>#</th></tr></thead>
+                        <tbody>${rows}</tbody>
+                    </table>
                 </div>
-                <div class="card-body">
-                    ${bulkActionHTML}
-                    ${tableHTML}
-                </div>
-            </div>
-        `;
+            </div></div>`;
     },
 
-    // Reset form
-    resetForm: (isEdit = false) => {
-        const form = document.getElementById("productForm");
-        const attrContainer = document.getElementById("attributesContainer");
-        const variantWrapper = document.getElementById("variantsContainer");
-        const formTitle = document.querySelector("#createView h2");
-        
-        if (form) form.reset();
-        if (attrContainer) attrContainer.innerHTML = "";
-        if (variantWrapper) variantWrapper.innerHTML = "";
-        if (formTitle) formTitle.innerText = isEdit ? "Cập nhật sản phẩm" : "Thêm Sản Phẩm Mới";
-        
-        UI.renderMainImage(null);
+    resetForm: () => {
+        document.getElementById("productForm")?.reset();
+        document.getElementById("attributesContainer").innerHTML = "";
+        document.getElementById("variantsContainer").innerHTML = "";
+        document.getElementById("mainImagePreview").innerHTML = "";
+        document.querySelector("#createView h2").innerText = "Thêm Sản Phẩm Mới";
     }
 };
