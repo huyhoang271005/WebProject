@@ -267,7 +267,7 @@ function setupEventListeners() {
             variantId: currentVariant.variantId,
             quantity: parseInt(input.value)
         }
-        const result = await callAPI("/auth/carts", "POST", data);
+        const result = await callAPI('/carts', "POST", data);
         showNotification(result.message);
     });
 
