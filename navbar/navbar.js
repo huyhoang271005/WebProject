@@ -4,7 +4,6 @@ import { connectSse, subscribeTopic } from "../public/Sse.js";
 
 const noImage = "https://cdn-icons-png.flaticon.com/512/847/847969.png";
 
-// State quản lý thông báo
 let notiState = {
   page: 0,
   size: 10,
@@ -13,21 +12,17 @@ let notiState = {
   isLoadedFirstTime: false,
 };
 
-// CSS Navbar + [FIX TỰ ĐỘNG CÁCH DÒNG CHO TẤT CẢ CÁC TRANG]
+// CSS Navbar + [FIX CSS BODY]
 const navbarHTML = `
     <style>
-        /* --- [FIX QUAN TRỌNG] --- */
-        /* Ép tất cả các trang load Navbar phải hiển thị dạng khối (Block) từ trên xuống */
-        /* Ghi đè lên display: flex của public.css */
+        /* [FIX] Reset Body để Spacer hoạt động đúng */
         body {
             display: block !important; 
             margin: 0 !important;
             padding: 0 !important;
             min-height: 100vh;
-            /* Giữ background cũ hoặc reset tùy ý */
         }
 
-        /* Navbar chính */
         .navbar-component {
             background: #fff; height: 80px; width: 100%; position: fixed; top: 0; left: 0; z-index: 1000;
             display: flex; align-items: center; justify-content: space-between; padding: 0 40px; 
@@ -135,32 +130,45 @@ export async function loadNavbar(options = {}) {
   if (options.centerHTML)
     document.getElementById("nbCenterSlot").innerHTML = options.centerHTML;
 
-  // 1. Kiểm tra session
+  // 1. Kiểm tra sessionCache (Giữ SessionStorage như bro muốn)
   const cached = sessionStorage.getItem("homeData");
+  if (sessionStorage.getItem("hasCache")) {
+    sessionStorage.setItem("hasCache", "false");
+  }
+  let hasCache = sessionStorage.getItem("hasCache");
   if (cached) {
     try {
       homeData = JSON.parse(cached);
-      updateNavbarUI(homeData);
-    } catch (e) {
-      console.error("Lỗi parse homeData từ session", e);
-    }
-  }
+      updateNavbarUI(homeData); // Render ngay lập tức từ Session
+      sessionStorage.setItem("hasCache", "true");
 
-  // 2. Gọi API ngầm để cập nhật mới nhất
-  try {
-    const res = await callAPI("/home", "GET");
-    if (res && res.success && res.data) {
-      homeData = res.data;
-      sessionStorage.setItem("homeData", JSON.stringify(homeData));
-      updateNavbarUI(homeData);
-
+      // Vẫn nối SSE để update realtime
       if (homeData.username !== "Khách") {
         await connectSse("/sse");
         setupSSERealtime();
       }
+    } catch (e) {
+      console.error("Lỗi parse homeData", e);
     }
-  } catch (err) {
-    console.error("Lỗi tải thông tin Home:", err);
+  }
+
+  // 2. Chỉ gọi API khi KHÔNG có cache (Lần đầu mở Tab hoặc F5 nếu session mất)
+  if (hasCache == "false") {
+    try {
+      const res = await callAPI("/home", "GET");
+      if (res && res.success && res.data) {
+        homeData = res.data;
+        sessionStorage.setItem("homeData", JSON.stringify(homeData));
+        updateNavbarUI(homeData);
+
+        if (homeData.username !== "Khách") {
+          await connectSse("/sse");
+          setupSSERealtime();
+        }
+      }
+    } catch (err) {
+      console.error("Lỗi tải thông tin Home:", err);
+    }
   }
 
   setupEvents();
@@ -203,7 +211,7 @@ function setupSSERealtime() {
   subscribeTopic("notification", (data) => {
     homeData.readNotifications = (homeData.readNotifications || 0) + 1;
     updateNavbarUI(homeData);
-    sessionStorage.setItem("homeData", JSON.stringify(homeData));
+    sessionStorage.setItem("homeData", JSON.stringify(homeData)); // Cập nhật Session
 
     const notiList = document.getElementById("nbNotiList");
     if (document.getElementById("nbNotiDropdown").classList.contains("show")) {
@@ -216,9 +224,10 @@ function setupSSERealtime() {
     if (!isNaN(change)) {
       let newCount = (homeData.cartsCount || 0) + change;
       if (newCount < 0) newCount = 0;
+
       homeData.cartsCount = newCount;
       updateNavbarUI(homeData);
-      sessionStorage.setItem("homeData", JSON.stringify(homeData));
+      sessionStorage.setItem("homeData", JSON.stringify(homeData)); // Cập nhật Session
     }
   });
 }
@@ -265,7 +274,7 @@ function setupEvents() {
         "Bạn có chắc chắn muốn đăng xuất không?",
         async () => {
           await callAPI("/logout");
-          sessionStorage.clear();
+          sessionStorage.clear(); // Xóa sạch session
           window.location.replace("../auth/login");
         },
         "Đăng xuất",
