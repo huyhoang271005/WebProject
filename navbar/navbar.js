@@ -4,7 +4,7 @@ import { connectSse, subscribeTopic } from "../public/Sse.js";
 
 const noImage = "https://cdn-icons-png.flaticon.com/512/847/847969.png";
 
-// State quản lý thông báo (chỉ dùng khi bấm vào xem)
+// State quản lý thông báo
 let notiState = {
   page: 0,
   size: 10,
@@ -13,9 +13,21 @@ let notiState = {
   isLoadedFirstTime: false,
 };
 
-// CSS Navbar (Giữ nguyên giao diện đẹp của bro)
+// CSS Navbar + [FIX TỰ ĐỘNG CÁCH DÒNG CHO TẤT CẢ CÁC TRANG]
 const navbarHTML = `
     <style>
+        /* --- [FIX QUAN TRỌNG] --- */
+        /* Ép tất cả các trang load Navbar phải hiển thị dạng khối (Block) từ trên xuống */
+        /* Ghi đè lên display: flex của public.css */
+        body {
+            display: block !important; 
+            margin: 0 !important;
+            padding: 0 !important;
+            min-height: 100vh;
+            /* Giữ background cũ hoặc reset tùy ý */
+        }
+
+        /* Navbar chính */
         .navbar-component {
             background: #fff; height: 80px; width: 100%; position: fixed; top: 0; left: 0; z-index: 1000;
             display: flex; align-items: center; justify-content: space-between; padding: 0 40px; 
@@ -108,7 +120,6 @@ const navbarHTML = `
     <style>@media(max-width:992px){ .nav-spacer { height: 110px !important; } }</style>
 `;
 
-// Biến global lưu data Home
 let homeData = {
   imageUrl: noImage,
   username: "Khách",
@@ -124,32 +135,25 @@ export async function loadNavbar(options = {}) {
   if (options.centerHTML)
     document.getElementById("nbCenterSlot").innerHTML = options.centerHTML;
 
-  // 1. Kiểm tra session xem có dữ liệu Home chưa
+  // 1. Kiểm tra session
   const cached = sessionStorage.getItem("homeData");
   if (cached) {
     try {
       homeData = JSON.parse(cached);
-      updateNavbarUI(homeData); // Render ngay lập tức từ cache
+      updateNavbarUI(homeData);
     } catch (e) {
       console.error("Lỗi parse homeData từ session", e);
     }
   }
 
-  // 2. Gọi API /home để lấy dữ liệu mới nhất (nếu chưa có hoặc muốn refresh ngầm)
-  // Nếu bro muốn tiết kiệm tối đa, có thể thêm điều kiện !cached mới gọi
+  // 2. Gọi API ngầm để cập nhật mới nhất
   try {
-    // Giả sử API là /home, bro đổi lại cho đúng nếu là /auth/home
     const res = await callAPI("/home", "GET");
-
     if (res && res.success && res.data) {
-      // Cập nhật biến global
       homeData = res.data;
-      // Lưu vào session theo yêu cầu
       sessionStorage.setItem("homeData", JSON.stringify(homeData));
-      // Cập nhật UI
       updateNavbarUI(homeData);
 
-      // Kết nối SSE sau khi có dữ liệu user
       if (homeData.username !== "Khách") {
         await connectSse("/sse");
         setupSSERealtime();
@@ -162,19 +166,14 @@ export async function loadNavbar(options = {}) {
   setupEvents();
 }
 
-/**
- * Hàm cập nhật giao diện Navbar dựa trên homeData
- */
 function updateNavbarUI(data) {
   if (!data) return;
 
-  // Avatar & Info
   document.getElementById("nbAvatar").src = data.imageUrl || noImage;
   if (data.username && data.username !== "Khách") {
     document.getElementById("nbUsername").textContent = data.username;
     document.getElementById("nbRole").textContent = data.roleName;
 
-    // Hiện menu Admin nếu có quyền
     if (data.roleName === "ADMIN") {
       document
         .querySelectorAll(".nb-admin-only")
@@ -182,7 +181,6 @@ function updateNavbarUI(data) {
     }
   }
 
-  // Cart Badge
   const cartBadge = document.getElementById("cartBadge");
   if (data.cartsCount > 0) {
     cartBadge.innerText = data.cartsCount > 99 ? "99+" : data.cartsCount;
@@ -191,9 +189,7 @@ function updateNavbarUI(data) {
     cartBadge.style.display = "none";
   }
 
-  // Notification Badge
   const notiBadge = document.getElementById("nbBadge");
-  // Backend trả về "readNotifications", tôi map nó vào badge (thường là unread)
   if (data.readNotifications > 0) {
     notiBadge.innerText =
       data.readNotifications > 99 ? "99+" : data.readNotifications;
@@ -203,66 +199,47 @@ function updateNavbarUI(data) {
   }
 }
 
-/**
- * Xử lý Realtime SSE
- */
 function setupSSERealtime() {
-  // 1. Notification: Nhận tin nhắn -> Hiện badge + thêm vào list (nếu đang mở)
   subscribeTopic("notification", (data) => {
-    // Tăng số lượng thông báo trên badge
     homeData.readNotifications = (homeData.readNotifications || 0) + 1;
-    updateNavbarUI(homeData); // Cập nhật badge
-    sessionStorage.setItem("homeData", JSON.stringify(homeData)); // Lưu session
+    updateNavbarUI(homeData);
+    sessionStorage.setItem("homeData", JSON.stringify(homeData));
 
-    // Nếu dropdown đang mở thì render thêm item
     const notiList = document.getElementById("nbNotiList");
     if (document.getElementById("nbNotiDropdown").classList.contains("show")) {
       prependNotification(data);
     }
   });
 
-  // 2. Cart: Nhận số int (+1, -1, +5...) -> Cộng dồn vào cartsCount
   subscribeTopic("cart", (data) => {
     const change = parseInt(data);
     if (!isNaN(change)) {
-      // Cộng dồn
       let newCount = (homeData.cartsCount || 0) + change;
       if (newCount < 0) newCount = 0;
-
       homeData.cartsCount = newCount;
-
-      // Cập nhật UI & Session
       updateNavbarUI(homeData);
       sessionStorage.setItem("homeData", JSON.stringify(homeData));
     }
   });
 }
 
-// === CÁC HÀM XỬ LÝ SỰ KIỆN ===
 function setupEvents() {
   const userDropdown = document.getElementById("nbUserDropdown");
   const notiDropdown = document.getElementById("nbNotiDropdown");
   const notiList = document.getElementById("nbNotiList");
 
-  // Click Avatar -> Toggle User Menu
   document.getElementById("nbUserMenu").onclick = (e) => {
     e.stopPropagation();
     userDropdown.classList.toggle("show");
     notiDropdown.classList.remove("show");
   };
 
-  // Click Bell -> Toggle Noti Menu & Load Data (Lazy Load)
   document.getElementById("nbNotiBtn").onclick = async (e) => {
     e.stopPropagation();
     notiDropdown.classList.toggle("show");
     userDropdown.classList.remove("show");
 
     if (notiDropdown.classList.contains("show")) {
-      // Ẩn badge khi đã xem
-      // document.getElementById("nbBadge").style.display = "none";
-      // (Tùy logic: có thể giữ badge đến khi đọc từng cái, hoặc ẩn luôn)
-
-      // Lazy load: Nếu chưa load lần nào thì mới gọi API
       if (!notiState.isLoadedFirstTime) {
         await fetchNotifications();
         notiState.isLoadedFirstTime = true;
@@ -270,7 +247,6 @@ function setupEvents() {
     }
   };
 
-  // Scroll Infinite cho Notification
   if (notiList) {
     notiList.addEventListener("scroll", () => {
       if (
@@ -281,7 +257,6 @@ function setupEvents() {
     });
   }
 
-  // Click Logout
   const logoutBtn = document.getElementById("nbLogout");
   if (logoutBtn) {
     logoutBtn.onclick = async () => {
@@ -291,8 +266,6 @@ function setupEvents() {
         async () => {
           await callAPI("/logout");
           sessionStorage.clear();
-          // Xóa luôn localStorage nếu có lưu token ở đó
-          // localStorage.removeItem("accessToken");
           window.location.replace("../auth/login");
         },
         "Đăng xuất",
@@ -301,27 +274,22 @@ function setupEvents() {
     };
   }
 
-  // Đóng dropdown khi click ra ngoài
   document.addEventListener("click", () => {
     userDropdown.classList.remove("show");
     notiDropdown.classList.remove("show");
   });
 
-  // Nút xóa tất cả thông báo
   const clearAllBtn = document.getElementById("btnClearAllNoti");
   if (clearAllBtn) {
     clearAllBtn.onclick = async (e) => {
       e.stopPropagation();
       if (!confirm("Xóa tất cả thông báo?")) return;
-      // Gọi API xóa (nếu có)
-      // await callAPI("/auth/notifications/delete-all", "POST");
       document.getElementById("nbNotiList").innerHTML =
         '<div class="empty-noti" style="padding:20px;text-align:center;color:#999">Không có thông báo nào</div>';
     };
   }
 }
 
-// === CÁC HÀM API NOTIFICATION (GIỮ NGUYÊN LOGIC CŨ) ===
 async function fetchNotifications() {
   if (notiState.isLoading || !notiState.hasMore) return;
   notiState.isLoading = true;
@@ -360,7 +328,6 @@ async function fetchNotifications() {
 
 function prependNotification(item) {
   const notiList = document.getElementById("nbNotiList");
-  // Nếu đang hiện "Không có thông báo" thì xóa đi
   const emptyMsg = notiList.querySelector(".empty-noti");
   if (emptyMsg) emptyMsg.remove();
 
@@ -388,12 +355,10 @@ function createNotiItemHTML(item, isNew = false) {
     `;
 }
 
-// Hàm global để gọi từ HTML onclick
 window.deleteNoti = async (id, e) => {
   e.stopPropagation();
   if (!id || id === "undefined") return;
   const item = document.getElementById(`noti-${id}`);
   if (item) item.remove();
-  // Gọi API xóa
   await callAPI("/auth/notifications/delete", "POST", [id]);
 };
