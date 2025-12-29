@@ -53,12 +53,11 @@ function setupEvents() {
     document.getElementById("productForm").onsubmit = handleSubmit;
 }
 
-// --- XỬ LÝ SUBMIT (ĐÃ SỬA LỖI) ---
+// --- XỬ LÝ SUBMIT ---
 async function handleSubmit(e) {
     e.preventDefault();
     console.log("📤 Đang xử lý submit...");
 
-    // 1. Validate Form cơ bản
     const productName = document.getElementById("productName").value.trim();
     const catId = document.getElementById("categoryId").value;
     const brandId = document.getElementById("brandId").value;
@@ -67,14 +66,12 @@ async function handleSubmit(e) {
         return alert("Vui lòng nhập tên, danh mục, thương hiệu và ảnh chính!");
     }
 
-    // 2. Lấy attributes hiện tại từ màn hình
     const currentAttrs = VariantLogic.parseAttributesFromDOM();
     
-    // ⚠️ CHECK AN TOÀN: Nếu có biến thể nhưng attributes trên màn hình bị xóa -> Báo lỗi
+    // Check lỗi logic attributes
     if (state.variants.length > 0 && currentAttrs.length === 0) {
          return alert("Lỗi: Bạn đã xóa các dòng thuộc tính. Vui lòng nhấn nút 'Tạo biến thể' lại trước khi lưu!");
     }
-    
     if (currentAttrs.length > 0 && state.variants.length === 0) {
         return alert("Bạn đã nhập thuộc tính nhưng chưa nhấn nút 'Tạo biến thể'!");
     }
@@ -85,13 +82,17 @@ async function handleSubmit(e) {
     if(spinner) spinner.classList.remove("d-none");
 
     try {
+        // 👇 LẤY GIÁ TRỊ VÀ ÉP KIỂU SỐ (NUMBER) ĐỂ TRÁNH LỖI 500
+        const priceVal = parseFloat(document.getElementById("price").value) || 0;
+        const originalPriceVal = parseFloat(document.getElementById("priceOriginal").value) || 0;
+
         const payload = {
             productDetailDTO: {
                 productId: null,
                 productName: productName,
                 description: document.getElementById("description").value || "",
-                price: parseFloat(document.getElementById("price").value) || 0,
-                originalPrice: parseFloat(document.getElementById("priceOriginal").value) || 0,
+                price: priceVal, // Số
+                OriginalPrice: originalPriceVal, // 👈 ĐÃ SỬA: Tên trường là OriginalPrice (số)
                 categoryId: catId,
                 brandId: brandId,
                 imageName: "productImage"
@@ -101,7 +102,7 @@ async function handleSubmit(e) {
             variantValues: []
         };
 
-        // --- BƯỚC 1: Map Attributes ---
+        // 1. Map Attributes
         payload.attributes = currentAttrs.map(attr => ({
             attributeId: attr.id,
             attributeName: attr.name,
@@ -111,43 +112,39 @@ async function handleSubmit(e) {
             }))
         }));
 
-        // --- BƯỚC 2: Map Variants (Quan trọng) ---
+        // 2. Map Variants
         for (let i = 0; i < state.variants.length; i++) {
             const v = state.variants[i];
             
-            // Map mảng giá trị chuỗi ["Đỏ", "XL"] thành mảng Objects đầy đủ ID
             const mappedAttributeValues = v.comboValues.map((valName, valIdx) => {
-                const parentAttr = currentAttrs[valIdx]; // Tìm cha theo thứ tự
-                
-                // Nếu không tìm thấy cha (do người dùng xóa dòng thuộc tính), trả về null
+                const parentAttr = currentAttrs[valIdx];
                 if (!parentAttr) return null;
 
                 return {
-                    attributeId: parentAttr.id,          // ✅ Gửi ID thuộc tính
-                    attributeName: parentAttr.name,      // ✅ Gửi tên thuộc tính
-                    attributeValueName: valName,         // ✅ Gửi giá trị (VD: Đỏ)
+                    attributeId: parentAttr.id,
+                    attributeName: parentAttr.name,
+                    attributeValueName: valName,
                     attributeValueId: parentAttr.valueIdMap?.[valName] || null
                 };
-            }).filter(item => item !== null); 
+            }).filter(item => item !== null);
 
-            // ⚠️ CHECK LỖI: Nếu map xong mà rỗng -> Có nghĩa là dữ liệu sai lệch
             if (mappedAttributeValues.length === 0 && currentAttrs.length > 0) {
-                throw new Error(`Dữ liệu biến thể "${v.name}" bị lỗi (mất thông tin cha). Vui lòng nhấn nút "Tạo biến thể" lại!`);
+                throw new Error(`Dữ liệu biến thể "${v.name}" bị lỗi. Vui lòng tạo lại biến thể!`);
             }
 
             payload.variants.push({
                 variantId: null,
-                price: v.price,
-                originalPrice: v.priceOriginal,
+                price: v.price, // Số
+                OriginalPrice: v.priceOriginal, // 👈 ĐÃ SỬA: Đồng bộ tên trường trong variant luôn cho chắc
                 stock: v.stock,
                 imageName: v.rawFile ? `image_variant_${i}` : null,
-                attributeValues: mappedAttributeValues // ✅ Mảng này không được rỗng
+                attributeValues: mappedAttributeValues
             });
         }
 
         console.log("📦 Payload gửi đi:", payload);
 
-        // --- BƯỚC 3: Đóng gói FormData ---
+        // 3. Build FormData
         const formData = new FormData();
         formData.append("productImage", state.mainImageFile);
         
@@ -157,7 +154,7 @@ async function handleSubmit(e) {
 
         formData.append("productDTO", new Blob([JSON.stringify(payload)], { type: "application/json" }));
 
-        // --- BƯỚC 4: Gọi API ---
+        // 4. Call API
         const res = await ProductService.createProduct(formData);
         
         console.log("📥 Kết quả:", res);
