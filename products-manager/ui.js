@@ -1,6 +1,6 @@
 // ui.js
 export const UI = {
-    // Cache sẵn các Element
+    // Cache sẵn các Element quan trọng
     els: {
         list: document.getElementById("listView"),
         form: document.getElementById("createView"),
@@ -16,24 +16,30 @@ export const UI = {
         mainImgInput: document.getElementById("mainImage")
     },
 
+    // Chuyển đổi giữa màn hình Danh sách và Màn hình Form
     switchView: (viewName) => {
+        const listView = document.getElementById("listView");
+        const createView = document.getElementById("createView");
+
         if (viewName === 'list') {
-            if(UI.els.list) UI.els.list.classList.remove('d-none');
-            if(UI.els.form) UI.els.form.classList.add('d-none');
+            if(listView) listView.classList.remove('d-none');
+            if(createView) createView.classList.add('d-none');
         } else {
-            if(UI.els.list) UI.els.list.classList.add('d-none');
-            if(UI.els.form) UI.els.form.classList.remove('d-none');
+            if(listView) listView.classList.add('d-none');
+            if(createView) createView.classList.remove('d-none');
         }
     },
 
+    // Render bảng sản phẩm
     renderTable: (products) => {
-        if (!UI.els.tableBody) return;
+        const tbody = document.getElementById("productTableBody");
+        if (!tbody) return;
 
         if (!products || !products.length) {
-            UI.els.tableBody.innerHTML = `
+            tbody.innerHTML = `
                 <tr>
                     <td colspan="6" class="text-center py-5 text-muted">
-                        Không có dữ liệu
+                        Không có dữ liệu hoặc chưa tải được sản phẩm
                     </td>
                 </tr>`;
             return;
@@ -41,13 +47,13 @@ export const UI = {
 
         const fmt = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' });
 
-        UI.els.tableBody.innerHTML = products.map(p => {
+        tbody.innerHTML = products.map(p => {
             let imgUrl = "https://via.placeholder.com/50";
             if (p.imageUrl) imgUrl = p.imageUrl;
             else if (p.imageName) imgUrl = `/images/${p.imageName}`;
 
-            const priceOriginalDisplay = (p.priceOriginal && p.priceOriginal > 0)
-                ? fmt.format(p.priceOriginal) 
+            const priceOriginalDisplay = (p.originalPrice && p.originalPrice > 0)
+                ? fmt.format(p.originalPrice) 
                 : '-';
 
             const variantCount = p.variants ? p.variants.length : 0;
@@ -76,27 +82,34 @@ export const UI = {
     },
 
     renderBrands: (brands, cateId, selectedBrandId = null) => {
-        if (!UI.els.brandSelect) return;
-        UI.els.brandSelect.innerHTML = `<option value="">-- Chọn thương hiệu --</option>`;
+        const brandSelect = document.getElementById("brandId");
+        if (!brandSelect) return;
+        brandSelect.innerHTML = `<option value="">-- Chọn thương hiệu --</option>`;
+        
         if (!cateId) return;
+        
+        // Filter brand theo categoryId (chú ý kiểu dữ liệu string/number)
         const filtered = brands.filter(b => b.categoryId == cateId);
-        (filtered.length ? filtered : brands).forEach(b => {
+        
+        (filtered.length ? filtered : []).forEach(b => {
             const selected = (selectedBrandId && b.brandId == selectedBrandId) ? 'selected' : '';
-            UI.els.brandSelect.innerHTML += `<option value="${b.brandId}" ${selected}>${b.brandName}</option>`;
+            brandSelect.innerHTML += `<option value="${b.brandId}" ${selected}>${b.brandName}</option>`;
         });
     },
 
     renderMainImage: (src) => {
         const preview = document.getElementById("mainImagePreview");
         if (!preview) return;
-        if (src) preview.innerHTML = `<img src="${src}" class="img-fluid rounded" style="max-height: 300px;">`;
-        else preview.innerHTML = `<p class="text-muted">Chưa chọn ảnh</p>`;
+        if (src) preview.innerHTML = `<img src="${src}" class="img-fluid rounded" style="max-height: 200px; border: 1px solid #ddd; padding: 4px;">`;
+        else preview.innerHTML = ``;
     },
 
     addAttrRow: (nameVal = "", valuesVal = "", onInputCallback, attrId = null, valueIds = [], valueIdMap = {}, allAttributes = []) => {
-        if (!UI.els.attrContainer) return;
+        const container = document.getElementById("attributesContainer");
+        if (!container) return;
+        
         const div = document.createElement("div");
-        div.className = "mb-3 attr-row"; // Thêm class attr-row để logic.js tìm được
+        div.className = "mb-3 attr-row"; 
         if (attrId) div.dataset.attrId = attrId;
         if (Object.keys(valueIdMap).length) div.dataset.valueIdMap = JSON.stringify(valueIdMap);
         
@@ -124,30 +137,35 @@ export const UI = {
         const inputEl = div.querySelector(".inp-attr-vals");
         
         selectEl.onchange = (e) => {
-            const selectedAttr = allAttributes.find(a => a.attributeId === e.target.value);
+            const selectedAttr = allAttributes.find(a => a.attributeId == e.target.value);
             if(selectedAttr) {
                  div.dataset.attrId = selectedAttr.attributeId;
-                 if(selectedAttr.attributeValues && selectedAttr.attributeValues.length) {
-                     inputEl.value = selectedAttr.attributeValues.map(v => v.attributeValueName).join(", ");
-                 }
+                 // Nếu chọn attribute có sẵn, tự điền value mẫu nếu muốn
+                 // if(selectedAttr.attributeValues && selectedAttr.attributeValues.length) {
+                 //    inputEl.value = selectedAttr.attributeValues.map(v => v.attributeValueName).join(", ");
+                 // }
+            } else {
+                 delete div.dataset.attrId;
             }
             if(onInputCallback) onInputCallback();
         }
+        
         inputEl.oninput = () => { if(onInputCallback) onInputCallback(); };
         div.querySelector(".btn-remove").onclick = () => { div.remove(); if(onInputCallback) onInputCallback(); };
-        UI.els.attrContainer.appendChild(div);
+        
+        container.appendChild(div);
     },
 
-    // === PHẦN SỬA ĐỔI QUAN TRỌNG: RENDER BẢNG BIẾN THỂ ===
     renderVariants: (variants) => {
-        if (!UI.els.variantWrapper) return;
+        const wrapper = document.getElementById("variantsContainer");
+        if (!wrapper) return;
 
         if (!variants || !variants.length) {
-            UI.els.variantWrapper.innerHTML = "";
+            wrapper.innerHTML = "";
             return;
         }
 
-        // HTML Thanh thao tác hàng loạt (Bulk Edit)
+        // HTML Thanh thao tác hàng loạt
         const bulkActionHTML = `
             <div class="card bg-light mb-3 border-primary border-opacity-25">
                 <div class="card-body py-2">
@@ -227,7 +245,7 @@ export const UI = {
             </div>
         `;
 
-        UI.els.variantWrapper.innerHTML = `
+        wrapper.innerHTML = `
             <div class="d-flex align-items-center justify-content-between mb-2">
                 <h6 class="fw-bold m-0 text-primary">Danh sách phân loại hàng (${variants.length})</h6>
             </div>
@@ -238,10 +256,14 @@ export const UI = {
 
     resetForm: (isEdit) => {
         const form = document.getElementById("productForm");
+        const attrContainer = document.getElementById("attributesContainer");
+        const variantWrapper = document.getElementById("variantsContainer");
+        const formTitle = document.querySelector("#createView h2");
+        
         if(form) form.reset();
-        if(UI.els.attrContainer) UI.els.attrContainer.innerHTML = "";
-        if(UI.els.variantWrapper) UI.els.variantWrapper.innerHTML = "";
-        if(UI.els.formTitle) UI.els.formTitle.innerText = isEdit ? "Cập nhật sản phẩm" : "Thêm Sản Phẩm Mới";
+        if(attrContainer) attrContainer.innerHTML = "";
+        if(variantWrapper) variantWrapper.innerHTML = "";
+        if(formTitle) formTitle.innerText = isEdit ? "Cập nhật sản phẩm" : "Thêm Sản Phẩm Mới";
         UI.renderMainImage(null);
     }
 };
