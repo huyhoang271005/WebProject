@@ -235,12 +235,25 @@ async function handleSubmit(e) {
             variantValues: []
         };
         
-        // Parse attributes
+        // Parse attributes và tạo values mới nếu chưa có
+        const attributeValueMapping = {}; // { "Đỏ": "val_id_1", "S": "val_id_2" }
+        
         currentAttrs.forEach(attr => {
-            const attributeValues = attr.values.map(valueName => ({
-                attributeValueId: attr.valueIdMap[valueName] || null,
-                attributeValueName: valueName
-            }));
+            const attributeValues = attr.values.map(valueName => {
+                // Kiểm tra xem value này có ID sẵn không (từ DB)
+                const existingValueId = attr.valueIdMap ? attr.valueIdMap[valueName] : null;
+                
+                // Nếu có ID sẵn -> dùng luôn
+                // Nếu không -> để null, backend sẽ tự tạo mới
+                if (existingValueId) {
+                    attributeValueMapping[valueName] = existingValueId;
+                }
+                
+                return {
+                    attributeValueId: existingValueId, // null = tạo mới
+                    attributeValueName: valueName
+                };
+            });
             
             payload.attributes.push({
                 attributeId: attr.id,
@@ -249,9 +262,34 @@ async function handleSubmit(e) {
             });
         });
         
-        // Parse variants
+        console.log("🗺️ Attribute Value Mapping:", attributeValueMapping);
+        
+        // Parse variants - QUAN TRỌNG: attributeValues phải là ARRAY STRING IDs
         state.variants.forEach((variant, idx) => {
             const imgKey = variant.rawFile ? `image_variant_${idx}` : null;
+            
+            // Với mỗi variant, cần list các attribute value names
+            // Backend sẽ map dựa trên index trong attributes array
+            // VD: variant "Đỏ - S" với attributes ["Màu sắc", "Kích thước"]
+            //     -> attributeValues = ["Đỏ", "S"] (theo thứ tự attributes)
+            
+            const variantAttrValues = variant.comboValues.map((valueName, attrIdx) => {
+                // Tìm attribute tương ứng
+                const attr = currentAttrs[attrIdx];
+                
+                // Nếu có ID sẵn -> dùng ID
+                if (attributeValueMapping[valueName]) {
+                    return attributeValueMapping[valueName];
+                }
+                
+                // Nếu không có ID -> trả về tên, backend sẽ tìm/tạo
+                return valueName;
+            });
+            
+            console.log(`📦 Variant ${idx} (${variant.name}):`, {
+                comboValues: variant.comboValues,
+                attributeValues: variantAttrValues
+            });
             
             payload.variants.push({
                 variantId: null,
@@ -259,7 +297,7 @@ async function handleSubmit(e) {
                 originalPrice: variant.priceOriginal,
                 stock: variant.stock,
                 imageName: imgKey,
-                attributeValues: [] // Sẽ được map ở backend
+                attributeValues: variantAttrValues // Array of IDs hoặc Names
             });
         });
         
