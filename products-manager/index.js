@@ -28,14 +28,11 @@ async function reloadData() {
         // ID Test giả định, thực tế bạn có thể bỏ hoặc xử lý logic khác
         const targetId = "6786aedf-aa81-44ef-b28f-06abff1b5c1c"; 
         const [productData] = await ProductService.getProductById(targetId);
-        await ProductService.getInfo()
-        const cats = ProductService.getCategories;
-        const brands = ProductService.getBrands;
-        const attrs = ProductService.getAttributes;
+        const info = await ProductService.getInfo()
 
-        state.categories = cats || [];
-        state.brands = brands || [];
-        state.attributes = attrs || [];
+        state.categories = info.categories;
+        state.brands = info.brands;
+        state.attributes = info.attributes;
 
         let productList = [];
         if (productData && productData.productDetailDTO) {
