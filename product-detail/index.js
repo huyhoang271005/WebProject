@@ -378,7 +378,7 @@ function setupEventListeners() {
             sessionStorage.setItem('checkoutData', JSON.stringify(checkoutData));
 
             // Redirect to checkout
-            window.location.href = '/checkout';
+            window.location.href = '/WebProject/checkout';
         }, 500);
     });
 }
