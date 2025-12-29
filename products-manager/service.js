@@ -1,5 +1,5 @@
 // service.js
-import { callAPI } from './api.js'; 
+import { callAPI } from '../public/api.js'; 
 
 export const ProductService = {
     // Lấy danh sách danh mục
@@ -24,7 +24,7 @@ export const ProductService = {
         }
     },
 
-    // Lấy danh sách thuộc tính có sẵn
+    // Lấy danh sách thuộc tính
     getAttributes: async () => {
         try {
             const res = await callAPI(`/attributes`, "GET");
@@ -35,22 +35,20 @@ export const ProductService = {
         }
     },
 
+    // Lấy chi tiết sản phẩm (cho tính năng Edit sau này)
     getProductById: async (id) => {
         try {
             const res = await callAPI(`/auth/admin/products/${id}`, "GET");
-            if (res && res.success) {
-                return res.data;
-            }
-            return null;
+            return (res && res.success) ? res.data : null;
         } catch (e) {
             console.error("Lỗi lấy chi tiết sản phẩm:", e);
             return null;
         }
     },
 
-    // Tạo sản phẩm mới (Multipart/form-data)
+    // Tạo sản phẩm mới
     createProduct: async (formData) => {
-        // Lưu ý: callAPI cần hỗ trợ upload file (không set Content-Type JSON thủ công)
+        // callAPI cần tự động handle Content-Type cho FormData
         const res = await callAPI(`/auth/admin/products`, "POST", formData, true); 
         return res;
     }
