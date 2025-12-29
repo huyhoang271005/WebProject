@@ -9,102 +9,115 @@ let state = {
     attributes: [],
     variants: [],
     mainImageFile: null,
-    products: []
+    editingProductId: null // Lưu ID sản phẩm đang sửa
 };
 
 (async function init() {
-    // Chặn vòng lặp refresh token (Anti-loop patch)
-    const originalFetch = window.fetch;
-    window.fetch = async (...args) => {
-        const response = await originalFetch(...args);
-        if (response.status === 401) {
-            if (args[0].includes("refresh-token") || args[0].includes("auth/login")) {
-                console.error("Force Logout.");
-                localStorage.clear();
-                window.location.href = "/login.html";
-                return Promise.reject("Force Logout");
-            }
-        }
-        return response;
-    };
-
     setupEventListeners();
     await loadBaseData(); 
-    
-    // Mặc định vào màn hình thêm mới
-    UI.switchView('form');
-    UI.resetForm(false);
+
+    // Kiểm tra URL xem có phải đang sửa sản phẩm không
+    const urlParams = new URLSearchParams(window.location.search);
+    const productId = urlParams.get('id');
+
+    if (productId) {
+        state.editingProductId = productId;
+        await loadProductDetail(productId);
+    } else {
+        UI.switchView('list');
+    }
 })();
 
 async function loadBaseData() {
     try {
-        console.log("Bat dau tai du lieu nen...");
+        state.categories = await ProductService.getCategories() || [];
+        state.brands = await ProductService.getBrands() || [];
+        state.attributes = await ProductService.getAttributes() || [];
 
-        // 1. Load từng loại data riêng biệt với try-catch để tránh bị dừng
-        try {
-            const cats = await ProductService.getCategories();
-            state.categories = cats || [];
-            console.log("Categories loaded:", state.categories.length);
-        } catch (e) {
-            console.error("Loi load categories:", e);
-            state.categories = [];
+        // Render Category Select
+        const cateSelect = document.getElementById("categoryId");
+        if(cateSelect) {
+            cateSelect.innerHTML = `<option value="">-- Chon danh muc --</option>` + 
+                state.categories.map(c => `<option value="${c.categoryId}">${c.categoryName}</option>`).join('');
         }
-
-        try {
-            const brands = await ProductService.getBrands();
-            state.brands = brands || [];
-            console.log("Brands loaded:", state.brands.length);
-            console.log("Brands data:", state.brands); // Debug: xem cấu trúc data
-        } catch (e) {
-            console.error("Loi load brands:", e);
-            state.brands = [];
-        }
-
-        try {
-            const attrs = await ProductService.getAttributes();
-            state.attributes = attrs || [];
-            console.log("Attributes loaded:", state.attributes.length);
-        } catch (e) {
-            console.error("Loi load attributes:", e);
-            state.attributes = [];
-        }
-
-        // 2. Render dữ liệu vào Select Box
-        if (UI.els.cateSelect) {
-            UI.els.cateSelect.innerHTML = `<option value="">-- Chon danh muc --</option>`;
-            state.categories.forEach(c => {
-                UI.els.cateSelect.innerHTML += `<option value="${c.categoryId}">${c.categoryName}</option>`;
-            });
-        }
-
-        // Render Brands (hiển thị tất cả khi chưa chọn category)
-        console.log("Goi renderBrands voi:", state.brands.length, "brands");
-        UI.renderBrands(state.brands, ""); // Truyền "" thay vì null
-
+        
+        // Render Brand ban đầu (full)
+        UI.renderBrands(state.brands);
     } catch (e) {
-        console.error("Loi tai du lieu tong the:", e);
+        console.error("Loi tai du lieu nen:", e);
+    }
+}
+
+async function loadProductDetail(id) {
+    try {
+        UI.switchView('form');
+        document.querySelector("#createView h2").innerText = "Chinh sua san pham";
+        
+        const res = await ProductService.getProductById(id);
+        if (res && res.data) {
+            // 1. Dùng Logic để chuyển JSON API thành cấu trúc phẳng
+            const parsedData = VariantLogic.mapResponseToState(res.data);
+            
+            // Cập nhật state variants
+            state.variants = parsedData.variants;
+
+            // 2. Điền dữ liệu vào Form
+            UI.fillForm(parsedData, state.attributes);
+
+            // 3. Xử lý riêng cho Brand (vì phụ thuộc category)
+            const currentCateId = parsedData.product.categoryId;
+            const currentBrandId = parsedData.product.brandId;
+            // Render lại dropdown brand chỉ chứa brand thuộc category đó
+            UI.renderBrands(state.brands, currentCateId, currentBrandId);
+        }
+    } catch (err) {
+        console.error(err);
+        alert("Khong the tai thong tin san pham!");
     }
 }
 
 function setupEventListeners() {
     const btnReset = document.getElementById("resetBtn");
-    if(btnReset) btnReset.onclick = () => { UI.resetForm(false); state.variants = []; state.mainImageFile = null; };
+    if(btnReset) btnReset.onclick = () => { 
+        UI.resetForm(false); 
+        state.variants = []; 
+        state.mainImageFile = null; 
+        state.editingProductId = null;
+        window.history.pushState({}, document.title, window.location.pathname); // Xóa param ID trên URL
+    };
     
+    // Nút mở form tạo mới từ list
+    const btnOpenCreate = document.getElementById("btnOpenCreate");
+    if (btnOpenCreate) btnOpenCreate.onclick = () => {
+        UI.switchView('form');
+        UI.resetForm(false);
+        state.variants = [];
+        state.editingProductId = null;
+    };
+
+    const btnBack = document.getElementById("btnBackToList");
+    if (btnBack) btnBack.onclick = () => UI.switchView('list');
+
     const btnAddAttr = document.getElementById("btnAddAttr");
-    if (btnAddAttr) btnAddAttr.onclick = () => { UI.addAttrRow("", "", null, null, [], {}, state.attributes); };
+    if (btnAddAttr) btnAddAttr.onclick = () => { 
+        // Thêm dòng trắng, truyền list attributes hệ thống vào để render select
+        UI.addAttrRow("", "", null, null, {}, state.attributes); 
+    };
     
     const btnGenVariants = document.getElementById("btnGenerateVariants");
     if (btnGenVariants) btnGenVariants.onclick = () => { handleCalcVariants(); };
     
     // Khi chọn danh mục -> Lọc lại Brand
-    if (UI.els.cateSelect) {
-        UI.els.cateSelect.onchange = (e) => {
+    const cateSelect = document.getElementById("categoryId");
+    if (cateSelect) {
+        cateSelect.onchange = (e) => {
             UI.renderBrands(state.brands, e.target.value);
         };
     }
     
-    if (UI.els.mainImgInput) {
-        UI.els.mainImgInput.onchange = (e) => {
+    const mainImgInput = document.getElementById("mainImage");
+    if (mainImgInput) {
+        mainImgInput.onchange = (e) => {
             const file = e.target.files[0];
             if (file) {
                 state.mainImageFile = file;
@@ -121,6 +134,8 @@ function handleCalcVariants() {
     const attrs = VariantLogic.parseAttributesFromDOM();
     const basePrice = parseFloat(document.getElementById("price").value) || 0;
     const basePriceOriginal = parseFloat(document.getElementById("priceOriginal").value) || 0;
+    
+    // Tạo variants mới, nhưng truyền state.variants cũ vào để giữ lại ID nếu trùng tên
     state.variants = VariantLogic.generateVariants(attrs, basePrice, state.variants, basePriceOriginal);
     UI.renderVariants(state.variants);
 }
@@ -128,9 +143,10 @@ function handleCalcVariants() {
 async function handleSave(e) {
     e.preventDefault();
     
+    // Validate cơ bản
     if (state.variants.length === 0) {
         const currentAttrs = VariantLogic.parseAttributesFromDOM();
-        if (currentAttrs.length > 0) return alert("Chua nhan Tao bien the!");
+        if (currentAttrs.length > 0) return alert("Vui long nhan nut 'Tao bien the' truoc khi luu!");
     }
 
     const submitBtn = document.getElementById("submitBtn");
@@ -141,9 +157,10 @@ async function handleSave(e) {
     try {
         const currentAttrs = VariantLogic.parseAttributesFromDOM();
         
+        // Chuẩn bị payload
         const payload = {
             productDetailDTO: {
-                productId: null,
+                productId: state.editingProductId || null, // Nếu null server sẽ hiểu là tạo mới
                 productName: document.getElementById("productName").value,
                 description: document.getElementById("description").value,
                 price: parseFloat(document.getElementById("price").value) || 0,
@@ -152,44 +169,53 @@ async function handleSave(e) {
                 brandId: document.getElementById("brandId").value,
                 imageName: "productImage"
             },
-            attributes: [], variants: [], variantValues: []
+            attributes: [], 
+            variants: [], 
+            variantValues: [] // Có thể server tự generate cái này, tùy logic BE
         };
 
-        currentAttrs.forEach((attr, attrIdx) => {
+        // Build Attributes List
+        currentAttrs.forEach((attr) => {
             const attributeId = attr.id ? attr.id : null; 
             const attrValues = attr.values.map((v) => ({ 
+                // Tìm ID trong map nếu có (logic sửa), ko thì null (logic mới)
                 attributeValueId: attr.valueIdMap ? attr.valueIdMap[v] : null,
                 attributeValueName: v 
             }));
             payload.attributes.push({ attributeId, attributeName: attr.name, attributeValues: attrValues });
         });
 
+        // Build Variants List
         state.variants.forEach((v, idx) => {
             const imgKey = v.rawFile ? `image_variant_${idx}` : null;
             payload.variants.push({
-                variantId: null,
+                variantId: v.id || null, // ID nếu sửa, null nếu mới
                 price: v.price,
-                originalPrice: v.priceOriginal || v.price,
+                originalPrice: v.priceOriginal,
                 stock: v.stock,
-                imageName: imgKey,
-                attributeValues: []
+                imageName: imgKey, // Key để map với FormData bên dưới
+                attributeValues: [] // Backend của bạn có thể cần hoặc tự map dựa trên tên variant
             });
         });
 
+        // Đóng gói FormData
         const formData = new FormData();
         if(state.mainImageFile) formData.append("productImage", state.mainImageFile);
-        state.variants.forEach((v, idx) => { if(v.rawFile) formData.append(`image_variant_${idx}`, v.rawFile); });
+        
+        state.variants.forEach((v, idx) => { 
+            if(v.rawFile) formData.append(`image_variant_${idx}`, v.rawFile); 
+        });
+        
         formData.append("productDTO", new Blob([JSON.stringify(payload)], { type: "application/json" }));
 
-        // Gọi service của bạn
+        // Gọi API (Tùy chỉnh: Nếu có editingProductId thì gọi PUT, không thì POST)
+        // Hiện tại dùng chung createProduct như code cũ của bạn
+        // Nếu backend phân tách, hãy check: if (state.editingProductId) update... else create...
         const res = await ProductService.createProduct(formData);
         
-        // Kiểm tra kết quả (Tuỳ thuộc API của bạn trả về success hay không)
         if(res && (res.success || res.status === 200)) {
             alert("Thanh cong!");
-            UI.resetForm(false);
-            state.variants = [];
-            state.mainImageFile = null;
+            window.location.href = "index.html"; // Quay về danh sách
         } else {
              alert("Loi: " + (res?.message || "Server error"));
         }
@@ -203,7 +229,7 @@ async function handleSave(e) {
     }
 }
 
-// Global functions cho các nút trong bảng variants
+// Global functions cho bảng variants
 window.applyBulkInfo = () => {
     const pOrg = document.getElementById("bulk_price_org")?.value;
     const pSell = document.getElementById("bulk_price")?.value;

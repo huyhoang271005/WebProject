@@ -26,54 +26,32 @@ export const UI = {
 
     renderBrands: (brands, cateId = "", selectedBrandId = null) => {
         const brandSelect = document.getElementById("brandId");
-        if (!brandSelect) {
-            console.error("Khong tim thay brandId select element");
-            return;
-        }
+        if (!brandSelect) return;
         
-        console.log("renderBrands called:", { 
-            brandsCount: brands?.length, 
-            cateId, 
-            selectedBrandId 
-        });
-
         brandSelect.innerHTML = `<option value="">-- Chon thuong hieu --</option>`;
 
-        if (!brands || brands.length === 0) {
-            console.warn("Brands array trong hoac null");
-            return;
-        }
+        if (!brands || brands.length === 0) return;
 
         let filtered = brands;
         
-        // Lọc brand theo category
-        if (cateId && cateId !== "" && cateId !== null) {
-            const cateIdStr = String(cateId);
+        // Lọc brand theo category (chuyển về string để so sánh an toàn)
+        if (cateId && cateId !== "") {
             filtered = brands.filter(b => {
                 const bCateId = b.categoryId || b.category_id;
-                // Nếu brand không có categoryId thì hiển thị
-                if (!bCateId) return true;
-                return String(bCateId) === cateIdStr;
+                return !bCateId || String(bCateId) === String(cateId);
             });
-            console.log("Filtered brands:", filtered.length);
-        } else {
-            console.log("Hien thi tat ca brands:", brands.length);
         }
 
         filtered.forEach(b => {
-            // Tự động nhận diện key ID và Name
+            // Tự động nhận diện key (fix lỗi undefined)
             const id = b.brandId || b.id || b._id;
-            const name = b.brandName || b.name || b.brand_name;
+            const name = b.brandName || b.name || b.brand_name || b.title;
             
             if (id && name) {
                 const isSelected = (selectedBrandId && String(id) === String(selectedBrandId)) ? 'selected' : '';
                 brandSelect.innerHTML += `<option value="${id}" ${isSelected}>${name}</option>`;
-            } else {
-                console.warn("Brand khong hop le:", b);
             }
         });
-
-        console.log("Rendered", filtered.length, "brands vao dropdown");
     },
 
     renderMainImage: (src) => {
@@ -83,17 +61,22 @@ export const UI = {
         else preview.innerHTML = ``;
     },
 
-    addAttrRow: (nameVal = "", valuesVal = "", onInputCallback, attrId = null, valueIds = [], valueIdMap = {}, allAttributes = []) => {
+    // Hàm thêm dòng thuộc tính (đã nâng cấp để nhận dữ liệu cũ)
+    addAttrRow: (nameVal = "", valuesVal = "", onInputCallback, attrId = null, valueIdMap = {}, allAttributes = []) => {
         const container = document.getElementById("attributesContainer");
         if (!container) return;
         
         const div = document.createElement("div");
         div.className = "mb-3 attr-row";
+        
+        // Lưu data ẩn vào thẻ div để Logic đọc lại sau này
         if (attrId) div.dataset.attrId = attrId;
-        if (Object.keys(valueIdMap).length) div.dataset.valueIdMap = JSON.stringify(valueIdMap);
+        if (valueIdMap && Object.keys(valueIdMap).length) {
+            div.dataset.valueIdMap = JSON.stringify(valueIdMap);
+        }
         
         const attrOptions = allAttributes.map(attr => 
-            `<option value="${attr.attributeId}" ${attrId === attr.attributeId ? 'selected' : ''}>${attr.attributeName}</option>`
+            `<option value="${attr.attributeId}" ${String(attrId) === String(attr.attributeId) ? 'selected' : ''}>${attr.attributeName}</option>`
         ).join('');
 
         div.innerHTML = `
@@ -105,18 +88,17 @@ export const UI = {
                     </select>
                 </div>
                 <div class="col-md-8">
-                    <input type="text" class="inp-attr-vals form-control" value="${valuesVal}" placeholder="Nhap gia tri (ngan cach phay). VD: Do, Xanh">
+                    <input type="text" class="inp-attr-vals form-control" value="${valuesVal}" placeholder="VD: Do, Xanh">
                 </div>
                 <div class="col-md-1">
                     <button type="button" class="btn-remove btn btn-outline-danger w-100">Xoa</button>
                 </div>
             </div>`;
 
+        // Sự kiện đổi select -> cập nhật attrId
         const selectEl = div.querySelector(".inp-attr-select");
         selectEl.onchange = (e) => {
-            const selectedAttr = allAttributes.find(a => a.attributeId == e.target.value);
-            if(selectedAttr) div.dataset.attrId = selectedAttr.attributeId;
-            else delete div.dataset.attrId;
+            div.dataset.attrId = e.target.value;
         };
         div.querySelector(".btn-remove").onclick = () => { div.remove(); };
         container.appendChild(div);
@@ -174,7 +156,7 @@ export const UI = {
                                 </td>
                                 <td>
                                     <strong>${v.name}</strong>
-                                    <div class="small text-muted">${v.comboValues.join(" - ")}</div>
+                                    <input type="hidden" value="${v.id || ''}">
                                 </td>
                                 <td>
                                     <input type="number" class="form-control form-control-sm" 
@@ -220,10 +202,40 @@ export const UI = {
         if(formTitle) formTitle.innerText = isEdit ? "Cap nhat san pham" : "Them San Pham Moi";
         UI.renderMainImage(null);
         
-        // Reset brand select về mặc định
         const brandSelect = document.getElementById("brandId");
-        if (brandSelect) {
-            brandSelect.innerHTML = `<option value="">-- Chon thuong hieu --</option>`;
-        }
+        if (brandSelect) brandSelect.innerHTML = `<option value="">-- Chon thuong hieu --</option>`;
+    },
+
+    // 3. (MỚI) Hàm điền dữ liệu vào form (Mode Edit)
+    fillForm: (parsedData, allAttributes) => {
+        const { product, attributes, variants } = parsedData;
+
+        // Điền thông tin cơ bản
+        document.getElementById("productName").value = product.productName || "";
+        document.getElementById("description").value = product.description || "";
+        document.getElementById("price").value = product.price || 0;
+        document.getElementById("priceOriginal").value = product.OriginalPrice || product.originalPrice || 0;
+        document.getElementById("categoryId").value = product.categoryId || "";
+        
+        // Ảnh chính
+        UI.renderMainImage(product.imageUrl);
+
+        // Tạo lại các dòng attributes
+        const attrContainer = document.getElementById("attributesContainer");
+        attrContainer.innerHTML = ""; 
+        attributes.forEach(attr => {
+            // attr.values đang là mảng ["X", "L"] -> chuyển thành chuỗi "X, L"
+            UI.addAttrRow(
+                attr.name, 
+                attr.values.join(", "), 
+                null, 
+                attr.id, 
+                attr.valueIdMap, 
+                allAttributes
+            );
+        });
+
+        // Tạo bảng variants
+        UI.renderVariants(variants);
     }
 };
