@@ -126,7 +126,8 @@ function handleAttributeSelect(attrId, valId, btnElement) {
 
     // 2. Logic: Lưu state
     selectedAttributes[attrId] = valId;
-
+    const errorEl = document.getElementById('attributeError');
+    if (errorEl) errorEl.style.display = 'none';
     // 3. Logic: Tìm variant phù hợp
     findMatchingVariant();
 }
@@ -295,11 +296,18 @@ function setupEventListeners() {
 }
 
 function validateSelection() {
-    // Check xem có thuộc tính nào chưa chọn không
     const totalRows = document.getElementsByClassName('attribute-row').length;
-    // Nếu có attribute mà chưa có variant -> chưa chọn đủ
+    const errorEl = document.getElementById('attributeError');
+
     if (totalRows > 0 && !currentVariant) {
-        alert("Vui lòng chọn phân loại hàng (Màu sắc, Kích thước...)");
+        // Hiển thị thông báo lỗi text thay vì alert
+        if (errorEl) {
+            errorEl.style.display = 'block';
+            // Hiệu ứng rung nhẹ hoặc cuộn tới nếu cần
+            errorEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        } else {
+            alert("Vui lòng chọn phân loại hàng!");
+        }
         return false;
     }
     return true;
