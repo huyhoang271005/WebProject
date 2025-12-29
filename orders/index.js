@@ -306,10 +306,9 @@ function renderOrderItems(items) {
 
         return `
             <div class="order-item">
-                <img src="${item.imageUrl || 'https://via.placeholder.com/80'}" 
+                <img src="${item.imageUrl}" 
                      alt="${escapeHtml(item.productName)}" 
-                     class="item-image"
-                     onerror="this.src='https://via.placeholder.com/80'">
+                     class="item-image">
                 <div class="item-info">
                     <div class="item-name">${escapeHtml(item.productName)}</div>
                     <div class="item-variant">Phân loại: ${escapeHtml(variantName)}</div>
@@ -504,10 +503,9 @@ function renderAllOrderItems(items) {
 
         return `
             <div class="order-item">
-                <img src="${item.imageUrl || 'https://via.placeholder.com/80'}" 
+                <img src="${item.imageUrl}" 
                      alt="${escapeHtml(item.productName)}" 
-                     class="item-image"
-                     onerror="this.src='https://via.placeholder.com/80'">
+                     class="item-image">
                 <div class="item-info">
                     <div class="item-name">${escapeHtml(item.productName)}</div>
                     <div class="item-variant">Phân loại: ${escapeHtml(variantName)}</div>
