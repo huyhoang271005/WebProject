@@ -7,14 +7,13 @@ document.addEventListener("DOMContentLoaded", async () => {
     // 1. Mặc định load tab "Chờ xác nhận" (WAITING)
     await loadOrders('WAITING');
     
-    // 2. Đảm bảo UI active đúng tab đầu tiên
+    // 2. Active Tab đầu tiên
     const tabs = document.querySelectorAll('.tab-btn');
     if(tabs.length > 0) {
         tabs.forEach(t => t.classList.remove('active'));
         if(tabs[0]) tabs[0].classList.add('active'); 
     }
 
-    // Xử lý đóng modal
     window.onclick = (event) => {
         const modal = document.getElementById("detailModal");
         if (event.target == modal) closeModal();
@@ -32,7 +31,6 @@ async function loadOrders(status) {
     tbody.innerHTML = "";
 
     try {
-        // Endpoint chuẩn: /auth/admin/orders/{STATUS}
         const endpoint = `/auth/admin/orders/${status}`;
         const res = await callAPI(endpoint, 'GET'); 
         
@@ -52,7 +50,7 @@ async function loadOrders(status) {
 }
 
 // ============================================================
-// 2. RENDER BẢNG
+// 2. RENDER BẢNG (GỌI HÀM UPDATE VỚI INTENT RÕ RÀNG)
 // ============================================================
 function renderOrders(listData) {
     const tbody = document.getElementById("orderList");
@@ -67,13 +65,12 @@ function renderOrders(listData) {
         const totalAmount = order.orderItemDTOList.reduce((sum, item) => sum + (item.price * item.quantity), 0);
         const st = order.orderStatus; 
         
-        // --- LOGIC HIỂN THỊ NÚT BẤM (Dựa theo Enum Backend) ---
         let actionButtons = '';
 
-        // Case 1: Đơn mới (WAITING hoặc PENDING)
+        // Case 1: Đơn mới (WAITING)
         if (st === 'WAITING' || st === 'PENDING') {
             actionButtons = `
-                <button class="btn-approve" onclick="updateStatus('${order.orderId}', 'CONFIRMED')" title="Duyệt đơn này">
+                <button class="btn-approve" onclick="updateStatus('${order.orderId}', 'TO_DELIVERING')" title="Duyệt đơn này">
                     <i class="fa-solid fa-truck-fast"></i> Duyệt đơn
                 </button>
                 <button class="btn-reject" onclick="updateStatus('${order.orderId}', 'CANCELED')" title="Hủy đơn này">
@@ -84,7 +81,7 @@ function renderOrders(listData) {
         // Case 2: Đang giao (DELIVERING)
         else if (st === 'DELIVERING') {
             actionButtons = `
-                <button class="btn-approve" style="background-color:#3B82F6;" onclick="updateStatus('${order.orderId}', 'CONFIRMED')" title="Xác nhận khách đã nhận">
+                <button class="btn-approve" style="background-color:#3B82F6;" onclick="updateStatus('${order.orderId}', 'TO_DELIVERED')" title="Xác nhận khách đã nhận">
                     <i class="fa-solid fa-check-double"></i> Đã giao
                 </button>
             `;
@@ -93,9 +90,7 @@ function renderOrders(listData) {
         const tr = document.createElement("tr");
         tr.innerHTML = `
             <td><span class="order-id">#${order.orderId.substring(0, 8)}</span></td>
-            <td>
-                <div class="customer-info"><strong>${order.contactName || 'Khách lẻ'}</strong></div>
-            </td>
+            <td><div class="customer-info"><strong>${order.contactName || 'Khách lẻ'}</strong></div></td>
             <td>${renderMiniProducts(order.orderItemDTOList)}</td>
             <td class="total-price">${money.format(totalAmount)}</td>
             <td>${getStatusBadge(st)}</td>
@@ -127,18 +122,32 @@ function renderMiniProducts(items) {
 }
 
 // ============================================================
-// 3. CẬP NHẬT TRẠNG THÁI (FIX THEO LOGIC CỦA NHÓM TRƯỞNG)
+// 3. CẬP NHẬT TRẠNG THÁI (MAPPING TẤT CẢ VỀ "CONFIRMED")
 // ============================================================
-window.updateStatus = async (orderId, newStatus) => {
+window.updateStatus = async (orderId, intent) => {
     let msg = "Bạn có chắc chắn chuyển trạng thái đơn này?";
-    if (newStatus === 'CANCELED') msg = "CẢNH BÁO: Bạn sắp HỦY đơn hàng này?";
+    if (intent === 'CANCELED') msg = "CẢNH BÁO: Bạn sắp HỦY đơn hàng này?";
 
     if (!confirm(msg)) return;
-        const endpoint = `/auth/admin/orders/${orderId}`;
-        // Vẫn gửi biến trần (callAPI tự đóng gói JSON)
-        const body = newStatus; 
 
-        console.log(`Đang gửi PATCH: ${endpoint} -> Gửi: ${body} (Mong muốn: ${newStatus})`);
+    try {
+        const endpoint = `/auth/admin/orders/${orderId}`;
+        
+        // 👇👇👇 QUY TẮC "TRIGGER" CỦA BACKEND 👇👇👇
+        // Backend dùng "CONFIRMED" như một lệnh "Next Step" (Bước tiếp theo).
+        // - Đang WAITING + CONFIRMED -> Sang DELIVERING
+        // - Đang DELIVERING + CONFIRMED -> Sang DELIVERED
+        
+        let statusToSend = intent; // Mặc định (cho trường hợp CANCELED)
+
+        if (intent === 'TO_DELIVERING' || intent === 'TO_DELIVERED') {
+            statusToSend = 'CONFIRMED'; 
+        }
+
+        // Gửi biến trần (callAPI tự đóng gói JSON)
+        const body = statusToSend; 
+
+        console.log(`Sending to ${endpoint}: ${body}`);
 
         const res = await callAPI(endpoint, 'PATCH', body);
 
@@ -160,7 +169,12 @@ window.updateStatus = async (orderId, newStatus) => {
         } else {
             alert(res.message || "Lỗi cập nhật từ Server");
         }
+    } catch (e) {
+        console.error(e);
+        alert("Lỗi hệ thống: " + e.message);
+    }
 };
+
 // ============================================================
 // 4. BỘ LỌC VÀ HELPER
 // ============================================================
@@ -175,7 +189,6 @@ function getStatusBadge(status) {
     let cls = 'bg-gray-100 text-gray-800'; 
     let lbl = s;
 
-    // Mapping đúng với Enum Backend
     switch (s) {
         case 'WAITING': case 'PENDING': cls = 'badge-yellow'; lbl = 'Chờ xác nhận'; break;
         case 'DELIVERING': cls = 'badge-blue'; lbl = 'Đang giao'; break;
