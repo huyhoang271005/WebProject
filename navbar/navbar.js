@@ -212,10 +212,6 @@ function setupSSERealtime() {
   });
 }
 
-export function resetCart(){
-  sessionStorage.clear();
-}
-
 function setupEvents() {
   const userDropdown = document.getElementById("nbUserDropdown");
   const notiDropdown = document.getElementById("nbNotiDropdown");
