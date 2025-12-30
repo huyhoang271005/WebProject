@@ -132,45 +132,25 @@ export async function loadNavbar(options = {}) {
 
   // 1. Kiểm tra sessionCache (Giữ SessionStorage như bro muốn)
   const cached = sessionStorage.getItem("homeData");
-  if (!sessionStorage.getItem("hasCache")) {
-    sessionStorage.setItem("hasCache", "false");
-  }
-  let hasCache = sessionStorage.getItem("hasCache");
   if (cached) {
     try {
       homeData = JSON.parse(cached);
       updateNavbarUI(homeData); // Render ngay lập tức từ Session
-      sessionStorage.setItem("hasCache", "true");
-
-      // Vẫn nối SSE để update realtime
-      if (homeData.username !== "Khách") {
-        await connectSse("/sse");
-        setupSSERealtime();
-      }
+      
     } catch (e) {
       console.error("Lỗi parse homeData", e);
     }
   }
-
-  // 2. Chỉ gọi API khi KHÔNG có cache (Lần đầu mở Tab hoặc F5 nếu session mất)
-  if (hasCache == "false") {
-    try {
-      const res = await callAPI("/home", "GET");
-      if (res && res.success && res.data) {
-        homeData = res.data;
-        sessionStorage.setItem("homeData", JSON.stringify(homeData));
-        updateNavbarUI(homeData);
-
-        if (homeData.username !== "Khách") {
-          await connectSse("/sse");
-          setupSSERealtime();
-        }
-      }
-    } catch (err) {
-      console.error("Lỗi tải thông tin Home:", err);
+  else {
+    const res = await callAPI("/home", "GET");
+    if (res && res.success && res.data) {
+      homeData = res.data;
+      sessionStorage.setItem("homeData", JSON.stringify(homeData));
+      updateNavbarUI(homeData);
     }
   }
-
+  await connectSse("/sse");
+  setupSSERealtime();
   setupEvents();
 }
 
@@ -209,7 +189,7 @@ function updateNavbarUI(data) {
 
 function setupSSERealtime() {
   subscribeTopic("notification", (data) => {
-    homeData.readNotifications = (homeData.readNotifications || 0) + 1;
+    homeData.readNotifications = (homeData.readNotifications) + 1;
     updateNavbarUI(homeData);
     sessionStorage.setItem("homeData", JSON.stringify(homeData)); // Cập nhật Session
 
@@ -222,7 +202,7 @@ function setupSSERealtime() {
   subscribeTopic("cart", (data) => {
     const change = parseInt(data);
     if (!isNaN(change)) {
-      let newCount = (homeData.cartsCount || 0) + change;
+      let newCount = (homeData.cartsCount) + change;
       if (newCount < 0) newCount = 0;
 
       homeData.cartsCount = newCount;
