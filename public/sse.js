@@ -22,7 +22,13 @@ export async function connectSse(endpoint) {
         async onMessage(e) {
             try {
                 const topic = e.event;
-                const data = JSON.parse(e.data);
+                let data;
+                try {
+                    data = JSON.parse(e.data);;
+                }
+                catch {
+                    data = e.data;
+                }
 
                 const handlers = topicHandlers[topic];
                 if (handlers) {
