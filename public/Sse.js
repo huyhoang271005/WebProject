@@ -36,15 +36,22 @@ export async function connectSse(endpoint) {
         },
 
         async onError(e) {
-            es?.close();
-            es = null;
-            authState.accessToken = null;
+            console.warn("Sse error", e);
+            if(e?.status === 401){
+                await refreshAccessToken();
+                reconnectSse(endpoint);
+            }
+            return;
         }
     });
 
     return es;
 }
-
+async function reconnectSse(endpoint) {
+    es?.close();
+    es = null;
+    return await connectSse(endpoint);
+}
 export function subscribeTopic(topic, callback) {
     if(!topicHandlers[topic]){
         topicHandlers[topic] = [];
