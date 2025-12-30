@@ -30,6 +30,9 @@ export async function connectSse(endpoint) {
                         await h(data);
                     }
                 }
+                subscribeTopic("connected", data => {
+                    console.log(data);
+                });
             } catch (err) {
                 console.error(err);
             }
