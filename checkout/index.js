@@ -73,7 +73,7 @@ async function loadDataFromCart(checkedIds) {
 
         const [resAddr, resCart] = await Promise.all([
             callAPI('/contacts', 'GET'),
-            callAPI('/auth/carts?page=0&size=999', 'GET')
+            callAPI('/carts?page=0&size=999', 'GET')
         ]);
 
         if (resAddr.success && resAddr.data?.listData?.length > 0) {
@@ -190,19 +190,11 @@ async function handleOrder() {
 
     try {
         toggleLoading(true);
-        const res = await callAPI('/auth/orders', 'POST', payload);
+        const res = await callAPI('/orders', 'POST', payload);
         if (res.success) {
-            // Xử lý dọn dẹp sau khi đặt hàng thành công
-            if (isBuyNowMode) {
-                sessionStorage.removeItem("buyNowData");
-            } else {
-                const cartItemIds = currentCheckoutItems.map(item => item.cartItemId);
-                await callAPI('/auth/carts/delete', 'POST', cartItemIds);
-                localStorage.removeItem("checkoutItems");
-            }
 
-            if (payload.paymentMethod === 'VN_PAY' && res.data?.paymentUrl) {
-                window.location.href = res.data.paymentUrl;
+            if (payload.paymentMethod === 'VN_PAY') {
+                await callAPI(`/payment/vn-pay/${res.data.orderId}`);
             } else {
                 alert("Đặt hàng thành công!");
                 window.location.href = "../orders/index.html";
