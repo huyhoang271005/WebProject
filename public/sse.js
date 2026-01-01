@@ -13,7 +13,7 @@ export async function connectSse(endpoint) {
 
     es = new EventSource(url, { withCredentials: true });
 
-    es.onmessage = e => handleEvent("message", e);
+    es.onmessage = e => handleEvent(e.type, e);
     es.onerror  = e => handleError(e);
     subscribeTopic("connected", data => {console.log(data)})
 
