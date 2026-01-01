@@ -40,10 +40,6 @@ async function callAPIWithRetry(endpoint, method, data, isMultipart, alreadyRefr
             }
             return await callAPIWithRetry(endpoint, method, data, isMultipart, true);
         }
-        if(res.status === 302){
-            window.location.href = res.headers.get("Location");
-            return;
-        }
         return body;
     } catch (err) {
         console.error(err);

@@ -194,7 +194,10 @@ async function handleOrder() {
         if (res.success) {
 
             if (payload.paymentMethod === 'VN_PAY') {
-                await callAPI(`/payment/vn-pay/${res.data.orderId}`);
+                const pay = await callAPI(`/payment/vn-pay/${res.data.orderId}`);
+                if(pay.success){
+                    window.location.href = pay.data;
+                }
             } else {
                 alert("Đặt hàng thành công!");
                 window.location.href = "../orders/index.html";
