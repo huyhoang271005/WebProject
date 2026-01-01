@@ -1,55 +1,60 @@
 import { API_BASE } from "./api.js";
 
 let es = null;
-const topicHandlers = {};
 let currentEndpoint = null;
+const topicHandlers = {}; // {cart:[fn1,fn2], order:[fn1],...}
 
+/*================ CONNECT =================*/
 export async function connectSse(endpoint) {
     if (es) return es;
 
     currentEndpoint = endpoint;
+    es = new EventSource(`${API_BASE}${endpoint}`, { withCredentials: true });
 
-    const url = `${API_BASE}${endpoint}`;
+    // message mặc định nếu không có event:
+    es.onmessage = e => dispatch("message", e);
+    es.onerror   = handleError;
 
-    es = new EventSource(url, { withCredentials: true });
-
-    es.onmessage = e => handleEvent(e.type, e);
-    es.onerror  = e => handleError(e);
-    subscribeTopic("connected", data => {console.log(data)})
-
+    console.log("🔗 SSE connected");
     return es;
 }
 
-async function handleError(e) {
-    console.warn("SSE error", e);
-
-    // auto reconnect nhẹ sau 3s (tránh spam request)
-    setTimeout(reconnectSse, 3000);
-}
-
-function handleEvent(eventName, e) {
+/*================ DISPATCH EVENT =================*/
+function dispatch(eventName, e) {
     let data;
     try { data = JSON.parse(e.data) } catch { data = e.data }
 
-    const handlers = topicHandlers[eventName];   
-    if (handlers) {
-        handlers.forEach(fn => fn(data));
-    }
+    const handlers = topicHandlers[eventName];
+    if (handlers) handlers.forEach(h => h(data));
 }
 
+/*================ HANDLE ERROR =================*/
+function handleError(e) {
+    console.warn("❗ SSE Error - reconnect in 3s", e);
+    setTimeout(reconnectSse, 3000);
+}
+
+/*================ RECONNECT =================*/
 export async function reconnectSse() {
     es?.close();
     es = null;
     return await connectSse(currentEndpoint);
 }
 
-export function subscribeTopic(event, callback) {
-    if (!topicHandlers[event]) topicHandlers[event] = [];
-    topicHandlers[event].push(callback);
+/*================ SUBSCRIBE DYNAMIC EVENT =================*/
+export function subscribeTopic(eventName, callback) {
+    if (!topicHandlers[eventName]) {
+        topicHandlers[eventName] = [];
+
+        es?.addEventListener(eventName, e => dispatch(eventName, e));
+    }
+    topicHandlers[eventName].push(callback);
 }
 
-export function unsubscribeTopic(event, callback) {
-    if (!topicHandlers[event]) return;
-    topicHandlers[event] = topicHandlers[event].filter(cb => cb !== callback);
-    if (!topicHandlers[event].length) delete topicHandlers[event];
+/*================ UNSUBSCRIBE =================*/
+export function unsubscribeTopic(eventName, callback) {
+    if (!topicHandlers[eventName]) return;
+
+    topicHandlers[eventName] = topicHandlers[eventName].filter(cb => cb !== callback);
+    if (!topicHandlers[eventName].length) delete topicHandlers[eventName];
 }
