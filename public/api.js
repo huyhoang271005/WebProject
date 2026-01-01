@@ -40,6 +40,10 @@ async function callAPIWithRetry(endpoint, method, data, isMultipart, alreadyRefr
             }
             return await callAPIWithRetry(endpoint, method, data, isMultipart, true);
         }
+        if(res.status === 302){
+            window.location.href = res.headers.get("Location");
+            return;
+        }
         return body;
     } catch (err) {
         console.error(err);
@@ -57,7 +61,6 @@ export async function refreshAccessToken() {
         credentials: "include",
         headers: {
             "Content-Type": "application/json",
-            "ngrok-skip-browser-warning":"271005",
         }
     });
     const body = await res.json();
