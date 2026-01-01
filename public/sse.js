@@ -1,79 +1,55 @@
-import { EventSourcePlus } from "https://cdn.jsdelivr.net/npm/event-source-plus/+esm";
-import { API_BASE, authState, refreshAccessToken } from "./api.js";
+import { API_BASE } from "./api.js";
 
 let es = null;
 const topicHandlers = {};
+let currentEndpoint = null;
 
 export async function connectSse(endpoint) {
     if (es) return es;
 
-    if (!authState.accessToken) {
-        const result = await refreshAccessToken();
-        if (!result.success) throw new Error(result.message);
-    }
+    currentEndpoint = endpoint;
 
-    es = new EventSourcePlus(`${API_BASE}${endpoint}`, {
-        headers: {
-            'Authorization': `Bearer ${authState.accessToken}`
-        }
-    });
+    const url = `${API_BASE}${endpoint}`;
 
-    es.listen({
-        async onMessage(e) {
-            try {
-                const topic = e.event;
-                let data;
-                try {
-                    data = JSON.parse(e.data);;
-                }
-                catch {
-                    data = e.data;
-                }
+    es = new EventSource(url, { withCredentials: true });
 
-                const handlers = topicHandlers[topic];
-                if (handlers) {
-                    for(const h of handlers){
-                        await h(data);
-                    }
-                }
-                subscribeTopic("connected", data => {
-                    console.log(data);
-                });
-            } catch (err) {
-                console.error(err);
-            }
-        },
-
-        async onError(e) {
-            console.warn("Sse error", e);
-            if(e?.status === 401){
-                await refreshAccessToken();
-                reconnectSse(endpoint);
-            }
-            return;
-        }
-    });
+    es.onmessage = e => handleEvent("message", e);
+    es.onerror  = e => handleError(e);
+    subscribeTopic("connected", data => {console.log(data)})
 
     return es;
 }
-async function reconnectSse(endpoint) {
+
+async function handleError(e) {
+    console.warn("SSE error", e);
+
+    // auto reconnect nhẹ sau 3s (tránh spam request)
+    setTimeout(reconnectSse, 3000);
+}
+
+function handleEvent(eventName, e) {
+    let data;
+    try { data = JSON.parse(e.data) } catch { data = e.data }
+
+    const handlers = topicHandlers[e.event];   
+    if (handlers) {
+        handlers.forEach(fn => fn(data));
+    }
+}
+
+export async function reconnectSse() {
     es?.close();
     es = null;
-    return await connectSse(endpoint);
-}
-export function subscribeTopic(topic, callback) {
-    if(!topicHandlers[topic]){
-        topicHandlers[topic] = [];
-    }
-    topicHandlers[topic].push(callback);
+    return await connectSse(currentEndpoint);
 }
 
-export function unsubscribeTopic(topic, callback) {
-    if (!topicHandlers[topic]) return;
+export function subscribeTopic(event, callback) {
+    if (!topicHandlers[event]) topicHandlers[event] = [];
+    topicHandlers[event].push(callback);
+}
 
-    topicHandlers[topic] = topicHandlers[topic].filter(cb => cb !== callback);
-
-    if (topicHandlers[topic].length === 0) {
-        delete topicHandlers[topic];
-    }
+export function unsubscribeTopic(event, callback) {
+    if (!topicHandlers[event]) return;
+    topicHandlers[event] = topicHandlers[event].filter(cb => cb !== callback);
+    if (!topicHandlers[event].length) delete topicHandlers[event];
 }
