@@ -580,7 +580,7 @@ window.cancelOrder = async (orderIndex) => {
         // Giả sử API cancel cần orderId hoặc một identifier nào đó
         // Nếu không có orderId, có thể cần dùng cách khác
         const orderId = order.orderId || `ORDER_${orderIndex}`;
-        const response = await callAPI(`/orders/${orderId}/cancel`, 'PUT');
+        const response = await callAPI(`/orders/${orderId}`, 'PATCH');
 
         if (response.success) {
             showNotification('Hủy đơn hàng thành công', 'success');

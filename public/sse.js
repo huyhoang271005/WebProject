@@ -2,9 +2,8 @@ import { API_BASE } from "./api.js";
 
 let es = null;
 let currentEndpoint = null;
-const topicHandlers = {}; // {cart:[fn1,fn2], order:[fn1],...}
-
-/*================ CONNECT =================*/
+const topicHandlers = {};
+/**Connect SSE with endpoint */
 export async function connectSse(endpoint) {
     if (es) return es;
 
@@ -15,11 +14,10 @@ export async function connectSse(endpoint) {
     es.onmessage = e => dispatch("message", e);
     es.onerror   = handleError;
 
-    console.log("🔗 SSE connected");
     return es;
 }
 
-/*================ DISPATCH EVENT =================*/
+
 function dispatch(eventName, e) {
     let data;
     try { data = JSON.parse(e.data) } catch { data = e.data }
@@ -28,20 +26,19 @@ function dispatch(eventName, e) {
     if (handlers) handlers.forEach(h => h(data));
 }
 
-/*================ HANDLE ERROR =================*/
+/*when error */
 function handleError(e) {
-    console.warn("❗ SSE Error - reconnect in 3s", e);
     setTimeout(reconnectSse, 3000);
 }
 
-/*================ RECONNECT =================*/
+/*Reconnect*/
 export async function reconnectSse() {
     es?.close();
     es = null;
     return await connectSse(currentEndpoint);
 }
 
-/*================ SUBSCRIBE DYNAMIC EVENT =================*/
+/*Subcribe event*/
 export function subscribeTopic(eventName, callback) {
     if (!topicHandlers[eventName]) {
         topicHandlers[eventName] = [];
@@ -51,7 +48,7 @@ export function subscribeTopic(eventName, callback) {
     topicHandlers[eventName].push(callback);
 }
 
-/*================ UNSUBSCRIBE =================*/
+/*Unsubcribe event */
 export function unsubscribeTopic(eventName, callback) {
     if (!topicHandlers[eventName]) return;
 
