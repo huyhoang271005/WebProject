@@ -140,7 +140,7 @@
             }
         };
         document.getElementById('skip-ngrok').addEventListener('click', async()=>{
-            window.location.href = `${API_BASE}/websocket`;
+            window.location.href = `${API_BASE}/ws`;
         });
         document.getElementById('reconnect').addEventListener('click', async()=>{
             if(stompClient !== null && stompClient.connected){
@@ -153,7 +153,7 @@
          */
         function connect() {
             // Tạo SockJS connection đến endpoint đã config
-            var socket = new SockJS(`${API_BASE}/websocket`);
+            var socket = new SockJS(`${API_BASE}/ws`);
             
             // Bọc STOMP protocol lên WebSocket
             stompClient = Stomp.over(socket);
