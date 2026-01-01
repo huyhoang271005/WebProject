@@ -31,7 +31,7 @@ function handleEvent(eventName, e) {
     let data;
     try { data = JSON.parse(e.data) } catch { data = e.data }
 
-    const handlers = topicHandlers[e.event];   
+    const handlers = topicHandlers[eventName];   
     if (handlers) {
         handlers.forEach(fn => fn(data));
     }
