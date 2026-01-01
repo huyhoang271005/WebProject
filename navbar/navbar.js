@@ -17,10 +17,7 @@ const navbarHTML = `
     <style>
         /* [FIX] Reset Body để Spacer hoạt động đúng */
         body {
-            display: block !important; 
-            margin: 0 !important;
-            padding: 0 !important;
-            min-height: 100vh;
+            padding-top: 80px;
         }
 
         .navbar-component {
