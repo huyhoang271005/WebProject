@@ -194,7 +194,7 @@ async function handleOrder() {
 
     try {
         toggleLoading(true);
-        const res = await callAPI('/auth/orders', 'POST', payload);
+        const res = await callAPI('/orders', 'POST', payload);
         if (res.success) {
             // Xử lý dọn dẹp sau khi đặt hàng thành công
             if (isBuyNowMode) {
