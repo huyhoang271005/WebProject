@@ -201,8 +201,22 @@ async function handleOrder() {
                 localStorage.removeItem("checkoutItems");
             }
 
-            if (payload.paymentMethod === 'VN_PAY' && res.data?.paymentUrl) {
-                window.location.href = res.data.paymentUrl;
+            if (payload.paymentMethod === 'VN_PAY') {
+                const orderId = res.data.orderId;
+                if (orderId) {
+                    try {
+                        const payRes = await callAPI(`/payment/vn-pay/${orderId}`, 'GET');
+                        if (payRes.success && (payRes.data?.paymentUrl || payRes.data)) {
+                            window.location.href = payRes.data.paymentUrl || payRes.data;
+                            return;
+                        }
+                    } catch (payErr) {
+                        console.error("Lỗi lấy link thanh toán:", payErr);
+                    }
+                }
+                // Nếu không lấy được link hoặc lỗi, vẫn về trang đơn hàng
+                alert("Đặt hàng thành công! Vui lòng thanh toán trong chi tiết đơn hàng.");
+                window.location.href = "../orders/index.html";
             } else {
                 alert("Đặt hàng thành công!");
                 window.location.href = "../orders/index.html";

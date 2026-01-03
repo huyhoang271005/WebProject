@@ -7,8 +7,14 @@ const formatter = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 
 
 const STATUS_CONFIG = {
     WAITING: {
-        label: 'Chờ xác nhận',
+        label: 'Chờ thanh toán',
         icon: 'fa-clock',
+        color: '#f59e0b',
+        actions: ['detail', 'cancel']
+    },
+    PAYING: {
+        label: 'Chờ thanh toán',
+        icon: 'fa-spinner fa-spin',
         color: '#f59e0b',
         actions: ['detail', 'cancel']
     },
@@ -16,7 +22,7 @@ const STATUS_CONFIG = {
         label: 'Đang xử lý',
         icon: 'fa-hourglass-half',
         color: '#3b82f6',
-        actions: ['detail', 'cancel']
+        actions: ['detail']
     },
     CONFIRMED: {
         label: 'Đã xác nhận',
@@ -24,22 +30,10 @@ const STATUS_CONFIG = {
         color: '#10b981',
         actions: ['detail']
     },
-    PAINTED: {
-        label: 'Đã đóng gói',
-        icon: 'fa-paint-brush',
-        color: '#8b5cf6',
-        actions: ['detail']
-    },
     CANCELED: {
         label: 'Đã hủy',
         icon: 'fa-times-circle',
         color: '#6b7280',
-        actions: ['detail', 'reorder']
-    },
-    REJECTED: {
-        label: 'Từ chối',
-        icon: 'fa-ban',
-        color: '#ef4444',
         actions: ['detail', 'reorder']
     },
     DELIVERING: {
@@ -366,8 +360,44 @@ function renderOrderActions(orderIndex, statusConfig) {
         `;
     }
 
+    const order = filteredOrders[orderIndex];
+    if (order && (order.orderStatus === 'WAITING' || order.orderStatus === 'PAYING') && order.paymentMethod === 'VN_PAY') {
+        html += `
+            <button class="btn-action btn-pay" onclick="payOrder(${orderIndex})" style="background-color: #ee4d2d; color: white; border: none;">
+                <i class="fas fa-credit-card"></i> Thanh toán
+            </button>
+        `;
+    }
+
     return html;
 }
+
+/**
+ * Handle VNPay payment redirect
+ */
+window.payOrder = async (orderIndex) => {
+    const order = filteredOrders[orderIndex];
+    if (!order || !order.orderId) {
+        showNotification('Không tìm thấy mã đơn hàng', 'error');
+        return;
+    }
+
+    try {
+        if (typeof toggleLoading === 'function') toggleLoading(true);
+        const response = await callAPI(`/payment/vn-pay/${order.orderId}`, 'GET');
+        
+        if (response.success && (response.data?.paymentUrl || response.data)) {
+            window.location.href = response.data.paymentUrl || response.data;
+        } else {
+            showNotification(response.message || 'Không thể lấy liên kết thanh toán', 'error');
+        }
+    } catch (error) {
+        console.error('Lỗi thanh toán VNPay:', error);
+        showNotification('Có lỗi xảy ra khi kết nối thanh toán', 'error');
+    } finally {
+        if (typeof toggleLoading === 'function') toggleLoading(false);
+    }
+};
 
 /**
  * Calculate order total
@@ -505,6 +535,16 @@ function showOrderDetailModal(order, orderIndex) {
         </div>
     `;
 
+    if ((order.orderStatus === 'WAITING' || order.orderStatus === 'PAYING') && order.paymentMethod === 'VN_PAY') {
+        modalBody.innerHTML += `
+            <div style="margin-top: 20px; text-align: right;">
+                <button class="btn-action btn-pay" onclick="payOrder(${orderIndex})" style="background-color: #ee4d2d; color: white; border: none; padding: 12px 24px; border-radius: 4px; cursor: pointer; font-weight: 600; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                    <i class="fas fa-credit-card"></i> THANH TOÁN NGAY QUA VNPAY
+                </button>
+            </div>
+        `;
+    }
+
     modal.style.display = 'flex';
 }
 
@@ -565,7 +605,7 @@ window.addEventListener('click', (e) => {
  */
 window.cancelOrder = async (orderIndex) => {
     const order = filteredOrders[orderIndex];
-    if (!order) {
+    if (!order || !order.orderId) {
         showNotification('Không tìm thấy đơn hàng', 'error');
         return;
     }
@@ -577,10 +617,8 @@ window.cancelOrder = async (orderIndex) => {
     try {
         if (typeof toggleLoading === 'function') toggleLoading(true);
 
-        // Giả sử API cancel cần orderId hoặc một identifier nào đó
-        // Nếu không có orderId, có thể cần dùng cách khác
-        const orderId = order.orderId || `ORDER_${orderIndex}`;
-        const response = await callAPI(`/auth/orders/${orderId}/cancel`, 'PUT');
+        // Sử dụng PATCH /orders/{orderId} theo yêu cầu mới
+        const response = await callAPI(`/orders/${order.orderId}`, 'PATCH', { status: 'CANCELED' });
 
         if (response.success) {
             showNotification('Hủy đơn hàng thành công', 'success');
