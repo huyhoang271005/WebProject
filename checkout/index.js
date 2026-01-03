@@ -73,7 +73,7 @@ async function loadDataFromCart(checkedIds) {
 
         const [resAddr, resCart] = await Promise.all([
             callAPI('/contacts', 'GET'),
-            callAPI('/auth/carts?page=0&size=999', 'GET')
+            callAPI('/carts?page=0&size=999', 'GET')
         ]);
 
         if (resAddr.success && resAddr.data?.listData?.length > 0) {
@@ -87,8 +87,11 @@ async function loadDataFromCart(checkedIds) {
             const allItems = [];
             resCart.data.listData.forEach(product => {
                 product.cartItemDTOList.forEach(item => {
-                    const variant = product.productVariantsDTOList.find(v => v.variantId === item.variantId);
-                    if (variant && checkedIds.includes(item.cartItemId)) {
+                    const variant = product.productVariantsDTOList?.find(v => v.variantId === item.variantId);
+                    // Chuyển cả hai sang String để so sánh chính xác (tránh lỗi type mismatch giữa Number và String)
+                    const isChecked = checkedIds.some(id => String(id) === String(item.cartItemId));
+                    
+                    if (variant && isChecked) {
                         allItems.push({
                             cartItemId: item.cartItemId, // Lưu lại để xóa sau khi đặt hàng
                             variantId: item.variantId,
@@ -113,6 +116,7 @@ async function loadDataFromCart(checkedIds) {
 
 // Hàm bổ trợ lấy tên phân loại
 function getVariantName(product, variant) {
+    if (!product.attributes) return '';
     return variant.attributeValueIdList.map(id => {
         for (const attr of product.attributes) {
             const val = attr.attributeValues.find(av => av.attributeValueId === id);
@@ -197,7 +201,7 @@ async function handleOrder() {
                 sessionStorage.removeItem("buyNowData");
             } else {
                 const cartItemIds = currentCheckoutItems.map(item => item.cartItemId);
-                await callAPI('/auth/carts/delete', 'POST', cartItemIds);
+                await callAPI('/carts/delete', 'POST', cartItemIds);
                 localStorage.removeItem("checkoutItems");
             }
 
