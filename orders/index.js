@@ -5,6 +5,23 @@ import { loadNavbar } from '../navbar/navbar.js';
 // Constants
 const formatter = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' });
 
+const STATUS_MAP = {
+    0: 'WAITING',
+    1: 'PAYING',
+    2: 'PENDING',
+    3: 'CONFIRMED',
+    4: 'CANCELED',
+    5: 'DELIVERING',
+    6: 'DELIVERED',
+    'WAITING': 'WAITING',
+    'PAYING': 'PAYING',
+    'PENDING': 'PENDING',
+    'CONFIRMED': 'CONFIRMED',
+    'CANCELED': 'CANCELED',
+    'DELIVERING': 'DELIVERING',
+    'DELIVERED': 'DELIVERED'
+};
+
 const STATUS_CONFIG = {
     WAITING: {
         label: 'Chờ thanh toán',
@@ -104,10 +121,16 @@ async function loadOrders(append = false) {
 
             if (append) {
                 // Thêm vào danh sách hiện tại (infinite scroll)
-                allOrders = [...allOrders, ...newOrders];
+                allOrders = [...allOrders, ...newOrders.map(o => ({
+                    ...o,
+                    orderStatus: STATUS_MAP[o.orderStatus] || o.orderStatus
+                }))];
             } else {
                 // Reset danh sách (load mới)
-                allOrders = newOrders;
+                allOrders = newOrders.map(o => ({
+                    ...o,
+                    orderStatus: STATUS_MAP[o.orderStatus] || o.orderStatus
+                }));
             }
 
             filterByStatus(currentStatus);
@@ -167,6 +190,9 @@ window.filterByStatus = (status) => {
     // Filter orders
     if (status === 'ALL') {
         filteredOrders = [...allOrders];
+    } else if (status === 'WAITING') {
+        // Tab WAITING bao gồm cả WAITING (#0) và PAYING (#1)
+        filteredOrders = allOrders.filter(order => order.orderStatus === 'WAITING' || order.orderStatus === 'PAYING');
     } else {
         filteredOrders = allOrders.filter(order => order.orderStatus === status);
     }
@@ -426,6 +452,7 @@ window.viewOrderDetail = async (orderIndex) => {
             const detailOrder = {
                 ...order,
                 ...response.data,
+                orderStatus: STATUS_MAP[response.data.orderStatus] || response.data.orderStatus,
                 orderId: order.orderId
             };
             showOrderDetailModal(detailOrder, orderIndex);
