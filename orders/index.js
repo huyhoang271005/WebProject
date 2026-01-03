@@ -287,6 +287,11 @@ function renderOrders() {
                         ${statusConfig.label}
                     </div>
                 </div>
+                <!-- Hiển thị phương thức thanh toán ngay trên card để dễ nhận biết -->
+                <div style="padding: 0 20px; font-size: 13px; color: var(--text-gray); margin-bottom: 10px;">
+                    <i class="fas ${order.paymentMethod === 'VN_PAY' ? 'fa-credit-card' : 'fa-money-bill-wave'}"></i>
+                    ${order.paymentMethod === 'VN_PAY' ? 'VNPay' : 'Thanh toán khi nhận hàng (COD)'}
+                </div>
 
                 <div class="order-card-body">
                     <div class="order-items">
@@ -300,7 +305,7 @@ function renderOrders() {
                         <div class="total-amount">${formatter.format(totalAmount)}</div>
                     </div>
                     <div class="order-actions">
-                        ${renderOrderActions(index, statusConfig)}
+                        ${renderOrderActions(index, statusConfig, order)}
                     </div>
                 </div>
             </div>
@@ -358,7 +363,7 @@ function renderOrderItems(items) {
 /**
  * Render action buttons based on order status
  */
-function renderOrderActions(orderIndex, statusConfig) {
+function renderOrderActions(orderIndex, statusConfig, orderFromList) {
     const actions = statusConfig.actions || ['detail'];
     let html = '';
 
@@ -370,10 +375,18 @@ function renderOrderActions(orderIndex, statusConfig) {
         `;
     }
 
-    const order = filteredOrders[orderIndex];
-    const isCOD = order && String(order.paymentMethod).toUpperCase() === 'COD';
+    const order = orderFromList || filteredOrders[orderIndex];
+    if (!order) return html;
 
-    if (actions.includes('cancel') || (order && order.orderStatus === 'PENDING' && isCOD)) {
+    const isVNPay = String(order.paymentMethod).toUpperCase() === 'VN_PAY';
+    
+    // Logic mới: WAITING/PAYING luôn hủy được. PENDING chỉ hủy được nếu KHÔNG phải VNPay (mặc định là COD)
+    let canCancel = actions.includes('cancel');
+    if (order.orderStatus === 'PENDING' && !isVNPay) {
+        canCancel = true;
+    }
+
+    if (canCancel) {
         html += `
             <button class="btn-action btn-cancel" onclick="cancelOrder(${orderIndex})">
                 <i class="fas fa-times"></i> Hủy đơn
@@ -389,7 +402,7 @@ function renderOrderActions(orderIndex, statusConfig) {
         `;
     }
 
-    if (order && (order.orderStatus === 'WAITING' || order.orderStatus === 'PAYING') && order.paymentMethod === 'VN_PAY') {
+    if ((order.orderStatus === 'WAITING' || order.orderStatus === 'PAYING') && isVNPay) {
         html += `
             <button class="btn-action btn-pay" onclick="payOrder(${orderIndex})" style="background-color: #ee4d2d; color: white; border: none;">
                 <i class="fas fa-credit-card"></i> Thanh toán
