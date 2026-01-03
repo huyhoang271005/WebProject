@@ -112,7 +112,7 @@ document.addEventListener("DOMContentLoaded", async () => {
  */
 async function loadOrders(append = false) {
     try {
-        const response = await callAPI(`/auth/orders?page=${currentPage}&size=${pageSize}`, 'GET');
+        const response = await callAPI(`/orders?page=${currentPage}&size=${pageSize}`, 'GET');
 
         if (response.success && response.data) {
             const newOrders = response.data.listData || [];
@@ -447,7 +447,7 @@ window.viewOrderDetail = async (orderIndex) => {
 
     try {
         if (typeof toggleLoading === 'function') toggleLoading(true);
-        const response = await callAPI(`/auth/orders/${order.orderId}`, 'GET');
+        const response = await callAPI(`/orders/${order.orderId}`, 'GET');
         if (response.success && response.data) {
             const detailOrder = {
                 ...order,
