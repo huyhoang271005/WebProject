@@ -370,7 +370,9 @@ function renderOrderActions(orderIndex, statusConfig) {
         `;
     }
 
-    if (actions.includes('cancel')) {
+    const order = filteredOrders[orderIndex];
+
+    if (actions.includes('cancel') || (order && order.orderStatus === 'PENDING' && order.paymentMethod === 'COD')) {
         html += `
             <button class="btn-action btn-cancel" onclick="cancelOrder(${orderIndex})">
                 <i class="fas fa-times"></i> Hủy đơn
@@ -386,7 +388,6 @@ function renderOrderActions(orderIndex, statusConfig) {
         `;
     }
 
-    const order = filteredOrders[orderIndex];
     if (order && (order.orderStatus === 'WAITING' || order.orderStatus === 'PAYING') && order.paymentMethod === 'VN_PAY') {
         html += `
             <button class="btn-action btn-pay" onclick="payOrder(${orderIndex})" style="background-color: #ee4d2d; color: white; border: none;">
@@ -645,7 +646,7 @@ window.cancelOrder = async (orderIndex) => {
         if (typeof toggleLoading === 'function') toggleLoading(true);
 
         // Sử dụng PATCH /orders/{orderId} theo yêu cầu mới
-        const response = await callAPI(`/orders/${order.orderId}`, 'PATCH', { status: 'CANCELED' });
+        const response = await callAPI(`/orders/${order.orderId}`, 'PATCH', 'CANCELED');
 
         if (response.success) {
             showNotification('Hủy đơn hàng thành công', 'success');
