@@ -371,8 +371,9 @@ function renderOrderActions(orderIndex, statusConfig) {
     }
 
     const order = filteredOrders[orderIndex];
+    const isCOD = order && String(order.paymentMethod).toUpperCase() === 'COD';
 
-    if (actions.includes('cancel') || (order && order.orderStatus === 'PENDING' && order.paymentMethod === 'COD')) {
+    if (actions.includes('cancel') || (order && order.orderStatus === 'PENDING' && isCOD)) {
         html += `
             <button class="btn-action btn-cancel" onclick="cancelOrder(${orderIndex})">
                 <i class="fas fa-times"></i> Hủy đơn
@@ -563,14 +564,28 @@ function showOrderDetailModal(order, orderIndex) {
         </div>
     `;
 
-    if ((order.orderStatus === 'WAITING' || order.orderStatus === 'PAYING') && order.paymentMethod === 'VN_PAY') {
-        modalBody.innerHTML += `
-            <div style="margin-top: 20px; text-align: right;">
-                <button class="btn-action btn-pay" onclick="payOrder(${orderIndex})" style="background-color: #ee4d2d; color: white; border: none; padding: 12px 24px; border-radius: 4px; cursor: pointer; font-weight: 600; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-                    <i class="fas fa-credit-card"></i> THANH TOÁN NGAY QUA VNPAY
+    const isCOD = order && String(order.paymentMethod).toUpperCase() === 'COD';
+    const canCancel = ['WAITING', 'PAYING'].includes(order.orderStatus) || (order.orderStatus === 'PENDING' && isCOD);
+
+    if (canCancel || (order.paymentMethod === 'VN_PAY' && ['WAITING', 'PAYING'].includes(order.orderStatus))) {
+        modalBody.innerHTML += `<div class="modal-actions" style="margin-top: 20px; display: flex; gap: 10px; justify-content: flex-end;"></div>`;
+        const actionContainer = modalBody.querySelector('.modal-actions');
+
+        if (canCancel) {
+            actionContainer.innerHTML += `
+                <button class="btn-action btn-cancel" onclick="cancelOrder(${orderIndex})" style="padding: 12px 24px; border-radius: 4px; cursor: pointer; font-weight: 600;">
+                    <i class="fas fa-times"></i> HỦY ĐƠN HÀNG
                 </button>
-            </div>
-        `;
+            `;
+        }
+
+        if (order.paymentMethod === 'VN_PAY' && ['WAITING', 'PAYING'].includes(order.orderStatus)) {
+            actionContainer.innerHTML += `
+                <button class="btn-action btn-pay" onclick="payOrder(${orderIndex})" style="background-color: #ee4d2d; color: white; border: none; padding: 12px 24px; border-radius: 4px; cursor: pointer; font-weight: 600; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                    <i class="fas fa-credit-card"></i> THANH TOÁN QUA VNPAY
+                </button>
+            `;
+        }
     }
 
     modal.style.display = 'flex';
