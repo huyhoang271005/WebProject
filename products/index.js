@@ -39,7 +39,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 async function fetchCategories() {
   try {
     const res = await callAPI("/categories", "GET", null);
-    if (res && res.success && Array.isArray(res.data)) {
+    if (res && res.success && Array.isArray(res.data.listData)) {
       categoriesData = res.data;
     } else {
       categoriesData = [

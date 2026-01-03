@@ -1,10 +1,9 @@
 import { callAPI } from "../public/api.js";
 import { showDialog } from "../dialog/index.js";
-import { connectSse, subscribeTopic } from "../public/Sse.js";
+import { connectSse, subscribeTopic } from "../public/sse.js";
 
 const noImage = "https://cdn-icons-png.flaticon.com/512/847/847969.png";
 
-// State quản lý thông báo
 let notiState = {
   page: 0,
   size: 10,
@@ -13,21 +12,14 @@ let notiState = {
   isLoadedFirstTime: false,
 };
 
-// CSS Navbar + [FIX TỰ ĐỘNG CÁCH DÒNG CHO TẤT CẢ CÁC TRANG]
+// CSS Navbar + [FIX CSS BODY]
 const navbarHTML = `
     <style>
-        /* --- [FIX QUAN TRỌNG] --- */
-        /* Ép tất cả các trang load Navbar phải hiển thị dạng khối (Block) từ trên xuống */
-        /* Ghi đè lên display: flex của public.css */
+        /* [FIX] Reset Body để Spacer hoạt động đúng */
         body {
-            display: block !important; 
-            margin: 0 !important;
-            padding: 0 !important;
-            min-height: 100vh;
-            /* Giữ background cũ hoặc reset tùy ý */
+            padding-top: 80px;
         }
 
-        /* Navbar chính */
         .navbar-component {
             background: #fff; height: 80px; width: 100%; position: fixed; top: 0; left: 0; z-index: 1000;
             display: flex; align-items: center; justify-content: space-between; padding: 0 40px; 
@@ -135,34 +127,27 @@ export async function loadNavbar(options = {}) {
   if (options.centerHTML)
     document.getElementById("nbCenterSlot").innerHTML = options.centerHTML;
 
-  // 1. Kiểm tra session
+  // 1. Kiểm tra sessionCache (Giữ SessionStorage như bro muốn)
   const cached = sessionStorage.getItem("homeData");
   if (cached) {
     try {
       homeData = JSON.parse(cached);
-      updateNavbarUI(homeData);
+      updateNavbarUI(homeData); // Render ngay lập tức từ Session
+      
     } catch (e) {
-      console.error("Lỗi parse homeData từ session", e);
+      console.error("Lỗi parse homeData", e);
     }
   }
-
-  // 2. Gọi API ngầm để cập nhật mới nhất
-  try {
+  else {
     const res = await callAPI("/home", "GET");
     if (res && res.success && res.data) {
       homeData = res.data;
       sessionStorage.setItem("homeData", JSON.stringify(homeData));
       updateNavbarUI(homeData);
-
-      if (homeData.username !== "Khách") {
-        await connectSse("/sse");
-        setupSSERealtime();
-      }
     }
-  } catch (err) {
-    console.error("Lỗi tải thông tin Home:", err);
   }
-
+  await connectSse("/sse");
+  setupSSERealtime();
   setupEvents();
 }
 
@@ -201,9 +186,9 @@ function updateNavbarUI(data) {
 
 function setupSSERealtime() {
   subscribeTopic("notification", (data) => {
-    homeData.readNotifications = (homeData.readNotifications || 0) + 1;
+    homeData.readNotifications = (homeData.readNotifications) + 1;
     updateNavbarUI(homeData);
-    sessionStorage.setItem("homeData", JSON.stringify(homeData));
+    sessionStorage.setItem("homeData", JSON.stringify(homeData)); // Cập nhật Session
 
     const notiList = document.getElementById("nbNotiList");
     if (document.getElementById("nbNotiDropdown").classList.contains("show")) {
@@ -214,11 +199,12 @@ function setupSSERealtime() {
   subscribeTopic("cart", (data) => {
     const change = parseInt(data);
     if (!isNaN(change)) {
-      let newCount = (homeData.cartsCount || 0) + change;
+      let newCount = (homeData.cartsCount) + change;
       if (newCount < 0) newCount = 0;
+
       homeData.cartsCount = newCount;
       updateNavbarUI(homeData);
-      sessionStorage.setItem("homeData", JSON.stringify(homeData));
+      sessionStorage.setItem("homeData", JSON.stringify(homeData)); // Cập nhật Session
     }
   });
 }
@@ -265,7 +251,7 @@ function setupEvents() {
         "Bạn có chắc chắn muốn đăng xuất không?",
         async () => {
           await callAPI("/logout");
-          sessionStorage.clear();
+          sessionStorage.clear(); // Xóa sạch session
           window.location.replace("../auth/login");
         },
         "Đăng xuất",

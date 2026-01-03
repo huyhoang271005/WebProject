@@ -1,6 +1,6 @@
 import { callAPI } from '../public/api.js';
 import { showDialog } from '../dialog/index.js';
-
+import { loadNavbar } from '../navbar/navbar.js';
 const money = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' });
 let cartData = [], checked = new Set(), busy = false; let currentPage = 0;      // Trang hiện tại (Bắt đầu từ 0 hoặc 1 tùy API của bạn)
 const pageSize = 10;      // Số lượng sản phẩm mỗi lần load
@@ -10,6 +10,7 @@ let isLoading = false;
 // --- 3. KHỞI TẠO & CUỘN VÔ TẬN ---
 document.addEventListener("DOMContentLoaded", async () => {
     // Tạo element "Đang tải thêm..."
+    await loadNavbar();
     const cartBox = document.getElementById("cartList");
     const loader = document.createElement("div");
     loader.id = "loading-more";
