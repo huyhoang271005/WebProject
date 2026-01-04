@@ -87,8 +87,11 @@ async function loadDataFromCart(checkedIds) {
             const allItems = [];
             resCart.data.listData.forEach(product => {
                 product.cartItemDTOList.forEach(item => {
-                    const variant = product.productVariantsDTOList.find(v => v.variantId === item.variantId);
-                    if (variant && checkedIds.includes(item.cartItemId)) {
+                    const variant = product.productVariantsDTOList?.find(v => v.variantId === item.variantId);
+                    // Chuyển cả hai sang String để so sánh chính xác (tránh lỗi type mismatch giữa Number và String)
+                    const isChecked = checkedIds.some(id => String(id) === String(item.cartItemId));
+                    
+                    if (variant && isChecked) {
                         allItems.push({
                             cartItemId: item.cartItemId, // Lưu lại để xóa sau khi đặt hàng
                             variantId: item.variantId,
@@ -113,6 +116,7 @@ async function loadDataFromCart(checkedIds) {
 
 // Hàm bổ trợ lấy tên phân loại
 function getVariantName(product, variant) {
+    if (!product.attributes) return '';
     return variant.attributeValueIdList.map(id => {
         for (const attr of product.attributes) {
             const val = attr.attributeValues.find(av => av.attributeValueId === id);
@@ -192,12 +196,31 @@ async function handleOrder() {
         toggleLoading(true);
         const res = await callAPI('/orders', 'POST', payload);
         if (res.success) {
+            // Xử lý dọn dẹp sau khi đặt hàng thành công
+            if (isBuyNowMode) {
+                sessionStorage.removeItem("buyNowData");
+            } else {
+                const cartItemIds = currentCheckoutItems.map(item => item.cartItemId);
+                await callAPI('/carts/delete', 'POST', cartItemIds);
+                localStorage.removeItem("checkoutItems");
+            }
 
             if (payload.paymentMethod === 'VN_PAY') {
-                const pay = await callAPI(`/payment/vn-pay/${res.data.orderId}`);
-                if(pay.success){
-                    window.location.href = pay.data.paymentUr;;
+                const orderId = res.data.orderId;
+                if (orderId) {
+                    try {
+                        const payRes = await callAPI(`/payment/vn-pay/${orderId}`, 'GET');
+                        if (payRes.success && (payRes.data?.paymentUrl || payRes.data)) {
+                            window.location.href = payRes.data.paymentUrl || payRes.data;
+                            return;
+                        }
+                    } catch (payErr) {
+                        console.error("Lỗi lấy link thanh toán:", payErr);
+                    }
                 }
+                // Nếu không lấy được link hoặc lỗi, vẫn về trang đơn hàng
+                alert("Đặt hàng thành công! Vui lòng thanh toán trong chi tiết đơn hàng.");
+                window.location.href = "../orders/index.html";
             } else {
                 alert("Đặt hàng thành công!");
                 window.location.href = "../orders/index.html";
