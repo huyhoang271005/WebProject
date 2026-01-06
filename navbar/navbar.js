@@ -283,7 +283,7 @@ async function fetchNotifications() {
 
   try {
     const res = await callAPI(
-      `/auth/notifications?page=${notiState.page}&size=${notiState.size}`,
+      `/notifications?page=${notiState.page}&size=${notiState.size}`,
       "GET"
     );
     if (res && res.success && res.data && Array.isArray(res.data.listData)) {
@@ -346,5 +346,5 @@ window.deleteNoti = async (id, e) => {
   if (!id || id === "undefined") return;
   const item = document.getElementById(`noti-${id}`);
   if (item) item.remove();
-  await callAPI("/auth/notifications/delete", "POST", [id]);
+  await callAPI("/notifications/delete", "POST", [id]);
 };
