@@ -179,44 +179,110 @@ async function loadProductForEdit(id) {
     UI.setLoading(true);
 
     try {
-        const product = await ProductService.getProductById(id);
-        if (!product) {
+        const response = await ProductService.getProductById(id);
+        if (!response) {
             alert("Không tìm thấy sản phẩm! Vui lòng kiểm tra lại ID.");
+            UI.setLoading(false);
+            return;
+        }
+
+        // Debug: Log response to see structure
+        console.log("Product API Response:", response);
+
+        // Handle different response structures
+        // API might return: { productDetailDTO, productVariantsDTO, attributeDTOList }
+        // or direct product object
+        const productDetail = response.productDetailDTO || response;
+        const variants = response.productVariantsDTO || response.variants || [];
+        const attributes = response.attributeDTOList || response.attributes || [];
+
+        if (!productDetail) {
+            alert("Dữ liệu sản phẩm không hợp lệ!");
+            UI.setLoading(false);
+            return;
+        }
+
+        // Get productId - try multiple possible fields
+        const productId = productDetail.productId || productDetail.id || id;
+        if (!productId) {
+            alert("Không tìm thấy ID sản phẩm!");
             UI.setLoading(false);
             return;
         }
 
         // Set State
         state.isEdit = true;
-        state.currentId = product.productId;
-        state.currentMainImageUrl = product.imageName ? `/images/${product.imageName}` : "";
+        state.currentId = productId;
+        
+        // Handle image - try multiple possible fields
+        const imageName = productDetail.imageName || productDetail.imageUrl || "";
+        state.currentMainImageUrl = imageName ? (imageName.startsWith('/') ? imageName : `/images/${imageName}`) : "";
 
         // Fill Form
-        UI.els.productName.value = product.productName || "";
-        UI.els.description.value = product.description || "";
-        UI.els.price.value = product.price || 0;
-        UI.els.priceOriginal.value = product.originalPrice || 0;
+        UI.els.productName.value = productDetail.productName || "";
+        UI.els.description.value = productDetail.description || "";
+        
+        // Handle price - might be in productDetail or variants
+        const basePrice = productDetail.price || 0;
+        const baseOriginalPrice = productDetail.originalPrice || 0;
+        UI.els.price.value = basePrice;
+        UI.els.priceOriginal.value = baseOriginalPrice;
 
         // Category & Brand
-        UI.els.categoryId.value = product.categoryId || "";
-        if (product.categoryId) {
-            const brands = await ProductService.getBrandsByCategory(product.categoryId);
+        const categoryId = productDetail.categoryId || "";
+        const brandId = productDetail.brandId || "";
+        UI.els.categoryId.value = categoryId;
+        if (categoryId) {
+            const brands = await ProductService.getBrandsByCategory(categoryId);
             state.brands = brands || [];
-            UI.renderBrands(state.brands, product.categoryId, product.brandId);
+            UI.renderBrands(state.brands, categoryId, brandId);
         }
 
-        // Variants
-        state.variants = (product.variants || []).map(v => ({
-            id: v.variantId,
-            name: v.variantName || v.variantId,
-            comboValues: v.comboValues || [],
-            price: v.price || 0,
-            priceOriginal: v.originalPrice || 0,
-            stock: v.stock || 0,
-            imageName: v.imageName || "",
-            previewUrl: v.imageName ? `/images/${v.imageName}` : "",
-            rawFile: null
-        }));
+        // Load attributes if available
+        if (attributes && attributes.length > 0) {
+            // Reconstruct attribute rows from API data
+            state.currentAttrs = attributes.map(attr => {
+                const values = (attr.attributeValues || []).map(v => v.attributeValueName || v);
+                return {
+                    id: attr.attributeId,
+                    name: attr.attributeName,
+                    values: values,
+                    valueIdMap: {}
+                };
+            });
+            
+            // Render attribute rows
+            UI.els.attrContainer.innerHTML = "";
+            state.currentAttrs.forEach(attr => {
+                const valuesStr = attr.values.join(", ");
+                UI.addAttrRow(attr.name, valuesStr, null, attr.id, [], {}, state.attributes || []);
+            });
+        }
+
+        // Variants - handle different structures
+        state.variants = variants.map(v => {
+            // Try to get variant name from attributes if available
+            let variantName = v.variantName || v.variantId || "";
+            let comboValues = v.comboValues || [];
+            
+            // If no comboValues, try to reconstruct from variant attributes
+            if (!comboValues.length && v.attributeValues) {
+                comboValues = v.attributeValues.map(av => av.attributeValueName || av);
+                variantName = comboValues.join(" - ");
+            }
+            
+            return {
+                id: v.variantId || v.id,
+                name: variantName,
+                comboValues: comboValues,
+                price: v.price || basePrice,
+                priceOriginal: v.originalPrice || v.originalPrice || baseOriginalPrice,
+                stock: v.stock || 0,
+                imageName: v.imageName || "",
+                previewUrl: v.imageName ? `/images/${v.imageName}` : (v.imageUrl || ""),
+                rawFile: null
+            };
+        });
 
         UI.renderMainImage(state.currentMainImageUrl);
         UI.renderVariants(state.variants);
@@ -243,6 +309,7 @@ async function loadProductForEdit(id) {
 
     } catch (e) {
         console.error("Lỗi khi tải sản phẩm:", e);
+        console.error("Response data:", e);
         alert("Lỗi khi tải dữ liệu: " + (e.message || "Không xác định"));
     } finally {
         UI.setLoading(false);
