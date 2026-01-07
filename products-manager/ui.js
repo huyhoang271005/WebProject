@@ -1,247 +1,231 @@
-// ui.js
+// ui.js - UI Management for Products Manager
 export const UI = {
-    // Cache sẵn các Element
+    // Cache Elements
     els: {
-        list: document.getElementById("listView"),
-        form: document.getElementById("createView"),
-        
-        tableBody: document.getElementById("productTableBody"), 
-        
-        cateSelect: document.getElementById("categoryId"),
-        brandSelect: document.getElementById("brandId"),
+        // Views
+        addView: document.getElementById('addView'),
+        editView: document.getElementById('editView'),
+
+        // Tabs
+        btnTabAdd: document.getElementById('btnTabAdd'),
+        btnTabEdit: document.getElementById('btnTabEdit'),
+
+        // Form Inputs
+        form: document.getElementById("productForm"),
+        productName: document.getElementById("productName"),
+        description: document.getElementById("description"),
+        price: document.getElementById("price"),
+        priceOriginal: document.getElementById("priceOriginal"),
+        categoryId: document.getElementById("categoryId"),
+        brandId: document.getElementById("brandId"),
+        mainImageInput: document.getElementById("mainImage"),
+        mainImagePreview: document.getElementById("mainImagePreview"),
+
+        // Form Actions
+        btnSubmit: document.getElementById("btnSubmit"),
+        submitBtnText: document.getElementById("submitBtnText"),
+        submitSpinner: document.getElementById("submitSpinner"),
+        btnReset: document.getElementById("btnReset"),
+
+        // Variant Containers
         attrContainer: document.getElementById("attributesContainer"),
-        variantWrapper: document.getElementById("variantsContainer"),
-        formTitle: document.querySelector("#createView h2"),
-        mainImgPreview: document.getElementById("mainImagePreview"),
-        mainImgInput: document.getElementById("mainImage")
+        variantContainer: document.getElementById("variantsContainer"),
+        btnAddAttr: document.getElementById("btnAddAttr"),
+        btnGenerateVariants: document.getElementById("btnGenerateVariants"),
+
+        // Edit View
+        searchProductInput: document.getElementById("searchProductInput"),
+        btnSearchProduct: document.getElementById("btnSearchProduct")
     },
 
-    switchView: (viewName) => {
-        if (viewName === 'list') {
-            if(UI.els.list) UI.els.list.classList.remove('d-none');
-            if(UI.els.form) UI.els.form.classList.add('d-none');
+    // Switch between Add and Edit views
+    switchView(viewName) { // 'add' or 'edit'
+        if (viewName === 'add') {
+            UI.els.addView.classList.remove('d-none');
+            UI.els.editView.classList.add('d-none');
+            UI.els.btnTabAdd.classList.remove('btn-outline-success');
+            UI.els.btnTabAdd.classList.add('btn-success');
+            UI.els.btnTabEdit.classList.remove('btn-primary');
+            UI.els.btnTabEdit.classList.add('btn-outline-primary');
         } else {
-            if(UI.els.list) UI.els.list.classList.add('d-none');
-            if(UI.els.form) UI.els.form.classList.remove('d-none');
+            UI.els.addView.classList.add('d-none');
+            UI.els.editView.classList.remove('d-none');
+            UI.els.btnTabAdd.classList.remove('btn-success');
+            UI.els.btnTabAdd.classList.add('btn-outline-success');
+            UI.els.btnTabEdit.classList.remove('btn-outline-primary');
+            UI.els.btnTabEdit.classList.add('btn-primary');
         }
     },
 
-    renderTable: (products) => {
-        if (!UI.els.tableBody) return;
-
-        if (!products || !products.length) {
-            UI.els.tableBody.innerHTML = `
-                <tr>
-                    <td colspan="6" class="text-center py-5 text-muted">
-                        Không có dữ liệu
-                    </td>
-                </tr>`;
-            return;
+    setLoading(isLoading) {
+        if (isLoading) {
+            UI.els.btnSubmit.disabled = true;
+            UI.els.submitSpinner.classList.remove('d-none');
+        } else {
+            UI.els.btnSubmit.disabled = false;
+            UI.els.submitSpinner.classList.add('d-none');
         }
-
-        const fmt = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' });
-
-        UI.els.tableBody.innerHTML = products.map(p => {
-            let imgUrl = "https://via.placeholder.com/50";
-            if (p.imageUrl) imgUrl = p.imageUrl;
-            else if (p.imageName) imgUrl = `/images/${p.imageName}`;
-
-            const priceOriginalDisplay = (p.priceOriginal && p.priceOriginal > 0)
-                ? fmt.format(p.priceOriginal) 
-                : '-';
-
-            const variantCount = p.variants ? p.variants.length : 0;
-            const variantBadge = variantCount > 0 
-                ? `<span class="badge bg-info text-white">${variantCount} loại</span>` 
-                : `<span class="badge bg-secondary">Đơn thể</span>`;
-
-            return `
-            <tr>
-                <td class="ps-4">
-                    <div class="d-flex align-items-center gap-3">
-                        <img src="${imgUrl}" style="width:50px; height:50px; object-fit:cover; border-radius:4px; border: 1px solid #dee2e6;">
-                        <strong>${p.productName}</strong>
-                    </div>
-                </td>
-                <td>${p.categoryName || '-'} <br> <small class="text-muted">${p.brandName || '-'}</small></td>
-                <td style="color: #999; text-decoration: line-through;">${priceOriginalDisplay}</td>
-                <td style="color:#d32f2f; font-weight:bold; font-size:1.1em">${fmt.format(p.price)}</td>
-                <td>${variantBadge}</td>
-                <td class="text-end pe-4">
-                    <button onclick="window.editProduct('${p.productId}')" class="btn btn-sm btn-outline-primary" title="Sửa"><i class="bi bi-pencil-square"></i></button>
-                    <button onclick="window.deleteProduct('${p.productId}')" class="btn btn-sm btn-outline-danger" title="Xóa"><i class="bi bi-trash"></i></button>
-                </td>
-            </tr>`;
-        }).join('');
     },
 
+    // FORM HELPERS
     renderBrands: (brands, cateId, selectedBrandId = null) => {
-        if (!UI.els.brandSelect) return;
-        UI.els.brandSelect.innerHTML = `<option value="">-- Chọn thương hiệu --</option>`;
+        const sel = UI.els.brandId;
+        if (!sel) return;
+        sel.innerHTML = `<option value="">-- Chọn thương hiệu --</option>`;
         if (!cateId) return;
+
         const filtered = brands.filter(b => b.categoryId == cateId);
         (filtered.length ? filtered : brands).forEach(b => {
             const selected = (selectedBrandId && b.brandId == selectedBrandId) ? 'selected' : '';
-            UI.els.brandSelect.innerHTML += `<option value="${b.brandId}" ${selected}>${b.brandName}</option>`;
+            sel.innerHTML += `<option value="${b.brandId}" ${selected}>${b.brandName}</option>`;
+        });
+    },
+
+    renderCategories: (cates) => {
+        const sel = UI.els.categoryId;
+        if (!sel) return;
+        sel.innerHTML = `<option value="">-- Chọn danh mục --</option>`;
+        cates.forEach(c => {
+            sel.innerHTML += `<option value="${c.categoryId}">${c.categoryName}</option>`;
         });
     },
 
     renderMainImage: (src) => {
-        const preview = document.getElementById("mainImagePreview");
+        const preview = UI.els.mainImagePreview;
         if (!preview) return;
-        if (src) preview.innerHTML = `<img src="${src}" class="img-fluid rounded" style="max-height: 300px;">`;
-        else preview.innerHTML = `<p class="text-muted">Chưa chọn ảnh</p>`;
+
+        if (src) {
+            preview.innerHTML = `<img src="${src}" class="img-fluid w-100 h-100" style="object-fit: contain;">`;
+        } else {
+            preview.innerHTML = `
+                <div class="text-center text-muted">
+                    <i class="bi bi-image fs-1 d-block mb-2"></i>
+                    <small>Chưa có ảnh</small>
+                </div>`;
+        }
     },
 
+    // Attribute Row
     addAttrRow: (nameVal = "", valuesVal = "", onInputCallback, attrId = null, valueIds = [], valueIdMap = {}, allAttributes = []) => {
         if (!UI.els.attrContainer) return;
         const div = document.createElement("div");
-        div.className = "mb-3 attr-row"; // Thêm class attr-row để logic.js tìm được
+        div.className = "mb-3 attr-row border rounded p-3 bg-light";
         if (attrId) div.dataset.attrId = attrId;
         if (Object.keys(valueIdMap).length) div.dataset.valueIdMap = JSON.stringify(valueIdMap);
-        
-        const attrOptions = allAttributes.map(attr => 
+
+        const attrOptions = allAttributes.map(attr =>
             `<option value="${attr.attributeId}" ${attrId === attr.attributeId ? 'selected' : ''}>${attr.attributeName}</option>`
         ).join('');
 
         div.innerHTML = `
             <div class="row g-2 align-items-center">
-                <div class="col-md-3">
-                    <select class="inp-attr-select form-select">
+                <div class="col-md-4">
+                    <select class="inp-attr-select form-select form-select-sm">
                         <option value="">-- Chọn thuộc tính --</option>
                         ${attrOptions}
                     </select>
                 </div>
-                <div class="col-md-8">
-                    <input type="text" class="inp-attr-vals form-control" value="${valuesVal}" placeholder="Nhập giá trị (ngăn cách phẩy). VD: Đỏ, Xanh, Vàng">
+                <div class="col-md-7">
+                    <input type="text" class="inp-attr-vals form-control form-control-sm" value="${valuesVal}" placeholder="Giá trị (VD: Đỏ, Xanh)">
                 </div>
-                <div class="col-md-1">
-                    <button type="button" class="btn-remove btn btn-outline-danger w-100"><i class="bi bi-x-lg"></i></button>
+                <div class="col-md-1 text-end">
+                    <button type="button" class="btn-remove btn btn-sm btn-outline-danger"><i class="bi bi-x-lg"></i></button>
                 </div>
             </div>`;
 
         const selectEl = div.querySelector(".inp-attr-select");
         const inputEl = div.querySelector(".inp-attr-vals");
-        
+
         selectEl.onchange = (e) => {
             const selectedAttr = allAttributes.find(a => a.attributeId === e.target.value);
-            if(selectedAttr) {
-                 div.dataset.attrId = selectedAttr.attributeId;
-                 if(selectedAttr.attributeValues && selectedAttr.attributeValues.length) {
-                     inputEl.value = selectedAttr.attributeValues.map(v => v.attributeValueName).join(", ");
-                 }
+            if (selectedAttr) {
+                div.dataset.attrId = selectedAttr.attributeId;
+                if (selectedAttr.attributeValues && selectedAttr.attributeValues.length) {
+                    inputEl.value = selectedAttr.attributeValues.map(v => v.attributeValueName).join(", ");
+                }
             }
-            if(onInputCallback) onInputCallback();
+            if (onInputCallback) onInputCallback();
         }
-        inputEl.oninput = () => { if(onInputCallback) onInputCallback(); };
-        div.querySelector(".btn-remove").onclick = () => { div.remove(); if(onInputCallback) onInputCallback(); };
+        inputEl.oninput = () => { if (onInputCallback) onInputCallback(); };
+        div.querySelector(".btn-remove").onclick = () => { div.remove(); if (onInputCallback) onInputCallback(); };
         UI.els.attrContainer.appendChild(div);
     },
 
-    // === PHẦN SỬA ĐỔI QUAN TRỌNG: RENDER BẢNG BIẾN THỂ ===
+    // Variants Table
     renderVariants: (variants) => {
-        if (!UI.els.variantWrapper) return;
+        if (!UI.els.variantContainer) return;
 
         if (!variants || !variants.length) {
-            UI.els.variantWrapper.innerHTML = "";
+            UI.els.variantContainer.innerHTML = "";
             return;
         }
 
-        // HTML Thanh thao tác hàng loạt (Bulk Edit)
-        const bulkActionHTML = `
-            <div class="card bg-light mb-3 border-primary border-opacity-25">
-                <div class="card-body py-2">
-                    <div class="row g-2 align-items-end">
-                        <div class="col-auto"><strong class="text-primary small"><i class="bi bi-layers-fill me-1"></i>Thiết lập hàng loạt:</strong></div>
-                        <div class="col"><input type="number" id="bulk_price_org" class="form-control form-control-sm" placeholder="Giá gốc chung"></div>
-                        <div class="col"><input type="number" id="bulk_price" class="form-control form-control-sm" placeholder="Giá bán chung"></div>
-                        <div class="col"><input type="number" id="bulk_stock" class="form-control form-control-sm" placeholder="Kho chung"></div>
-                        <div class="col-auto">
-                            <button type="button" class="btn btn-sm btn-primary" onclick="window.applyBulkInfo()">
-                                <i class="bi bi-check2-all"></i> Áp dụng
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        `;
-
-        // HTML Bảng danh sách
         const tableHTML = `
-            <div class="table-responsive">
-                <table class="table table-bordered table-hover align-middle mb-0" style="font-size: 14px;">
-                    <thead class="table-light text-center text-muted">
-                        <tr>
-                            <th style="width: 60px;">Ảnh</th>
-                            <th class="text-start">Tên phân loại</th>
-                            <th style="width: 140px;">Giá gốc (₫)</th>
-                            <th style="width: 140px;">Giá bán (₫)</th>
-                            <th style="width: 100px;">Kho</th>
-                            <th style="width: 50px;"><i class="bi bi-trash"></i></th>
+            <div class="table-responsive rounded border">
+                <table class="table table-sm align-middle mb-0 bg-white">
+                    <thead class="table-light">
+                        <tr class="text-center">
+                            <th width="50">Ảnh</th>
+                            <th class="text-start">Phân loại</th>
+                            <th width="100">Giá gốc</th>
+                            <th width="100">Giá bán</th>
+                            <th width="80">Kho</th>
+                            <th width="40"></th>
                         </tr>
                     </thead>
                     <tbody>
                         ${variants.map((v, i) => {
-                            const imgSrc = v.previewUrl ? v.previewUrl : (v.imageUrl || "");
-                            return `
+            const imgSrc = v.previewUrl ? v.previewUrl : (v.imageUrl || "");
+            return `
                             <tr>
-                                <td class="text-center">
-                                    <div style="width: 48px; height: 48px; margin: 0 auto; cursor: pointer; border: 1px dashed #adb5bd; border-radius: 4px; overflow: hidden; position: relative; background: #fff;"
-                                         onclick="document.getElementById('v_file_${i}').click()"
-                                         title="Tải ảnh lên">
-                                        ${imgSrc 
-                                            ? `<img src="${imgSrc}" style="width:100%; height:100%; object-fit:cover;">` 
-                                            : `<div class="d-flex align-items-center justify-content-center h-100 text-secondary"><i class="bi bi-camera-fill"></i></div>`
-                                        }
+                                <td class="text-center p-1">
+                                    <div class="ratio ratio-1x1 mx-auto bg-light rounded border position-relative" style="width: 40px; cursor: pointer;"
+                                         onclick="document.getElementById('v_file_${i}').click()">
+                                         ${imgSrc ? `<img src="${imgSrc}" class="w-100 h-100" style="object-fit: cover;">` : `<i class="bi bi-camera text-muted position-absolute top-50 start-50 translate-middle"></i>`}
                                     </div>
                                     <input type="file" id="v_file_${i}" hidden onchange="window.handleSelectVariantImage(${i}, this)" accept="image/*">
                                 </td>
                                 <td>
-                                    <strong class="text-dark">${v.name}</strong>
-                                    <div class="small text-muted">${v.comboValues.join(" - ")}</div>
+                                    <div class="fw-bold text-dark small">${v.name || ""}</div>
+                                    <div class="text-muted" style="font-size: 0.75rem;">${(v.comboValues && v.comboValues.length) ? v.comboValues.join(" - ") : ""}</div>
                                 </td>
                                 <td>
-                                    <input type="number" class="form-control form-control-sm" 
-                                        value="${v.priceOriginal}" 
-                                        onchange="window.updateVar(${i},'priceOriginal',this.value)" placeholder="0">
+                                    <input type="number" class="form-control form-control-sm text-end" value="${v.priceOriginal}" onchange="window.updateVar(${i},'priceOriginal',this.value)">
                                 </td>
                                 <td>
-                                    <input type="number" class="form-control form-control-sm fw-bold text-success" 
-                                        value="${v.price}" 
-                                        onchange="window.updateVar(${i},'price',this.value)" placeholder="0">
+                                    <input type="number" class="form-control form-control-sm text-end fw-bold text-primary" value="${v.price}" onchange="window.updateVar(${i},'price',this.value)">
                                 </td>
                                 <td>
-                                    <input type="number" class="form-control form-control-sm text-center" 
-                                        value="${v.stock}" 
-                                        onchange="window.updateVar(${i},'stock',this.value)" placeholder="0">
+                                    <input type="number" class="form-control form-control-sm text-center" value="${v.stock}" onchange="window.updateVar(${i},'stock',this.value)">
                                 </td>
                                 <td class="text-center">
-                                    <button type="button" onclick="window.removeVariant(${i})" class="btn btn-sm btn-link text-danger p-0">
-                                        <i class="bi bi-x-circle-fill" style="font-size: 1.2rem;"></i>
-                                    </button>
+                                    <button type="button" onclick="window.removeVariant(${i})" class="btn btn-link text-danger p-0"><i class="bi bi-trash"></i></button>
                                 </td>
                             </tr>`;
-                        }).join('')}
+        }).join('')}
                     </tbody>
                 </table>
             </div>
+            <div class="form-text mt-1 text-end"><i class="bi bi-info-circle"></i> Nhập giá trị để cập nhật tự động.</div>
         `;
 
-        UI.els.variantWrapper.innerHTML = `
-            <div class="d-flex align-items-center justify-content-between mb-2">
-                <h6 class="fw-bold m-0 text-primary">Danh sách phân loại hàng (${variants.length})</h6>
-            </div>
-            ${bulkActionHTML}
-            ${tableHTML}
-        `;
+        UI.els.variantContainer.innerHTML = tableHTML;
     },
 
-    resetForm: (isEdit) => {
-        const form = document.getElementById("productForm");
-        if(form) form.reset();
-        if(UI.els.attrContainer) UI.els.attrContainer.innerHTML = "";
-        if(UI.els.variantWrapper) UI.els.variantWrapper.innerHTML = "";
-        if(UI.els.formTitle) UI.els.formTitle.innerText = isEdit ? "Cập nhật sản phẩm" : "Thêm Sản Phẩm Mới";
+
+    resetForm: () => {
+        if (!UI.els.form) return;
+        UI.els.form.reset();
+        UI.els.productName.value = "";
+        UI.els.description.value = "";
+        UI.els.price.value = "";
+        UI.els.priceOriginal.value = "";
+        UI.els.categoryId.value = "";
+        UI.els.brandId.innerHTML = '<option value="">-- Chọn thương hiệu --</option>';
+
+        UI.els.attrContainer.innerHTML = "";
+        UI.els.variantContainer.innerHTML = "";
         UI.renderMainImage(null);
+        UI.els.submitBtnText.innerText = "Lưu Sản Phẩm";
     }
 };
