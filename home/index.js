@@ -56,7 +56,7 @@ async function renderHomeSections() {
   container.innerHTML = "";
 
   // [CHỐT] Chỉ gọi duy nhất 1 API này (Đã test thành công)
-  const res = await callAPI("/auth/products?page=0&size=15", "GET", null);
+  const res = await callAPI("/products?page=0&size=15", "GET", null);
 
   if (res && res.success) {
     const listData = res.data?.listData || [];
