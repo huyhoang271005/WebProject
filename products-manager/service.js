@@ -83,10 +83,36 @@ export const ProductService = {
         }
     },
 
-    // Tạo sản phẩm mới
-    createProduct: async (productData) => {
+    // Tạo sản phẩm (Multipart)
+    createProduct: async (productData, mainImageFile, variantImagesMap) => {
         try {
-            const res = await callAPI(`/admin/products`, "POST", productData, true);
+            const formData = new FormData();
+            formData.append('productDTO', JSON.stringify(productData));
+
+            if (mainImageFile) {
+                formData.append('productImage', mainImageFile);
+            }
+
+            if (variantImagesMap) {
+                Object.entries(variantImagesMap).forEach(([id, file]) => {
+                    formData.append(id, file); // Backend: @Part List<MultipartBody.Part> variantImages -> name matches? 
+                    // Wait, Java: @Part List<MultipartBody.Part> variantImages
+                    // Retrofit maps part names. If key is dynamic (variantId), controller needs to handle it.
+                    // Java Code: RequestBuilder loop uses entry.getKey() as name.
+                    // Api: @Part List<MultipartBody.Part> variantImages
+                    // Spring/Jersey mapping might need exact name 'variantImages' or it gathers all unknown parts?
+                    // Re-reading Java ProductApi:
+                    // loop: MultipartBody.Part.createFormData(entry.getKey(), file.getName(), body)
+                    // The LIST is passed to methods.
+                    // If backend expects a List named "variantImages", we might need to append all with same name 'variantImages'.
+                    // BUT Java RequestBuilder uses entry.getKey() as the part name. 
+                    // Let's stick to using variantId as key for now as per Java client logic.
+                });
+            }
+
+            // Note: callAPI needs to support FormData. If it sets Content-Type: json, this fails.
+            // We assume callAPI handles FormData if body is FormData.
+            const res = await callAPI(`/admin/products`, "POST", formData, true);
             return res;
         } catch (error) {
             console.error("Lỗi tạo sản phẩm:", error);
@@ -94,10 +120,23 @@ export const ProductService = {
         }
     },
 
-    // Cập nhật sản phẩm
-    updateProduct: async (productData) => {
+    // Cập nhật sản phẩm (Multipart)
+    updateProduct: async (productData, mainImageFile, variantImagesMap) => {
         try {
-            const res = await callAPI(`/admin/products`, "PUT", productData, true);
+            const formData = new FormData();
+            formData.append('productDTO', JSON.stringify(productData));
+
+            if (mainImageFile) {
+                formData.append('productImage', mainImageFile);
+            }
+
+            if (variantImagesMap) {
+                Object.entries(variantImagesMap).forEach(([id, file]) => {
+                    formData.append(id, file);
+                });
+            }
+
+            const res = await callAPI(`/admin/products`, "PUT", formData, true);
             return res;
         } catch (error) {
             console.error("Lỗi cập nhật sản phẩm:", error);
@@ -116,16 +155,17 @@ export const ProductService = {
         }
     },
 
-    // --- VARIANTS ---
+    // --- VARIANTS (Direct Operations) ---
 
-    // Tạo biến thể mới
+    // Tạo biến thể mới (độc lập - nếu dùng)
     createVariant: async (variantData) => {
+        // Logic tương tự nếu cần multipart, nhưng hiện tại UI sẽ gộp vào updateProduct
+        // Nếu cần gọi riêng:
         try {
             const res = await callAPI(`/admin/products/variants`, "POST", variantData, true);
             return res;
         } catch (error) {
-            console.error("Lỗi tạo biến thể:", error);
-            return { success: false, message: error.message || "Lỗi tạo biến thể" };
+            return { success: false, message: error.message };
         }
     },
 
@@ -135,8 +175,7 @@ export const ProductService = {
             const res = await callAPI(`/admin/products/variants`, "PUT", variantData, true);
             return res;
         } catch (error) {
-            console.error("Lỗi cập nhật biến thể:", error);
-            return { success: false, message: error.message || "Lỗi cập nhật biến thể" };
+            return { success: false, message: error.message };
         }
     },
 

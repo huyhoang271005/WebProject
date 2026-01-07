@@ -1,97 +1,118 @@
-// payloadBuilder.js
-import { Utils } from "./utils.js";
-
 export const PayloadBuilder = {
-    buildProductPayload: (data) => {
-        const {
-            isEdit, currentId,
-            productName, description, price, originalPrice,
-            categoryId, brandId, currentMainImageUrl,
-            attributes, variants, mainImageFile
-        } = data;
+    // Tạo UUID v4
+    uuidv4: () => {
+        return "10000000-1000-4000-8000-100000000000".replace(/[018]/g, c =>
+            (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
+        );
+    },
 
-        const payload = {
-            productDetailDTO: {
-                productId: isEdit ? currentId : null,
-                productName: productName,
-                description: description,
-                price: String(price),
-                originalPrice: String(originalPrice),
-                categoryId: categoryId,
-                brandId: brandId,
-                imageUrl: currentMainImageUrl || ""
-            },
-            attributes: [],
-            variants: [],
-            variantValues: []
+    // Build ProductDTO & Images Map từ dữ liệu Form
+    build: (baseInfo, variantsList) => {
+        // baseInfo: { name, description, categoryId, brandId, originalPrice, price, id (optional) }
+        // variantsList: Array of { id (opt), sku, priceImport, price, stock, imageFile (opt), attributes: [{name, value}] }
+
+        const productDetailDTO = {
+            productId: baseInfo.id || null, // Nếu null -> Backend tự tạo hoặc ignore
+            productName: baseInfo.name,
+            description: baseInfo.description,
+            categoryId: baseInfo.categoryId,
+            brandId: baseInfo.brandId,
+            originalPrice: baseInfo.originalPrice.toString(),
+            price: baseInfo.price.toString()
         };
 
-        const attrValueIdMap = {};
+        const attributes = [];
+        const variants = [];
+        const variantValues = [];
+        const variantImagesMap = {}; // Key: variantId, Value: File
 
-        // 1. Process Attributes
-        attributes.forEach(attr => {
-            const attributeId = attr.id || Utils.generateUUID();
-            attr.id = attributeId;
+        // 1. Xử lý Attributes & Values (Group by Name)
+        // Map: AttrName -> { id, name, values: { ValName -> id } }
+        const attrMap = {};
 
-            const attrValues = attr.values.map(v => {
-                const existingValueId = attr.valueIdMap[v];
-                const valueId = existingValueId ? existingValueId : Utils.generateUUID();
+        // Duyệt tất cả variants để thu thập attributes
+        variantsList.forEach(v => {
+            if (v.attributes) {
+                v.attributes.forEach(attr => {
+                    const aName = attr.name.trim();
+                    const aVal = attr.value.trim();
 
-                attrValueIdMap[`${attributeId}-${v}`] = valueId;
+                    if (!attrMap[aName]) {
+                        attrMap[aName] = {
+                            attributeId: PayloadBuilder.uuidv4(),
+                            attributeName: aName,
+                            values: {} // Map valueName -> valueId
+                        };
+                    }
 
-                return {
-                    attributeValueId: valueId,
-                    attributeValueName: v
-                };
-            });
+                    if (!attrMap[aName].values[aVal]) {
+                        attrMap[aName].values[aVal] = PayloadBuilder.uuidv4();
+                    }
+                });
+            }
+        });
 
-            payload.attributes.push({
-                attributeId: attributeId,
-                attributeName: attr.name,
+        // Convert attrMap to List<AttributeDTO>
+        Object.values(attrMap).forEach(a => {
+            const attrValues = Object.entries(a.values).map(([valName, valId]) => ({
+                attributeValueId: valId,
+                attributeValueName: valName
+            }));
+
+            attributes.push({
+                attributeId: a.attributeId,
+                attributeName: a.attributeName,
                 attributeValues: attrValues
             });
         });
 
-        // 2. Process Variants
-        const formData = new FormData();
+        // 2. Xử lý Variants & VariantValues
+        variantsList.forEach(v => {
+            const variantId = v.id || PayloadBuilder.uuidv4();
 
-        variants.forEach(v => {
-            const variantAttrValues = (v.comboValues || []).map((val, valIdx) => {
-                const attr = attributes[valIdx];
-                if (!attr) return null;
-                const valueId = attrValueIdMap[`${attr.id}-${val}`];
-                if (!valueId) return null;
-                return {
-                    variantId: v.id,
-                    attributeValueId: valueId
-                };
-            }).filter(Boolean);
-
-            payload.variants.push({
-                variantId: v.id,
-                price: String(v.price),
-                originalPrice: String(v.priceOriginal),
-                stock: v.stock,
-                imageName: v.id,
+            // VariantDTO
+            variants.push({
+                variantId: variantId,
+                imageName: variantId, // Backend uses ID as image name often
+                originalPrice: v.priceImport.toString(),
+                price: v.price.toString(),
+                stock: parseInt(v.quantity) || 0,
                 sold: 0,
-                active: true
+                active: true,
+                sku: v.sku || ''
             });
 
-            variantAttrValues.forEach(vv => payload.variantValues.push(vv));
+            // Variant Images
+            if (v.imageFile) {
+                variantImagesMap[variantId] = v.imageFile;
+            }
 
-            if (v.rawFile) {
-                formData.append(v.id, v.rawFile);
+            // VariantValues (Link Variant -> AttributeValue)
+            if (v.attributes) {
+                v.attributes.forEach(attr => {
+                    const aName = attr.name.trim();
+                    const aVal = attr.value.trim();
+
+                    if (attrMap[aName] && attrMap[aName].values[aVal]) {
+                        variantValues.push({
+                            variantId: variantId,
+                            attributeValueId: attrMap[aName].values[aVal]
+                        });
+                    }
+                });
             }
         });
 
-        // Main Image
-        if (mainImageFile) {
-            formData.append("productImage", mainImageFile);
-        }
+        const productDTO = {
+            productDetailDTO,
+            attributes,
+            variants,
+            variantValues
+        };
 
-        // ProductDTO
-        formData.append("productDTO", new Blob([JSON.stringify(payload)], { type: "application/json" }));
-
-        return formData;
+        return {
+            productDTO,
+            variantImagesMap
+        };
     }
 };

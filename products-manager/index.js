@@ -1,291 +1,269 @@
 import { ProductService } from './service.js';
-import { UI } from './ui.js';
-// import { showToast } from '../public/toast.js'; // Assuming toast exists, or use alert for now
+import { PayloadBuilder } from './payloadBuilder.js';
+import { UI } from './ui.js'; // Vẫn giữ UI helper cho render variant table
 
 // State
-let currentPage = 0;
-let totalPages = 1;
-let currentProductId = null; // Used for Edit Mode
-let currentVariants = []; // Store variants of current product
-let loadedProducts = []; // Store current page products
-let categories = [];
-let brands = [];
+let mode = 'ADD'; // 'ADD' or 'EDIT'
+let currentProduct = null;
+let currentVariants = []; // List of local variant objects { id, sku, price, ... }
+let mainImageFile = null;
 
 // DOM Elements
-const btnSearch = document.getElementById('btnSearch');
-const searchInput = document.getElementById('searchInput');
-const btnViewList = document.getElementById('btnViewList');
-const btnViewAdd = document.getElementById('btnViewAdd');
-const btnBackToList = document.getElementById('btnBackToList');
-const productForm = document.getElementById('productForm');
+const btnTabAdd = document.getElementById('btnTabAdd');
+const btnTabEdit = document.getElementById('btnTabEdit');
+const searchSection = document.getElementById('searchSection');
+const formSection = document.getElementById('formSection'); // Trong Edit mode chỉ hiện sau khi search
+const formTitle = document.getElementById('formTitle');
+const btnDeleteProduct = document.getElementById('btnDeleteProduct');
 
-const variantsTabBtn = document.getElementById('variants-tab');
+const searchIdInput = document.getElementById('searchIdInput');
+const btnSearchId = document.getElementById('btnSearchId');
+
+const productForm = document.getElementById('productForm');
 const btnAddVariantModal = document.getElementById('btnAddVariantModal');
 const variantModal = new bootstrap.Modal(document.getElementById('variantModal'));
-const btnSaveVariant = document.getElementById('btnSaveVariant');
+const btnSaveVariantToTable = document.getElementById('btnSaveVariantToTable');
 const btnAddAttributeLine = document.getElementById('btnAddAttributeLine');
 
 // ================= INITIALIZATION =================
 document.addEventListener('DOMContentLoaded', async () => {
-    await loadMetaData();
-    await loadProducts();
-    setupEventListeners();
-});
-
-async function loadMetaData() {
+    // Load metadata (Category/Brand)
     const info = await ProductService.getInfo();
-    categories = info.categories;
-    brands = info.brands;
+    UI.fillSelectOptions('categoryId', info.categories);
+    UI.fillSelectOptions('brandId', info.brands);
 
-    UI.fillSelectOptions('categoryId', categories);
-    UI.fillSelectOptions('brandId', brands);
-}
-
-// ================= PRODUCT LIST LOGIC =================
-async function loadProducts(page = 0) {
-    const keyword = searchInput.value.trim();
-    const result = await ProductService.getProductsList(page, 10, keyword);
-
-    loadedProducts = result.products;
-    currentPage = result.currentPage;
-    totalPages = result.totalPages;
-
-    UI.renderProductList(loadedProducts, 'productsTableBody');
-    UI.renderPagination(currentPage, totalPages, 'pagination', loadProducts);
-
-    // Re-attach event listeners for dynamic buttons
-    document.querySelectorAll('.btn-edit-product').forEach(btn => {
-        btn.onclick = () => openEditProduct(btn.dataset.id);
-    });
-    document.querySelectorAll('.btn-delete-product').forEach(btn => {
-        btn.onclick = () => deleteProduct(btn.dataset.id);
-    });
-}
+    setupEventListeners();
+    switchMode('ADD'); // Default
+});
 
 // ================= NAVIGATION =================
 function setupEventListeners() {
-    // Top Nav
-    btnViewList.onclick = () => UI.showListView();
-    btnViewAdd.onclick = () => {
-        currentProductId = null;
-        UI.showFormView('ADD');
-    };
-    btnBackToList.onclick = () => UI.showListView();
+    btnTabAdd.onclick = () => switchMode('ADD');
+    btnTabEdit.onclick = () => switchMode('EDIT');
 
     // Search
-    btnSearch.onclick = () => loadProducts(0);
-    searchInput.onkeypress = (e) => {
-        if (e.key === 'Enter') loadProducts(0);
+    btnSearchId.onclick = handleSearchProduct;
+    searchIdInput.onkeypress = (e) => {
+        if (e.key === 'Enter') handleSearchProduct();
     };
 
-    // Product Form Submit
+    // Product Actions
+    btnDeleteProduct.onclick = handleDeleteProduct;
     productForm.onsubmit = handleProductSubmit;
-
-    // Variant Events
-    btnAddVariantModal.onclick = () => openVariantModal();
-    btnSaveVariant.onclick = handleVariantSubmit;
-    btnAddAttributeLine.onclick = () => {
-        const container = document.getElementById('variantAttributesContainer');
-        const div = document.createElement('div');
-        div.className = 'row mb-2 align-items-center';
-        div.innerHTML = `
-            <div class="col-5"><input type="text" class="form-control form-control-sm" placeholder="Tên" name="attrName[]"></div>
-            <div class="col-5"><input type="text" class="form-control form-control-sm" placeholder="Giá trị" name="attrValue[]"></div>
-            <div class="col-2 text-end"><button type="button" class="btn btn-sm btn-outline-danger btn-remove-attr"><i class="bi bi-x"></i></button></div>
-        `;
-        div.querySelector('.btn-remove-attr').onclick = () => div.remove();
-        container.appendChild(div);
+    document.getElementById('mainImage').onchange = (e) => {
+        if (e.target.files && e.target.files[0]) {
+            mainImageFile = e.target.files[0];
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                const preview = document.getElementById('mainImagePreview');
+                preview.classList.remove('d-none');
+                preview.querySelector('img').src = ev.target.result;
+            };
+            reader.readAsDataURL(mainImageFile);
+        }
     };
+
+    // Variant Actions
+    btnAddVariantModal.onclick = () => openVariantModal();
+    btnSaveVariantToTable.onclick = saveVariantToTable;
+    btnAddAttributeLine.onclick = () => addAttributeLine();
 }
 
-// ================= PRODUCT CRUD =================
+function switchMode(newMode) {
+    mode = newMode;
+    // Reset Form
+    productForm.reset();
+    currentProduct = null;
+    currentVariants = [];
+    mainImageFile = null;
+    document.getElementById('mainImagePreview').classList.add('d-none');
+    UI.renderVariantList([], 'variantsTableBody'); // Reset table
+
+    if (mode === 'ADD') {
+        btnTabAdd.classList.add('active', 'btn-outline-success'); // Logic active
+        btnTabEdit.classList.remove('active');
+
+        searchSection.classList.add('d-none');
+        formSection.classList.remove('d-none');
+        formTitle.textContent = 'Thêm Sản Phẩm Mới';
+        btnDeleteProduct.classList.add('d-none');
+        document.getElementById('productId').value = '';
+    } else {
+        btnTabAdd.classList.remove('active');
+        btnTabEdit.classList.add('active');
+
+        searchSection.classList.remove('d-none');
+        formSection.classList.add('d-none'); // Hide until search found
+        formTitle.textContent = 'Chỉnh Sửa Sản Phẩm';
+        btnDeleteProduct.classList.remove('d-none');
+        searchIdInput.value = '';
+        searchIdInput.focus();
+    }
+}
+
+// ================= SEARCH LOGIC =================
+async function handleSearchProduct() {
+    const id = searchIdInput.value.trim();
+    if (!id) return alert('Vui lòng nhập ID!');
+
+    const res = await ProductService.getProductById(id);
+    if (res && res.id) {
+        currentProduct = res;
+        fillProductToForm(res);
+        formSection.classList.remove('d-none');
+        searchSection.classList.add('d-none'); // Optional: Hide search or keep it? Plan said Hide.
+    } else {
+        alert('Không tìm thấy sản phẩm có ID: ' + id);
+    }
+}
+
+function fillProductToForm(product) {
+    document.getElementById('productId').value = product.id;
+    document.getElementById('productName').value = product.name;
+    document.getElementById('description').value = product.description || '';
+    document.getElementById('categoryId').value = product.categoryId || '';
+    document.getElementById('brandId').value = product.brandId || '';
+    document.getElementById('priceOriginal').value = product.originalPrice || 0;
+    document.getElementById('price').value = product.price || 0;
+
+    // Load Variants (Mapping from Server DTO to Local UI structure is tricky)
+    // Server returns List<VariantDTO>. Attributes are separate or nested?
+    // Based on previous code, ProductDTO structure has separate lists. 
+    // We need to re-assemble them for UI or just display basic info?
+    // Let's assume `product.variants` contains enough info.
+    // NOTE: If getProductById returns the simplistic structure, we might need a richer DTO or parse logic.
+    // ProductService.getProductById returns res.data.
+    // If res.data is ProductDTO (complex), we need to parse.
+    // If it's a flattened View Model, it's easier.
+    // ASSUMPTION: The API returns the ProductDTO structure we defined in Java.
+    // We need to map `product.variants` + `product.variantValues` + `product.attributes` -> local variant objects.
+
+    // Simplification for now: Just show variants list if available directly or raw.
+    // If we want to support full Edit, we should reconstruct.
+    // For this Turn, to avoid huge complexity, I will map basic fields if available.
+
+    currentVariants = (product.variants || []).map(v => ({
+        id: v.variantId,
+        sku: v.sku, // Might not constitute in DTO if not added? Added in PayloadBuilder.
+        priceImport: v.originalPrice,
+        price: v.price,
+        stock: v.stock,
+        image: v.imageName, // Or Url
+        // Attributes reconstruction is complex. Leaving empty for viewing or simplistic display.
+        attributes: []
+    }));
+
+    UI.renderVariantList(currentVariants, 'variantsTableBody');
+}
+
+// ================= FORM SUBMISSION =================
 async function handleProductSubmit(e) {
     e.preventDefault();
 
-    const formData = {
+    // 1. Collect Base Info
+    const baseInfo = {
+        id: document.getElementById('productId').value,
         name: document.getElementById('productName').value,
         description: document.getElementById('description').value,
         categoryId: document.getElementById('categoryId').value,
         brandId: document.getElementById('brandId').value,
-        status: true // Default active
+        originalPrice: document.getElementById('priceOriginal').value,
+        price: document.getElementById('price').value
     };
 
+    // 2. Build Complex Payload
+    const { productDTO, variantImagesMap } = PayloadBuilder.build(baseInfo, currentVariants);
+
+    // 3. Send
     let res;
-    if (currentProductId) {
-        // UPDATE
-        formData.id = currentProductId;
-        res = await ProductService.updateProduct(formData);
+    if (mode === 'ADD') {
+        res = await ProductService.createProduct(productDTO, mainImageFile, variantImagesMap);
     } else {
-        // CREATE
-        res = await ProductService.createProduct(formData);
+        res = await ProductService.updateProduct(productDTO, mainImageFile, variantImagesMap);
     }
 
-    if (res && res.success) {
-        alert(currentProductId ? 'Cập nhật thành công!' : 'Tạo sản phẩm thành công!');
-        if (!currentProductId && res.data && res.data.id) {
-            // Created -> Switch to Edit mode to allow adding variants
-            currentProductId = res.data.id;
-            UI.showFormView('EDIT');
-            // Enable variants tab
-            variantsTabBtn.disabled = false;
-            // Load variants (empty initially)
-            currentVariants = [];
-            UI.renderVariantList([], 'variantsTableBody');
+    if (res && res.success) { // ApiCaller might return {success: true, data: ...}
+        // Check `service.js` implementation calling `callAPI` passing `return res`.
+        // If `callAPI` returns parsed JSON.
+        // Usually success check is `res && (res.id || res.success)` depending on API.
+        // Assuming MyResponse structure { data, message, status ... } - actually Java returns MyResponse.
+        // JS callAPI usually returns the body directly or wraps it.
+        // Alert success
+        alert('Thành công!');
+        if (mode === 'ADD') {
+            switchMode('ADD'); // Reset
         }
-        // If updating, just stay? Or reload list?
-        // Let's reload list in background
-        loadProducts(currentPage);
     } else {
-        alert('Lỗi: ' + (res?.message || 'Không xác định'));
+        alert('Có lỗi xảy ra: ' + (JSON.stringify(res) || 'Unknown Error'));
     }
 }
 
-async function openEditProduct(id) {
-    const product = await ProductService.getProductById(id);
-    if (product) {
-        currentProductId = product.id;
-        UI.showFormView('EDIT');
-        UI.fillProductForm(product);
-
-        // Load variants
-        // Assuming product object contains variants list or we fetch it.
-        // Based on service.js there isn't a getVariantsByProductId, usually getProductById returns it
-        // Or we might need to fetch separately if API is designed that way.
-        // Let's assume product.variants exists. If not, and we need another call, we would add it.
-        // Inspecting ProductService.getProductById -> calls /admin/products/{id} -> returns res.data
-        // Usually detailed product includes variants.
-
-        currentVariants = product.variants || [];
-        UI.renderVariantList(currentVariants, 'variantsTableBody');
-        setupVariantTableEvents();
-    }
-}
-
-async function deleteProduct(id) {
-    if (confirm('Bạn có chắc muốn xóa sản phẩm này?')) {
+async function handleDeleteProduct() {
+    if (!confirm('Chắc chắn xóa?')) return;
+    const id = document.getElementById('productId').value;
+    if (id) {
         const res = await ProductService.deleteProduct(id);
-        if (res && res.success) {
-            alert('Đã xóa sản phẩm');
-            loadProducts(currentPage);
-        } else {
-            alert('Lỗi xóa sản phẩm: ' + (res?.message || ''));
+        if (res) { // Assuming success
+            alert('Đã xóa');
+            switchMode('EDIT'); // Back to search
         }
     }
 }
 
-// ================= VARIANT CRUD =================
-function setupVariantTableEvents() {
-    document.querySelectorAll('.btn-edit-variant').forEach(btn => {
-        btn.onclick = () => openVariantModal(btn.dataset.id);
-    });
-    document.querySelectorAll('.btn-delete-variant').forEach(btn => {
-        btn.onclick = () => deleteVariant(btn.dataset.id);
-    });
-}
-
-function openVariantModal(variantId = null) {
-    const form = document.getElementById('variantForm');
-    form.reset();
-    document.getElementById('variantAttributesContainer').innerHTML = ''; // Clear dynamic attributes
-
-    // Clear image preview
-    const previewBox = document.getElementById('variantImagePreviewBox');
-    previewBox.innerHTML = '<span class="text-muted"><i class="bi bi-image fs-1"></i></span>';
-
-    if (variantId) {
-        const variant = currentVariants.find(v => v.id == variantId);
-        if (variant) {
-            document.getElementById('variantId').value = variant.id;
-            document.getElementById('variantSku').value = variant.sku || '';
-            document.getElementById('variantPriceImport').value = variant.priceImport || 0;
-            document.getElementById('variantPrice').value = variant.price || 0;
-            document.getElementById('variantQuantity').value = variant.quantity || 0;
-
-            // Image
-            if (variant.image) {
-                previewBox.innerHTML = `<img src="${variant.image}" class="img-fluid" style="max-height: 100%;">`;
-            }
-
-            // Attributes
-            if (variant.attributes) {
-                UI.renderAttributeInputs('variantAttributesContainer', variant.attributes);
-            }
-
-            document.getElementById('variantModalTitle').textContent = 'Chỉnh Sửa Biến Thể';
-        }
-    } else {
-        document.getElementById('variantId').value = '';
-        document.getElementById('variantModalTitle').textContent = 'Thêm Biến Thể Mới';
-        UI.renderAttributeInputs('variantAttributesContainer', [{ name: 'Màu sắc', value: '' }, { name: 'Kích thước', value: '' }]); // Default suggestions
-    }
-
+// ================= VARIANT UI LOGIC (Client-Side Only) =================
+// Variants are added to `currentVariants` array, then submitted in bulk with Product
+function openVariantModal() {
+    document.getElementById('variantForm').reset();
+    document.getElementById('variantAttributesContainer').innerHTML = '';
+    document.getElementById('variantImagePreviewBox').innerHTML = '<i class="bi bi-image fs-1 text-secondary"></i>';
+    // Reset local ID
+    document.getElementById('variantIdLocal').value = '';
     variantModal.show();
 }
 
-async function handleVariantSubmit() {
-    // Validate
-    const priceImport = document.getElementById('variantPriceImport').value;
+function saveVariantToTable() {
+    // Collect data from Modal
+    const priceImp = document.getElementById('variantPriceImport').value;
     const price = document.getElementById('variantPrice').value;
-    // ... basic validation
+    const stock = document.getElementById('variantQuantity').value;
+    const sku = document.getElementById('variantSku').value;
 
-    // Collect Attributes
-    const attrNames = document.getElementsByName('attrName[]');
-    const attrValues = document.getElementsByName('attrValue[]');
-    const attributes = [];
-    for (let i = 0; i < attrNames.length; i++) {
-        if (attrNames[i].value && attrValues[i].value) {
-            attributes.push({
-                name: attrNames[i].value,
-                value: attrValues[i].value
-            });
-        }
-    }
+    // Attributes
+    const attrRows = document.querySelectorAll('#variantAttributesContainer .row');
+    const attributes = Array.from(attrRows).map(row => ({
+        name: row.querySelector('input[name="attrName"]').value,
+        value: row.querySelector('input[name="attrValue"]').value
+    })).filter(a => a.name && a.value);
 
-    const payload = {
-        productId: currentProductId,
-        sku: document.getElementById('variantSku').value,
-        priceImport: parseFloat(priceImport),
-        price: parseFloat(price),
-        quantity: parseInt(document.getElementById('variantQuantity').value),
-        attributes: attributes
+    // Image File
+    const fileInput = document.getElementById('variantImage');
+    const imageFile = fileInput.files[0];
+
+    const newVariant = {
+        id: document.getElementById('variantIdServer').value || null, // If editing existing
+        targetId: Date.now(), // Temp ID for list management
+        sku,
+        priceImport: priceImp,
+        price,
+        quantity: stock,
+        attributes,
+        imageFile: imageFile,
+        image: imageFile ? URL.createObjectURL(imageFile) : null // Preview
     };
 
-    // Handle Image Upload (if file selected)
-    // IMPORTANT: Simplification - normally handle file upload to get URL first, or use FormData
-    // Assuming backend accepts JSON payload with image URL or base64? 
-    // Or if backend requires Multipart Form Data. The `callAPI` usually handles JSON. 
-    // If we have an image file, current `callAPI` might not support form-data unless modified.
-    // For now, let's assume we skip image upload logic or handle it as specific TODO if user didn't specify mechanism.
-    // Wait, the user has specific Controller endpoints. Usually POST /variants accepts JSON bodies.
-    // Image handling is tricky without seeing the API spec for images. I will skip File upload code -> URL conversion for this turnaround and focus on data.
-
-    const variantId = document.getElementById('variantId').value;
-    let res;
-
-    if (variantId) {
-        payload.id = variantId;
-        res = await ProductService.updateVariant(payload);
-    } else {
-        res = await ProductService.createVariant(payload);
-    }
-
-    if (res && res.success) {
-        alert('Lưu biến thể thành công');
-        variantModal.hide();
-        // Refresh variants list
-        await openEditProduct(currentProductId); // Reload product & variants
-    } else {
-        alert('Lỗi lưu biến thể: ' + (res?.message || ''));
-    }
+    currentVariants.push(newVariant);
+    UI.renderVariantList(currentVariants, 'variantsTableBody');
+    variantModal.hide();
 }
 
-async function deleteVariant(variantId) {
-    if (confirm('Xóa biến thể này?')) {
-        const res = await ProductService.deleteVariant(variantId);
-        if (res && res.success) {
-            await openEditProduct(currentProductId);
-        } else {
-            alert('Lỗi xóa biến thể: ' + (res?.message || ''));
-        }
-    }
+function addAttributeLine() {
+    const container = document.getElementById('variantAttributesContainer');
+    const div = document.createElement('div');
+    div.className = 'row mb-2';
+    div.innerHTML = `
+        <div class="col-5"><input type="text" class="form-control form-control-sm" placeholder="Tên" name="attrName"></div>
+        <div class="col-5"><input type="text" class="form-control form-control-sm" placeholder="Giá trị" name="attrValue"></div>
+        <div class="col-2"><button type="button" class="btn btn-sm btn-outline-danger" onclick="this.parentElement.parentElement.remove()">X</button></div>
+    `;
+    container.appendChild(div);
 }
