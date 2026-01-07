@@ -62,7 +62,7 @@ async function fetchProducts() {
     '<div style="grid-column:1/-1; text-align:center; padding:40px; color:#666;"><i class="fa-solid fa-circle-notch fa-spin"></i> Đang tải sản phẩm...</div>';
 
   try {
-    let endpoint = "/auth/products";
+    let endpoint = "/products";
     const params = [];
     params.push(`page=${currentFilter.page}`);
     params.push(`size=${currentFilter.size}`);

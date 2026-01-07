@@ -20,7 +20,7 @@ async function render(user) {
     document.getElementById("username").textContent = user.username;
     document.getElementById("fullName").textContent = user.fullName;
     document.getElementById("birthday").textContent = user.birthday;
-    document.getElementById("gender").textContent = user.gender == 'MALE' ? 'Nam': user.gender == 'FEMALE' ? 'Nữ' : 'Khác';
+    document.getElementById("gender").textContent = user.gender === 'MALE' ? 'Nam': user.gender == 'FEMALE' ? 'Nữ' : 'Khác';
     document.getElementById("createdAt").textContent = convertToVNTime(user.createdAt);
     if(user.extendUserResponse){
         const resultRoles = await callAPI('/roles');
