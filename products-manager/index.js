@@ -231,11 +231,34 @@ async function loadProductForEdit(id) {
         // Category & Brand
         const categoryId = productDetail.categoryId || "";
         const brandId = productDetail.brandId || "";
-        UI.els.categoryId.value = categoryId;
+        
+        // Set category first
+        if (UI.els.categoryId) {
+            UI.els.categoryId.value = categoryId;
+        }
+        
+        // Load and render brands
         if (categoryId) {
-            const brands = await ProductService.getBrandsByCategory(categoryId);
-            state.brands = brands || [];
-            UI.renderBrands(state.brands, categoryId, brandId);
+            try {
+                const brands = await ProductService.getBrandsByCategory(categoryId);
+                state.brands = brands || [];
+                console.log("Loaded brands:", state.brands, "for category:", categoryId, "selected brandId:", brandId);
+                UI.renderBrands(state.brands, categoryId, brandId);
+                
+                // Set brandId after brands are loaded
+                if (brandId && UI.els.brandId) {
+                    // Small delay to ensure options are rendered
+                    setTimeout(() => {
+                        UI.els.brandId.value = brandId;
+                        console.log("Set brandId to:", brandId);
+                    }, 100);
+                }
+            } catch (error) {
+                console.error("Error loading brands:", error);
+            }
+        } else {
+            // Clear brands if no category
+            UI.renderBrands([], null);
         }
 
         // Load attributes if available

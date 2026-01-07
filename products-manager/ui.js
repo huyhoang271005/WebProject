@@ -72,13 +72,26 @@ export const UI = {
         const sel = UI.els.brandId;
         if (!sel) return;
         sel.innerHTML = `<option value="">-- Chọn thương hiệu --</option>`;
-        if (!cateId) return;
+        if (!cateId || !brands || brands.length === 0) {
+            console.log("No brands to render. cateId:", cateId, "brands:", brands);
+            return;
+        }
 
+        // Filter brands by category if needed
         const filtered = brands.filter(b => b.categoryId == cateId);
-        (filtered.length ? filtered : brands).forEach(b => {
-            const selected = (selectedBrandId && b.brandId == selectedBrandId) ? 'selected' : '';
+        const brandsToShow = filtered.length > 0 ? filtered : brands;
+        
+        console.log("Rendering brands:", brandsToShow, "selectedBrandId:", selectedBrandId);
+        
+        brandsToShow.forEach(b => {
+            const selected = (selectedBrandId && (b.brandId == selectedBrandId || b.brandId === selectedBrandId)) ? 'selected' : '';
             sel.innerHTML += `<option value="${b.brandId}" ${selected}>${b.brandName}</option>`;
         });
+        
+        // Force set value if selectedBrandId provided
+        if (selectedBrandId && sel.value !== selectedBrandId) {
+            sel.value = selectedBrandId;
+        }
     },
 
     renderCategories: (cates) => {
