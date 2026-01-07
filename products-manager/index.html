@@ -27,187 +27,234 @@
 <body>
     <div class="container my-4" style="max-width: 1400px;">
 
-        <!-- ========== HEADER WITH TABS ========== -->
+        <!-- ========== HEADER ========== -->
         <div class="d-flex justify-content-between align-items-center mb-4">
             <div>
                 <h1 class="text-primary fw-bold mb-1">Quản Lý Sản Phẩm</h1>
-                <p class="text-muted mb-0">Quản lý kho hàng và giá cả</p>
+                <p class="text-muted mb-0">Quản lý kho hàng và biến thể sản phẩm</p>
             </div>
             <div class="btn-group" role="group">
-                <button type="button" class="btn btn-success" id="btnTabAdd">
-                    <i class="bi bi-plus-circle me-2"></i>Thêm Sản Phẩm
+                <button type="button" class="btn btn-outline-primary active" id="btnViewList">
+                    <i class="bi bi-list-ul me-2"></i>Danh Sách
                 </button>
-                <button type="button" class="btn btn-outline-primary" id="btnTabEdit">
-                    <i class="bi bi-pencil-square me-2"></i>Sửa / Xóa Sản Phẩm
+                <button type="button" class="btn btn-success" id="btnViewAdd">
+                    <i class="bi bi-plus-circle me-2"></i>Thêm Mới
                 </button>
             </div>
         </div>
 
-        <!-- ========== ADD PRODUCT VIEW ========== -->
-        <div id="addView" class="view-container">
-            <div class="card shadow-sm border-0 mb-4">
-                <div class="card-header bg-white border-bottom">
-                    <h5 class="mb-0 fw-bold">
-                        <i class="bi bi-plus-circle text-success me-2"></i>Thêm Sản Phẩm Mới
-                    </h5>
+        <!-- ========== PRODUCT LIST VIEW ========== -->
+        <div id="listView" class="view-section">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white border-bottom py-3">
+                    <div class="row align-items-center">
+                        <div class="col-md-6">
+                            <h5 class="mb-0 fw-bold text-secondary">Danh sách sản phẩm</h5>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="searchInput" placeholder="Tìm kiếm sản phẩm...">
+                                <button class="btn btn-outline-secondary" type="button" id="btnSearch">
+                                    <i class="bi bi-search"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="card-body p-4">
-                    <form id="productForm">
-                        <div class="row">
-                            <!-- LEFT: INFO & VARIANTS -->
-                            <div class="col-lg-8">
-                                <!-- Basic Info -->
-                                <div class="card shadow-sm border-0 mb-4">
-                                    <div class="card-body p-4">
-                                        <h5 class="card-title fw-bold text-uppercase text-muted mb-3 small">Thông tin chung</h5>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="bg-light">
+                                <tr>
+                                    <th class="ps-4">Sản phẩm</th>
+                                    <th>Danh mục</th>
+                                    <th>Thương hiệu</th>
+                                    <th class="text-end pe-4">Hành động</th>
+                                </tr>
+                            </thead>
+                            <tbody id="productsTableBody">
+                                <!-- Products will be loaded here -->
+                            </tbody>
+                        </table>
+                    </div>
+                    <!-- Pagination -->
+                    <div class="d-flex justify-content-center py-3">
+                        <nav aria-label="Page navigation">
+                            <ul class="pagination mb-0" id="pagination">
+                                <!-- Pagination items -->
+                            </ul>
+                        </nav>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========== ADD / EDIT PRODUCT VIEW ========== -->
+        <div id="formView" class="view-section d-none">
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0 fw-bold" id="formTitle">Thêm Sản Phẩm</h5>
+                    <button class="btn btn-outline-secondary btn-sm" id="btnBackToList">
+                        <i class="bi bi-arrow-left me-1"></i>Quay lại
+                    </button>
+                </div>
+                <div class="card-body p-0">
+                    <!-- TABS Navigation -->
+                    <ul class="nav nav-tabs nav-fill" id="productTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active fw-bold" id="info-tab" data-bs-toggle="tab" data-bs-target="#info-pane" type="button" role="tab">
+                                <i class="bi bi-info-circle me-2"></i>Thông tin chung
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link fw-bold" id="variants-tab" data-bs-toggle="tab" data-bs-target="#variants-pane" type="button" role="tab" disabled>
+                                <i class="bi bi-layers me-2"></i>Biến thể (Variants)
+                            </button>
+                        </li>
+                    </ul>
+
+                    <div class="tab-content p-4" id="productTabsContent">
+                        <!-- TAB 1: PRODUCT INFO -->
+                        <div class="tab-pane fade show active" id="info-pane" role="tabpanel">
+                            <form id="productForm">
+                                <input type="hidden" id="productId">
+                                <div class="row">
+                                    <div class="col-lg-8">
                                         <div class="mb-3">
-                                            <label class="form-label fw-medium">Tên sản phẩm <span
-                                                    class="text-danger">*</span></label>
-                                            <input type="text" class="form-control" id="productName" required
-                                                placeholder="VD: Áo thun nam...">
+                                            <label class="form-label fw-medium">Tên sản phẩm <span class="text-danger">*</span></label>
+                                            <input type="text" class="form-control" id="productName" required>
                                         </div>
                                         <div class="mb-3">
                                             <label class="form-label fw-medium">Mô tả</label>
-                                            <textarea class="form-control" id="description" rows="4"
-                                                placeholder="Mô tả chi tiết sản phẩm..."></textarea>
+                                            <textarea class="form-control" id="description" rows="5"></textarea>
                                         </div>
                                     </div>
-                                </div>
-
-                                <!-- Variants -->
-                                <div class="card shadow-sm border-0 mb-4">
-                                    <div class="card-body p-4">
-                                        <div class="d-flex justify-content-between align-items-center mb-3">
-                                            <h5 class="card-title fw-bold text-uppercase text-muted mb-0 small">Phân loại hàng
-                                            </h5>
-                                            <div>
-                                                <button type="button" class="btn btn-outline-primary btn-sm me-2"
-                                                    id="btnAddAttr">
-                                                    <i class="bi bi-plus-lg"></i> Thêm thuộc tính
-                                                </button>
-                                                <button type="button" class="btn btn-success btn-sm text-white"
-                                                    id="btnGenerateVariants">
-                                                    <i class="bi bi-lightning-charge-fill"></i> Tạo biến thể
-                                                </button>
-                                            </div>
-                                        </div>
-                                        <div id="attributesContainer" class="mb-3"></div>
-                                        <div id="variantsContainer"></div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- RIGHT: IMAGES, PRICE, CATEGORY -->
-                            <div class="col-lg-4">
-                                <!-- Image & Prices -->
-                                <div class="card shadow-sm border-0 mb-4">
-                                    <div class="card-body p-4">
-                                        <h5 class="card-title fw-bold text-uppercase text-muted mb-3 small">Ảnh & Giá</h5>
-
-                                        <div class="mb-4 text-center group-image-upload">
-                                            <div class="position-relative d-inline-block w-100">
-                                                <div id="mainImagePreview"
-                                                    class="border rounded bg-light d-flex align-items-center justify-content-center"
-                                                    style="height: 250px; overflow: hidden; background-color: #f8f9fa;">
-                                                    <div class="text-center text-muted">
-                                                        <i class="bi bi-image fs-1 d-block mb-2"></i>
-                                                        <small>Chưa có ảnh</small>
-                                                    </div>
-                                                </div>
-                                                <label for="mainImage"
-                                                    class="btn btn-primary rounded-circle position-absolute bottom-0 end-0 m-3 shadow"
-                                                    style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
-                                                    <i class="bi bi-camera-fill"></i>
-                                                </label>
-                                            </div>
-                                            <input type="file" class="d-none" id="mainImage" accept="image/*">
-                                        </div>
-
+                                    <div class="col-lg-4">
                                         <div class="mb-3">
-                                            <label class="form-label fw-medium">Giá gốc (VNĐ)</label>
-                                            <input type="number" class="form-control" id="priceOriginal" min="0" step="1000"
-                                                required>
-                                        </div>
-                                        <div class="mb-3">
-                                            <label class="form-label fw-medium">Giá bán (VNĐ)</label>
-                                            <input type="number" class="form-control" id="price" min="0" step="1000" required>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- Organization -->
-                                <div class="card shadow-sm border-0 mb-4">
-                                    <div class="card-body p-4">
-                                        <h5 class="card-title fw-bold text-uppercase text-muted mb-3 small">Phân loại</h5>
-                                        <div class="mb-3">
-                                            <label class="form-label fw-medium">Danh mục</label>
+                                            <label class="form-label fw-medium">Danh mục <span class="text-danger">*</span></label>
                                             <select class="form-select" id="categoryId" required>
                                                 <option value="">-- Chọn danh mục --</option>
                                             </select>
                                         </div>
                                         <div class="mb-3">
-                                            <label class="form-label fw-medium">Thương hiệu</label>
+                                            <label class="form-label fw-medium">Thương hiệu <span class="text-danger">*</span></label>
                                             <select class="form-select" id="brandId" required>
                                                 <option value="">-- Chọn thương hiệu --</option>
                                             </select>
                                         </div>
+                                        <div class="d-grid mt-4">
+                                            <button type="submit" class="btn btn-primary btn-lg">
+                                                <i class="bi bi-save me-2"></i>Lưu thông tin
+                                            </button>
+                                        </div>
                                     </div>
-                                </div>
-
-                                <!-- Actions -->
-                                <div class="card shadow-sm border-0 bg-transparent">
-                                    <div class="d-grid gap-2">
-                                        <button type="submit" class="btn btn-primary btn-lg fw-bold" id="btnSubmit">
-                                            <span class="spinner-border spinner-border-sm d-none me-2"
-                                                id="submitSpinner"></span>
-                                            <span id="submitBtnText">Lưu Sản Phẩm</span>
-                                        </button>
-                                        <button type="button" class="btn btn-outline-secondary" id="btnReset">Làm Mới
-                                            Form</button>
-                                        <button type="button" class="btn btn-outline-danger d-none" id="btnDelete">
-                                            <i class="bi bi-trash me-2"></i>Xóa Sản Phẩm Này
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-
-        <!-- ========== EDIT/DELETE PRODUCT VIEW ========== -->
-        <div id="editView" class="view-container d-none">
-            <div class="card shadow-sm border-0 mb-4">
-                <div class="card-header bg-white border-bottom">
-                    <h5 class="mb-0 fw-bold">
-                        <i class="bi bi-pencil-square text-primary me-2"></i>Sửa / Xóa Sản Phẩm
-                    </h5>
-                </div>
-                <div class="card-body p-4">
-                    <div class="row justify-content-center">
-                        <div class="col-md-8 col-lg-6">
-                            <div class="text-center mb-4">
-                                <i class="bi bi-search fs-1 text-muted d-block mb-3"></i>
-                                <h5 class="fw-bold mb-2">Tìm kiếm sản phẩm</h5>
-                                <p class="text-muted">Nhập ID sản phẩm để tìm và chỉnh sửa</p>
-                            </div>
-                            <form id="searchProductForm">
-                                <div class="input-group input-group-lg mb-3">
-                                    <input type="text" class="form-control" id="searchProductInput" 
-                                        placeholder="Nhập ID sản phẩm..." required>
-                                    <button class="btn btn-primary" type="submit" id="btnSearchProduct">
-                                        <i class="bi bi-search me-2"></i>Tìm kiếm
-                                    </button>
                                 </div>
                             </form>
-                            <div id="searchResult" class="mt-4"></div>
+                        </div>
+
+                        <!-- TAB 2: VARIANTS MANAGEMENT -->
+                        <div class="tab-pane fade" id="variants-pane" role="tabpanel">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h6 class="mb-0 text-muted">Danh sách biến thể của sản phẩm</h6>
+                                <button class="btn btn-sm btn-success" id="btnAddVariantModal">
+                                    <i class="bi bi-plus-lg me-1"></i>Thêm biến thể
+                                </button>
+                            </div>
+
+                            <div class="table-responsive border rounded">
+                                <table class="table table-hover mb-0">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Hình ảnh</th>
+                                            <th>SKU / Thuộc tính</th>
+                                            <th>Giá gốc</th>
+                                            <th>Giá bán</th>
+                                            <th class="text-end">Hành động</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="variantsTableBody">
+                                        <!-- Variants loaded here -->
+                                        <tr>
+                                            <td colspan="5" class="text-center py-4 text-muted">
+                                                Chưa có biến thể nào. Hãy thêm biến thể mới.
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
 
+    </div>
+
+    <!-- MODAL: ADD/EDIT VARIANT -->
+    <div class="modal fade" id="variantModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold" id="variantModalTitle">Thêm Biến Thể</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="variantForm">
+                        <input type="hidden" id="variantId">
+                        
+                        <div class="row">
+                            <!-- Image Upload -->
+                            <div class="col-md-4 text-center">
+                                <div class="mb-3">
+                                    <label class="form-label fw-medium d-block">Hình ảnh</label>
+                                    <div class="border rounded bg-light d-flex align-items-center justify-content-center mx-auto" 
+                                         style="width: 100%; height: 200px; overflow: hidden; position: relative;" id="variantImagePreviewBox">
+                                         <!-- Image preview here -->
+                                         <span class="text-muted"><i class="bi bi-image fs-1"></i></span>
+                                    </div>
+                                    <input type="file" class="form-control mt-2" id="variantImage" accept="image/*">
+                                </div>
+                            </div>
+                            
+                            <!-- Variant Details -->
+                            <div class="col-md-8">
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label fw-medium">Giá Gốc</label>
+                                        <input type="number" class="form-control" id="variantPriceImport" min="0" required>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label fw-medium">Giá Bán</label>
+                                        <input type="number" class="form-control" id="variantPrice" min="0" required>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label fw-medium">Số lượng tồn kho</label>
+                                        <input type="number" class="form-control" id="variantQuantity" min="0" value="0">
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label fw-medium">SKU (Mã kho)</label>
+                                        <input type="text" class="form-control" id="variantSku">
+                                    </div>
+                                </div>
+                                
+                                <hr>
+                                <h6 class="fw-bold text-muted small text-uppercase">Thuộc tính (Size, Color, ...)</h6>
+                                <div id="variantAttributesContainer">
+                                    <!-- Dynamic attribute inputs will be generated here -->
+                                </div>
+                                <button type="button" class="btn btn-outline-primary btn-sm mt-2" id="btnAddAttributeLine">
+                                    <i class="bi bi-plus"></i> Thêm thuộc tính
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="button" class="btn btn-primary" id="btnSaveVariant">Lưu Biến Thể</button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Scripts -->

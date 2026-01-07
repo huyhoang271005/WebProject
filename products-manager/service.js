@@ -106,16 +106,48 @@ export const ProductService = {
     },
 
     // Xóa sản phẩm
-    deleteProduct: async (id, publicId = "") => {
+    deleteProduct: async (id) => {
         try {
-            const endpoint = publicId 
-                ? `/admin/products/${id}?public_id=${publicId}`
-                : `/admin/products/${id}`;
-            const res = await callAPI(endpoint, "DELETE");
+            const res = await callAPI(`/admin/products/${id}`, "DELETE");
             return res;
         } catch (error) {
             console.error("Lỗi xóa sản phẩm:", error);
             return { success: false, message: error.message || "Lỗi xóa sản phẩm" };
+        }
+    },
+
+    // --- VARIANTS ---
+
+    // Tạo biến thể mới
+    createVariant: async (variantData) => {
+        try {
+            const res = await callAPI(`/admin/products/variants`, "POST", variantData, true);
+            return res;
+        } catch (error) {
+            console.error("Lỗi tạo biến thể:", error);
+            return { success: false, message: error.message || "Lỗi tạo biến thể" };
+        }
+    },
+
+    // Cập nhật biến thể
+    updateVariant: async (variantData) => {
+        try {
+            const res = await callAPI(`/admin/products/variants`, "PUT", variantData, true);
+            return res;
+        } catch (error) {
+            console.error("Lỗi cập nhật biến thể:", error);
+            return { success: false, message: error.message || "Lỗi cập nhật biến thể" };
+        }
+    },
+
+    // Xóa biến thể
+    deleteVariant: async (variantId) => {
+        try {
+            const res = await callAPI(`/admin/products/variants/${variantId}`, "DELETE");
+            return res;
+        } catch (error) {
+            console.error("Lỗi xóa biến thể:", error);
+            return { success: false, message: error.message || "Lỗi xóa biến thể" };
         }
     }
 };
