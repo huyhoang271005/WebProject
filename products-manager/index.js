@@ -1,306 +1,398 @@
-// index.js
 import { showDialog } from "../dialog/index.js";
 import { ProductService } from "./service.js";
-import { VariantLogic } from "./logic.js";
+import { VariantLogic } from "./variantLogic.js";
+import { PayloadBuilder } from "./payloadBuilder.js";
 import { UI } from "./ui.js";
+import { loadNavbar } from "../navbar/navbar.js";
 
-let state = {
-    products: [],
+// --- STATE MANAGEMENT ---
+const state = {
     categories: [],
     brands: [],
-    attributes: [],
-    variants: [],
-    mainImageFile: null,
+    attributes: [],      // All available attributes for dropdown
+    currentAttrs: [],   // Attributes for generating variants
+    variants: [],       // Generated variants
+
+    // Edit Mode State
     isEdit: false,
     currentId: null,
-    currentMainImageUrl: ""
+    currentMainImageUrl: null,
+    mainImageFile: null,
+
+    // Edit View State
+    currentPage: 0,
+    searchKeyword: null
 };
 
-// === INIT ===
-(async function init() {
-    await reloadData();
-    setupEventListeners();
-    setupGlobalFunctions();
-})();
-
-async function reloadData() {
+// --- INITIALIZATION ---
+document.addEventListener("DOMContentLoaded", async () => {
     try {
-        const targetId = "6786aedf-aa81-44ef-b28f-06abff1b5c1c"; 
-        const productData = await ProductService.getProductById(targetId);
+        // 1. Load Navbar
+        await loadNavbar();
+
+        // 2. Load Metadata (Categories, Brands, Attributes)
         const info = await ProductService.getInfo();
-
-        state.categories = info.categories;
-        state.brands = info.brands;
-        state.attributes = info.attributes;
-
-        let productList = [];
-        if (productData && productData.productDetailDTO) {
-            const detail = productData.productDetailDTO;
-            const uiItem = {
-                productId: detail.productId,
-                productName: detail.productName,
-                priceOriginal: detail.OriginalPrice || detail.originalPrice, 
-                price: detail.price,
-                imageName: detail.imageName,
-                imageUrl: detail.imageUrl,
-                variants: productData.variants || [], 
-                categoryName: state.categories.find(c => c.categoryId == detail.categoryId)?.categoryName || "-",
-                brandName: state.brands.find(b => b.brandId == detail.brandId)?.brandName || "-"
-            };
-            productList = [uiItem]; 
+        if (info) {
+            state.categories = info.categories || [];
+            state.brands = info.brands || [];
+            state.attributes = info.attributes || [];
+        } else {
+            state.categories = await ProductService.getCategories();
         }
 
-        state.products = productList;
-        UI.renderTable(state.products);
-        
-        if (UI.els.cateSelect) {
-            UI.els.cateSelect.innerHTML = `<option value="">-- Chọn danh mục --</option>`;
-            state.categories.forEach(c => {
-                UI.els.cateSelect.innerHTML += `<option value="${c.categoryId}">${c.categoryName}</option>`;
-            });
-        }
-    } catch (e) {
-        console.error("Lỗi reloadData:", e);
+        // 3. Render Categories
+        UI.renderCategories(state.categories);
+
+        // 4. Override UI.addAttrRow to use state.attributes
+        const originalAddAttr = UI.addAttrRow;
+        UI.addAttrRow = (n, v, cb, id, vids, map) => {
+            originalAddAttr(n, v, cb, id, vids, map, state.attributes || []);
+        };
+
+        // 5. Setup Global Window Helpers
+        setupWindowHelpers();
+
+        // 6. Setup Event Listeners
+        setupEventListeners();
+
+        // 7. Default to Add view
+        UI.switchView('add');
+    } catch (error) {
+        console.error("Lỗi khởi tạo:", error);
+        alert("Lỗi khởi tạo ứng dụng. Vui lòng tải lại trang.");
     }
-}
+});
 
+// --- EVENT LISTENERS ---
 function setupEventListeners() {
-    const btnAdd = document.getElementById("btnOpenCreate");
-    if (btnAdd) {
-        btnAdd.onclick = () => {
-            state.isEdit = false;
-            state.currentId = null;
-            state.variants = [];
-            state.mainImageFile = null;
-            state.currentMainImageUrl = "";
-            UI.resetForm(false);
-            UI.switchView('form');
+    // TAB SWITCHING
+    if (UI.els.btnTabAdd) {
+        UI.els.btnTabAdd.onclick = () => {
+            resetFormState();
+            UI.switchView('add');
         };
     }
-    
-    const btnBack = document.getElementById("btnBackToList");
-    if (btnBack) {
-        btnBack.onclick = () => { 
-            UI.switchView('list'); 
-            reloadData(); 
+
+    if (UI.els.btnTabEdit) {
+        UI.els.btnTabEdit.onclick = () => {
+            UI.switchView('edit');
+            // Clear search result when switching to edit view
+            const searchResult = document.getElementById('searchResult');
+            if (searchResult) {
+                searchResult.innerHTML = '';
+            }
+            if (UI.els.searchProductInput) {
+                UI.els.searchProductInput.value = '';
+            }
         };
     }
-    
-    const btnAddAttr = document.getElementById("btnAddAttr");
-    if (btnAddAttr) {
-        btnAddAttr.onclick = () => { 
-            UI.addAttrRow("", "", null, null, [], {}, state.attributes); 
+
+    // FORM: Category Change -> Load Brands
+    if (UI.els.categoryId) {
+        UI.els.categoryId.onchange = async (e) => {
+            const cateId = e.target.value;
+            if (!cateId) {
+                UI.renderBrands([], null);
+                return;
+            }
+            const brands = await ProductService.getBrandsByCategory(cateId);
+            state.brands = brands || [];
+            UI.renderBrands(state.brands, cateId);
         };
     }
-    
-    const btnGenVariants = document.getElementById("btnGenerateVariants");
-    if (btnGenVariants) {
-        btnGenVariants.onclick = () => { 
-            handleCalcVariants(); 
+
+    // FORM: Add Attribute
+    if (UI.els.btnAddAttr) {
+        UI.els.btnAddAttr.onclick = () => {
+            UI.addAttrRow(null, null, null, null, [], {}, state.attributes || []);
         };
     }
-    
-    if (UI.els.cateSelect) {
-        UI.els.cateSelect.onchange = (e) => UI.renderBrands(state.brands, e.target.value);
+
+    // FORM: Generate Variants
+    if (UI.els.btnGenerateVariants) {
+        UI.els.btnGenerateVariants.onclick = () => {
+            const attrs = VariantLogic.parseAttributesFromDOM();
+            state.currentAttrs = attrs;
+
+            const basePrice = parseFloat(UI.els.price.value) || 0;
+            const basePriceOriginal = parseFloat(UI.els.priceOriginal.value) || 0;
+
+            const newVariants = VariantLogic.generateVariants(attrs, basePrice, state.variants, basePriceOriginal);
+            state.variants = newVariants;
+            UI.renderVariants(state.variants);
+        };
     }
-    
-    if (UI.els.mainImgInput) {
-        UI.els.mainImgInput.onchange = (e) => {
+
+    // FORM: Submit
+    if (UI.els.form) {
+        UI.els.form.onsubmit = handleSave;
+    }
+
+    // FORM: Reset
+    if (UI.els.btnReset) {
+        UI.els.btnReset.onclick = resetFormState;
+    }
+
+    // FORM: Delete (Edit Mode Only)
+    const btnDelete = document.getElementById('btnDelete');
+    if (btnDelete) {
+        btnDelete.onclick = async () => {
+            if (state.currentId) {
+                await deleteProductById(state.currentId);
+            }
+        };
+    }
+
+    // FORM: Image Preview
+    if (UI.els.mainImageInput) {
+        UI.els.mainImageInput.onchange = (e) => {
             const file = e.target.files[0];
             if (file) {
                 state.mainImageFile = file;
                 UI.renderMainImage(URL.createObjectURL(file));
+            } else {
+                state.mainImageFile = null;
+                UI.renderMainImage(null);
             }
         };
     }
-    
-    const form = document.getElementById("productForm");
-    if (form) form.onsubmit = handleSave;
-    
-    const btnReset = document.getElementById("resetBtn");
-    if(btnReset) { 
-        btnReset.onclick = () => UI.resetForm(state.isEdit); 
+
+    // EDIT VIEW: Search by ID
+    const searchForm = document.getElementById('searchProductForm');
+    if (searchForm) {
+        searchForm.onsubmit = async (e) => {
+            e.preventDefault();
+            const id = UI.els.searchProductInput?.value.trim();
+            if (!id) {
+                alert("Vui lòng nhập ID sản phẩm!");
+                return;
+            }
+            await loadProductForEdit(id);
+        };
     }
 }
 
-// === CÁC HÀM GLOBAL ===
-function setupGlobalFunctions() {
-    window.editProduct = async (id) => {
-        const fullData = await ProductService.getProductById(id);
-        if (!fullData || !fullData.productDetailDTO) return;
-        const detail = fullData.productDetailDTO;
-        state.isEdit = true;
-        state.currentId = id;
-        state.variants = []; 
-        state.mainImageFile = null;
-        state.currentMainImageUrl = detail.imageName || "";
-        UI.resetForm(true);
-        UI.switchView('form');
-        
-        if(document.getElementById("productName")) document.getElementById("productName").value = detail.productName;
-        if(document.getElementById("description")) document.getElementById("description").value = detail.description || "";
-        if(document.getElementById("price")) document.getElementById("price").value = detail.price;
-        // Gán giá trị vào Input có ID là OriginalPrice
-        if(document.getElementById("OriginalPrice")) document.getElementById("OriginalPrice").value = detail.OriginalPrice || detail.originalPrice;
-        
-        if(UI.els.cateSelect) {
-            UI.els.cateSelect.value = detail.categoryId;
-            UI.renderBrands(state.brands, detail.categoryId, detail.brandId);
-        }
-        if(detail.imageUrl) UI.renderMainImage(detail.imageUrl);
-        else if(detail.imageName) UI.renderMainImage(`/images/${detail.imageName}`);
-    };
 
+// --- LOGIC: LOAD PRODUCT FOR EDIT ---
+async function loadProductForEdit(id) {
+    resetFormState();
+    UI.setLoading(true);
+
+    try {
+        const product = await ProductService.getProductById(id);
+        if (!product) {
+            alert("Không tìm thấy sản phẩm! Vui lòng kiểm tra lại ID.");
+            UI.setLoading(false);
+            return;
+        }
+
+        // Set State
+        state.isEdit = true;
+        state.currentId = product.productId;
+        state.currentMainImageUrl = product.imageName ? `/images/${product.imageName}` : "";
+
+        // Fill Form
+        UI.els.productName.value = product.productName || "";
+        UI.els.description.value = product.description || "";
+        UI.els.price.value = product.price || 0;
+        UI.els.priceOriginal.value = product.originalPrice || 0;
+
+        // Category & Brand
+        UI.els.categoryId.value = product.categoryId || "";
+        if (product.categoryId) {
+            const brands = await ProductService.getBrandsByCategory(product.categoryId);
+            state.brands = brands || [];
+            UI.renderBrands(state.brands, product.categoryId, product.brandId);
+        }
+
+        // Variants
+        state.variants = (product.variants || []).map(v => ({
+            id: v.variantId,
+            name: v.variantName || v.variantId,
+            comboValues: v.comboValues || [],
+            price: v.price || 0,
+            priceOriginal: v.originalPrice || 0,
+            stock: v.stock || 0,
+            imageName: v.imageName || "",
+            previewUrl: v.imageName ? `/images/${v.imageName}` : "",
+            rawFile: null
+        }));
+
+        UI.renderMainImage(state.currentMainImageUrl);
+        UI.renderVariants(state.variants);
+        UI.els.submitBtnText.innerText = "Cập Nhật";
+
+        // Show delete button
+        const btnDelete = document.getElementById('btnDelete');
+        if (btnDelete) {
+            btnDelete.classList.remove('d-none');
+        }
+
+        // Show success message in search result
+        const searchResult = document.getElementById('searchResult');
+        if (searchResult) {
+            searchResult.innerHTML = `
+                <div class="alert alert-success">
+                    <i class="bi bi-check-circle me-2"></i>
+                    Đã tìm thấy sản phẩm! Vui lòng chuyển sang tab "Thêm Sản Phẩm" để chỉnh sửa.
+                </div>`;
+        }
+
+        // Switch to Add view (form is there)
+        UI.switchView('add');
+
+    } catch (e) {
+        console.error("Lỗi khi tải sản phẩm:", e);
+        alert("Lỗi khi tải dữ liệu: " + (e.message || "Không xác định"));
+    } finally {
+        UI.setLoading(false);
+    }
+}
+
+// --- LOGIC: SAVE PRODUCT ---
+async function handleSave(e) {
+    e.preventDefault();
+
+    // Validation
+    const name = UI.els.productName.value.trim();
+    if (!name) {
+        alert("Tên sản phẩm là bắt buộc!");
+        return;
+    }
+
+    const categoryId = UI.els.categoryId.value;
+    if (!categoryId) {
+        alert("Vui lòng chọn danh mục!");
+        return;
+    }
+
+    const brandId = UI.els.brandId.value;
+    if (!brandId) {
+        alert("Vui lòng chọn thương hiệu!");
+        return;
+    }
+
+    UI.setLoading(true);
+
+    try {
+        // Build Payload
+        const buildData = {
+            isEdit: state.isEdit,
+            currentId: state.currentId,
+            productName: name,
+            description: UI.els.description.value.trim(),
+            price: parseFloat(UI.els.price.value) || 0,
+            originalPrice: parseFloat(UI.els.priceOriginal.value) || 0,
+            categoryId: categoryId,
+            brandId: brandId,
+            currentMainImageUrl: state.currentMainImageUrl,
+            attributes: state.currentAttrs,
+            variants: state.variants,
+            mainImageFile: state.mainImageFile
+        };
+
+        const formData = PayloadBuilder.buildProductPayload(buildData);
+
+        // Call Service
+        let res;
+        if (state.isEdit) {
+            res = await ProductService.updateProduct(formData);
+        } else {
+            res = await ProductService.createProduct(formData);
+        }
+
+        if (res && res.success) {
+            alert("Thành công!");
+            if (!state.isEdit) {
+                resetFormState();
+            } else {
+                // After successful update, stay in add view with updated data
+                alert("Cập nhật sản phẩm thành công!");
+            }
+        } else {
+            alert("Lỗi: " + (res?.message || "Không xác định"));
+        }
+    } catch (err) {
+        console.error("Lỗi khi lưu:", err);
+        alert("Lỗi hệ thống: " + (err.message || "Không xác định"));
+    } finally {
+        UI.setLoading(false);
+    }
+}
+
+// --- LOGIC: DELETE PRODUCT ---
+async function deleteProductById(id) {
+    if (!confirm(`Bạn chắc chắn muốn xóa sản phẩm ${id}? Hành động này không thể hoàn tác!`)) {
+        return;
+    }
+
+    try {
+        const res = await ProductService.deleteProduct(id, "");
+        if (res && res.success) {
+            alert("Đã xóa thành công!");
+            // Clear form and switch back to edit view
+            resetFormState();
+            UI.switchView('edit');
+            const searchResult = document.getElementById('searchResult');
+            if (searchResult) {
+                searchResult.innerHTML = '';
+            }
+        } else {
+            alert("Lỗi xóa: " + (res?.message || "Không xác định"));
+        }
+    } catch (e) {
+        console.error("Lỗi khi xóa:", e);
+        alert("Lỗi hệ thống khi xóa: " + (e.message || "Không xác định"));
+    }
+}
+
+// --- HELPER: RESET FORM STATE ---
+function resetFormState() {
+    state.isEdit = false;
+    state.currentId = null;
+    state.currentMainImageUrl = null;
+    state.mainImageFile = null;
+    state.variants = [];
+    state.currentAttrs = [];
+
+    UI.resetForm();
+    
+    // Hide delete button
+    const btnDelete = document.getElementById('btnDelete');
+    if (btnDelete) {
+        btnDelete.classList.add('d-none');
+    }
+}
+
+// --- WINDOW HELPERS (For onclick="" in HTML strings) ---
+function setupWindowHelpers() {
+    // Handle variant image selection
     window.handleSelectVariantImage = (index, input) => {
         const file = input.files[0];
-        if (file && state.variants[index]) {
-            state.variants[index].rawFile = file;
-            state.variants[index].previewUrl = URL.createObjectURL(file);
+        if (!file || !state.variants[index]) return;
+
+        state.variants[index].rawFile = file;
+        state.variants[index].previewUrl = URL.createObjectURL(file);
+        UI.renderVariants(state.variants);
+    };
+
+    // Update variant field
+    window.updateVar = (index, field, value) => {
+        if (!state.variants[index]) return;
+        const numValue = parseFloat(value);
+        if (field === 'price' || field === 'priceOriginal' || field === 'stock') {
+            state.variants[index][field] = isNaN(numValue) ? 0 : numValue;
+        } else {
+            state.variants[index][field] = value;
+        }
+    };
+
+    // Remove variant
+    window.removeVariant = (index) => {
+        if (confirm("Bạn có chắc muốn xóa biến thể này?")) {
+            state.variants.splice(index, 1);
             UI.renderVariants(state.variants);
         }
     };
 
-    window.updateVar = (i, field, value) => {
-        if(state.variants[i]) state.variants[i][field] = value;
-    };
-
-    window.removeVariant = (i) => {
-        state.variants.splice(i, 1);
-        UI.renderVariants(state.variants);
-    };
-
-    window.applyBulkInfo = () => {
-        const pOrg = document.getElementById("bulk_price_org")?.value;
-        const pSell = document.getElementById("bulk_price")?.value;
-        const stock = document.getElementById("bulk_stock")?.value;
-
-        if (!pOrg && !pSell && !stock) return;
-
-        state.variants.forEach(v => {
-            // Trong state vẫn giữ tên camelCase để xử lý logic nội bộ
-            if (pOrg) v.priceOriginal = parseFloat(pOrg);
-            if (pSell) v.price = parseFloat(pSell);
-            if (stock) v.stock = parseInt(stock);
-        });
-        UI.renderVariants(state.variants);
-    };
-}
-
-function handleCalcVariants() {
-    const attrs = VariantLogic.parseAttributesFromDOM();
-    const basePrice = parseFloat(document.getElementById("price").value) || 0;
-    // Lấy từ input OriginalPrice
-    const basePriceOriginal = parseFloat(document.getElementById("OriginalPrice")?.value) || 0;
-    
-    state.variants = VariantLogic.generateVariants(attrs, basePrice, state.variants, basePriceOriginal);
-    UI.renderVariants(state.variants);
-}
-
-// === LOGIC SAVE ĐÃ CẬP NHẬT KEY JSON ===
-async function handleSave(e) {
-    e.preventDefault();
-    
-    const currentAttrs = VariantLogic.parseAttributesFromDOM();
-
-    if (currentAttrs.length > 0 && state.variants.length === 0) {
-        const msg = "⚠️ Bạn chưa tạo biến thể!\nVui lòng nhấn nút màu xanh 'Tạo biến thể' trước khi lưu.";
-        if(typeof showDialog === 'function') await showDialog("error", msg);
-        else alert(msg);
-        return; 
-    }
-
-    const payload = {
-        productDetailDTO: {
-            productId: state.isEdit ? state.currentId : null,
-            productName: document.getElementById("productName").value,
-            description: document.getElementById("description").value,
-            price: parseFloat(document.getElementById("price").value) || 0,
-            // SỬA TÊN KEY JSON THÀNH OriginalPrice
-            OriginalPrice: parseFloat(document.getElementById("OriginalPrice").value) || 0,
-            categoryId: document.getElementById("categoryId").value, 
-            brandId: document.getElementById("brandId").value,
-            imageName: state.currentMainImageUrl || "" 
-        },
-        attributes: [], 
-        variants: [], 
-        variantValues: []
-    };
-
-    const attrValueIdMap = {}; 
-    currentAttrs.forEach(attr => {
-        const attrValues = attr.values.map(v => {
-            const existingValueId = attr.valueIdMap[v];
-            const finalId = existingValueId ? existingValueId : null;
-            attrValueIdMap[`${attr.id}-${v}`] = finalId;
-            return { 
-                attributeValueName: v,
-                attributeValueId: finalId
-            };
-        });
-        
-        payload.attributes.push({ 
-            attributeName: attr.name, 
-            attributeValues: attrValues,
-            attributeId: attr.id 
-        });
-    });
-
-    state.variants.forEach((v, idx) => {
-        const imgKey = v.rawFile ? `image_variant_${idx}` : null;
-        
-        const variantAttrValues = v.comboValues.map((val, valIdx) => {
-            const attr = currentAttrs[valIdx];
-            if (!attr) return null;
-            const attrId = attr.id;
-            const mapKey = `${attrId}-${val}`;
-            const valueId = attrValueIdMap[mapKey];
-            
-            return {
-                attributeId: attrId,
-                attributeValueId: valueId,
-                attributeName: attr.name,
-                attributeValueName: val
-            };
-        }).filter(Boolean);
-
-        payload.variants.push({
-            price: v.price,
-            // SỬA TÊN KEY JSON CHO BIẾN THỂ THÀNH OriginalPrice
-            OriginalPrice: v.priceOriginal || v.price,
-            stock: v.stock,
-            imageName: imgKey,
-            attributeValues: variantAttrValues 
-        });
-    });
-
-    const formData = new FormData();
-    if(state.mainImageFile) {
-        payload.productDetailDTO.imageName = "productImage";
-        formData.append("productImage", state.mainImageFile);
-    }
-    state.variants.forEach((v, idx) => {
-        if(v.rawFile) formData.append(`image_variant_${idx}`, v.rawFile);
-    });
-    
-    formData.append("productDTO", new Blob([JSON.stringify(payload)], { type: "application/json" }));
-
-    console.log("=== PAYLOAD DEBUG ===");
-    console.log("Payload JSON:", JSON.stringify(payload, null, 2));
-
-    try {
-        const res = await ProductService.createProduct(formData);
-        if(res && res.success) {
-            if(typeof showDialog === 'function') await showDialog("success", "Thành công!");
-            else alert("Thành công");
-            UI.switchView('list');
-            reloadData();
-        } else {
-             const errorMsg = res?.message || "Lỗi không xác định";
-             if(typeof showDialog === 'function') await showDialog("error", errorMsg);
-             else alert("Lỗi: " + errorMsg);
-        }
-    } catch(err) {
-        console.error(err);
-        alert("Lỗi hệ thống: " + err.message);
-    }
 }
