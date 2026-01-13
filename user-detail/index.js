@@ -20,7 +20,7 @@ async function render(user) {
     document.getElementById("username").textContent = user.username;
     document.getElementById("fullName").textContent = user.fullName;
     document.getElementById("birthday").textContent = user.birthday;
-    document.getElementById("gender").textContent = user.gender == 'MALE' ? 'Nam': user.gender == 'FEMALE' ? 'Nữ' : 'Khác';
+    document.getElementById("gender").textContent = user.gender === 'MALE' ? 'Nam': user.gender == 'FEMALE' ? 'Nữ' : 'Khác';
     document.getElementById("createdAt").textContent = convertToVNTime(user.createdAt);
     if(user.extendUserResponse){
         const resultRoles = await callAPI('/roles');
@@ -72,6 +72,14 @@ async function render(user) {
                 const result = await callAPI(`/logout-all/${user.userId}`);
                 await showDialog(result.success ? 'success' : 'error', result.message);
             })
+        });
+        const btnSendMessage = document.getElementById("btnSendMessage");
+        btnSendMessage.addEventListener('click', async () => {
+            const data = {
+                userIds: [user.userId]
+            };
+            const result = await callAPI("/room-chat", "POST", data);
+            await showDialog(result.success ? "success" : "error", result.message);
         });
 
     } else {

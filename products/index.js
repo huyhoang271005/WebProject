@@ -39,7 +39,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 async function fetchCategories() {
   try {
     const res = await callAPI("/categories", "GET", null);
-    if (res && res.success && Array.isArray(res.data)) {
+    if (res && res.success && Array.isArray(res.data.listData)) {
       categoriesData = res.data;
     } else {
       categoriesData = [
@@ -62,7 +62,7 @@ async function fetchProducts() {
     '<div style="grid-column:1/-1; text-align:center; padding:40px; color:#666;"><i class="fa-solid fa-circle-notch fa-spin"></i> Đang tải sản phẩm...</div>';
 
   try {
-    let endpoint = "/auth/products";
+    let endpoint = "/products";
     const params = [];
     params.push(`page=${currentFilter.page}`);
     params.push(`size=${currentFilter.size}`);

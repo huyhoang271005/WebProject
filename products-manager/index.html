@@ -1,148 +1,123 @@
 <!DOCTYPE html>
 <html lang="vi">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quản lý Sản phẩm - Tạp hóa Xanh</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <title>Quản lý Sản phẩm</title>
+    <link rel="stylesheet" href="../dialog/index.css">
     <link rel="stylesheet" href="index.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <script src="https://kit.fontawesome.com/e9c281dd3f.js" crossorigin="anonymous"></script>
 </head>
+
 <body>
-    <div class="container my-5">
-        
-        <!-- ========== LIST VIEW ========== -->
-        <div id="listView">
-            <div class="d-flex justify-content-between align-items-center mb-4 p-3 bg-white rounded shadow-sm">
-                <div>
-                    <h2 class="mb-1">Danh sách sản phẩm</h2>
-                    <p class="text-muted mb-0">Quản lý kho hàng và giá cả</p>
-                </div>
-                <button class="btn btn-primary" id="btnOpenCreate">
-                    <i class="bi bi-plus-lg me-2"></i>Thêm sản phẩm
-                </button>
-            </div>
+    <div class="container">
+        <div class="container">
+            <!-- Main Card -->
+            <div class="card">
+                <h2 id="pageTitle">Thêm mới Sản phẩm</h2>
 
-            <div class="card shadow-sm border-0">
-                <div class="card-body p-0">
-                    <div class="table-responsive">
-                        <table class="table table-hover align-middle mb-0">
-                           <thead class="bg-light">
-                            <tr>
-                                <th class="ps-4 py-3">Sản phẩm</th>
-                                <th>Danh mục / Thương hiệu</th>
-                                <th>Giá gốc</th>
-                                <th>Giá bán</th>
-                                <th>Phân loại</th>
-                                <th class="text-end pe-4">Thao tác</th>
-                            </tr>
-                            </thead>
-                            <tbody id="productTableBody">
-                                <tr><td colspan="6" class="text-center py-5 text-muted">Đang tải dữ liệu...</td></tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </div>
+                <!-- VIEW: ADD -->
+                <div id="viewAdd">
+                    <div class="form-container">
+                        <h3>Thông tin cơ bản</h3>
 
-        <!-- ========== CREATE/EDIT VIEW ========== -->
-        <div id="createView" class="d-none">
-            <div class="d-flex align-items-center mb-4">
-                <button class="btn btn-outline-secondary me-3" id="btnBackToList">
-                    <i class="bi bi-arrow-left"></i> Quay lại
-                </button>
-                <h2 class="mb-0">Thêm Sản Phẩm Mới</h2>
-            </div>
-            
-            <form id="productForm">
-                <!-- THÔNG TIN CƠ BẢN -->
-                <div class="card mb-4 shadow-sm">
-                    <div class="card-body">
-                        <h5 class="card-title text-primary mb-3">Thông tin cơ bản</h5>
-                        
-                        <div class="mb-3">
-                            <label for="productName" class="form-label">Tên sản phẩm <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" id="productName" required>
-                        </div>
-
-                        <div class="mb-3">
-                            <label for="description" class="form-label">Mô tả</label>
-                            <textarea class="form-control" id="description" rows="4"></textarea>
-                        </div>
-
-                        <div class="mb-3">
-                            <label for="mainImage" class="form-label">Ảnh chính sản phẩm <span class="text-danger">*</span></label>
-                            <input type="file" class="form-control" id="mainImage" accept="image/*">
-                            <div id="mainImagePreview" class="mt-3"></div>
-                        </div>
-
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label for="priceOriginal" class="form-label">Giá gốc <span class="text-danger">*</span></label>
-                                <input type="number" class="form-control" id="priceOriginal" min="0" step="1000" required>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label for="price" class="form-label">Giá bán <span class="text-danger">*</span></label>
-                                <input type="number" class="form-control" id="price" min="0" step="1000" required>
+                        <div class="form-group" style="text-align: center; margin-bottom: 20px;">
+                            <div class="image-upload-box" id="mainImageContainer"
+                                style="width: 150px; height: 150px; border: 2px dashed #ccc; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; overflow: hidden; position: relative; cursor: pointer; background: #fff;">
+                                <img id="mainImagePreview" src=""
+                                    style="width: 100%; height: 100%; object-fit: cover; display: none;">
+                                <div id="mainImagePlaceholder" style="text-align: center; color: #888;">
+                                    <i class="fa-solid fa-cloud-arrow-up" style="font-size: 24px;"></i><br>
+                                    <span style="font-size: 12px;">Ảnh chính</span>
+                                </div>
+                                <input type="file" id="mainImageInput" accept="image/*"
+                                    style="opacity: 0; position: absolute; top:0; left:0; width:100%; height:100%; cursor: pointer;">
                             </div>
                         </div>
 
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label for="categoryId" class="form-label">Danh mục <span class="text-danger">*</span></label>
-                                <select class="form-select" id="categoryId" required>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>Tên sản phẩm <span class="required">*</span></label>
+                                <input type="text" id="productName" placeholder="Nhập tên sản phẩm...">
+                            </div>
+                            <div class="form-group">
+                                <label for="stock">Kho <span class="required">*</span></label>
+                                <input type="number" id="stock" placeholder="Nhập số lượng tồn kho" value="0">
+                            </div>
+                            <div class="form-group">
+                                <label for="categoryId">Danh mục <span class="required">*</span></label>
+                                <select id="categoryId">
                                     <option value="">-- Chọn danh mục --</option>
                                 </select>
                             </div>
-                            <div class="col-md-6 mb-3">
-                                <label for="brandId" class="form-label">Thương hiệu <span class="text-danger">*</span></label>
-                                <select class="form-select" id="brandId" required>
+                            <div class="form-group">
+                                <label>Thương hiệu <span class="required">*</span></label>
+                                <select id="brandId">
                                     <option value="">-- Chọn thương hiệu --</option>
                                 </select>
                             </div>
                         </div>
-                    </div>
-                </div>
 
-                <!-- PHÂN LOẠI HÀNG -->
-                <div class="card mb-4 shadow-sm">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-center mb-3">
-                            <h5 class="card-title text-primary mb-0">Phân loại hàng</h5>
-                            <div class="d-flex gap-2">
-                                <button type="button" class="btn btn-success btn-sm" id="btnGenerateVariants">
-                                    <i class="bi bi-arrow-repeat me-1"></i> Tạo biến thể
-                                </button>
-                                <button type="button" class="btn btn-outline-primary btn-sm" id="btnAddAttr">
-                                    <i class="bi bi-plus-lg me-1"></i> Thêm thuộc tính
-                                </button>
+                        <div class="form-group">
+                            <label>Mô tả</label>
+                            <textarea id="description" rows="3" placeholder="Mô tả sản phẩm..."></textarea>
+                        </div>
+
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>Giá gốc <span class="required">*</span></label>
+                                <input type="number" id="originalPrice" placeholder="0">
+                            </div>
+                            <div class="form-group">
+                                <label>Giá bán <span class="required">*</span></label>
+                                <input type="number" id="price" placeholder="0">
                             </div>
                         </div>
-                        <div id="attributesContainer"></div>
-                        <small class="text-muted">
-                            <i class="bi bi-info-circle me-1"></i>
-                            Nhập các giá trị thuộc tính (ngăn cách bởi dấu phẩy), sau đó nhấn nút "Tạo biến thể". VD: Màu sắc: Đỏ, Xanh, Vàng
-                        </small>
+
+                        <hr>
+
+                        <h3>Thuộc tính & Biến thể</h3>
+                        <div id="attributesSection">
+                            <!-- Dynamic Attributes will be added here -->
+                        </div>
+
+                        <button id="btnAddAttribute" class="secondary-btn"><i class="fa-solid fa-plus"></i> Thêm thuộc
+                            tính</button>
+
+                        <div class="variants-wrapper" style="margin-top: 20px;">
+                            <h4>Danh sách biến thể</h4>
+                            <table id="variantsTable">
+                                <thead>
+                                    <tr>
+                                        <th>Ảnh</th>
+                                        <th>Biến thể</th>
+                                        <th>Giá gốc</th>
+                                        <th>Giá bán</th>
+                                        <th>Kho</th>
+                                        <th>Xóa</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Generated Variants -->
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="form-actions">
+                            <button id="btnCancel" class="secondary-btn">Hủy</button>
+                            <button id="btnSave" class="primary-btn">Lưu sản phẩm</button>
+                        </div>
                     </div>
                 </div>
-
-                <!-- DANH SÁCH BIẾN THỂ -->
-                <div id="variantsContainer"></div>
-
-                <!-- NÚT ACTION -->
-                <div class="d-flex gap-2 justify-content-end pb-5">
-                    <button type="button" class="btn btn-secondary" id="resetBtn">Làm mới</button>
-                    <button type="submit" class="btn btn-primary px-4" id="submitBtn">
-                        <span class="spinner-border spinner-border-sm d-none" id="submitSpinner"></span>
-                        Tạo sản phẩm
-                    </button>
-                </div>
-            </form>
+            </div>
         </div>
-    </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script type="module" src="index.js"></script>
+        <script type="module" src="index.js"></script>
+        <script type="module">
+            import { loadNavbar } from '../navbar/navbar.js';
+            loadNavbar({});
+        </script>
 </body>
+
 </html>

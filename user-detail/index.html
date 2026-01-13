@@ -83,6 +83,30 @@
     color: #9CA3AF;
     margin-top: 5px;
 }
+.action-buttons .primary {
+    background-color: #3B82F6;
+    color: #fff;
+    border: none;
+}
+
+.action-buttons .primary:hover {
+    background-color: #2563EB;
+}
+
+/* Nút gửi thông báo */
+.action-buttons .secondary {
+    background-color: #F3F4F6;
+    color: #111827;
+    border: 1px solid #D1D5DB;
+}
+
+.action-buttons .secondary:hover {
+    background-color: #E5E7EB;
+}
+
+.action-buttons button:active {
+    transform: scale(0.97);
+}
 @media (max-width:700px){
     .profile { display: inline-block; }
 }
@@ -99,6 +123,18 @@
             <div class="avatar-wrapper">
                 <img id="avatarPreview" src="" class="avatar-img" />
                 <div id="emailsSection"></div>
+                <div class="action-buttons">
+                    <button id="btnSendMessage" class="primary">
+                        <i class="fa-solid fa-paper-plane"></i>
+                        Gửi tin nhắn
+                    </button>
+
+                    <button id="btnSendNotification" class="secondary">
+                        <i class="fa-solid fa-bell"></i>
+                        Gửi thông báo
+                    </button>
+                </div>
+
             </div>
 
             <!-- Thông tin user -->

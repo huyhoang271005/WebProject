@@ -5,10 +5,33 @@ import { loadNavbar } from '../navbar/navbar.js';
 // Constants
 const formatter = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' });
 
+const STATUS_MAP = {
+    0: 'WAITING',
+    1: 'PAYING',
+    2: 'PENDING',
+    3: 'CONFIRMED',
+    4: 'CANCELED',
+    5: 'DELIVERING',
+    6: 'DELIVERED',
+    'WAITING': 'WAITING',
+    'PAYING': 'PAYING',
+    'PENDING': 'PENDING',
+    'CONFIRMED': 'CONFIRMED',
+    'CANCELED': 'CANCELED',
+    'DELIVERING': 'DELIVERING',
+    'DELIVERED': 'DELIVERED'
+};
+
 const STATUS_CONFIG = {
     WAITING: {
-        label: 'Chờ xác nhận',
+        label: 'Chờ thanh toán',
         icon: 'fa-clock',
+        color: '#f59e0b',
+        actions: ['detail', 'cancel']
+    },
+    PAYING: {
+        label: 'Chờ thanh toán',
+        icon: 'fa-spinner fa-spin',
         color: '#f59e0b',
         actions: ['detail', 'cancel']
     },
@@ -16,7 +39,7 @@ const STATUS_CONFIG = {
         label: 'Đang xử lý',
         icon: 'fa-hourglass-half',
         color: '#3b82f6',
-        actions: ['detail', 'cancel']
+        actions: ['detail']
     },
     CONFIRMED: {
         label: 'Đã xác nhận',
@@ -24,22 +47,10 @@ const STATUS_CONFIG = {
         color: '#10b981',
         actions: ['detail']
     },
-    PAINTED: {
-        label: 'Đã đóng gói',
-        icon: 'fa-paint-brush',
-        color: '#8b5cf6',
-        actions: ['detail']
-    },
     CANCELED: {
         label: 'Đã hủy',
         icon: 'fa-times-circle',
         color: '#6b7280',
-        actions: ['detail', 'reorder']
-    },
-    REJECTED: {
-        label: 'Từ chối',
-        icon: 'fa-ban',
-        color: '#ef4444',
         actions: ['detail', 'reorder']
     },
     DELIVERING: {
@@ -101,7 +112,7 @@ document.addEventListener("DOMContentLoaded", async () => {
  */
 async function loadOrders(append = false) {
     try {
-        const response = await callAPI(`/auth/orders?page=${currentPage}&size=${pageSize}`, 'GET');
+        const response = await callAPI(`/orders?page=${currentPage}&size=${pageSize}`, 'GET');
 
         if (response.success && response.data) {
             const newOrders = response.data.listData || [];
@@ -110,10 +121,16 @@ async function loadOrders(append = false) {
 
             if (append) {
                 // Thêm vào danh sách hiện tại (infinite scroll)
-                allOrders = [...allOrders, ...newOrders];
+                allOrders = [...allOrders, ...newOrders.map(o => ({
+                    ...o,
+                    orderStatus: STATUS_MAP[o.orderStatus] || o.orderStatus
+                }))];
             } else {
                 // Reset danh sách (load mới)
-                allOrders = newOrders;
+                allOrders = newOrders.map(o => ({
+                    ...o,
+                    orderStatus: STATUS_MAP[o.orderStatus] || o.orderStatus
+                }));
             }
 
             filterByStatus(currentStatus);
@@ -173,6 +190,9 @@ window.filterByStatus = (status) => {
     // Filter orders
     if (status === 'ALL') {
         filteredOrders = [...allOrders];
+    } else if (status === 'WAITING') {
+        // Tab WAITING bao gồm cả WAITING (#0) và PAYING (#1)
+        filteredOrders = allOrders.filter(order => order.orderStatus === 'WAITING' || order.orderStatus === 'PAYING');
     } else {
         filteredOrders = allOrders.filter(order => order.orderStatus === status);
     }
@@ -267,6 +287,11 @@ function renderOrders() {
                         ${statusConfig.label}
                     </div>
                 </div>
+                <!-- Hiển thị phương thức thanh toán ngay trên card để dễ nhận biết -->
+                <div style="padding: 0 20px; font-size: 13px; color: var(--text-gray); margin-bottom: 10px;">
+                    <i class="fas ${order.paymentMethod === 'VN_PAY' ? 'fa-credit-card' : 'fa-money-bill-wave'}"></i>
+                    ${order.paymentMethod === 'VN_PAY' ? 'VNPay' : 'Thanh toán khi nhận hàng (COD)'}
+                </div>
 
                 <div class="order-card-body">
                     <div class="order-items">
@@ -280,7 +305,7 @@ function renderOrders() {
                         <div class="total-amount">${formatter.format(totalAmount)}</div>
                     </div>
                     <div class="order-actions">
-                        ${renderOrderActions(index, statusConfig)}
+                        ${renderOrderActions(index, statusConfig, order)}
                     </div>
                 </div>
             </div>
@@ -306,10 +331,9 @@ function renderOrderItems(items) {
 
         return `
             <div class="order-item">
-                <img src="${item.imageUrl || 'https://via.placeholder.com/80'}" 
+                <img src="${item.imageUrl}" 
                      alt="${escapeHtml(item.productName)}" 
-                     class="item-image"
-                     onerror="this.src='https://via.placeholder.com/80'">
+                     class="item-image">
                 <div class="item-info">
                     <div class="item-name">${escapeHtml(item.productName)}</div>
                     <div class="item-variant">Phân loại: ${escapeHtml(variantName)}</div>
@@ -339,7 +363,7 @@ function renderOrderItems(items) {
 /**
  * Render action buttons based on order status
  */
-function renderOrderActions(orderIndex, statusConfig) {
+function renderOrderActions(orderIndex, statusConfig, orderFromList) {
     const actions = statusConfig.actions || ['detail'];
     let html = '';
 
@@ -351,7 +375,18 @@ function renderOrderActions(orderIndex, statusConfig) {
         `;
     }
 
-    if (actions.includes('cancel')) {
+    const order = orderFromList || filteredOrders[orderIndex];
+    if (!order) return html;
+
+    const isVNPay = String(order.paymentMethod).toUpperCase() === 'VN_PAY';
+    
+    // Logic mới: WAITING/PAYING luôn hủy được. PENDING chỉ hủy được nếu KHÔNG phải VNPay (mặc định là COD)
+    let canCancel = actions.includes('cancel');
+    if (order.orderStatus === 'PENDING' && !isVNPay) {
+        canCancel = true;
+    }
+
+    if (canCancel) {
         html += `
             <button class="btn-action btn-cancel" onclick="cancelOrder(${orderIndex})">
                 <i class="fas fa-times"></i> Hủy đơn
@@ -367,8 +402,43 @@ function renderOrderActions(orderIndex, statusConfig) {
         `;
     }
 
+    if ((order.orderStatus === 'WAITING' || order.orderStatus === 'PAYING') && isVNPay) {
+        html += `
+            <button class="btn-action btn-pay" onclick="payOrder(${orderIndex})" style="background-color: #ee4d2d; color: white; border: none;">
+                <i class="fas fa-credit-card"></i> Thanh toán
+            </button>
+        `;
+    }
+
     return html;
 }
+
+/**
+ * Handle VNPay payment redirect
+ */
+window.payOrder = async (orderIndex) => {
+    const order = filteredOrders[orderIndex];
+    if (!order || !order.orderId) {
+        showNotification('Không tìm thấy mã đơn hàng', 'error');
+        return;
+    }
+
+    try {
+        if (typeof toggleLoading === 'function') toggleLoading(true);
+        const response = await callAPI(`/payment/vn-pay/${order.orderId}`, 'GET');
+        
+        if (response.success && (response.data?.paymentUrl || response.data)) {
+            window.location.href = response.data.paymentUrl || response.data;
+        } else {
+            showNotification(response.message || 'Không thể lấy liên kết thanh toán', 'error');
+        }
+    } catch (error) {
+        console.error('Lỗi thanh toán VNPay:', error);
+        showNotification('Có lỗi xảy ra khi kết nối thanh toán', 'error');
+    } finally {
+        if (typeof toggleLoading === 'function') toggleLoading(false);
+    }
+};
 
 /**
  * Calculate order total
@@ -385,12 +455,31 @@ function calculateOrderTotal(order) {
  */
 window.viewOrderDetail = async (orderIndex) => {
     const order = filteredOrders[orderIndex];
-    if (!order) {
+    if (!order || !order.orderId) {
         showNotification('Không tìm thấy đơn hàng', 'error');
         return;
     }
 
-    showOrderDetailModal(order, orderIndex);
+    try {
+        if (typeof toggleLoading === 'function') toggleLoading(true);
+        const response = await callAPI(`/orders/${order.orderId}`, 'GET');
+        if (response.success && response.data) {
+            const detailOrder = {
+                ...order,
+                ...response.data,
+                orderStatus: STATUS_MAP[response.data.orderStatus] || response.data.orderStatus,
+                orderId: order.orderId
+            };
+            showOrderDetailModal(detailOrder, orderIndex);
+        } else {
+            showOrderDetailModal(order, orderIndex);
+        }
+    } catch (error) {
+        console.error('Lỗi load chi tiết đơn hàng:', error);
+        showOrderDetailModal(order, orderIndex);
+    } finally {
+        if (typeof toggleLoading === 'function') toggleLoading(false);
+    }
 };
 
 /**
@@ -488,6 +577,30 @@ function showOrderDetailModal(order, orderIndex) {
         </div>
     `;
 
+    const isCOD = order && String(order.paymentMethod).toUpperCase() === 'COD';
+    const canCancel = ['WAITING', 'PAYING'].includes(order.orderStatus) || (order.orderStatus === 'PENDING' && isCOD);
+
+    if (canCancel || (order.paymentMethod === 'VN_PAY' && ['WAITING', 'PAYING'].includes(order.orderStatus))) {
+        modalBody.innerHTML += `<div class="modal-actions" style="margin-top: 20px; display: flex; gap: 10px; justify-content: flex-end;"></div>`;
+        const actionContainer = modalBody.querySelector('.modal-actions');
+
+        if (canCancel) {
+            actionContainer.innerHTML += `
+                <button class="btn-action btn-cancel" onclick="cancelOrder(${orderIndex})" style="padding: 12px 24px; border-radius: 4px; cursor: pointer; font-weight: 600;">
+                    <i class="fas fa-times"></i> HỦY ĐƠN HÀNG
+                </button>
+            `;
+        }
+
+        if (order.paymentMethod === 'VN_PAY' && ['WAITING', 'PAYING'].includes(order.orderStatus)) {
+            actionContainer.innerHTML += `
+                <button class="btn-action btn-pay" onclick="payOrder(${orderIndex})" style="background-color: #ee4d2d; color: white; border: none; padding: 12px 24px; border-radius: 4px; cursor: pointer; font-weight: 600; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                    <i class="fas fa-credit-card"></i> THANH TOÁN QUA VNPAY
+                </button>
+            `;
+        }
+    }
+
     modal.style.display = 'flex';
 }
 
@@ -504,10 +617,9 @@ function renderAllOrderItems(items) {
 
         return `
             <div class="order-item">
-                <img src="${item.imageUrl || 'https://via.placeholder.com/80'}" 
+                <img src="${item.imageUrl}" 
                      alt="${escapeHtml(item.productName)}" 
-                     class="item-image"
-                     onerror="this.src='https://via.placeholder.com/80'">
+                     class="item-image">
                 <div class="item-info">
                     <div class="item-name">${escapeHtml(item.productName)}</div>
                     <div class="item-variant">Phân loại: ${escapeHtml(variantName)}</div>
@@ -549,7 +661,7 @@ window.addEventListener('click', (e) => {
  */
 window.cancelOrder = async (orderIndex) => {
     const order = filteredOrders[orderIndex];
-    if (!order) {
+    if (!order || !order.orderId) {
         showNotification('Không tìm thấy đơn hàng', 'error');
         return;
     }
@@ -561,10 +673,8 @@ window.cancelOrder = async (orderIndex) => {
     try {
         if (typeof toggleLoading === 'function') toggleLoading(true);
 
-        // Giả sử API cancel cần orderId hoặc một identifier nào đó
-        // Nếu không có orderId, có thể cần dùng cách khác
-        const orderId = order.orderId || `ORDER_${orderIndex}`;
-        const response = await callAPI(`/auth/orders/${orderId}/cancel`, 'PUT');
+        // Sử dụng PATCH /orders/{orderId} theo yêu cầu mới
+        const response = await callAPI(`/orders/${order.orderId}`, 'PATCH', 'CANCELED');
 
         if (response.success) {
             showNotification('Hủy đơn hàng thành công', 'success');
