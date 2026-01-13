@@ -1,6 +1,6 @@
-import { callAPI } from "../public/api.js";
 import { showDialog } from "../dialog/index.js";
 import { getLoader } from "../public/public.js";
+import { fetchCategories, fetchBrands, fetchAttributes, createProduct } from "./services.js";
 
 // DOM Elements
 const productName = document.getElementById("productName");
@@ -44,7 +44,7 @@ export function resetAddForm() {
 
 async function loadMetadata() {
     // Load Categories
-    const catRes = await callAPI("/categories?page=0&size=100", "GET");
+    const catRes = await fetchCategories();
     if (catRes.success && catRes.data) {
         let html = '<option value="">-- Chọn danh mục --</option>';
         catRes.data.listData.forEach(c => {
@@ -54,7 +54,7 @@ async function loadMetadata() {
     }
 
     // Load Brands
-    const brandRes = await callAPI("/brands?page=0&size=100", "GET");
+    const brandRes = await fetchBrands();
     if (brandRes.success && brandRes.data) {
         let html = '<option value="">-- Chọn thương hiệu --</option>';
         brandRes.data.listData.forEach(b => {
@@ -64,7 +64,7 @@ async function loadMetadata() {
     }
 
     // Load Attributes
-    const attrRes = await callAPI("/attributes?page=0&size=100", "GET");
+    const attrRes = await fetchAttributes();
     if (attrRes.success && attrRes.data) {
         availableAttributes = attrRes.data.listData;
     }
@@ -311,7 +311,7 @@ async function saveProduct() {
 
     // Send
     await getLoader("btnSave", async () => {
-        const res = await callAPI("/admin/products", "POST", formData, true); // true for isMultipart
+        const res = await createProduct(formData); // true for isMultipart
 
         if (res.success) {
             await showDialog("success", "Thêm sản phẩm thành công!");
