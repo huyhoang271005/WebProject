@@ -299,9 +299,6 @@ async function saveProduct() {
         variants: []
     };
 
-    // Log the DTO for debugging
-    console.log("Final ProductDTO:", productDTO);
-
     const formData = new FormData();
 
     // Append Main Image
@@ -322,12 +319,17 @@ async function saveProduct() {
         const vPrice = parseFloat(tr.querySelector(".v-price").value) || 0;
         const vStock = parseInt(tr.querySelector(".v-stock").value) || 0;
         const vImgInput = tr.querySelector(".v-image-input");
+        const file = vImgInput.files[0];
+
+        let imgName = null;
 
         // Append Image (Sync Index)
-        if (vImgInput.files[0]) {
-            formData.append('variantImages', vImgInput.files[0]);
+        if (file) {
+            imgName = file.name; // Use original filename
+            formData.append('variantImages', file, imgName);
         } else {
             // Append empty blob to keep list/array index synchronized with variants
+            // We give it a dummy name 'empty' or just rely on blob default
             formData.append('variantImages', new Blob([], { type: 'application/octet-stream' }));
         }
 
@@ -340,9 +342,14 @@ async function saveProduct() {
             originalPrice: vOriginal,
             price: vPrice,
             stock: vStock,
+            imageName: imgName, // Send filename reference
+            active: true, // Default active
             attributeValues: variantAttrs
         });
     });
+
+    // Log the DTO for debugging
+    console.log("Final ProductDTO:", productDTO);
 
     // Append JSON Blob
     formData.append('productDTO', new Blob([JSON.stringify(productDTO)], { type: 'application/json' }));
