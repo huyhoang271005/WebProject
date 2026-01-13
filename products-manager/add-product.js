@@ -10,6 +10,11 @@ const price = document.getElementById("price");
 const categoryId = document.getElementById("categoryId");
 const brandId = document.getElementById("brandId");
 
+// Main Image Elements
+const mainImageInput = document.getElementById("mainImageInput");
+const mainImagePreview = document.getElementById("mainImagePreview");
+const mainImagePlaceholder = document.getElementById("mainImagePlaceholder");
+
 const attributesSection = document.getElementById("attributesSection");
 const btnAddAttribute = document.getElementById("btnAddAttribute");
 const variantsTableBody = document.querySelector("#variantsTable tbody");
@@ -26,6 +31,16 @@ export function initAddProduct() {
     btnSave.addEventListener("click", saveProduct);
     btnCancel.addEventListener("click", resetAddForm);
 
+    // Main Image Preview
+    mainImageInput.addEventListener("change", (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            mainImagePreview.src = URL.createObjectURL(file);
+            mainImagePreview.style.display = "block";
+            mainImagePlaceholder.style.display = "none";
+        }
+    });
+
     // Load metadata (Categories, Brands, Attributes)
     loadMetadata();
 }
@@ -38,30 +53,43 @@ export function resetAddForm() {
     categoryId.value = "";
     brandId.value = "";
 
+    // Reset Main Image
+    mainImageInput.value = "";
+    mainImagePreview.src = "";
+    mainImagePreview.style.display = "none";
+    mainImagePlaceholder.style.display = "block";
+
     attributes = [];
     renderAttributes();
     variantsTableBody.innerHTML = "";
 }
 
 async function loadMetadata() {
-    categoryId.innerHTML = html;
-}
+    // Load Categories
+    const catRes = await fetchCategories();
+    if (catRes.success && catRes.data) {
+        let html = '<option value="">-- Chọn danh mục --</option>';
+        catRes.data.listData.forEach(c => {
+            html += `<option value="${c.categoryId}">${c.categoryName}</option>`;
+        });
+        categoryId.innerHTML = html;
+    }
 
-// Load Brands
-const brandRes = await fetchBrands();
-if (brandRes.success && brandRes.data) {
-    let html = '<option value="">-- Chọn thương hiệu --</option>';
-    brandRes.data.listData.forEach(b => {
-        html += `<option value="${b.brandId}">${b.brandName}</option>`;
-    });
-    brandId.innerHTML = html;
-}
+    // Load Brands
+    const brandRes = await fetchBrands();
+    if (brandRes.success && brandRes.data) {
+        let html = '<option value="">-- Chọn thương hiệu --</option>';
+        brandRes.data.listData.forEach(b => {
+            html += `<option value="${b.brandId}">${b.brandName}</option>`;
+        });
+        brandId.innerHTML = html;
+    }
 
-// Load Attributes
-const attrRes = await fetchAttributes();
-if (attrRes.success && attrRes.data) {
-    availableAttributes = attrRes.data.listData;
-}
+    // Load Attributes
+    const attrRes = await fetchAttributes();
+    if (attrRes.success && attrRes.data) {
+        availableAttributes = attrRes.data.listData;
+    }
 }
 
 // === ATTRIBUTE HANDLING ===
@@ -263,6 +291,12 @@ async function saveProduct() {
     };
 
     const formData = new FormData();
+
+    // Append Main Image
+    if (mainImageInput.files[0]) {
+        formData.append('image', mainImageInput.files[0]);
+    }
+
     // Gather variants
     const rows = variantsTableBody.querySelectorAll("tr");
 
