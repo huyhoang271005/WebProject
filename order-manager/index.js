@@ -20,9 +20,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     };
 });
 
-// ============================================================
-// 1. TẢI DỮ LIỆU
-// ============================================================
 async function loadOrders(status) {
     const spinner = document.getElementById("loading-spinner");
     const tbody = document.getElementById("orderList");
@@ -31,11 +28,15 @@ async function loadOrders(status) {
     tbody.innerHTML = "";
 
     try {
-        const endpoint = `/admin/orders/${status}`;
+        // Thêm page=0&size=100 
+        const endpoint = `/admin/orders?orderStatus=${status}&page=0&size=100`;
+        
+        console.log("Calling API:", endpoint); // Log để kiểm tra
         const res = await callAPI(endpoint, 'GET'); 
         
         if (res.success) {
             allOrders = res.data.listData || [];
+            // Sắp xếp đơn mới nhất lên đầu
             allOrders.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
             renderOrders(allOrders);
         } else {
@@ -50,7 +51,7 @@ async function loadOrders(status) {
 }
 
 // ============================================================
-// 2. RENDER BẢNG (GỌI HÀM UPDATE VỚI INTENT RÕ RÀNG)
+// 2. RENDER BẢNG
 // ============================================================
 function renderOrders(listData) {
     const tbody = document.getElementById("orderList");
@@ -122,7 +123,7 @@ function renderMiniProducts(items) {
 }
 
 // ============================================================
-// 3. CẬP NHẬT TRẠNG THÁI (MAPPING TẤT CẢ VỀ "CONFIRMED")
+// 3. CẬP NHẬT TRẠNG THÁI (ĐÃ SỬA THEO JAVA SWING)
 // ============================================================
 window.updateStatus = async (orderId, intent) => {
     let msg = "Bạn có chắc chắn chuyển trạng thái đơn này?";
@@ -131,21 +132,12 @@ window.updateStatus = async (orderId, intent) => {
     if (!confirm(msg)) return;
 
     try {
+        // Endpoint giữ nguyên vì Swing dùng @Path("id")
         const endpoint = `/admin/orders/${orderId}`;
         
-        // 👇👇👇 QUY TẮC "TRIGGER" CỦA BACKEND 👇👇👇
-        // Backend dùng "CONFIRMED" như một lệnh "Next Step" (Bước tiếp theo).
-        // - Đang WAITING + CONFIRMED -> Sang DELIVERING
-        // - Đang DELIVERING + CONFIRMED -> Sang DELIVERED
-        
-        let statusToSend = intent; // Mặc định (cho trường hợp CANCELED)
-
-        if (intent === 'TO_DELIVERING' || intent === 'TO_DELIVERED') {
-            statusToSend = 'CONFIRMED'; 
-        }
-
-        // Gửi biến trần (callAPI tự đóng gói JSON)
-        const body = statusToSend; 
+        // [FIX 2] Gửi thẳng intent (TO_DELIVERING, TO_DELIVERED...) 
+        // Không map sang 'CONFIRMED' nữa vì Java Swing không làm thế.
+        const body = intent; 
 
         console.log(`Sending to ${endpoint}: ${body}`);
 
