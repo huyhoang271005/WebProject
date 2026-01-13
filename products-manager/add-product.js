@@ -308,6 +308,14 @@ async function saveProduct() {
     if (!categoryId.value) return showDialog("error", "Vui lòng chọn danh mục");
     if (!brandId.value) return showDialog("error", "Vui lòng chọn thương hiệu");
 
+    // Filter only valid attributes to send
+    const validAttributes = attributes.filter(a => a.attributeId && a.values.length > 0);
+    const validAttributeDTOs = validAttributes.map(a => ({
+        attributeId: a.attributeId,
+        attributeName: a.name,
+        attributeValues: a.values.map(v => ({ attributeValueName: v }))
+    }));
+
     const productDTO = {
         productName: productName.value.trim(),
         description: description.value.trim(),
@@ -317,16 +325,8 @@ async function saveProduct() {
         categoryId: categoryId.value,
         brandId: brandId.value,
         // Backend seems to require BOTH keys to be present and non-null
-        attributes: attributes.map(a => ({
-            attributeId: a.attributeId,
-            attributeName: a.name,
-            attributeValues: a.values.map(v => ({ attributeValueName: v }))
-        })),
-        variantValues: attributes.map(a => ({
-            attributeId: a.attributeId,
-            attributeName: a.name,
-            attributeValues: a.values.map(v => ({ attributeValueName: v }))
-        })),
+        attributes: validAttributeDTOs,
+        variantValues: validAttributeDTOs,
         variants: []
     };
 
@@ -352,7 +352,9 @@ async function saveProduct() {
         const vImgInput = tr.querySelector(".v-image-input");
         const file = vImgInput.files[0];
 
-        let imgName = null;
+        // Ensure imgName is NOT null. Use empty string if no image.
+        // "element cannot be mapped to a null key" -> Collectors.toMap fails with null key
+        let imgName = "";
 
         // Append Image with Key = ImageName (Backend requires this exact mapping)
         if (file) {
