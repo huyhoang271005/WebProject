@@ -76,7 +76,7 @@ async function render(user) {
         const btnSendMessage = document.getElementById("btnSendMessage");
         btnSendMessage.addEventListener('click', async () => {
             const data = {
-                userIds: [uid]
+                userIds: [user.userId]
             };
             const result = await callAPI("/room-chat", "POST", data);
             await showDialog(result.success ? "success" : "error", result.message);
