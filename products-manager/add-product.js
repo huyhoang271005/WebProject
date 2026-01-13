@@ -335,7 +335,7 @@ async function saveProduct() {
     });
 
     // Append JSON Blob
-    formData.append('productRequest', new Blob([JSON.stringify(productDTO)], { type: 'application/json' }));
+    formData.append('productDTO', new Blob([JSON.stringify(productDTO)], { type: 'application/json' }));
 
     // Send
     await getLoader("btnSave", async () => {
