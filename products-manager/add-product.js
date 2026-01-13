@@ -283,6 +283,14 @@ async function saveProduct() {
     if (!categoryId.value) return showDialog("error", "Vui lòng chọn danh mục");
     if (!brandId.value) return showDialog("error", "Vui lòng chọn thương hiệu");
 
+    // FIX 1: Filter only valid attributes to avoid sending garbage
+    const validAttributes = attributes.filter(a => a.attributeId && a.values.length > 0);
+    const validAttributeDTOs = validAttributes.map(a => ({
+        attributeId: a.attributeId,
+        attributeName: a.name,
+        attributeValues: a.values.map(v => ({ attributeValueName: v }))
+    }));
+
     const productDTO = {
         productName: productName.value.trim(),
         description: description.value.trim(),
@@ -291,11 +299,9 @@ async function saveProduct() {
         stock: parseInt(stock.value) || 0,
         categoryId: categoryId.value,
         brandId: brandId.value,
-        attributes: attributes.map(a => ({
-            attributeId: a.attributeId,
-            attributeName: a.name,
-            attributeValues: a.values.map(v => ({ attributeValueName: v }))
-        })),
+        // FIX 2: Send BOTH 'attributes' and 'variantValues' to satisfy Backend requirements
+        attributes: validAttributeDTOs,
+        variantValues: validAttributeDTOs,
         variants: []
     };
 
@@ -305,7 +311,7 @@ async function saveProduct() {
     if (mainImageInput.files[0]) {
         formData.append('image', mainImageInput.files[0]);
     } else {
-        // Should we send empty blob for main image? Usually optional.
+        // Optional: append empty blob if main image is strictly required by backend map
         // formData.append('image', new Blob([], {type: 'application/octet-stream'}));
     }
 
@@ -321,16 +327,16 @@ async function saveProduct() {
         const vImgInput = tr.querySelector(".v-image-input");
         const file = vImgInput.files[0];
 
-        let imgName = null;
+        // FIX 3: Always generate a UNIQUE key for imageName
+        // "element cannot be mapped to a null key" -> implies we need a valid key even if no file
+        const imgName = `variant-${index}-${Date.now()}`;
 
-        // Append Image with Key = ImageName
+        // FIX 4: Always append to FormData. If no file, append empty blob.
+        // This prevents backend 'toMap' value null errors.
         if (file) {
-            // Generate unique name WITHOUT extension (simplest string)
-            // Backend likely does request.getFile(imageName)
-            imgName = `variant-${index}-${Date.now()}`;
-
-            // KEY must match the imageName in DTO
             formData.append(imgName, file);
+        } else {
+            formData.append(imgName, new Blob([], { type: 'application/octet-stream' }));
         }
 
         const variantAttrs = Object.values(combo).map(item => ({
@@ -342,7 +348,7 @@ async function saveProduct() {
             originalPrice: vOriginal,
             price: vPrice,
             stock: vStock,
-            imageName: imgName,
+            imageName: imgName, // Never null
             active: true,
             attributeValues: variantAttrs
         });
@@ -361,7 +367,6 @@ async function saveProduct() {
     // Send
     await getLoader("btnSave", async () => {
         const res = await createProduct(formData); // true for isMultipart
-
 
         if (res.success) {
             await showDialog("success", "Thêm sản phẩm thành công!");
