@@ -4,22 +4,26 @@ const money = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND
 let allOrders = []; 
 
 document.addEventListener("DOMContentLoaded", async () => {
-    // 1. Mặc định load tab "Chờ xác nhận" (WAITING)
-    await loadOrders('WAITING');
+    // 1. Mặc định load tab "Chờ xác nhận" -> Gọi status PENDING
+    await loadOrders('PENDING');
     
-    // 2. Active Tab đầu tiên
+    // 2. Xử lý Active Tab
     const tabs = document.querySelectorAll('.tab-btn');
     if(tabs.length > 0) {
         tabs.forEach(t => t.classList.remove('active'));
         if(tabs[0]) tabs[0].classList.add('active'); 
     }
 
+    // 3. Xử lý click ngoài modal
     window.onclick = (event) => {
         const modal = document.getElementById("detailModal");
         if (event.target == modal) closeModal();
     };
 });
 
+// ============================================================
+// 1. TẢI DỮ LIỆU (THEO SWING: page=0, size=100, orderStatus=...)
+// ============================================================
 async function loadOrders(status) {
     const spinner = document.getElementById("loading-spinner");
     const tbody = document.getElementById("orderList");
@@ -28,15 +32,14 @@ async function loadOrders(status) {
     tbody.innerHTML = "";
 
     try {
-        // Thêm page=0&size=100 
+        // Gọi đúng tên tham số backend yêu cầu: orderStatus
         const endpoint = `/admin/orders?orderStatus=${status}&page=0&size=100`;
         
-        console.log("Calling API:", endpoint); // Log để kiểm tra
+        console.log("Calling API:", endpoint); 
         const res = await callAPI(endpoint, 'GET'); 
         
         if (res.success) {
             allOrders = res.data.listData || [];
-            // Sắp xếp đơn mới nhất lên đầu
             allOrders.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
             renderOrders(allOrders);
         } else {
@@ -51,7 +54,7 @@ async function loadOrders(status) {
 }
 
 // ============================================================
-// 2. RENDER BẢNG
+// 2. RENDER BẢNG (Logic nút bấm gửi CONFIRMED)
 // ============================================================
 function renderOrders(listData) {
     const tbody = document.getElementById("orderList");
@@ -68,21 +71,24 @@ function renderOrders(listData) {
         
         let actionButtons = '';
 
-        // Case 1: Đơn mới (WAITING)
-        if (st === 'WAITING' || st === 'PENDING') {
+        // [CASE 1] PENDING (Chờ xác nhận)
+        // -> Nút Duyệt: Gửi 'CONFIRMED' để sang DELIVERING
+        // -> Nút Hủy: Gửi 'CANCELED'
+        if (st === 'PENDING') {
             actionButtons = `
-                <button class="btn-approve" onclick="updateStatus('${order.orderId}', 'TO_DELIVERING')" title="Duyệt đơn này">
-                    <i class="fa-solid fa-truck-fast"></i> Duyệt đơn
+                <button class="btn-approve" onclick="updateStatus('${order.orderId}', 'CONFIRMED', 'Duyệt đơn chuyển sang giao hàng?')" title="Duyệt đơn">
+                    <i class="fa-solid fa-truck-fast"></i> Duyệt
                 </button>
-                <button class="btn-reject" onclick="updateStatus('${order.orderId}', 'CANCELED')" title="Hủy đơn này">
+                <button class="btn-reject" onclick="updateStatus('${order.orderId}', 'CANCELED', 'Hủy đơn hàng này?')" title="Hủy đơn">
                     <i class="fa-solid fa-xmark"></i>
                 </button>
             `;
         } 
-        // Case 2: Đang giao (DELIVERING)
+        // [CASE 2] DELIVERING (Đang giao)
+        // -> Nút Đã giao: Gửi 'CONFIRMED' để sang DELIVERED
         else if (st === 'DELIVERING') {
             actionButtons = `
-                <button class="btn-approve" style="background-color:#3B82F6;" onclick="updateStatus('${order.orderId}', 'TO_DELIVERED')" title="Xác nhận khách đã nhận">
+                <button class="btn-approve" style="background-color:#3B82F6;" onclick="updateStatus('${order.orderId}', 'CONFIRMED', 'Xác nhận khách đã nhận hàng?')" title="Xác nhận đã giao">
                     <i class="fa-solid fa-check-double"></i> Đã giao
                 </button>
             `;
@@ -123,21 +129,19 @@ function renderMiniProducts(items) {
 }
 
 // ============================================================
-// 3. CẬP NHẬT TRẠNG THÁI (ĐÃ SỬA THEO JAVA SWING)
+// 3. CẬP NHẬT TRẠNG THÁI (GỬI TRỰC TIẾP CONFIRMED / CANCELED)
 // ============================================================
-window.updateStatus = async (orderId, intent) => {
-    let msg = "Bạn có chắc chắn chuyển trạng thái đơn này?";
-    if (intent === 'CANCELED') msg = "CẢNH BÁO: Bạn sắp HỦY đơn hàng này?";
-
-    if (!confirm(msg)) return;
+window.updateStatus = async (orderId, statusToSend, message) => {
+    // 1. Hỏi xác nhận trước
+    if (!confirm(message || "Bạn có chắc chắn?")) return;
 
     try {
-        // Endpoint giữ nguyên vì Swing dùng @Path("id")
+        // Endpoint giữ nguyên (theo Swing)
         const endpoint = `/admin/orders/${orderId}`;
         
-        // [FIX 2] Gửi thẳng intent (TO_DELIVERING, TO_DELIVERED...) 
-        // Không map sang 'CONFIRMED' nữa vì Java Swing không làm thế.
-        const body = intent; 
+        // 2. Gửi đúng cái status (CONFIRMED hoặc CANCELED) mà hàm render đã truyền vào
+        // Không cần logic if/else phức tạp nữa vì render đã định nghĩa đúng rồi.
+        const body = statusToSend; 
 
         console.log(`Sending to ${endpoint}: ${body}`);
 
@@ -146,16 +150,19 @@ window.updateStatus = async (orderId, intent) => {
         if (res.success) {
             alert("Thành công!");
             
-            // Logic reload giữ nguyên tab
+            // 3. Reload lại đúng tab đang đứng
             const activeBtn = document.querySelector('.tab-btn.active');
-            let currentFilter = 'WAITING';
+            let currentFilter = 'PENDING'; // Mặc định là PENDING
+            
             if (activeBtn) {
                 const text = activeBtn.innerText.trim();
-                if(text === 'Chờ xác nhận') currentFilter = 'WAITING';
+                // Map lại text trên nút bấm về Status backend
+                if(text === 'Chờ xác nhận') currentFilter = 'PENDING';
                 else if(text === 'Đang giao') currentFilter = 'DELIVERING';
                 else if(text === 'Hoàn thành') currentFilter = 'DELIVERED';
                 else if(text === 'Đã hủy') currentFilter = 'CANCELED';
             }
+            
             loadOrders(currentFilter);
             closeModal();
         } else {
@@ -171,8 +178,11 @@ window.updateStatus = async (orderId, intent) => {
 // 4. BỘ LỌC VÀ HELPER
 // ============================================================
 window.filterStatus = (status) => {
+    // Xử lý UI tab active
     document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
     if(event && event.target) event.target.classList.add('active');
+    
+    // Gọi hàm load
     loadOrders(status);
 };
 
@@ -182,10 +192,11 @@ function getStatusBadge(status) {
     let lbl = s;
 
     switch (s) {
-        case 'WAITING': case 'PENDING': cls = 'badge-yellow'; lbl = 'Chờ xác nhận'; break;
+        case 'PENDING': cls = 'badge-yellow'; lbl = 'Chờ xác nhận'; break;
         case 'DELIVERING': cls = 'badge-blue'; lbl = 'Đang giao'; break;
         case 'DELIVERED': cls = 'badge-green'; lbl = 'Hoàn thành'; break;
         case 'CANCELED': case 'REJECTED': cls = 'badge-red'; lbl = 'Đã hủy'; break;
+        case 'CONFIRMED': cls = 'badge-blue'; lbl = 'Đã duyệt'; break; // Phòng hờ
     }
     return `<span class="status-badge ${cls}">${lbl}</span>`;
 }
