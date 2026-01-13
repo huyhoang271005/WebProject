@@ -77,33 +77,138 @@ async function getProductDetail(id) {
 async function getFeedbacks(productId) {
     const endpoint = `/feedbacks/${productId}`;
     try {
-        console.log(`Calling GET ${endpoint}...`);
         const res = await callAPI(endpoint, "GET");
-        console.log("Feedbacks Response:", res);
 
         const container = document.getElementById('feedbackList');
-        if (res.success && res.data) {
-             // Temporary placeholder until structure is known
-             container.innerHTML = `<p style="color: green;">Đã tải đánh giá. Kiểm tra DevTools (F12) để xem cấu trúc JSON.</p>`;
+        if (res.success && res.data && res.data.listData) {
+             const list = res.data.listData;
+             if (list.length === 0) {
+                 container.innerHTML = `<p style="color: #888; text-align:center; padding: 20px;">Chưa có đánh giá nào.</p>`;
+                 return;
+             }
+
+             // Check Admin Role
+             let isAdmin = false;
+             try {
+                 const cached = sessionStorage.getItem("homeData");
+                 if (cached) {
+                     const userData = JSON.parse(cached);
+                     isAdmin = userData.roleName === 'ADMIN';
+                 }
+             } catch (e) {}
+
+             container.innerHTML = list.map(item => renderFeedbackItem(item, isAdmin)).join('');
+
+             // Attach events for reply buttons
+             if (isAdmin) {
+                 document.querySelectorAll('.btn-reply').forEach(btn => {
+                     btn.addEventListener('click', (e) => {
+                         const id = e.target.dataset.id;
+                         document.getElementById(`reply-box-${id}`).classList.toggle('show');
+                     });
+                 });
+             }
+
         } else {
-             container.innerHTML = `<p style="color: #888;">Chưa có đánh giá nào.</p>`;
+             container.innerHTML = `<p style="color: #888; text-align:center; padding: 20px;">Chưa có đánh giá nào.</p>`;
         }
     } catch (error) {
         console.error("Error loading feedbacks:", error);
-         document.getElementById('feedbackList').innerHTML = `<p style="color: red;">Lỗi tải đánh giá.</p>`;
+         document.getElementById('feedbackList').innerHTML = `<p style="color: red; text-align:center;">Lỗi tải đánh giá.</p>`;
     }
 }
 
+function renderFeedbackItem(item, isAdmin) {
+    const avatar = item.imageUrl || "https://cdn-icons-png.flaticon.com/512/847/847969.png";
+    const date = new Date(item.createdAt).toLocaleString('vi-VN');
+    
+    // Render Stars
+    let starsHtml = '';
+    for(let i=1; i<=5; i++) {
+        if(item.rating >= i) starsHtml += '<i class="fa-solid fa-star"></i>';
+        else starsHtml += '<i class="fa-regular fa-star"></i>';
+    }
+
+    let replyHtml = '';
+    if (item.reply) {
+        const replyDate = new Date(item.reply.createdAt).toLocaleString('vi-VN');
+        const adminAvatar = item.reply.imageUrl || "https://cdn-icons-png.flaticon.com/512/847/847969.png";
+        replyHtml = `
+            <div class="fb-reply-box">
+                <div class="fb-header">
+                    <div class="fb-user-info">
+                        <img src="${adminAvatar}" class="fb-avatar">
+                        <div class="fb-meta">
+                            <span class="fb-username">${item.reply.username} <span class="admin-badge">QTV</span></span>
+                            <span class="fb-date">${replyDate}</span>
+                        </div>
+                    </div>
+                </div>
+                <div style="margin-left: 52px; color: #444; font-size: 0.95rem;">${item.reply.message}</div>
+            </div>
+        `;
+    } else if (isAdmin) {
+        replyHtml = `
+            <button class="btn-reply" data-id="${item.feedbackId}">Trả lời</button>
+            <div class="reply-input-area" id="reply-box-${item.feedbackId}">
+                <textarea class="reply-input" id="input-${item.feedbackId}" rows="3" placeholder="Nhập phản hồi..."></textarea>
+                <button class="btn btn-filled" style="height: 36px; padding: 0 20px; font-size: 0.9rem;" 
+                    onclick="submitReply('${item.feedbackId}')">Gửi</button>
+            </div>
+        `;
+    }
+
+    return `
+        <div class="feedback-item">
+            <div class="fb-header">
+                <div class="fb-user-info">
+                    <img src="${avatar}" class="fb-avatar">
+                    <div class="fb-meta">
+                        <span class="fb-username">${item.username}</span>
+                        <span class="fb-rating">${starsHtml}</span>
+                        <span class="fb-date">${date}</span>
+                    </div>
+                </div>
+            </div>
+            <div class="fb-content">${item.comment}</div>
+            ${replyHtml}
+        </div>
+    `;
+}
+
 // Function to reply to feedback - Admin only
-async function replyFeedback(feedbackId, replyContent) {
-    const endpoint = `/feedbacks/reply/${feedbackId}`;
+window.submitReply = async function(feedbackId) {
+    const input = document.getElementById(`input-${feedbackId}`);
+    const content = input.value.trim();
+
+    if (!content) {
+        showNotification("Vui lòng nhập nội dung!", "warning");
+        return;
+    }
+
+    const btn = input.nextElementSibling;
+    btn.innerText = "Đang gửi...";
+    btn.disabled = true;
+
     try {
-        const res = await callAPI(endpoint, "POST", replyContent); 
+        const res = await callAPI(`/feedbacks/reply/${feedbackId}`, "POST", content); 
         console.log("Reply Response:", res);
-        return res;
+        
+        if (res.success) {
+            showNotification("Đã trả lời đánh giá!", "success");
+            // Reload feedbacks
+            const urlParams = new URLSearchParams(window.location.search);
+            getFeedbacks(urlParams.get('id'));
+        } else {
+             showNotification(res.message || "Lỗi khi trả lời", "error");
+             btn.disabled = false;
+             btn.innerText = "Gửi";
+        }
     } catch (error) {
         console.error("Error replying to feedback:", error);
-        return { success: false, message: "Lỗi kết nối" };
+        showNotification("Lỗi kết nối", "error");
+        btn.disabled = false;
+        btn.innerText = "Gửi";
     }
 }
 
