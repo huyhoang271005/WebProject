@@ -73,6 +73,14 @@ async function render(user) {
                 await showDialog(result.success ? 'success' : 'error', result.message);
             })
         });
+        const btnSendMessage = document.getElementById("btnSendMessage");
+        btnSendMessage.addEventListener('click', async () => {
+            const data = {
+                userIds: [uid]
+            };
+            const result = await callAPI("/room-chat", "POST", data);
+            await showDialog(result.success ? "success" : "error", result.message);
+        });
 
     } else {
         document.getElementById("adminFields").style.display = "none";
