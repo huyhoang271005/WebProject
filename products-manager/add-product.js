@@ -362,6 +362,7 @@ async function saveProduct() {
     await getLoader("btnSave", async () => {
         const res = await createProduct(formData); // true for isMultipart
 
+
         if (res.success) {
             await showDialog("success", "Thêm sản phẩm thành công!");
             resetAddForm();
