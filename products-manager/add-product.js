@@ -299,11 +299,17 @@ async function saveProduct() {
         variants: []
     };
 
+    // Log the DTO for debugging
+    console.log("Final ProductDTO:", productDTO);
+
     const formData = new FormData();
 
     // Append Main Image
     if (mainImageInput.files[0]) {
         formData.append('image', mainImageInput.files[0]);
+    } else {
+        // Should we send empty blob for main image? Usually optional.
+        // formData.append('image', new Blob([], {type: 'application/octet-stream'}));
     }
 
     // Gather variants
@@ -317,17 +323,12 @@ async function saveProduct() {
         const vStock = parseInt(tr.querySelector(".v-stock").value) || 0;
         const vImgInput = tr.querySelector(".v-image-input");
 
-        // Append Image if exists
+        // Append Image (Sync Index)
         if (vImgInput.files[0]) {
-            // Naming convention: backend depends. 
-            // Often just "images" array, but need to map to variant.
-            // Using a specific key per index is safest if supported, OR assume order matching.
-            // Let's assume the backend expects "variantImages" and we match by index.
             formData.append('variantImages', vImgInput.files[0]);
         } else {
-            // Need a placeholder to keep index sync? Or maybe the DTO handle it?
-            // Sending empty blob or special handling required in real app.
-            // For now, I'll append nothing, user can test.
+            // Append empty blob to keep list/array index synchronized with variants
+            formData.append('variantImages', new Blob([], { type: 'application/octet-stream' }));
         }
 
         const variantAttrs = Object.values(combo).map(item => ({
@@ -354,6 +355,7 @@ async function saveProduct() {
             await showDialog("success", "Thêm sản phẩm thành công!");
             resetAddForm();
         } else {
+            console.error("Server Error:", res);
             await showDialog("error", res.message || "Có lỗi xảy ra");
         }
     });
