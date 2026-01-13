@@ -4,266 +4,102 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quản lý Sản phẩm - Tạp hóa Xanh</title>
-
-    <!-- Google Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
-
-    <!-- Bootstrap -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-
-    <!-- Shared Styles (Public) -->
-    <link rel="stylesheet" href="../public/public.css">
-
-    <!-- Local Styles -->
+    <title>Quản lý Sản phẩm</title>
+    <link rel="stylesheet" href="../dialog/index.css">
     <link rel="stylesheet" href="index.css">
-
-    <!-- Bootstrap Icons -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <script src="https://kit.fontawesome.com/e9c281dd3f.js" crossorigin="anonymous"></script>
 </head>
 
 <body>
-    <div class="container my-4" style="max-width: 1400px;">
+    <div class="container">
+        <div class="container">
+            <!-- Main Card -->
+            <div class="card">
+                <h2 id="pageTitle">Thêm mới Sản phẩm</h2>
 
-        <!-- ========== HEADER ========== -->
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <div>
-                <h1 class="text-primary fw-bold mb-1">Quản Lý Sản Phẩm</h1>
-                <p class="text-muted mb-0">Quản lý kho hàng và biến thể sản phẩm</p>
-            </div>
-            <div class="btn-group" role="group">
-                <button type="button" class="btn btn-outline-success active" id="btnTabAdd">
-                    <i class="bi bi-plus-circle me-2"></i>Thêm Mới
-                </button>
-                <button type="button" class="btn btn-outline-primary" id="btnTabEdit">
-                    <i class="bi bi-search me-2"></i>Tìm & Sửa/Xóa
-                </button>
-            </div>
-        </div>
+                <!-- VIEW: ADD -->
+                <div id="viewAdd">
+                    <div class="form-container">
+                        <h3>Thông tin cơ bản</h3>
 
-        <!-- ========== MAIN CONTAINER ========== -->
-        <div class="card shadow-sm border-0 mb-4">
-            <!-- SEARCH SECTION (ONLY VISIBLE IN EDIT TAB) -->
-            <div id="searchSection" class="card-body border-bottom bg-light d-none">
-                <div class="row justify-content-center py-4">
-                    <div class="col-md-8 col-lg-6 text-center">
-                        <h5 class="fw-bold mb-3">Nhập ID Sản phẩm để chỉnh sửa</h5>
-                        <div class="input-group input-group-lg">
-                            <input type="text" class="form-control" id="searchIdInput" placeholder="Ví dụ: 123-abc...">
-                            <button class="btn btn-primary" type="button" id="btnSearchId">
-                                <i class="bi bi-search me-2"></i>Tìm kiếm
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- FORM SECTION -->
-            <div id="formSection">
-                <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0 fw-bold" id="formTitle">Thêm Sản Phẩm Mới</h5>
-                    <div>
-                        <button class="btn btn-outline-danger d-none" id="btnDeleteProduct">
-                            <i class="bi bi-trash me-2"></i>Xóa Sản Phẩm
-                        </button>
-                    </div>
-                </div>
-                <div class="card-body p-0">
-                    <!-- TABS Navigation -->
-                    <ul class="nav nav-tabs nav-fill" id="productTabs" role="tablist">
-                        <li class="nav-item" role="presentation">
-                            <button class="nav-link active fw-bold" id="info-tab" data-bs-toggle="tab"
-                                data-bs-target="#info-pane" type="button" role="tab">
-                                <i class="bi bi-info-circle me-2"></i>Thông tin chung
-                            </button>
-                        </li>
-                        <li class="nav-item" role="presentation">
-                            <button class="nav-link fw-bold" id="variants-tab" data-bs-toggle="tab"
-                                data-bs-target="#variants-pane" type="button" role="tab">
-                                <i class="bi bi-layers me-2"></i>Biến thể (Variants)
-                            </button>
-                        </li>
-                    </ul>
-
-                    <div class="tab-content p-4" id="productTabsContent">
-                        <!-- TAB 1: PRODUCT INFO -->
-                        <div class="tab-pane fade show active" id="info-pane" role="tabpanel">
-                            <form id="productForm">
-                                <input type="hidden" id="productId">
-                                <div class="row">
-                                    <div class="col-lg-8">
-                                        <div class="mb-3">
-                                            <label class="form-label fw-medium">Tên sản phẩm <span
-                                                    class="text-danger">*</span></label>
-                                            <input type="text" class="form-control" id="productName" required>
-                                        </div>
-                                        <div class="mb-3">
-                                            <label class="form-label fw-medium">Mô tả</label>
-                                            <textarea class="form-control" id="description" rows="5"></textarea>
-                                        </div>
-
-                                        <!-- Main Image -->
-                                        <div class="mb-3">
-                                            <label class="form-label fw-medium">Ảnh chính</label>
-                                            <input type="file" class="form-control" id="mainImage" accept="image/*">
-                                            <div id="mainImagePreview"
-                                                class="mt-2 text-center border rounded p-2 bg-light d-none"
-                                                style="width: 150px; height: 150px;">
-                                                <img src="" class="img-fluid" style="max-height: 100%;">
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div class="col-lg-4">
-                                        <div class="mb-3">
-                                            <label class="form-label fw-medium">Danh mục <span
-                                                    class="text-danger">*</span></label>
-                                            <select class="form-select" id="categoryId" required>
-                                                <option value="">-- Chọn danh mục --</option>
-                                            </select>
-                                        </div>
-                                        <div class="mb-3">
-                                            <label class="form-label fw-medium">Thương hiệu <span
-                                                    class="text-danger">*</span></label>
-                                            <select class="form-select" id="brandId" required>
-                                                <option value="">-- Chọn thương hiệu --</option>
-                                            </select>
-                                        </div>
-                                        <div class="mb-3">
-                                            <label class="form-label fw-medium">Giá gốc (Hiển thị) <span
-                                                    class="text-danger">*</span></label>
-                                            <input type="number" class="form-control" id="priceOriginal" required
-                                                min="0">
-                                        </div>
-                                        <div class="mb-3">
-                                            <label class="form-label fw-medium">Giá bán (Hiển thị) <span
-                                                    class="text-danger">*</span></label>
-                                            <input type="number" class="form-control" id="price" required min="0">
-                                        </div>
-
-                                        <div class="d-grid mt-4">
-                                            <button type="submit" class="btn btn-primary btn-lg">
-                                                <i class="bi bi-save me-2"></i>Lưu Sản Phẩm
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </form>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>Tên sản phẩm <span class="required">*</span></label>
+                                <input type="text" id="productName" placeholder="Nhập tên sản phẩm...">
+                            </div>
+                            <div class="form-group">
+                                <label>Danh mục <span class="required">*</span></label>
+                                <select id="categoryId">
+                                    <option value="">-- Chọn danh mục --</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Thương hiệu <span class="required">*</span></label>
+                                <select id="brandId">
+                                    <option value="">-- Chọn thương hiệu --</option>
+                                </select>
+                            </div>
                         </div>
 
-                        <!-- TAB 2: VARIANTS MANAGEMENT -->
-                        <div class="tab-pane fade" id="variants-pane" role="tabpanel">
-                            <div class="d-flex justify-content-between align-items-center mb-3">
-                                <h6 class="mb-0 text-muted">Danh sách biến thể</h6>
-                                <button class="btn btn-sm btn-success" id="btnAddVariantModal">
-                                    <i class="bi bi-plus-lg me-1"></i>Thêm biến thể thủ công
-                                </button>
-                            </div>
+                        <div class="form-group">
+                            <label>Mô tả</label>
+                            <textarea id="description" rows="3" placeholder="Mô tả sản phẩm..."></textarea>
+                        </div>
 
-                            <div class="table-responsive border rounded">
-                                <table class="table table-hover mb-0 align-middle">
-                                    <thead class="table-light">
-                                        <tr>
-                                            <th>Hình ảnh</th>
-                                            <th>Thuộc tính</th>
-                                            <th>Giá gốc</th>
-                                            <th>Giá bán</th>
-                                            <th>Kho</th>
-                                            <th class="text-end">Hành động</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="variantsTableBody">
-                                        <!-- Variants loaded here -->
-                                        <tr>
-                                            <td colspan="6" class="text-center py-4 text-muted">
-                                                Chưa có biến thể.
-                                            </td>
-                                        </tr>
-                                    </tbody>
-                                </table>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>Giá gốc <span class="required">*</span></label>
+                                <input type="number" id="originalPrice" placeholder="0">
                             </div>
+                            <div class="form-group">
+                                <label>Giá bán <span class="required">*</span></label>
+                                <input type="number" id="price" placeholder="0">
+                            </div>
+                        </div>
+
+                        <hr>
+
+                        <h3>Thuộc tính & Biến thể</h3>
+                        <div id="attributesSection">
+                            <!-- Dynamic Attributes will be added here -->
+                        </div>
+
+                        <button id="btnAddAttribute" class="secondary-btn"><i class="fa-solid fa-plus"></i> Thêm thuộc
+                            tính</button>
+
+                        <div class="variants-wrapper" style="margin-top: 20px;">
+                            <h4>Danh sách biến thể</h4>
+                            <table id="variantsTable">
+                                <thead>
+                                    <tr>
+                                        <th>Ảnh</th>
+                                        <th>Biến thể</th>
+                                        <th>Giá gốc</th>
+                                        <th>Giá bán</th>
+                                        <th>Kho</th>
+                                        <th>Xóa</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Generated Variants -->
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="form-actions">
+                            <button id="btnCancel" class="secondary-btn">Hủy</button>
+                            <button id="btnSave" class="primary-btn">Lưu sản phẩm</button>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
 
-    <!-- MODAL: ADD/EDIT VARIANT -->
-    <div class="modal fade" id="variantModal" tabindex="-1">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title fw-bold" id="variantModalTitle">Biến Thể</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <form id="variantForm">
-                        <input type="hidden" id="variantIdLocal"> <!-- ID local để update trong list tạm -->
-                        <input type="hidden" id="variantIdServer"> <!-- ID server nếu đã tồn tại -->
-
-                        <div class="row">
-                            <!-- Image -->
-                            <div class="col-md-4 text-center">
-                                <div class="mb-3">
-                                    <label class="fw-medium">Ảnh biến thể</label>
-                                    <div class="border rounded bg-light d-flex align-items-center justify-content-center mx-auto mt-2"
-                                        style="width: 100%; height: 200px;" id="variantImagePreviewBox">
-                                        <i class="bi bi-image fs-1 text-secondary"></i>
-                                    </div>
-                                    <input type="file" class="form-control mt-2" id="variantImage" accept="image/*">
-                                </div>
-                            </div>
-
-                            <!-- Info -->
-                            <div class="col-md-8">
-                                <div class="row">
-                                    <div class="col-md-6 mb-3">
-                                        <label class="form-label">Giá Gốc</label>
-                                        <input type="number" class="form-control" id="variantPriceImport" min="0">
-                                    </div>
-                                    <div class="col-md-6 mb-3">
-                                        <label class="form-label">Giá Bán</label>
-                                        <input type="number" class="form-control" id="variantPrice" min="0">
-                                    </div>
-                                    <div class="col-md-6 mb-3">
-                                        <label class="form-label">Tồn kho</label>
-                                        <input type="number" class="form-control" id="variantQuantity" min="0"
-                                            value="10">
-                                    </div>
-                                    <div class="col-md-6 mb-3">
-                                        <label class="form-label">SKU</label>
-                                        <input type="text" class="form-control" id="variantSku">
-                                    </div>
-                                </div>
-                                <hr>
-                                <div class="d-flex justify-content-between align-items-center mb-2">
-                                    <label class="fw-bold small text-uppercase">Thuộc tính</label>
-                                    <button type="button" class="btn btn-sm btn-outline-primary"
-                                        id="btnAddAttributeLine">
-                                        <i class="bi bi-plus"></i> Thêm
-                                    </button>
-                                </div>
-                                <div id="variantAttributesContainer">
-                                    <!-- Dynamic attributes -->
-                                </div>
-                            </div>
-                        </div>
-                    </form>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
-                    <button type="button" class="btn btn-primary" id="btnSaveVariantToTable">Lưu vào bảng</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Scripts -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script type="module" src="index.js"></script>
+        <script type="module" src="index.js"></script>
+        <script type="module">
+            import { loadNavbar } from '../navbar/navbar.js';
+            loadNavbar({});
+        </script>
 </body>
 
 </html>

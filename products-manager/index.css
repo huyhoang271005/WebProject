@@ -1,106 +1,223 @@
-/* Override Public CSS body Flex center */
+:root {
+    --primary-color: #2563EB;
+    --primary-hover: #1D4ED8;
+    --bg-color: #F3F4F6;
+    --card-bg: #FFFFFF;
+    --text-color: #1F2937;
+    --border-color: #E5E7EB;
+    --danger-color: #EF4444;
+}
+
 body {
-    display: block !important;
-    min-height: auto;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    margin: 0;
     padding-bottom: 50px;
-    background: linear-gradient(135deg, #e0f2fe, #f0fdf4) !important;
-    /* Nhẹ hơn gradient gốc để dễ nhìn admin */
 }
 
-/* Custom cho Product Manager */
+.container {
+    max-width: 1200px;
+    margin: 20px auto;
+    padding: 0 20px;
+}
+
 .card {
+    background: var(--card-bg);
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    padding: 24px;
+}
+
+h2, h3, h4 {
+    margin-top: 0;
+}
+
+/* Actions Bar */
+.actions-bar {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 10px;
+}
+
+.tab-btn {
+    padding: 8px 16px;
     border: none;
-    border-radius: 12px;
-}
-
-#createView {
-    animation: fadeIn 0.3s ease-in-out;
-}
-
-.hover-lift {
-    transition: transform 0.2s, box-shadow 0.2s;
-}
-
-.hover-lift:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1) !important;
-}
-
-.cursor-pointer {
+    background: none;
     cursor: pointer;
+    font-weight: 500;
+    color: #6B7280;
+    border-bottom: 2px solid transparent;
 }
 
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(10px);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+.tab-btn.active {
+    color: var(--primary-color);
+    border-bottom-color: var(--primary-color);
 }
 
-/* Attribute Row animation */
-.attr-row {
-    animation: slideIn 0.2s ease-out;
+.tab-btn:hover {
+    color: var(--primary-hover);
 }
 
-@keyframes slideIn {
-    from {
-        opacity: 0;
-        transform: translateX(-10px);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateX(0);
-    }
-}
-
-/* Variant Image box */
-.variant-img-box {
-    width: 48px;
-    height: 48px;
+/* Forms */
+.form-container {
+    max-width: 800px;
     margin: 0 auto;
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+.form-group {
+    margin-bottom: 16px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 6px;
+    font-weight: 500;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    font-size: 14px;
+    box-sizing: border-box; 
+    /* Fix box model sticking out */
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    ring: 2px solid rgba(37, 99, 235, 0.2);
+}
+
+.required {
+    color: var(--danger-color);
+}
+
+/* Buttons */
+.secondary-btn {
+    background: #E5E7EB;
+    color: #374151;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
     cursor: pointer;
-    border: 1px dashed #adb5bd;
-    border-radius: 4px;
-    overflow: hidden;
+}
+
+.secondary-btn:hover {
+    background: #D1D5DB;
+}
+
+.primary-btn {
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.primary-btn:hover {
+    background: var(--primary-hover);
+}
+
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 24px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border-color);
+}
+
+/* Attributes Section */
+.attribute-item {
+    background: #F9FAFB;
+    border: 1px solid var(--border-color);
+    padding: 16px;
+    border-radius: 6px;
+    margin-bottom: 12px;
     position: relative;
-    background: #fff;
-    transition: border-color 0.2s;
 }
 
-.variant-img-box:hover {
-    border-color: #3b82f6;
+.attribute-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
 }
 
-/* View Container */
-.view-container {
-    animation: fadeIn 0.3s ease-in-out;
+.remove-attr-btn {
+    color: var(--danger-color);
+    background: none;
+    border: none;
+    cursor: pointer;
 }
 
-/* Table Styles */
-.table-hover tbody tr:hover {
-    background-color: #f8f9fa;
+.tags-input-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 6px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    background: white;
+    min-height: 38px;
 }
 
-.table th {
+.tag {
+    background: #DBEAFE;
+    color: #1E40AF;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.tag i {
+    cursor: pointer;
+}
+
+.tags-input {
+    border: none;
+    outline: none;
+    flex: 1;
+    min-width: 60px;
+}
+
+/* Table */
+.table-wrapper {
+    overflow-x: auto;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+}
+
+th, td {
+    padding: 10px;
+    border-bottom: 1px solid var(--border-color);
+    text-align: left;
+}
+
+th {
+    background: #F9FAFB;
     font-weight: 600;
-    font-size: 0.875rem;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    color: #495057;
-}
-
-/* Button Group Styles */
-.btn-group .btn {
-    transition: all 0.2s;
-}
-
-.btn-group .btn:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
