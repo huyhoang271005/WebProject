@@ -316,6 +316,12 @@ async function saveProduct() {
         stock: parseInt(stock.value) || 0,
         categoryId: categoryId.value,
         brandId: brandId.value,
+        // Backend seems to require BOTH keys to be present and non-null
+        attributes: attributes.map(a => ({
+            attributeId: a.attributeId,
+            attributeName: a.name,
+            attributeValues: a.values.map(v => ({ attributeValueName: v }))
+        })),
         variantValues: attributes.map(a => ({
             attributeId: a.attributeId,
             attributeName: a.name,
