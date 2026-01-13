@@ -212,19 +212,6 @@ function generateVariants() {
         return;
     }
 
-    // Capture existing state to preserve inputs
-    const existingState = new Map();
-    variantsTableBody.querySelectorAll("tr").forEach(tr => {
-        if (tr.dataset.combo) {
-            const comboKey = getComboKey(JSON.parse(tr.dataset.combo));
-            existingState.set(comboKey, {
-                original: tr.querySelector(".v-original").value,
-                price: tr.querySelector(".v-price").value,
-                stock: tr.querySelector(".v-stock").value
-            });
-        }
-    });
-
     let combinations = [{}];
     validAttributes.forEach(attr => {
         const next = [];
@@ -247,13 +234,6 @@ function generateVariants() {
     combinations.forEach((combo) => {
         // combo = { "Color": { valName: "Red", attrId: "123" }, "Size": ... }
         const name = Object.keys(combo).map(k => `${k}: ${combo[k].valName}`).join(" - ");
-        const comboKey = getComboKey(combo);
-
-        // Restore values if exist, else use defaults
-        const saved = existingState.get(comboKey);
-        const valOriginal = saved ? saved.original : baseOriginal;
-        const valPrice = saved ? saved.price : basePrice;
-        const valStock = saved ? saved.stock : 0;
 
         const tr = document.createElement("tr");
         tr.innerHTML = `
@@ -265,9 +245,9 @@ function generateVariants() {
                 </div>
             </td>
             <td>${name}</td>
-            <td><input type="number" class="v-original" value="${valOriginal}" style="width:100px;"></td>
-            <td><input type="number" class="v-price" value="${valPrice}" style="width:100px;"></td>
-            <td><input type="number" class="v-stock" value="${valStock}" style="width:80px;"></td>
+            <td><input type="number" class="v-original" value="${baseOriginal}" style="width:100px;"></td>
+            <td><input type="number" class="v-price" value="${basePrice}" style="width:100px;"></td>
+            <td><input type="number" class="v-stock" value="0" style="width:80px;"></td>
             <td><button class="remove-v-btn" style="color:red; border:none; background:none;"><i class="fa-solid fa-trash"></i></button></td>
         `;
 
@@ -295,11 +275,6 @@ function generateVariants() {
     });
 }
 
-function getComboKey(combo) {
-    // Generate a consistent key for the combination map (sort by attribute name)
-    return Object.keys(combo).sort().map(k => `${k}:${combo[k].valName}`).join("|");
-}
-
 
 // === SAVE ===
 async function saveProduct() {
@@ -307,14 +282,6 @@ async function saveProduct() {
     if (!productName.value.trim()) return showDialog("error", "Tên sản phẩm là bắt buộc");
     if (!categoryId.value) return showDialog("error", "Vui lòng chọn danh mục");
     if (!brandId.value) return showDialog("error", "Vui lòng chọn thương hiệu");
-
-    // Filter only valid attributes to send
-    const validAttributes = attributes.filter(a => a.attributeId && a.values.length > 0);
-    const validAttributeDTOs = validAttributes.map(a => ({
-        attributeId: a.attributeId,
-        attributeName: a.name,
-        attributeValues: a.values.map(v => ({ attributeValueName: v }))
-    }));
 
     const productDTO = {
         productName: productName.value.trim(),
@@ -324,9 +291,11 @@ async function saveProduct() {
         stock: parseInt(stock.value) || 0,
         categoryId: categoryId.value,
         brandId: brandId.value,
-        // Backend seems to require BOTH keys to be present and non-null
-        attributes: validAttributeDTOs,
-        variantValues: validAttributeDTOs,
+        attributes: attributes.map(a => ({
+            attributeId: a.attributeId,
+            attributeName: a.name,
+            attributeValues: a.values.map(v => ({ attributeValueName: v }))
+        })),
         variants: []
     };
 
@@ -352,13 +321,12 @@ async function saveProduct() {
         const vImgInput = tr.querySelector(".v-image-input");
         const file = vImgInput.files[0];
 
-        // Ensure imgName is NOT null. Use empty string if no image.
-        // "element cannot be mapped to a null key" -> Collectors.toMap fails with null key
-        let imgName = "";
+        let imgName = null;
 
-        // Append Image with Key = ImageName (Backend requires this exact mapping)
+        // Append Image with Key = ImageName
         if (file) {
-            // Generate unique name WITHOUT extension
+            // Generate unique name WITHOUT extension (simplest string)
+            // Backend likely does request.getFile(imageName)
             imgName = `variant-${index}-${Date.now()}`;
 
             // KEY must match the imageName in DTO
