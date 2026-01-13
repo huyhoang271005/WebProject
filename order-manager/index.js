@@ -31,11 +31,7 @@ async function loadOrders(status) {
     tbody.innerHTML = "";
 
     try {
-<<<<<<< HEAD
-        const endpoint = `/auth/admin/orders/${status}`;
-=======
         const endpoint = `/admin/orders/${status}`;
->>>>>>> main
         const res = await callAPI(endpoint, 'GET'); 
         
         if (res.success) {
@@ -135,11 +131,7 @@ window.updateStatus = async (orderId, intent) => {
     if (!confirm(msg)) return;
 
     try {
-<<<<<<< HEAD
-        const endpoint = `/auth/admin/orders/${orderId}`;
-=======
         const endpoint = `/admin/orders/${orderId}`;
->>>>>>> main
         
         // 👇👇👇 QUY TẮC "TRIGGER" CỦA BACKEND 👇👇👇
         // Backend dùng "CONFIRMED" như một lệnh "Next Step" (Bước tiếp theo).
