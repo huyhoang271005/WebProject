@@ -364,8 +364,9 @@ async function saveProduct() {
         console.log(pair[0] + ', ' + pair[1]);
     }
 
-    // Append JSON Blob
-    formData.append('productDTO', new Blob([JSON.stringify(productDTO)], { type: 'application/json' }));
+    // Append JSON Blob with explicit filename "product.json"
+    // This prevents "element cannot be mapped to a null key" if backend maps ALL parts by filename.
+    formData.append('productDTO', new Blob([JSON.stringify(productDTO)], { type: 'application/json' }), 'product.json');
 
     // Send
     await getLoader("btnSave", async () => {
