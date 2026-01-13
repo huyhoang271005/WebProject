@@ -42,7 +42,7 @@ loadPage(async () => {
 
 // --- API Functions ---
 async function getProductDetail(id) {
-    const endpoint = `/auth/products/${id}`;
+    const endpoint = `/products/${id}`;
 
     try {
         const res = await callAPI(endpoint, "GET");
