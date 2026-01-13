@@ -1,6 +1,6 @@
-import { callAPI } from "../public/api.js";
+import { callAPI } from "../lib/api.js";
 import { showDialog } from "../dialog/index.js";
-import { connectSse, subscribeTopic } from "../public/sse.js";
+import { connectSse, subscribeTopic } from "../lib/sse.js";
 
 const noImage = "https://cdn-icons-png.flaticon.com/512/847/847969.png";
 

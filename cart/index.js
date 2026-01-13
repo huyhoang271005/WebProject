@@ -1,4 +1,4 @@
-import { callAPI } from '../public/api.js'; 
+import { callAPI } from '../lib/api.js';
 import { showDialog } from '../dialog/index.js';
 import { loadNavbar } from '../navbar/navbar.js';
 const money = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' });

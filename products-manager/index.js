@@ -1,4 +1,4 @@
-import { callAPI } from "../public/api.js";
+import { callAPI } from "../lib/api.js";
 import { initAddProduct } from "./add-product.js";
 
 // Initialize

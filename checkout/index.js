@@ -1,5 +1,5 @@
-import { callAPI } from '../public/api.js';
-import { toggleLoading } from '../public/loader.js';
+import { callAPI } from '../lib/api.js';
+import { toggleLoading } from '../lib/loader.js';
 
 const formatter = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' });
 let selectedContactId = null;

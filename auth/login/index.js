@@ -1,6 +1,6 @@
-import {callAPI} from "../../public/api.js";
+import {callAPI} from "../../lib/api.js";
 import {showDialog} from "../../dialog/index.js";
-import {  getLoader, getEye} from "../../public/public.js";
+import {  getLoader, getEye} from "../../lib/public.js";
 
 const usernameInput = document.getElementById('username');
 const passwordInput = document.getElementById('password');

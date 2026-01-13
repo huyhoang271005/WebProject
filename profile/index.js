@@ -1,6 +1,6 @@
-import { callAPI } from "../public/api.js";
+import { callAPI } from "../lib/api.js";
 import { showDialog } from "../dialog/index.js";
-import { convertToVNTime, getLoader, loadPage } from "../public/public.js";
+import { convertToVNTime, getLoader, loadPage } from "../lib/public.js";
 import { initEmailList } from "./email-list.js";
 import { loadNavbar } from "../navbar/navbar.js";
 const usernameInput = document.getElementById('username');

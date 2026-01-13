@@ -1,7 +1,7 @@
-import {callAPI} from "../public/api.js";
-import {loadPage, noImage} from '../public/public.js';
+import {callAPI} from "../lib/api.js";
+import {loadPage, noImage} from '../lib/public.js';
 import {loadNavbar} from "../navbar/navbar.js";
-import {toggleLoading} from "../public/loader.js";
+import {toggleLoading} from "../lib/loader.js";
 
 // --- Global Variables ---
 let productDetail = null;

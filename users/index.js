@@ -1,6 +1,6 @@
-import { callAPI } from "../public/api.js";
+import { callAPI } from "../lib/api.js";
 import { showDialog } from "../dialog/index.js";
-import { loadPage, convertToVNTime, getLoader, noImage } from "../public/public.js";
+import { loadPage, convertToVNTime, getLoader, noImage } from "../lib/public.js";
 import { loadNavbar } from "../navbar/navbar.js";
 const loadMore = document.getElementById('loadMore');
 let page = 0;
