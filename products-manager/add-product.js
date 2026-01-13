@@ -334,9 +334,12 @@ async function saveProduct() {
         // FIX 4: Always append to FormData. If no file, append empty blob.
         // This prevents backend 'toMap' value null errors.
         if (file) {
+            // Use actual file. Filename is intrinsic.
             formData.append(imgName, file);
         } else {
-            formData.append(imgName, new Blob([], { type: 'application/octet-stream' }));
+            // Append empty blob BUT with an explicit unique filename.
+            // If backend maps by getOriginalFilename(), this prevents "null key" or "duplicate key".
+            formData.append(imgName, new Blob([], { type: 'application/octet-stream' }), imgName); // <--- Added filename
         }
 
         const variantAttrs = Object.values(combo).map(item => ({
