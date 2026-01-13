@@ -316,7 +316,7 @@ async function saveProduct() {
         stock: parseInt(stock.value) || 0,
         categoryId: categoryId.value,
         brandId: brandId.value,
-        attributes: attributes.map(a => ({
+        variantValues: attributes.map(a => ({
             attributeId: a.attributeId,
             attributeName: a.name,
             attributeValues: a.values.map(v => ({ attributeValueName: v }))
