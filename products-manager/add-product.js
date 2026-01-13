@@ -323,17 +323,15 @@ async function saveProduct() {
 
         let imgName = null;
 
-        // Append Image with Unique Name Strategy
+        // Append Image with Key = ImageName
         if (file) {
-            // Generate valid safe filename
-            const ext = file.name.split('.').pop() || 'jpg';
-            // Simple unique name: variant_{index}_{timestamp}.{ext}
-            imgName = `variant-${index}-${Date.now()}.${ext}`;
+            // Generate unique name WITHOUT extension (simplest string)
+            // Backend likely does request.getFile(imageName)
+            imgName = `variant-${index}-${Date.now()}`;
 
-            formData.append('variantImages', file, imgName);
+            // KEY must match the imageName in DTO
+            formData.append(imgName, file);
         }
-        // If no file, we do NOT append anything to variantImages. 
-        // We assume backend uses 'imageName' to find the file in the multipart list.
 
         const variantAttrs = Object.values(combo).map(item => ({
             attributeId: item.attrId,
@@ -344,7 +342,7 @@ async function saveProduct() {
             originalPrice: vOriginal,
             price: vPrice,
             stock: vStock,
-            imageName: imgName, // Send unique reference
+            imageName: imgName,
             active: true,
             attributeValues: variantAttrs
         });
@@ -352,6 +350,10 @@ async function saveProduct() {
 
     // Log the DTO for debugging
     console.log("Final ProductDTO:", productDTO);
+    // Log keys for debugging
+    for (var pair of formData.entries()) {
+        console.log(pair[0] + ', ' + pair[1]);
+    }
 
     // Append JSON Blob
     formData.append('productDTO', new Blob([JSON.stringify(productDTO)], { type: 'application/json' }));
