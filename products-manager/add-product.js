@@ -348,14 +348,13 @@ async function saveProduct() {
 
         let imgName = null;
 
-        // Synchronized list of images: 'variantImages'
-        // If file exists, append it. If not, append empty blob to keep index alignment.
+        // Append Image with Key = ImageName (Backend requires this exact mapping)
         if (file) {
-            imgName = file.name; // Use actual filename
-            formData.append('variantImages', file);
-        } else {
-            // Append empty blob for alignment
-            formData.append('variantImages', new Blob([], { type: 'application/octet-stream' }));
+            // Generate unique name WITHOUT extension
+            imgName = `variant-${index}-${Date.now()}`;
+
+            // KEY must match the imageName in DTO
+            formData.append(imgName, file);
         }
 
         const variantAttrs = Object.values(combo).map(item => ({
