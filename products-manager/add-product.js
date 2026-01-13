@@ -21,6 +21,7 @@ let attributes = []; // { id: timestamp, attributeId: "...", name: "Color", valu
 let availableAttributes = []; // Fetched from API
 
 export function initAddProduct() {
+    console.log("add-product.js: initAddProduct called");
     btnAddAttribute.addEventListener("click", addNewAttribute);
     btnSave.addEventListener("click", saveProduct);
     btnCancel.addEventListener("click", resetAddForm);
@@ -43,31 +44,24 @@ export function resetAddForm() {
 }
 
 async function loadMetadata() {
-    // Load Categories
-    const catRes = await fetchCategories();
-    if (catRes.success && catRes.data) {
-        let html = '<option value="">-- Chọn danh mục --</option>';
-        catRes.data.listData.forEach(c => {
-            html += `<option value="${c.categoryId}">${c.categoryName}</option>`;
-        });
-        categoryId.innerHTML = html;
-    }
+    categoryId.innerHTML = html;
+}
 
-    // Load Brands
-    const brandRes = await fetchBrands();
-    if (brandRes.success && brandRes.data) {
-        let html = '<option value="">-- Chọn thương hiệu --</option>';
-        brandRes.data.listData.forEach(b => {
-            html += `<option value="${b.brandId}">${b.brandName}</option>`;
-        });
-        brandId.innerHTML = html;
-    }
+// Load Brands
+const brandRes = await fetchBrands();
+if (brandRes.success && brandRes.data) {
+    let html = '<option value="">-- Chọn thương hiệu --</option>';
+    brandRes.data.listData.forEach(b => {
+        html += `<option value="${b.brandId}">${b.brandName}</option>`;
+    });
+    brandId.innerHTML = html;
+}
 
-    // Load Attributes
-    const attrRes = await fetchAttributes();
-    if (attrRes.success && attrRes.data) {
-        availableAttributes = attrRes.data.listData;
-    }
+// Load Attributes
+const attrRes = await fetchAttributes();
+if (attrRes.success && attrRes.data) {
+    availableAttributes = attrRes.data.listData;
+}
 }
 
 // === ATTRIBUTE HANDLING ===
