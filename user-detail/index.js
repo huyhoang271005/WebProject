@@ -33,7 +33,7 @@ async function render(user) {
         const emailsSection = document.getElementById("emailsSection");
         const btnUpdate = document.getElementById('btnUpdate');
         const btnLogout = document.getElementById('btnLogout');
-        const html = await fetch("./email-list.html");
+        const html = await fetch("/user-detail/email-list.html");
         const text = await html.text();
         emailsSection.insertAdjacentHTML('beforeend', text);
         initEmailList(user.userId, user.extendUserResponse.emails);

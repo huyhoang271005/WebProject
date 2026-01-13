@@ -29,7 +29,7 @@ async function loadProfile() {
     role.value = profile.roleName;
     createdAt.textContent = convertToVNTime(profile.createdAt);
     updatedAt.textContent = convertToVNTime(profile.updatedAt);
-    const html = await fetch("./email-list.html");
+    const html = await fetch("/profile/email-list.html");
     const text = await html.text();
     emailsSection.insertAdjacentHTML('beforeend', text);
     initEmailList(profile.emails);
