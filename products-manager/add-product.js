@@ -323,15 +323,17 @@ async function saveProduct() {
 
         let imgName = null;
 
-        // Append Image (Sync Index)
+        // Append Image with Unique Name Strategy
         if (file) {
-            imgName = file.name; // Use original filename
+            // Generate valid safe filename
+            const ext = file.name.split('.').pop() || 'jpg';
+            // Simple unique name: variant_{index}_{timestamp}.{ext}
+            imgName = `variant-${index}-${Date.now()}.${ext}`;
+
             formData.append('variantImages', file, imgName);
-        } else {
-            // Append empty blob to keep list/array index synchronized with variants
-            // We give it a dummy name 'empty' or just rely on blob default
-            formData.append('variantImages', new Blob([], { type: 'application/octet-stream' }));
         }
+        // If no file, we do NOT append anything to variantImages. 
+        // We assume backend uses 'imageName' to find the file in the multipart list.
 
         const variantAttrs = Object.values(combo).map(item => ({
             attributeId: item.attrId,
@@ -342,8 +344,8 @@ async function saveProduct() {
             originalPrice: vOriginal,
             price: vPrice,
             stock: vStock,
-            imageName: imgName, // Send filename reference
-            active: true, // Default active
+            imageName: imgName, // Send unique reference
+            active: true,
             attributeValues: variantAttrs
         });
     });
