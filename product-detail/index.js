@@ -38,6 +38,7 @@ loadPage(async () => {
     }
 
     await getProductDetail(productId);
+    await getFeedbacks(productId);
 });
 
 // --- API Functions ---
@@ -70,6 +71,39 @@ async function getProductDetail(id) {
     } catch (error) {
         console.error("Error loading product:", error);
         showNotification("Không thể kết nối đến server. Vui lòng thử lại!", 'error');
+    }
+}
+
+async function getFeedbacks(productId) {
+    const endpoint = `/feedbacks/${productId}`;
+    try {
+        console.log(`Calling GET ${endpoint}...`);
+        const res = await callAPI(endpoint, "GET");
+        console.log("Feedbacks Response:", res);
+
+        const container = document.getElementById('feedbackList');
+        if (res.success && res.data) {
+             // Temporary placeholder until structure is known
+             container.innerHTML = `<p style="color: green;">Đã tải đánh giá. Kiểm tra DevTools (F12) để xem cấu trúc JSON.</p>`;
+        } else {
+             container.innerHTML = `<p style="color: #888;">Chưa có đánh giá nào.</p>`;
+        }
+    } catch (error) {
+        console.error("Error loading feedbacks:", error);
+         document.getElementById('feedbackList').innerHTML = `<p style="color: red;">Lỗi tải đánh giá.</p>`;
+    }
+}
+
+// Function to reply to feedback - Admin only
+async function replyFeedback(feedbackId, replyContent) {
+    const endpoint = `/feedbacks/reply/${feedbackId}`;
+    try {
+        const res = await callAPI(endpoint, "POST", replyContent); 
+        console.log("Reply Response:", res);
+        return res;
+    } catch (error) {
+        console.error("Error replying to feedback:", error);
+        return { success: false, message: "Lỗi kết nối" };
     }
 }
 
