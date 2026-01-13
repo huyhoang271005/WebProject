@@ -7,6 +7,7 @@ const productName = document.getElementById("productName");
 const description = document.getElementById("description");
 const originalPrice = document.getElementById("originalPrice");
 const price = document.getElementById("price");
+const stock = document.getElementById("stock"); // Add Stock
 const categoryId = document.getElementById("categoryId");
 const brandId = document.getElementById("brandId");
 
@@ -180,6 +181,13 @@ function renderAttributes() {
         tagInput.addEventListener("keydown", (e) => {
             if (e.key === "Enter") {
                 e.preventDefault();
+
+                // VALIDATION: Check if attribute name is selected
+                if (!attr.attributeId) {
+                    showDialog("error", "Vui lòng chọn tên thuộc tính trước khi nhập giá trị!");
+                    return;
+                }
+
                 addAttributeValue(attr.id, tagInput.value);
                 tagInput.value = "";
                 tagInput.focus();
@@ -280,6 +288,7 @@ async function saveProduct() {
         description: description.value.trim(),
         originalPrice: parseFloat(originalPrice.value) || 0,
         price: parseFloat(price.value) || 0,
+        stock: parseInt(stock.value) || 0,
         categoryId: categoryId.value,
         brandId: brandId.value,
         attributes: attributes.map(a => ({
