@@ -59,7 +59,8 @@
                                 <!-- Basic Info -->
                                 <div class="card shadow-sm border-0 mb-4">
                                     <div class="card-body p-4">
-                                        <h5 class="card-title fw-bold text-uppercase text-muted mb-3 small">Thông tin chung</h5>
+                                        <h5 class="card-title fw-bold text-uppercase text-muted mb-3 small">Thông tin
+                                            chung</h5>
                                         <div class="mb-3">
                                             <label class="form-label fw-medium">Tên sản phẩm <span
                                                     class="text-danger">*</span></label>
@@ -78,21 +79,31 @@
                                 <div class="card shadow-sm border-0 mb-4">
                                     <div class="card-body p-4">
                                         <div class="d-flex justify-content-between align-items-center mb-3">
-                                            <h5 class="card-title fw-bold text-uppercase text-muted mb-0 small">Phân loại hàng
-                                            </h5>
+                                            <h5 class="card-title fw-bold text-uppercase text-muted mb-0 small">Phân
+                                                loại hàng</h5>
                                             <div>
                                                 <button type="button" class="btn btn-outline-primary btn-sm me-2"
-                                                    id="btnAddAttr">
+                                                    id="btnAddAttribute">
                                                     <i class="bi bi-plus-lg"></i> Thêm thuộc tính
-                                                </button>
-                                                <button type="button" class="btn btn-success btn-sm text-white"
-                                                    id="btnGenerateVariants">
-                                                    <i class="bi bi-lightning-charge-fill"></i> Tạo biến thể
                                                 </button>
                                             </div>
                                         </div>
-                                        <div id="attributesContainer" class="mb-3"></div>
-                                        <div id="variantsContainer"></div>
+                                        <div id="attributesSection" class="mb-3"></div>
+                                        <div class="table-responsive">
+                                            <table class="table table-bordered table-hover" id="variantsTable">
+                                                <thead class="table-light">
+                                                    <tr>
+                                                        <th style="width: 70px;">Ảnh</th>
+                                                        <th>Phân loại</th>
+                                                        <th style="width: 120px;">Giá gốc</th>
+                                                        <th style="width: 120px;">Giá bán</th>
+                                                        <th style="width: 100px;">Kho</th>
+                                                        <th style="width: 50px;"></th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody></tbody>
+                                            </table>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -102,11 +113,15 @@
                                 <!-- Image & Prices -->
                                 <div class="card shadow-sm border-0 mb-4">
                                     <div class="card-body p-4">
-                                        <h5 class="card-title fw-bold text-uppercase text-muted mb-3 small">Ảnh & Giá</h5>
+                                        <h5 class="card-title fw-bold text-uppercase text-muted mb-3 small">Ảnh & Giá
+                                        </h5>
 
                                         <div class="mb-4 text-center group-image-upload">
                                             <div class="position-relative d-inline-block w-100">
-                                                <div id="mainImagePreview"
+                                                <img id="mainImagePreview" src="" class="border rounded w-100 h-100"
+                                                    style="height: 250px; object-fit: cover; display: none;">
+
+                                                <div id="mainImagePlaceholder"
                                                     class="border rounded bg-light d-flex align-items-center justify-content-center"
                                                     style="height: 250px; overflow: hidden; background-color: #f8f9fa;">
                                                     <div class="text-center text-muted">
@@ -114,23 +129,28 @@
                                                         <small>Chưa có ảnh</small>
                                                     </div>
                                                 </div>
-                                                <label for="mainImage"
+                                                <label for="mainImageInput"
                                                     class="btn btn-primary rounded-circle position-absolute bottom-0 end-0 m-3 shadow"
                                                     style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
                                                     <i class="bi bi-camera-fill"></i>
                                                 </label>
                                             </div>
-                                            <input type="file" class="d-none" id="mainImage" accept="image/*">
+                                            <input type="file" class="d-none" id="mainImageInput" accept="image/*">
                                         </div>
 
                                         <div class="mb-3">
                                             <label class="form-label fw-medium">Giá gốc (VNĐ)</label>
-                                            <input type="number" class="form-control" id="priceOriginal" min="0" step="1000"
-                                                required>
+                                            <input type="number" class="form-control" id="originalPrice" min="0"
+                                                step="1000" required>
                                         </div>
                                         <div class="mb-3">
                                             <label class="form-label fw-medium">Giá bán (VNĐ)</label>
-                                            <input type="number" class="form-control" id="price" min="0" step="1000" required>
+                                            <input type="number" class="form-control" id="price" min="0" step="1000"
+                                                required>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label fw-medium">Tồn kho</label>
+                                            <input type="number" class="form-control" id="stock" min="0" required>
                                         </div>
                                     </div>
                                 </div>
@@ -138,7 +158,8 @@
                                 <!-- Organization -->
                                 <div class="card shadow-sm border-0 mb-4">
                                     <div class="card-body p-4">
-                                        <h5 class="card-title fw-bold text-uppercase text-muted mb-3 small">Phân loại</h5>
+                                        <h5 class="card-title fw-bold text-uppercase text-muted mb-3 small">Phân loại
+                                        </h5>
                                         <div class="mb-3">
                                             <label class="form-label fw-medium">Danh mục</label>
                                             <select class="form-select" id="categoryId" required>
@@ -157,12 +178,10 @@
                                 <!-- Actions -->
                                 <div class="card shadow-sm border-0 bg-transparent">
                                     <div class="d-grid gap-2">
-                                        <button type="submit" class="btn btn-primary btn-lg fw-bold" id="btnSubmit">
-                                            <span class="spinner-border spinner-border-sm d-none me-2"
-                                                id="submitSpinner"></span>
-                                            <span id="submitBtnText">Lưu Sản Phẩm</span>
+                                        <button type="button" class="btn btn-primary btn-lg fw-bold" id="btnSave">
+                                            Lưu Sản Phẩm
                                         </button>
-                                        <button type="button" class="btn btn-outline-secondary" id="btnReset">Làm Mới
+                                        <button type="button" class="btn btn-outline-secondary" id="btnCancel">Làm Mới
                                             Form</button>
                                         <button type="button" class="btn btn-outline-danger d-none" id="btnDelete">
                                             <i class="bi bi-trash me-2"></i>Xóa Sản Phẩm Này
@@ -194,7 +213,7 @@
                             </div>
                             <form id="searchProductForm">
                                 <div class="input-group input-group-lg mb-3">
-                                    <input type="text" class="form-control" id="searchProductInput" 
+                                    <input type="text" class="form-control" id="searchProductInput"
                                         placeholder="Nhập ID sản phẩm..." required>
                                     <button class="btn btn-primary" type="submit" id="btnSearchProduct">
                                         <i class="bi bi-search me-2"></i>Tìm kiếm
