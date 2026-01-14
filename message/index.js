@@ -1,14 +1,17 @@
 // Import từ các file vệ tinh
-import { mockUsers, mockMessagesDB, state } from "./data.js";
-import { customLoadPage, customGetLoader } from "./helpers.js";
-import * as View from "./view.js";
+import { mockMessagesDB, state } from "/message/data.js";
+import { customLoadPage, customGetLoader } from "/message/helpers.js";
+import * as View from "/message/view.js";
+import {callAPI} from "../lib/api";
 
+const result = await callAPI("room-chat");
+const roomChat = result.listData;
 customLoadPage(() => {
     // 1. Render danh sách user lần đầu
-    View.renderUsers(mockUsers, state.currentUserId, handleSwitchUser);
+    View.renderUsers(roomChat, state.currentUserId, handleSwitchUser);
     
     // 2. Chọn user mặc định (người đầu tiên)
-    handleSwitchUser(mockUsers[0]);
+    handleSwitchUser(roomChat[0]);
     
     // 3. Cài đặt sự kiện gửi tin
     setupEvents();
@@ -21,7 +24,7 @@ function handleSwitchUser(user) {
 
     // Cập nhật giao diện:
     // 1. Vẽ lại list user để highlight người đang chọn
-    View.renderUsers(mockUsers, state.currentUserId, handleSwitchUser);
+    View.renderUsers(roomChat, state.currentUserId, handleSwitchUser);
     
     // 2. Đổi tên trên header
     View.updateChatHeader(user);

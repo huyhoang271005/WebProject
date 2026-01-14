@@ -9,16 +9,16 @@ export function renderUsers(users, currentUserId, onUserClick) {
     
     users.forEach(u => {
         const div = document.createElement('div');
-        div.className = `user-item ${u.id === currentUserId ? 'active' : ''}`;
-        div.setAttribute('data-id', u.id);
+        div.className = `user-item ${u.roomChatId === currentUserId ? 'active' : ''}`;
+        div.setAttribute('data-id', u.roomChatId);
         
         div.innerHTML = `
-            <div class="avatar" style="background: ${u.color}">${u.avatar}</div>
+            <div class="avatar" style="background: green">${u.imageUrl}</div>
             <div class="u-info">
-                <div class="name">${u.name}</div>
-                <div class="last-message">${u.lastMsg}</div>
+                <div class="name">${u.roomChatName}</div>
+                <div class="last-message">${u.lastMessage}</div>
             </div>
-            <div class="time-stamp">${u.time}</div>
+            <div class="time-stamp">${u.createdAt}</div>
         `;
         
         // Gắn sự kiện click, gọi callback function truyền từ index.js sang
@@ -34,10 +34,10 @@ export function updateChatHeader(user) {
     if(!header) return;
     
     header.innerHTML = `
-        <div class="avatar-small" style="background: ${user.color}">${user.avatar}</div>
+        <div class="avatar-small" style="background: green">${user.imageUrl}</div>
         <div class="target-info">
-            <h3>${user.name}</h3>
-            <span class="status-online">● ${user.status}</span>
+            <h3>${user.chatRoomName}</h3>
+            <span class="status-online">●</span>
         </div>
     `;
 }
