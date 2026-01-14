@@ -377,10 +377,12 @@ async function saveProduct() {
     // Debug Payload
     console.log("Saving Product DTO:", JSON.stringify(productDTO, null, 2));
 
-    formData.append("product", new Blob([JSON.stringify(productDTO)], { type: "application/json" }));
+    // Revert key to 'productDTO' and add filename + content-type
+    formData.append("productDTO", new Blob([JSON.stringify(productDTO)], { type: "application/json" }), "product.json");
 
     try {
-        const res = await callAPI('/admin/products', 'POST', formData);
+        // FIX: Must pass `true` for isMultipart argument
+        const res = await callAPI('/admin/products', 'POST', formData, true);
         if (res.success) {
             showDialog("success", "Thêm sản phẩm thành công!");
             setTimeout(() => window.location.reload(), 1500);
