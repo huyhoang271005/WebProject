@@ -416,7 +416,7 @@ async function saveProduct() {
 
     // Main Image
     const mainFile = document.getElementById("mainImageInput").files[0];
-    if (mainFile) formData.append("image", mainFile);
+    if (mainFile) formData.append("productImage", mainFile);
 
     // Debug Payload
     console.log("Saving Product DTO:", JSON.stringify(productDTO, null, 2));
