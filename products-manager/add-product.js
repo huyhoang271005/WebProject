@@ -7,8 +7,8 @@ import { loadNavbar } from "/navbar/navbar.js"; // Import Navbar
 let attributes = [];
 let categories = [];
 let brands = [];
-// Global source attributes to keep sync
-let sourceAttributes = [];
+let sourceAttributes = []; // Global source attributes to keep sync
+let selectedAttributeRows = []; // State for UI rows
 
 const variantsTableBody = document.getElementById("variantsTableBody");
 const attributesSection = document.getElementById("attributesSection");
@@ -32,8 +32,6 @@ export async function initAddProduct() {
 }
 
 // --- FETCH DATA ---
-
-/* Safe Data Mapping Helper */
 function getListData(res) {
     if (!res) return [];
     if (Array.isArray(res.data)) return res.data;
@@ -45,15 +43,9 @@ function getListData(res) {
 async function fetchAttributes() {
     try {
         const res = await callAPI("/attributes", "GET");
-        // Update both source and state
         const list = getListData(res);
-        sourceAttributes = list; // Keep raw source
-
-        attributes = list.map(attr => ({
-            attributeId: attr.attributeId,
-            attributeName: attr.attributeName,
-            values: [] // Selected values for this product
-        }));
+        sourceAttributes = list;
+        // Note: we don't init 'attributes' state here anymore, it's dynamic
     } catch (e) {
         console.error("Error fetching attributes", e);
     }
@@ -62,11 +54,10 @@ async function fetchAttributes() {
 async function fetchCategories() {
     try {
         const res = await callAPI("/categories", "GET");
-        const list = getListData(res);
-        categories = list;
+        categories = getListData(res);
 
         const sel = document.getElementById("categoryId");
-        sel.innerHTML = '<option value="">-- Chọn --</option>'; // Reset
+        sel.innerHTML = '<option value="">-- Chọn --</option>';
 
         categories.forEach(c => {
             const opt = document.createElement("option");
@@ -82,11 +73,10 @@ async function fetchCategories() {
 async function fetchBrands() {
     try {
         const res = await callAPI("/brands", "GET");
-        const list = getListData(res);
-        brands = list; // <--- Error "forEach is not a function" FIXED by using getListData helper
+        brands = getListData(res);
 
         const sel = document.getElementById("brandId");
-        sel.innerHTML = '<option value="">-- Chọn --</option>'; // Reset
+        sel.innerHTML = '<option value="">-- Chọn --</option>';
 
         brands.forEach(b => {
             const opt = document.createElement("option");
@@ -106,7 +96,7 @@ function setupEvents() {
         addAttribute();
     };
 
-    // Main Image Upload (Updated Class Names for V2)
+    // Main Image Upload
     const mainImgArea = document.getElementById("mainImageArea");
     const mainImgInput = document.getElementById("mainImageInput");
     const mainImgPrev = document.getElementById("mainImagePreview");
@@ -136,14 +126,13 @@ function setupEvents() {
 
 // --- ATTRIBUTE LOGIC ---
 function addAttribute() {
-    // Unique ID for UI tracking (timestamp + random)
-    const id = Date.now() + Math.floor(Math.random() * 1000);
-    attributes.push({ id: id, attributeId: "", attributeName: "", values: [] });
+    const id = Date.now() + Math.random();
+    selectedAttributeRows.push({ id: id, attributeId: "", values: [] });
     renderAttributes();
 }
 
 function removeAttribute(id) {
-    attributes = attributes.filter(a => a.id !== id);
+    selectedAttributeRows = selectedAttributeRows.filter(r => r.id !== id);
     renderAttributes();
     generateVariants();
 }
@@ -151,52 +140,14 @@ function removeAttribute(id) {
 function renderAttributes() {
     attributesSection.innerHTML = "";
 
-    // Only render items that we "added" via the button.
-    // Actually, 'attributes' array here tracks the ROWS we added. 
-    // BUT we initialized it with ALL attributes in fetchAttributes. This is WRONG logic overlap.
-    // 'attributes' variable name conflict.
-    // Let's fix: 'attributes' should be 'availableAttributes' config.
-    // And 'selectedAttributes' should handle the UI rows.
-
-    // QUICK FIX: Filter 'attributes' to only show ones with ID (if our init logic added IDs).
-    // Wait, line 37 init: attributes = res.data.map...
-    // But addAttribute pushes { id: ... }
-    // The previous logic (Step 230) was a bit mixed up.
-    // Let's strictly separate:
-    // 1. sourceAttributes: All available types from API.
-    // 2. dynamicAttributes: The rows user added.
-
-    // Re-evaluating: user adds a ROW. Each Row is a type.
-    // Let's use a new variable 'selectedAttributeRows'.
-}
-
-// RE-WRITING LOGIC VARIABLES 
-let selectedAttributeRows = []; // State for UI rows
-
-// Override addAttribute to use NEW variable
-addAttribute = function () {
-    const id = Date.now() + Math.random();
-    selectedAttributeRows.push({ id: id, attributeId: "", values: [] });
-    renderAttributes();
-}
-removeAttribute = function (id) {
-    selectedAttributeRows = selectedAttributeRows.filter(r => r.id !== id);
-    renderAttributes();
-    generateVariants();
-}
-
-renderAttributes = function () {
-    attributesSection.innerHTML = "";
-
     selectedAttributeRows.forEach(row => {
         const el = document.createElement("div");
         el.className = "attribute-box";
 
-        // Build Options
+        // Options
         let optionsHtml = '<option value="">-- Chọn thuộc tính --</option>';
         sourceAttributes.forEach(src => {
-            // Disable if selected in another row
-            const isUsed = selectedAttributeRows.some(r => r.attributeId === src.attributeId && r.id !== row.id);
+            const isUsed = selectedAttributeRows.some(r => r.attributeId == src.attributeId && r.id !== row.id);
             if (!isUsed) {
                 const selected = (src.attributeId == row.attributeId) ? "selected" : "";
                 optionsHtml += `<option value="${src.attributeId}" ${selected}>${src.attributeName}</option>`;
@@ -225,7 +176,7 @@ renderAttributes = function () {
         select.addEventListener("change", (e) => {
             row.attributeId = e.target.value;
             row.values = [];
-            renderAttributes(); // Refresh to update exclusions
+            renderAttributes();
             generateVariants();
         });
 
@@ -261,7 +212,6 @@ renderAttributes = function () {
 }
 
 function generateVariants() {
-    // Only use rows that have an ID and values
     const validRows = selectedAttributeRows.filter(r => r.attributeId && r.values.length > 0);
 
     if (validRows.length === 0) {
@@ -273,7 +223,6 @@ function generateVariants() {
 
     let combinations = [{}];
     validRows.forEach(row => {
-        // Find name
         const src = sourceAttributes.find(s => s.attributeId == row.attributeId);
         const attrName = src ? src.attributeName : "Unknown";
 
@@ -320,7 +269,16 @@ function generateVariants() {
 
         // Variant Image Logic
         const imgInput = tr.querySelector(".v-image-input");
+        const imgBox = tr.querySelector(".image-upload-box");
         const imgPreview = tr.querySelector("img");
+
+        // FIX CLICK: Explicit handler
+        imgBox.onclick = (e) => {
+            // Avoid double trigger if clicking input directly (though it's hidden/0 opacity)
+            if (e.target !== imgInput) {
+                imgInput.click();
+            }
+        };
 
         imgInput.onchange = (e) => {
             const file = e.target.files[0];
@@ -333,6 +291,11 @@ function generateVariants() {
         tr.querySelector(".remove-v-btn").onclick = () => tr.remove();
         variantsTableBody.appendChild(tr);
     });
+}
+
+function safeParseInt(val) {
+    const parsed = parseInt(val);
+    return isNaN(parsed) ? null : parsed;
 }
 
 async function saveProduct() {
@@ -350,19 +313,26 @@ async function saveProduct() {
         },
         attributes: [],
         variants: [],
-        variantValues: [] // Empty
+        variantValues: []
     };
 
     // Attributes Payload
+    /* 
+       Structure:
+       attributes: [
+          { attributeId: 1, attributeName: "Color", attributeValues: [{attributeValueName: "Red", attributeName: "Color"}, ...] }
+       ]
+    */
     const validRows = selectedAttributeRows.filter(r => r.attributeId && r.values.length > 0);
     productDTO.attributes = validRows.map(row => {
         const src = sourceAttributes.find(s => s.attributeId == row.attributeId);
+        const attrName = src ? src.attributeName : "Unknown";
         return {
-            attributeId: row.attributeId,
-            attributeName: src ? src.attributeName : "",
+            attributeId: safeParseInt(row.attributeId), // Force Int
+            attributeName: attrName,
             attributeValues: row.values.map(v => ({
                 attributeValueName: v,
-                attributeName: src ? src.attributeName : ""
+                attributeName: attrName
             }))
         };
     });
@@ -385,8 +355,9 @@ async function saveProduct() {
             formData.append(imgName, new Blob([], { type: 'application/octet-stream' }), imgName);
         }
 
+        // FIX: Ensure IDs are Int and Names are populated
         const variantAttrs = Object.keys(combo).map(key => ({
-            attributeId: combo[key].attrId,
+            attributeId: safeParseInt(combo[key].attrId),
             attributeName: key,
             attributeValueName: combo[key].valName
         }));
@@ -405,6 +376,9 @@ async function saveProduct() {
     const mainFile = document.getElementById("mainImageInput").files[0];
     if (mainFile) formData.append("image", mainFile);
 
+    // Debug Payload
+    console.log("Saving Product DTO:", JSON.stringify(productDTO, null, 2));
+
     formData.append('productDTO', new Blob([JSON.stringify(productDTO)], { type: 'application/json' }), 'product.json');
 
     await getLoader("btnSave", async () => {
@@ -413,6 +387,7 @@ async function saveProduct() {
             await showDialog("success", "Thêm sản phẩm thành công!");
             window.location.reload();
         } else {
+            console.error(res);
             await showDialog("error", res.message || "Lỗi server");
         }
     });
