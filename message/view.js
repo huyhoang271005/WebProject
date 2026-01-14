@@ -1,5 +1,5 @@
 //hiển thị html
-import { formatTime } from "/message/helpers.js";
+import { formatTime } from "./helpers.js";
 
 // Render danh sách User
 export function renderUsers(users, currentUserId, onUserClick) {
