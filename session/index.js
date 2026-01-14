@@ -1,6 +1,6 @@
-import { callAPI } from "../public/api.js";
+import { callAPI } from "../lib/api.js";
 import { showDialog } from "../dialog/index.js";
-import { loadPage, convertToVNTime } from "../public/public.js";
+import { loadPage, convertToVNTime } from "../lib/public.js";
 
 // --- CẤU HÌNH API ---
 const API_GET_SESSION = "/sessions?page=0&size=20";

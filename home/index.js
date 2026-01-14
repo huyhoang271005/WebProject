@@ -1,6 +1,6 @@
 import { loadNavbar } from "../navbar/navbar.js";
-import { callAPI } from "../public/api.js";
-import { toggleLoading } from "../public/loader.js";
+import { callAPI } from "../lib/api.js";
+import { toggleLoading } from "../lib/loader.js";
 
 let apiCategories = [];
 

@@ -6,8 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Quản lý đơn hàng - Tạp Hóa Xanh</title>
 
-    <link rel="stylesheet" href="admin-orders.css">
-
+    <link rel="stylesheet" href="/order-manager/admin-orders.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 
@@ -18,12 +17,29 @@
             <h2>Quản lý duyệt đơn hàng</h2>
 
             <div class="tabs-container">
-                <button class="tab-btn active" onclick="filterStatus('WAITING')">Chờ xác nhận</button>
+                <button class="tab-btn active" onclick="filterStatus('PENDING')">Chờ xác nhận</button>
                 <button class="tab-btn" onclick="filterStatus('DELIVERING')">Đang giao</button>
                 <button class="tab-btn" onclick="filterStatus('DELIVERED')">Hoàn thành</button>
                 <button class="tab-btn" onclick="filterStatus('CANCELED')">Đã hủy</button>
             </div>
 
+            <div class="search-box-container" style="margin: 5px 0 15px 0; display: flex; gap: 50px; align-items: center;">
+                <div style="position: relative; width: 300px;">
+                    <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: #888;"></i>
+                    <input type="text" id="searchInput" placeholder="Nhập mã đơn" 
+                        style="width: 100%; padding: 10px 10px 10px 35px; border: 1px solid #ddd; border-radius: 6px; outline: none;">
+                </div>
+                
+                <button onclick="searchOrder()" 
+                    style="padding: 10px 20px; background-color: #00bfa5; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">
+                    Tìm kiếm
+                </button>
+                
+                <button onclick="resetSearch()" 
+                    style="margin-left: -45px; padding: 10px 20px; background-color: #f3f4f6; color: #333; border: 1px solid #ddd; border-radius: 6px; cursor: pointer;">
+                    <i class="fa-solid fa-rotate-right"></i>
+                </button>
+            </div>
             <div class="table-wrapper">
                 <table>
                     <thead>
@@ -33,7 +49,9 @@
                             <th style="width: 30%;">Sản phẩm</th>
                             <th>Tổng tiền</th>
                             <th>Trạng thái</th>
-                            <th>Ngày tạo</th>
+                            <th style="cursor: pointer; user-select: none;" onclick="toggleSortDate()">
+                                Ngày tạo <i id="sortIcon" class="fa-solid fa-arrow-down-long"></i>
+                            </th>
                             <th style="text-align: right;">Thao tác</th>
                         </tr>
                     </thead>
@@ -98,7 +116,7 @@
         </div>
     </div>
 
-    <script type="module" src="index.js"></script>
+    <script type="module" src="/order-manager/index.js"></script>
     <script type="module">
         import { loadNavbar } from '../navbar/navbar.js';
         loadNavbar({}); 

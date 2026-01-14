@@ -1,10 +1,3 @@
-// fake user
-export const mockUsers = [
-    { id: 1, name: 'Sơn Tùng M-TP', lastMsg: 'Tối nay đi diễn Sky Tour nhé!', time: '10:30', active: true, avatar: 'S', color: '#EF4444', status: 'Vừa truy cập' },
-    { id: 2, name: 'Thằng bạn thân', lastMsg: 'Cho tao vay 500k đi...', time: 'Vừa xong', active: false, avatar: 'T', color: '#10B981', status: 'Đang hoạt động' },
-    { id: 3, name: 'Leader Team', lastMsg: 'Deadline xong chưa em?', time: 'Hôm qua', active: false, avatar: 'L', color: '#3B82F6', status: 'Offline' }
-];
-
 // fake tin nhắn
 export const mockMessagesDB = {
     1: [

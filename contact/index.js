@@ -1,6 +1,6 @@
-import { callAPI } from "../public/api.js";
+import { callAPI } from "../lib/api.js";
 import { loadNavbar } from "../navbar/navbar.js";
-import { toggleLoading } from "../public/loader.js";
+import { toggleLoading } from "../lib/loader.js";
 
 // DOM Elements
 const addressForm = document.getElementById('addressForm');
