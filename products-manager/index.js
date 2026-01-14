@@ -1,5 +1,5 @@
-import { callAPI } from "../lib/api.js";
-import { initAddProduct } from "./add-product.js";
+import { callAPI } from "/lib/api.js";
+import { initAddProduct } from "/products-manager/add-product.js";
 
 // Initialize
 async function init() {

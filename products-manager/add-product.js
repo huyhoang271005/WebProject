@@ -1,6 +1,6 @@
-import { showDialog } from "../dialog/index.js";
-import { getLoader } from "../public/public.js";
-import { fetchCategories, fetchBrands, fetchAttributes, createProduct } from "./services.js";
+import { showDialog } from "/dialog/index.js";
+import { getLoader } from "/lib/public.js";
+import { fetchCategories, fetchBrands, fetchAttributes, createProduct } from "/products-manager/services.js";
 
 // DOM Elements
 const productName = document.getElementById("productName");
