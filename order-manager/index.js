@@ -41,6 +41,8 @@ async function loadOrders(status) {
         if (res.success) {
             allOrders = res.data.listData || [];
             allOrders.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+            isAscending = false; // Reset trạng thái về giảm dần
+            updateSortIcon();    // Reset icon mũi tên xuống
             renderOrders(allOrders);
         } else {
             tbody.innerHTML = `<tr><td colspan="7" class="text-center p-5">${res.message || "Không có đơn hàng"}</td></tr>`;
@@ -232,3 +234,41 @@ window.viewDetail = (orderId) => {
 };
 window.closeModal = () => document.getElementById("detailModal").style.display = "none";
 function formatDate(iso) { if(!iso) return ''; return new Date(iso).toLocaleString('vi-VN'); }
+
+let isAscending = false; // Mặc định là False (Giảm dần: Mới nhất -> Cũ nhất)
+
+window.toggleSortDate = () => {
+    // 1. Đảo ngược trạng thái
+    isAscending = !isAscending;
+
+    // 2. Sắp xếp lại mảng allOrders
+    allOrders.sort((a, b) => {
+        const timeA = new Date(a.createdAt).getTime();
+        const timeB = new Date(b.createdAt).getTime();
+        
+        // Nếu isAscending = true -> A - B (Cũ -> Mới)
+        // Nếu isAscending = false -> B - A (Mới -> Cũ)
+        return isAscending ? timeA - timeB : timeB - timeA;
+    });
+
+    // 3. Render lại bảng
+    renderOrders(allOrders);
+
+    // 4. Cập nhật icon mũi tên cho trực quan
+    updateSortIcon();
+};
+
+function updateSortIcon() {
+    const icon = document.getElementById("sortIcon");
+    if (!icon) return;
+
+    if (isAscending) {
+        // Đang tăng dần (Cũ -> Mới): Mũi tên hướng LÊN
+        icon.className = "fa-solid fa-arrow-up-long";
+        icon.style.color = "#3B82F6"; // Màu xanh cho nổi
+    } else {
+        // Đang giảm dần (Mới -> Cũ): Mũi tên hướng XUỐNG
+        icon.className = "fa-solid fa-arrow-down-long";
+        icon.style.color = ""; // Màu mặc định
+    }
+}
