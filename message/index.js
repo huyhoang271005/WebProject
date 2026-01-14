@@ -2,9 +2,9 @@
 import { mockMessagesDB, state } from "/message/data.js";
 import { customLoadPage, customGetLoader } from "/message/helpers.js";
 import * as View from "/message/view.js";
-import {callAPI} from "../lib/api.js";
+import {callAPI} from "../lib/api";
 
-const result = await callAPI("/room-chat");
+const result = await callAPI("room-chat");
 const roomChat = result.listData;
 customLoadPage(() => {
     // 1. Render danh sách user lần đầu

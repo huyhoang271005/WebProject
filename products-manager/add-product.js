@@ -401,8 +401,8 @@ async function saveProduct() {
     // Debug Payload
     console.log("Saving Product DTO:", JSON.stringify(productDTO, null, 2));
 
-    // Revert key to 'productDTO' and add filename + content-type
-    formData.append("productDTO", new Blob([JSON.stringify(productDTO)], { type: "application/json" }), "product.json");
+    // Send productDTO as JSON blob (no filename for @RequestPart to work)
+    formData.append("productDTO", new Blob([JSON.stringify(productDTO)], { type: "application/json" }));
 
     try {
         // FIX: Must pass `true` for isMultipart argument
