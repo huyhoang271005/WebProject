@@ -276,63 +276,62 @@ window.modQty = async (id, delta, manualVal) => {
     } finally { busy = false; }
 };
 
-// --- HÀM CHANGE VAR (ĐÃ FIX LỖI 2 MỤC + LỖI THANH TOÁN) ---
+// --- HÀM CHANGE VAR ĐÃ FIX LỖI 2 MỤC TRÙNG NHAU ---
 window.changeVar = async (el) => {
     if(busy) return; 
     busy = true; 
-    
-    // Lưu lại trạng thái checkbox của dòng đang sửa
-    const row = el.closest(".cart-item");
-    if (!row) { busy = false; return; }
-    
-    const [pIdx, cIdx] = row.dataset.idx.split('-');
-    
-    // Safety check
-    if (!cartData[pIdx] || !cartData[pIdx].cartItemDTOList[cIdx]) {
-        await refreshCart(); busy = false; return;
-    }
-
-    const product = cartData[pIdx];
-    const currentItem = product.cartItemDTOList[cIdx];
-    const wasChecked = checked.has(currentItem.cartItemId); // Kiểm tra xem khách có đang tích chọn món này không?
-
     try {
-        // 1. Lấy Variant ID mới
+        const row = el.closest(".cart-item");
+        const [pIdx, cIdx] = row.dataset.idx.split('-');
+        
+        const product = cartData[pIdx];
+        const currentItem = product.cartItemDTOList[cIdx];
+        
+        // 1. Tìm Variant ID mới (Sử dụng String() để so sánh an toàn)
         const ids = Array.from(row.querySelectorAll(".variant-select")).map(s => s.value);
         const newV = product.productVariantsDTOList.find(v => 
             ids.every(id => String(v.attributeValueIdList).includes(String(id)))
         );
 
         if (!newV) { 
-            await showDialog("error", "Hết hàng hoặc lỗi dữ liệu"); 
-            await refreshCart(); return; 
+            await showDialog("error", "Hết hàng hoặc không tồn tại"); 
+            render(); 
+            return; 
         }
         
+        // Nếu chọn đúng variant hiện tại thì thôi
         if (String(newV.variantId) === String(currentItem.variantId)) return; 
 
-        // 2. Tìm trùng trên TOÀN BỘ giỏ hàng
+        // === 2. TÌM TRÙNG TRÊN TOÀN BỘ GIỎ HÀNG (FIX BUG) ===
+        // Duyệt qua tất cả các nhóm sản phẩm trong cartData để tìm sản phẩm trùng
+        // (đề phòng trường hợp phân trang làm tách nhóm sản phẩm ra)
         let duplicateItem = null;
+        
         for (const p of cartData) {
             if(p.cartItemDTOList) {
                 const found = p.cartItemDTOList.find(i => 
                     String(i.variantId) === String(newV.variantId) && 
                     String(i.cartItemId) !== String(currentItem.cartItemId)
                 );
-                if (found) { duplicateItem = found; break; }
+                if (found) {
+                    duplicateItem = found;
+                    break; 
+                }
             }
         }
 
         if (duplicateItem) {
             // >>> TRƯỜNG HỢP 1: CÓ TRÙNG -> GỘP <<<
-            console.log("Phát hiện trùng -> Gộp và Reload...");
+            console.log("Phát hiện trùng -> Gộp...");
             const newTotalQty = Number(duplicateItem.quantity) + Number(currentItem.quantity);
             
             if (newTotalQty > newV.stock) {
-                await showDialog("error", `Kho chỉ còn ${newV.stock}, không đủ để gộp!`);
-                render(); return;
+                await showDialog("error", `Không thể gộp: Tổng số lượng (${newTotalQty}) vượt quá tồn kho (${newV.stock})`);
+                render();
+                return;
             }
 
-            // A. Cập nhật số lượng item đích
+            // Gọi API cập nhật item đích
             const resUpdate = await callAPI('/carts', 'PUT', { 
                 cartItemId: duplicateItem.cartItemId, 
                 variantId: duplicateItem.variantId, 
@@ -340,22 +339,26 @@ window.changeVar = async (el) => {
             });
 
             if (resUpdate.success) {
-                // B. Xóa item hiện tại
-                await callAPI('/carts/delete', 'POST', [currentItem.cartItemId]);
+                // Gọi API xóa item thừa (item hiện tại)
+                const resDelete = await callAPI('/carts/delete', 'POST', [currentItem.cartItemId]);
                 
-                // C. QUAN TRỌNG: Cập nhật lại Checkbox cho đúng ID mới
-                if (wasChecked) {
-                    checked.delete(currentItem.cartItemId); // Xóa ID cũ (đã chết)
-                    checked.add(duplicateItem.cartItemId);  // Thêm ID mới (đang sống)
+                if (resDelete.success) {
+                    // Xóa item hiện tại khỏi danh sách hiển thị
+                    product.cartItemDTOList = product.cartItemDTOList.filter(i => i.cartItemId !== currentItem.cartItemId);
+                    
+                    // Cập nhật số lượng mới cho item đích (dù nó ở trang nào trong cartData cũng sẽ được cập nhật nhờ tham chiếu object)
+                    duplicateItem.quantity = newTotalQty;
+                    
+                    checked.delete(currentItem.cartItemId);
+                    await showDialog("success", "Đã gộp sản phẩm thành công!");
+                    render();
+                } else {
+                    await showDialog("error", "Lỗi khi xóa dòng thừa, vui lòng tải lại trang");
+                    render();
                 }
-
-                // D. Tải lại toàn bộ để xóa sạch "sản phẩm ma" hiển thị sai
-                await refreshCart();
-                
-                await showDialog("success", "Đã gộp sản phẩm!");
             } else {
-                await showDialog("error", "Lỗi gộp: " + resUpdate.message);
-                await refreshCart();
+                await showDialog("error", resUpdate.message || "Lỗi cập nhật số lượng gộp");
+                render();
             }
 
         } else {
@@ -367,58 +370,14 @@ window.changeVar = async (el) => {
             });
             
             if (res.success) {
-                // Nếu đổi thành công, tải lại để cập nhật ảnh/giá chính xác từ server
-                await refreshCart(); 
+                currentItem.variantId = newV.variantId;
+                render();
             } else {
-                await showDialog("error", res.message || "Lỗi đổi loại");
-                await refreshCart();
+                await showDialog("error", res.message || "Lỗi đổi phân loại");
+                render();
             }
         }
-    } catch (e) {
-        console.error(e);
-        await refreshCart();
     } finally {
         busy = false;
     }
 };
-
-// --- CẬP NHẬT LẠI HÀM refreshCart ĐỂ GIỮ LẠI CHECKBOX ---
-async function refreshCart() {
-    // 1. Sao lưu lại danh sách đang check (chỉ giữ lại những ID còn tồn tại sau này)
-    const oldChecked = new Set(checked); 
-    
-    cartData = [];
-    currentPage = 0;
-    hasMore = true;
-    isLoading = false;
-    
-    const box = document.getElementById("cartList");
-    if (box) box.innerHTML = '<div style="text-align:center; padding:20px; color:#2196F3"><i class="fas fa-sync fa-spin"></i> Đang cập nhật giỏ hàng...</div>';
-    
-    await loadCart(0, pageSize);
-    
-    // 2. Khôi phục lại checkbox (những ID nào còn trong dữ liệu mới thì check lại)
-    // Lưu ý: Logic gộp bên trên đã xử lý việc đổi ID trong 'checked' rồi, nên ở đây cứ giữ nguyên là được
-    // Tuy nhiên loadCart mặc định reset render, ta cần đảm bảo 'checked' không bị clear bậy
-    // (Trong code cũ checked.clear() ở đâu đó? Nếu trong loadCart có dòng xóa checked thì bỏ đi nhé!)
-    
-    // Render lại giao diện
-    render();
-}
-
-async function refreshCart() {
-    console.warn("Phát hiện dữ liệu không đồng bộ -> Đang tải lại...");
-    
-    // 1. Reset toàn bộ biến
-    cartData = [];
-    currentPage = 0;
-    hasMore = true;
-    isLoading = false;
-    
-    // 2. Xóa giao diện cũ và hiện loading
-    const box = document.getElementById("cartList");
-    if (box) box.innerHTML = '<div style="text-align:center; padding:20px"><i class="fas fa-spinner fa-spin"></i> Đang đồng bộ lại dữ liệu...</div>';
-    
-    // 3. Gọi tải lại trang 0
-    await loadCart(0, pageSize);
-}
