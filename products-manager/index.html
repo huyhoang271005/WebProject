@@ -6,22 +6,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Thêm Sản Phẩm Mới - Tạp hóa Xanh</title>
 
-    <!-- Shared Styles -->
-    <link rel="stylesheet" href="/lib/public.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
-    <!-- Local Styles -->
-    <link rel="stylesheet" href="/products-manager/index.css">
-
-    <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <link rel="stylesheet" href="./index.css">
 </head>
 
 <body>
-    <!-- Navbar will be injected here by navbar.js -->
+    <div id="navbar-placeholder"></div>
 
     <div class="pm-container">
 
-        <!-- Header -->
         <header class="pm-header">
             <div class="pm-header-content">
                 <div class="pm-header-left">
@@ -41,14 +37,11 @@
             </div>
         </header>
 
-        <!-- Main Content -->
         <div class="pm-content">
             <form id="productForm" class="pm-form-layout">
 
-                <!-- Left Column -->
                 <div class="pm-main-col">
 
-                    <!-- Basic Info Card -->
                     <div class="pm-card">
                         <div class="pm-card-header">
                             <h3 class="pm-card-title">
@@ -61,28 +54,18 @@
                                 <label class="pm-label">
                                     Tên sản phẩm <span class="pm-required">*</span>
                                 </label>
-                                <input 
-                                    type="text" 
-                                    class="pm-input" 
-                                    id="productName" 
-                                    placeholder="VD: Bánh quy bơ Danisa 454g"
-                                    required
-                                >
+                                <input type="text" class="pm-input" id="productName"
+                                    placeholder="VD: Bánh quy bơ Danisa 454g" required>
                             </div>
 
                             <div class="pm-form-group">
                                 <label class="pm-label">Mô tả sản phẩm</label>
-                                <textarea 
-                                    class="pm-input pm-textarea" 
-                                    id="description"
-                                    rows="5"
-                                    placeholder="Nhập mô tả chi tiết về sản phẩm, thành phần, công dụng..."
-                                ></textarea>
+                                <textarea class="pm-input pm-textarea" id="description" rows="5"
+                                    placeholder="Nhập mô tả chi tiết về sản phẩm, thành phần, công dụng..."></textarea>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Pricing & Inventory Card -->
                     <div class="pm-card">
                         <div class="pm-card-header">
                             <h3 class="pm-card-title">
@@ -97,15 +80,8 @@
                                         Giá bán <span class="pm-required">*</span>
                                     </label>
                                     <div class="pm-input-group">
-                                        <input 
-                                            type="number" 
-                                            class="pm-input" 
-                                            id="price"
-                                            placeholder="14000"
-                                            min="0"
-                                            step="1000"
-                                            required
-                                        >
+                                        <input type="number" class="pm-input" id="price" placeholder="14000" min="0"
+                                            step="1000" required>
                                         <span class="pm-input-suffix">đ</span>
                                     </div>
                                 </div>
@@ -113,14 +89,8 @@
                                 <div class="pm-form-group">
                                     <label class="pm-label">Giá gốc</label>
                                     <div class="pm-input-group">
-                                        <input 
-                                            type="number" 
-                                            class="pm-input" 
-                                            id="originalPrice"
-                                            placeholder="18000"
-                                            min="0"
-                                            step="1000"
-                                        >
+                                        <input type="number" class="pm-input" id="originalPrice" placeholder="18000"
+                                            min="0" step="1000">
                                         <span class="pm-input-suffix">đ</span>
                                     </div>
                                 </div>
@@ -130,19 +100,11 @@
                                 <label class="pm-label">
                                     Số lượng tồn kho <span class="pm-required">*</span>
                                 </label>
-                                <input 
-                                    type="number" 
-                                    class="pm-input" 
-                                    id="stock"
-                                    placeholder="100"
-                                    min="0"
-                                    required
-                                >
+                                <input type="number" class="pm-input" id="stock" placeholder="100" min="0" required>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Variants Card -->
                     <div class="pm-card">
                         <div class="pm-card-header pm-card-header-action">
                             <h3 class="pm-card-title">
@@ -157,7 +119,6 @@
                         <div class="pm-card-body">
                             <div id="attributesSection" class="pm-attributes-section"></div>
 
-                            <!-- Variants Table -->
                             <div class="pm-variants-wrapper">
                                 <div class="pm-table-container">
                                     <table class="pm-table" id="variantsTable">
@@ -185,10 +146,8 @@
 
                 </div>
 
-                <!-- Right Sidebar -->
                 <aside class="pm-sidebar">
 
-                    <!-- Image Upload Card -->
                     <div class="pm-card pm-card-sticky">
                         <div class="pm-card-header">
                             <h3 class="pm-card-title">
@@ -204,12 +163,11 @@
                                     <span>Kéo thả ảnh vào đây</span>
                                     <small>hoặc click để chọn</small>
                                 </div>
-                                <img id="mainImagePreview" class="pm-image-preview" style="display:none;">
+                                <img id="mainImagePreview" class="pm-image-preview" style="display:none;" alt="Preview">
                             </div>
                         </div>
                     </div>
 
-                    <!-- Organization Card -->
                     <div class="pm-card">
                         <div class="pm-card-header">
                             <h3 class="pm-card-title">
@@ -224,6 +182,8 @@
                                 </label>
                                 <select class="pm-input pm-select" id="categoryId" required>
                                     <option value="">-- Chọn danh mục --</option>
+                                    <option value="1">Đồ khô</option>
+                                    <option value="2">Nước giải khát</option>
                                 </select>
                             </div>
 
@@ -233,6 +193,8 @@
                                 </label>
                                 <select class="pm-input pm-select" id="brandId" required>
                                     <option value="">-- Chọn thương hiệu --</option>
+                                    <option value="1">Danisa</option>
+                                    <option value="2">Chinsu</option>
                                 </select>
                             </div>
                         </div>
@@ -245,7 +207,6 @@
 
     </div>
 
-    <script type="module" src="/products-manager/index.js"></script>
-</body>
+    </body>
 
 </html>
