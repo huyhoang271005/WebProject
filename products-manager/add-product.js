@@ -287,8 +287,11 @@ async function saveProduct() {
     const validAttributes = attributes.filter(a => a.attributeId && a.values.length > 0);
     const validAttributeDTOs = validAttributes.map(a => ({
         attributeId: a.attributeId,
-        attributeName: a.name,
-        attributeValues: a.values.map(v => ({ attributeValueName: v }))
+        attributeName: a.name || "", // Safeguard
+        attributeValues: a.values.map(v => ({
+            attributeValueName: v,
+            attributeName: a.name || "" // Backend might use this as key
+        }))
     }));
 
     const productDTO = {
@@ -301,9 +304,10 @@ async function saveProduct() {
             categoryId: categoryId.value,
             brandId: brandId.value,
         },
-        // FIX 2: Send BOTH 'attributes' and 'variantValues' to satisfy Backend requirements
+        // FIX 2: Send 'attributes' correctly. 'variantValues' should be empty or handled by backend from hierarchy.
+        // Sending validAttributeDTOs (which are Attributes) to variantValues (which expects Values) causes "null key" mapping error.
         attributes: validAttributeDTOs,
-        variantValues: validAttributeDTOs,
+        variantValues: [],
         variants: []
     };
 
