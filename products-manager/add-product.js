@@ -1,6 +1,6 @@
-import { showDialog } from "../dialog/index.js";
-import { getLoader } from "../public/public.js";
-import { fetchCategories, fetchBrands, fetchAttributes, createProduct } from "./services.js";
+import { showDialog } from "/dialog/index.js";
+import { getLoader } from "/lib/public.js";
+import { fetchCategories, fetchBrands, fetchAttributes, createProduct } from "/products-manager/services.js";
 
 // DOM Elements
 const productName = document.getElementById("productName");
@@ -342,9 +342,10 @@ async function saveProduct() {
             formData.append(imgName, new Blob([], { type: 'application/octet-stream' }), imgName); // <--- Added filename
         }
 
-        const variantAttrs = Object.values(combo).map(item => ({
-            attributeId: item.attrId,
-            attributeValueName: item.valName
+        const variantAttrs = Object.keys(combo).map(key => ({
+            attributeId: combo[key].attrId,
+            attributeName: key,
+            attributeValueName: combo[key].valName
         }));
 
         productDTO.variants.push({
