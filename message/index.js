@@ -5,13 +5,13 @@ import * as View from "/message/view.js";
 import {callAPI} from "../lib/api.js";
 
 const result = await callAPI("/room-chat");
-const roomChat = result.listData;
+const roomChat = result.data.listData;
 customLoadPage(() => {
     // 1. Render danh sách user lần đầu
     View.renderUsers(roomChat, state.currentUserId, handleSwitchUser);
     
     // 2. Chọn user mặc định (người đầu tiên)
-    handleSwitchUser(roomChat[0]);
+    if(roomChat.length > 0) handleSwitchUser(roomChat[0]);
     
     // 3. Cài đặt sự kiện gửi tin
     setupEvents();
@@ -20,7 +20,7 @@ customLoadPage(() => {
 // --- LOGIC CHUYỂN ĐỔI USER ---
 function handleSwitchUser(user) {
     // Cập nhật trạng thái
-    state.currentUserId = user.id;
+    state.currentUserId = user.roomChatId;
 
     // Cập nhật giao diện:
     // 1. Vẽ lại list user để highlight người đang chọn

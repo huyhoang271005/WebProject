@@ -18,7 +18,7 @@ export function renderUsers(users, currentUserId, onUserClick) {
                 <div class="name">${u.roomChatName}</div>
                 <div class="last-message">${u.lastMessage}</div>
             </div>
-            <div class="time-stamp">${u.createdAt}</div>
+            <div class="time-stamp">${u.lastMessageTime}</div>
         `;
         
         // Gắn sự kiện click, gọi callback function truyền từ index.js sang
@@ -36,7 +36,7 @@ export function updateChatHeader(user) {
     header.innerHTML = `
         <div class="avatar-small" style="background: green">${user.imageUrl}</div>
         <div class="target-info">
-            <h3>${user.chatRoomName}</h3>
+            <h3>${user.roomChatName}</h3>
             <span class="status-online">●</span>
         </div>
     `;
