@@ -1,6 +1,6 @@
-import { loadPage, convertToVNTime, getLoader, noImage } from "../public/public.js";
+import { loadPage, convertToVNTime, getLoader, noImage } from "../lib/public.js";
 import { showDialog } from "../dialog/index.js";
-import { callAPI } from "../public/api.js";
+import { callAPI } from "../lib/api.js";
 import { initEmailList } from "./email-list.js";
 import { loadNavbar } from "../navbar/navbar.js";
 await loadPage(async()=>{
@@ -33,7 +33,7 @@ async function render(user) {
         const emailsSection = document.getElementById("emailsSection");
         const btnUpdate = document.getElementById('btnUpdate');
         const btnLogout = document.getElementById('btnLogout');
-        const html = await fetch("./email-list.html");
+        const html = await fetch("/user-detail/email-list.html");
         const text = await html.text();
         emailsSection.insertAdjacentHTML('beforeend', text);
         initEmailList(user.userId, user.extendUserResponse.emails);

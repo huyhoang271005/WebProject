@@ -1,4 +1,4 @@
-import { convertToVNTime } from "../public/public.js";
+import { convertToVNTime } from "../lib/public.js";
 
 export function formatTime(isoString) {
     try {

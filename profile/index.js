@@ -1,6 +1,6 @@
-import { callAPI } from "../public/api.js";
+import { callAPI } from "../lib/api.js";
 import { showDialog } from "../dialog/index.js";
-import { convertToVNTime, getLoader, loadPage } from "../public/public.js";
+import { convertToVNTime, getLoader, loadPage } from "../lib/public.js";
 import { initEmailList } from "./email-list.js";
 import { loadNavbar } from "../navbar/navbar.js";
 const usernameInput = document.getElementById('username');
@@ -29,7 +29,7 @@ async function loadProfile() {
     role.value = profile.roleName;
     createdAt.textContent = convertToVNTime(profile.createdAt);
     updatedAt.textContent = convertToVNTime(profile.updatedAt);
-    const html = await fetch("./email-list.html");
+    const html = await fetch("/profile/email-list.html");
     const text = await html.text();
     emailsSection.insertAdjacentHTML('beforeend', text);
     initEmailList(profile.emails);

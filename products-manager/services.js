@@ -1,4 +1,4 @@
-import { callAPI } from "../public/api.js";
+import { callAPI } from "/lib/api.js";
 
 const PAGE_SIZE = 100;
 

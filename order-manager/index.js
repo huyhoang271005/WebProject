@@ -1,4 +1,4 @@
-import { callAPI } from '../public/api.js'; 
+import { callAPI } from '../lib/api.js';
 
 const money = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' });
 let allOrders = []; 

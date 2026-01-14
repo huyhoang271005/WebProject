@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Chi tiết người dùng</title>
 <link rel="stylesheet" href="../dialog/index.css"/>
-<link rel="stylesheet" href="../public/public.css"/>
+<link rel="stylesheet" href="../lib/public.css"/>
 <script src="https://kit.fontawesome.com/e9c281dd3f.js" crossorigin="anonymous"></script>
 <style>
 .profile {
@@ -83,16 +83,6 @@
     color: #9CA3AF;
     margin-top: 5px;
 }
-.action-buttons .primary {
-    background-color: #3B82F6;
-    color: #fff;
-    border: none;
-}
-
-.action-buttons .primary:hover {
-    background-color: #2563EB;
-}
-
 /* Nút gửi thông báo */
 .action-buttons .secondary {
     background-color: #F3F4F6;
@@ -102,10 +92,6 @@
 
 .action-buttons .secondary:hover {
     background-color: #E5E7EB;
-}
-
-.action-buttons button:active {
-    transform: scale(0.97);
 }
 @media (max-width:700px){
     .profile { display: inline-block; }
@@ -134,7 +120,6 @@
                         Gửi thông báo
                     </button>
                 </div>
-
             </div>
 
             <!-- Thông tin user -->
@@ -169,6 +154,6 @@
     </div>
 </div>
 
-<script type="module" src="index.js"></script>
+<script type="module" src="/user-detail/index.js"></script>
 </body>
 </html>

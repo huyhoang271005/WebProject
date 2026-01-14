@@ -1,6 +1,6 @@
-import { showDialog } from "../dialog/index.js";
-import { getLoader } from "../public/public.js";
-import { fetchCategories, fetchBrands, fetchAttributes, createProduct } from "./services.js";
+import { showDialog } from "/dialog/index.js";
+import { getLoader } from "/lib/public.js";
+import { fetchCategories, fetchBrands, fetchAttributes, createProduct } from "/products-manager/services.js";
 
 // DOM Elements
 const productName = document.getElementById("productName");
@@ -212,19 +212,6 @@ function generateVariants() {
         return;
     }
 
-    // Capture existing state to preserve inputs
-    const existingState = new Map();
-    variantsTableBody.querySelectorAll("tr").forEach(tr => {
-        if (tr.dataset.combo) {
-            const comboKey = getComboKey(JSON.parse(tr.dataset.combo));
-            existingState.set(comboKey, {
-                original: tr.querySelector(".v-original").value,
-                price: tr.querySelector(".v-price").value,
-                stock: tr.querySelector(".v-stock").value
-            });
-        }
-    });
-
     let combinations = [{}];
     validAttributes.forEach(attr => {
         const next = [];
@@ -247,13 +234,6 @@ function generateVariants() {
     combinations.forEach((combo) => {
         // combo = { "Color": { valName: "Red", attrId: "123" }, "Size": ... }
         const name = Object.keys(combo).map(k => `${k}: ${combo[k].valName}`).join(" - ");
-        const comboKey = getComboKey(combo);
-
-        // Restore values if exist, else use defaults
-        const saved = existingState.get(comboKey);
-        const valOriginal = saved ? saved.original : baseOriginal;
-        const valPrice = saved ? saved.price : basePrice;
-        const valStock = saved ? saved.stock : 0;
 
         const tr = document.createElement("tr");
         tr.innerHTML = `
@@ -265,9 +245,9 @@ function generateVariants() {
                 </div>
             </td>
             <td>${name}</td>
-            <td><input type="number" class="v-original" value="${valOriginal}" style="width:100px;"></td>
-            <td><input type="number" class="v-price" value="${valPrice}" style="width:100px;"></td>
-            <td><input type="number" class="v-stock" value="${valStock}" style="width:80px;"></td>
+            <td><input type="number" class="v-original" value="${baseOriginal}" style="width:100px;"></td>
+            <td><input type="number" class="v-price" value="${basePrice}" style="width:100px;"></td>
+            <td><input type="number" class="v-stock" value="0" style="width:80px;"></td>
             <td><button class="remove-v-btn" style="color:red; border:none; background:none;"><i class="fa-solid fa-trash"></i></button></td>
         `;
 
@@ -295,11 +275,6 @@ function generateVariants() {
     });
 }
 
-function getComboKey(combo) {
-    // Generate a consistent key for the combination map (sort by attribute name)
-    return Object.keys(combo).sort().map(k => `${k}:${combo[k].valName}`).join("|");
-}
-
 
 // === SAVE ===
 async function saveProduct() {
@@ -307,6 +282,14 @@ async function saveProduct() {
     if (!productName.value.trim()) return showDialog("error", "Tên sản phẩm là bắt buộc");
     if (!categoryId.value) return showDialog("error", "Vui lòng chọn danh mục");
     if (!brandId.value) return showDialog("error", "Vui lòng chọn thương hiệu");
+
+    // FIX 1: Filter only valid attributes to avoid sending garbage
+    const validAttributes = attributes.filter(a => a.attributeId && a.values.length > 0);
+    const validAttributeDTOs = validAttributes.map(a => ({
+        attributeId: a.attributeId,
+        attributeName: a.name,
+        attributeValues: a.values.map(v => ({ attributeValueName: v }))
+    }));
 
     const productDTO = {
         productName: productName.value.trim(),
@@ -316,17 +299,9 @@ async function saveProduct() {
         stock: parseInt(stock.value) || 0,
         categoryId: categoryId.value,
         brandId: brandId.value,
-        // Backend seems to require BOTH keys to be present and non-null
-        attributes: attributes.map(a => ({
-            attributeId: a.attributeId,
-            attributeName: a.name,
-            attributeValues: a.values.map(v => ({ attributeValueName: v }))
-        })),
-        variantValues: attributes.map(a => ({
-            attributeId: a.attributeId,
-            attributeName: a.name,
-            attributeValues: a.values.map(v => ({ attributeValueName: v }))
-        })),
+        // FIX 2: Send BOTH 'attributes' and 'variantValues' to satisfy Backend requirements
+        attributes: validAttributeDTOs,
+        variantValues: validAttributeDTOs,
         variants: []
     };
 
@@ -336,7 +311,7 @@ async function saveProduct() {
     if (mainImageInput.files[0]) {
         formData.append('image', mainImageInput.files[0]);
     } else {
-        // Should we send empty blob for main image? Usually optional.
+        // Optional: append empty blob if main image is strictly required by backend map
         // formData.append('image', new Blob([], {type: 'application/octet-stream'}));
     }
 
@@ -352,27 +327,32 @@ async function saveProduct() {
         const vImgInput = tr.querySelector(".v-image-input");
         const file = vImgInput.files[0];
 
-        let imgName = null;
+        // FIX 3: Always generate a UNIQUE key for imageName
+        // "element cannot be mapped to a null key" -> implies we need a valid key even if no file
+        const imgName = `variant-${index}-${Date.now()}`;
 
-        // Append Image with Key = ImageName (Backend requires this exact mapping)
+        // FIX 4: Always append to FormData. If no file, append empty blob.
+        // This prevents backend 'toMap' value null errors.
         if (file) {
-            // Generate unique name WITHOUT extension
-            imgName = `variant-${index}-${Date.now()}`;
-
-            // KEY must match the imageName in DTO
+            // Use actual file. Filename is intrinsic.
             formData.append(imgName, file);
+        } else {
+            // Append empty blob BUT with an explicit unique filename.
+            // If backend maps by getOriginalFilename(), this prevents "null key" or "duplicate key".
+            formData.append(imgName, new Blob([], { type: 'application/octet-stream' }), imgName); // <--- Added filename
         }
 
-        const variantAttrs = Object.values(combo).map(item => ({
-            attributeId: item.attrId,
-            attributeValueName: item.valName
+        const variantAttrs = Object.keys(combo).map(key => ({
+            attributeId: combo[key].attrId,
+            attributeName: key,
+            attributeValueName: combo[key].valName
         }));
 
         productDTO.variants.push({
             originalPrice: vOriginal,
             price: vPrice,
             stock: vStock,
-            imageName: imgName,
+            imageName: imgName, // Never null
             active: true,
             attributeValues: variantAttrs
         });
@@ -385,8 +365,9 @@ async function saveProduct() {
         console.log(pair[0] + ', ' + pair[1]);
     }
 
-    // Append JSON Blob
-    formData.append('productDTO', new Blob([JSON.stringify(productDTO)], { type: 'application/json' }));
+    // Append JSON Blob with explicit filename "product.json"
+    // This prevents "element cannot be mapped to a null key" if backend maps ALL parts by filename.
+    formData.append('productDTO', new Blob([JSON.stringify(productDTO)], { type: 'application/json' }), 'product.json');
 
     // Send
     await getLoader("btnSave", async () => {

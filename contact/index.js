@@ -1,6 +1,6 @@
-import { callAPI } from "../public/api.js";
+import { callAPI } from "../lib/api.js";
 import { loadNavbar } from "../navbar/navbar.js";
-import { toggleLoading } from "../public/loader.js";
+import { toggleLoading } from "../lib/loader.js";
 
 // DOM Elements
 const addressForm = document.getElementById('addressForm');
@@ -126,9 +126,12 @@ async function addNewAddress(data) {
 
     const result = await callAPI("/contacts", "POST", data);
 
-    if (result.success) {
+    // Support both wrapped response (success: true) and direct object response (has contactId)
+    if (result.success || result.contactId) {
         showNotification("Thêm địa chỉ mới thành công!");
-        const newAddress = { contactId: result.data.contactId, ...data };
+        // Extract contactId from either root or data object
+        const newId = result.contactId || result.data?.contactId;
+        const newAddress = { contactId: newId, ...data };
         currentAddresses.unshift(newAddress);
         renderAddressList();
         resetForm();
@@ -145,7 +148,8 @@ async function updateAddress(id, data) {
     const updateData = { contactId: id, ...data };
     const result = await callAPI("/contacts", "PUT", updateData);
 
-    if (result.success) {
+    // Support both wrapped response and direct object response
+    if (result.success || result.contactId) {
         showNotification("Cập nhật địa chỉ thành công!");
         const index = currentAddresses.findIndex(addr => addr.contactId === id);
         if (index !== -1) {

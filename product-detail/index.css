@@ -25,6 +25,13 @@ body {
     display: grid;
     grid-template-columns: 2fr 3fr;
     gap: 40px;
+    align-items: flex-start;
+}
+
+.product-bottom-section {
+    margin-top: 40px;
+    border-top: 1px solid #f0f0f0;
+    padding-top: 30px;
 }
 
 /* --- Ảnh --- */
@@ -257,6 +264,7 @@ body {
     font-size: 1rem;
     font-weight: 500;
     -moz-appearance: textfield;
+    appearance: textfield;
 }
 
 /* Ẩn mũi tên input number */
@@ -573,4 +581,131 @@ body {
 
 .hidden {
     display: none;
+}
+
+/* --- Feedback Section --- */
+.feedback-item {
+    padding: 20px 0;
+    border-bottom: 1px solid #eee;
+}
+
+.feedback-item:last-child {
+    border-bottom: none;
+}
+
+.fb-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
+}
+
+.fb-user-info {
+    display: flex;
+    gap: 12px;
+}
+
+.fb-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 1px solid #f0f0f0;
+}
+
+.fb-meta {
+    display: flex;
+    flex-direction: column;
+}
+
+.fb-username {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #333;
+}
+
+.fb-date {
+    font-size: 0.8rem;
+    color: #999;
+}
+
+.fb-rating {
+    color: #FFD700;
+    font-size: 0.85rem;
+}
+
+.fb-content {
+    margin-left: 52px; /* Align with text, skipping avatar */
+    color: #444;
+    font-size: 0.95rem;
+    line-height: 1.5;
+    margin-bottom: 10px;
+}
+
+/* Admin Reply */
+.fb-reply-box {
+    margin-left: 52px;
+    background: #f8fafc;
+    padding: 15px;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+    position: relative;
+    margin-top: 10px;
+}
+
+.fb-reply-box::before {
+    content: '';
+    position: absolute;
+    top: -6px;
+    left: 20px;
+    width: 10px;
+    height: 10px;
+    background: #f8fafc;
+    border-left: 1px solid #e2e8f0;
+    border-top: 1px solid #e2e8f0;
+    transform: rotate(45deg);
+}
+
+.admin-badge {
+    background: #10B981;
+    color: white;
+    font-size: 0.7rem;
+    padding: 1px 6px;
+    border-radius: 4px;
+    margin-left: 5px;
+    vertical-align: middle;
+}
+
+.btn-reply {
+    margin-left: 52px;
+    font-size: 0.85rem;
+    color: #666;
+    cursor: pointer;
+    background: none;
+    border: none;
+    padding: 0;
+    text-decoration: underline;
+}
+
+.btn-reply:hover {
+    color: #10B981;
+}
+
+.reply-input-area {
+    margin-left: 52px;
+    margin-top: 10px;
+    display: none;
+}
+
+.reply-input-area.show {
+    display: block;
+}
+
+.reply-input {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-family: inherit;
+    margin-bottom: 8px;
+    resize: vertical;
 }

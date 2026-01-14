@@ -1,5 +1,5 @@
 import { showDialog } from "../dialog/index.js";
-import { callAPI } from "../public/api.js";
+import { callAPI } from "../lib/api.js";
 export function initEmailList(initialEmails = []) {
     let emails = [...initialEmails];
 
