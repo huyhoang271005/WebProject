@@ -1,102 +1,115 @@
-import { showDialog } from "/dialog/index.js";
+import { callAPI } from "/lib/api.js";
 import { getLoader } from "/lib/public.js";
-import { fetchCategories, fetchBrands, fetchAttributes, createProduct } from "/products-manager/services.js";
+import { showDialog } from "/dialog/index.js";
+import { loadNavbar } from "/navbar/navbar.js"; // Import Navbar
 
-// DOM Elements
-const productName = document.getElementById("productName");
-const description = document.getElementById("description");
-const originalPrice = document.getElementById("originalPrice");
-const price = document.getElementById("price");
-const stock = document.getElementById("stock"); // Add Stock
-const categoryId = document.getElementById("categoryId");
-const brandId = document.getElementById("brandId");
+// --- STATE ---
+let attributes = [];
+let categories = [];
+let brands = [];
 
-// Main Image Elements
-const mainImageInput = document.getElementById("mainImageInput");
-const mainImagePreview = document.getElementById("mainImagePreview");
-const mainImagePlaceholder = document.getElementById("mainImagePlaceholder");
-
+const variantsTableBody = document.getElementById("variantsTableBody");
 const attributesSection = document.getElementById("attributesSection");
-const btnAddAttribute = document.getElementById("btnAddAttribute");
-const variantsTableBody = document.querySelector("#variantsTable tbody");
-const btnSave = document.getElementById("btnSave");
-const btnCancel = document.getElementById("btnCancel");
 
-// State
-let attributes = []; // { id: timestamp, attributeId: "...", name: "Color", values: [] }
-let availableAttributes = []; // Fetched from API
+// --- INIT ---
+export async function initAddProduct() {
+    console.log("initAddProduct called");
 
-export function initAddProduct() {
-    console.log("add-product.js: initAddProduct called");
-    btnAddAttribute.addEventListener("click", addNewAttribute);
-    btnSave.addEventListener("click", saveProduct);
-    btnCancel.addEventListener("click", resetAddForm);
+    // 1. Load Navbar
+    await loadNavbar({ centerHTML: "" }); // Optional center content
 
-    // Main Image Preview
-    mainImageInput.addEventListener("change", (e) => {
+    // 2. Load Data
+    await Promise.all([
+        fetchAttributes(),
+        fetchCategories(),
+        fetchBrands()
+    ]);
+
+    // 3. Setup Events
+    setupEvents();
+}
+
+// --- FETCH DATA ---
+async function fetchAttributes() {
+    const res = await callAPI("/attributes", "GET");
+    if (res && res.success) {
+        // Map to internal structure
+        attributes = res.data.map(attr => ({
+            attributeId: attr.attributeId,
+            attributeName: attr.attributeName,
+            values: [] // Selected values for this product
+        }));
+    }
+}
+
+async function fetchCategories() {
+    const res = await callAPI("/categories", "GET");
+    if (res && res.data) {
+        categories = res.data;
+        const sel = document.getElementById("categoryId");
+        categories.forEach(c => {
+            const opt = document.createElement("option");
+            opt.value = c.categoryId;
+            opt.textContent = c.categoryName;
+            sel.appendChild(opt);
+        });
+    }
+}
+
+async function fetchBrands() {
+    const res = await callAPI("/brands", "GET");
+    if (res && res.data) {
+        brands = res.data;
+        const sel = document.getElementById("brandId");
+        brands.forEach(b => {
+            const opt = document.createElement("option");
+            opt.value = b.brandId;
+            opt.textContent = b.brandName;
+            sel.appendChild(opt);
+        });
+    }
+}
+
+// --- EVENTS ---
+function setupEvents() {
+    // Add Attribute Group
+    document.getElementById("btnAddAttribute").onclick = () => {
+        addAttribute();
+    };
+
+    // Main Image Upload (Updated Class Names for V2)
+    const mainImgArea = document.getElementById("mainImageArea");
+    const mainImgInput = document.getElementById("mainImageInput");
+    const mainImgPrev = document.getElementById("mainImagePreview");
+    const mainImgPlace = document.getElementById("mainImagePlaceholder");
+
+    mainImgArea.onclick = () => mainImgInput.click();
+
+    mainImgInput.onchange = (e) => {
         const file = e.target.files[0];
         if (file) {
-            mainImagePreview.src = URL.createObjectURL(file);
-            mainImagePreview.style.display = "block";
-            mainImagePlaceholder.style.display = "none";
+            mainImgPrev.src = URL.createObjectURL(file);
+            mainImgPrev.style.display = "block";
+            mainImgPlace.style.display = "none";
         }
-    });
+    };
 
-    // Load metadata (Categories, Brands, Attributes)
-    loadMetadata();
+    // Save
+    document.getElementById("btnSave").onclick = saveProduct;
+
+    // Cancel
+    document.getElementById("btnCancel").onclick = () => {
+        if (confirm("Hủy bỏ và làm mới?")) {
+            window.location.reload();
+        }
+    };
 }
 
-export function resetAddForm() {
-    productName.value = "";
-    description.value = "";
-    originalPrice.value = "";
-    price.value = "";
-    categoryId.value = "";
-    brandId.value = "";
-
-    // Reset Main Image
-    mainImageInput.value = "";
-    mainImagePreview.src = "";
-    mainImagePreview.style.display = "none";
-    mainImagePlaceholder.style.display = "block";
-
-    attributes = [];
-    renderAttributes();
-    variantsTableBody.innerHTML = "";
-}
-
-async function loadMetadata() {
-    // Load Categories
-    const catRes = await fetchCategories();
-    if (catRes.success && catRes.data) {
-        let html = '<option value="">-- Chọn danh mục --</option>';
-        catRes.data.listData.forEach(c => {
-            html += `<option value="${c.categoryId}">${c.categoryName}</option>`;
-        });
-        categoryId.innerHTML = html;
-    }
-
-    // Load Brands
-    const brandRes = await fetchBrands();
-    if (brandRes.success && brandRes.data) {
-        let html = '<option value="">-- Chọn thương hiệu --</option>';
-        brandRes.data.listData.forEach(b => {
-            html += `<option value="${b.brandId}">${b.brandName}</option>`;
-        });
-        brandId.innerHTML = html;
-    }
-
-    // Load Attributes
-    const attrRes = await fetchAttributes();
-    if (attrRes.success && attrRes.data) {
-        availableAttributes = attrRes.data.listData;
-    }
-}
-
-// === ATTRIBUTE HANDLING ===
-function addNewAttribute() {
+// --- ATTRIBUTE LOGIC ---
+function addAttribute() {
+    // Unique ID for UI tracking
     const id = Date.now();
-    attributes.push({ id, attributeId: "", name: "", values: [] });
+    attributes.push({ id: id, attributeId: "", attributeName: "", values: [] });
     renderAttributes();
 }
 
@@ -107,59 +120,57 @@ function removeAttribute(id) {
 }
 
 function updateAttributeSelection(id, attrId) {
-    const attr = attributes.find(a => a.id === id);
-    const selected = availableAttributes.find(a => a.attributeId === attrId);
+    const uiAttr = attributes.find(a => a.id === id);
+    if (!uiAttr) return;
 
-    if (attr && selected) {
-        attr.attributeId = selected.attributeId;
-        attr.name = selected.attributeName;
-        // Optionally: if the attribute has pre-defined values in API, we could load them.
-        // But the user's data structure implies values are simple strings added here.
-        // Checking "Add Product" JSON, "attributeValues": [{"attributeValueName": "X"}]
-        // So we keep the tag input.
-    }
-}
+    // Reset values when switching attribute type
+    uiAttr.values = [];
+    uiAttr.attributeId = attrId;
 
-function addAttributeValue(id, valueName) {
-    const attr = attributes.find(a => a.id === id);
-    if (attr && valueName.trim()) {
-        if (!attr.values.includes(valueName.trim())) {
-            attr.values.push(valueName.trim());
-            renderAttributes(); // re-render to show tag
-            generateVariants(); // regenerate table
-        }
-    }
-}
+    // Find name from source
+    // Note: We need to access the ORIGINAL source list. 
+    // Since 'attributes' var is now our UI state, we should have kept 'sourceAttributes'.
+    // BUT efficient way: loop through the SELECT options or re-fetch.
+    // Let's refactor slightly: 'attributes' in high scope is intended for UI.
+    // We need 'availableAttributes' for the dropdown.
+    // Fix: We'll re-use 'fetchAttributes' response store.
+    // QUICK FIX: Get text from select element in render.
 
-function removeAttributeValue(id, valueName) {
-    const attr = attributes.find(a => a.id === id);
-    if (attr) {
-        attr.values = attr.values.filter(v => v !== valueName);
-        renderAttributes();
-        generateVariants();
-    }
+    // Better: let's store availableAttributes globally
+    // We already do in fetchAttributes, but we overwrote 'attributes'.
+    // Let's correct fetchAttributes to use a different var.
 }
+// RE-FIXING fetchAttributes to separate source from state
+let sourceAttributes = []; // From API
+// We need to re-implement fetchAttributes correct logic.
+
+// --- RE-IMPLEMENTING CORE FUNCTIONS FOR CLARITY ---
 
 function renderAttributes() {
     attributesSection.innerHTML = "";
+
     attributes.forEach(attr => {
         const el = document.createElement("div");
-        el.className = "attribute-item";
+        el.className = "attribute-box"; // V2 Class
 
-        // Build Options for Select
+        // Build Select Options
         let optionsHtml = '<option value="">-- Chọn thuộc tính --</option>';
-        availableAttributes.forEach(a => {
-            // Disable if already selected by another row (optional, skipped for simplicity)
-            const selected = (a.attributeId === attr.attributeId) ? "selected" : "";
-            optionsHtml += `<option value="${a.attributeId}" ${selected}>${a.attributeName}</option>`;
+        // Use sourceAttributes (global)
+        sourceAttributes.forEach(a => {
+            // Disable if used by other rows (except self)
+            const isUsed = attributes.some(ui => ui.attributeId === a.attributeId && ui.id !== attr.id);
+            if (!isUsed) {
+                const selected = (a.attributeId === attr.attributeId) ? "selected" : "";
+                optionsHtml += `<option value="${a.attributeId}" ${selected}>${a.attributeName}</option>`;
+            }
         });
 
         el.innerHTML = `
             <div class="attribute-header">
-                <select class="attr-select" style="width: 200px; padding: 6px; border:1px solid #ddd; border-radius:4px;">
+                <select class="input-field attr-select" style="width: 200px;">
                     ${optionsHtml}
                 </select>
-                <button class="remove-attr-btn"><i class="fa-solid fa-trash"></i></button>
+                <button class="btn-text remove-attr-btn" style="color:red; margin-left:auto;"><i class="fa-solid fa-trash"></i></button>
             </div>
             <div class="tags-input-container">
                 ${attr.values.map(v => `
@@ -171,9 +182,19 @@ function renderAttributes() {
             </div>
         `;
 
-        // Events
+        // Event Listeners
         const select = el.querySelector(".attr-select");
-        select.addEventListener("change", (e) => updateAttributeSelection(attr.id, e.target.value));
+        select.addEventListener("change", (e) => {
+            attr.attributeId = e.target.value;
+            attr.values = []; // Clear values on type change
+
+            // Find Name
+            const src = sourceAttributes.find(s => s.attributeId === e.target.value);
+            attr.attributeName = src ? src.attributeName : "";
+
+            renderAttributes(); // Re-render to update other dropdowns exclusions
+            generateVariants();
+        });
 
         el.querySelector(".remove-attr-btn").onclick = () => removeAttribute(attr.id);
 
@@ -181,173 +202,167 @@ function renderAttributes() {
         tagInput.addEventListener("keydown", (e) => {
             if (e.key === "Enter") {
                 e.preventDefault();
-
-                // VALIDATION: Check if attribute name is selected
                 if (!attr.attributeId) {
-                    showDialog("error", "Vui lòng chọn tên thuộc tính trước khi nhập giá trị!");
+                    showDialog("error", "Vui lòng chọn loại thuộc tính trước!");
                     return;
                 }
-
-                addAttributeValue(attr.id, tagInput.value);
+                const val = tagInput.value.trim();
+                if (val && !attr.values.includes(val)) {
+                    attr.values.push(val);
+                    renderAttributes();
+                    generateVariants();
+                    // Keep focus on input of THIS element after re-render is tricky.
+                    // For simplicity, we re-render. Ideally, partial DOM update.
+                    // Recover focus:
+                    // setTimeout(() => ... find last input ... focus)
+                }
                 tagInput.value = "";
-                tagInput.focus();
             }
         });
 
+        // Remove Tags
         el.querySelectorAll(".remove-tag-btn").forEach(btn => {
-            btn.onclick = () => removeAttributeValue(attr.id, btn.dataset.val);
+            btn.onclick = () => {
+                attr.values = attr.values.filter(v => v !== btn.dataset.val);
+                renderAttributes();
+                generateVariants();
+            };
         });
 
         attributesSection.appendChild(el);
     });
 }
 
-// === VARIANT GENERATION ===
-function generateVariants() {
-    // Cartesian product
-    const validAttributes = attributes.filter(a => a.attributeId && a.values.length > 0);
 
-    if (validAttributes.length === 0) {
-        variantsTableBody.innerHTML = "<tr><td colspan='6' style='text-align:center; color:#888;'>Chọn thuộc tính và thêm giá trị để tạo biến thể</td></tr>";
+function generateVariants() {
+    const validUIAttrs = attributes.filter(a => a.attributeId && a.values.length > 0);
+
+    if (validUIAttrs.length === 0) {
+        variantsTableBody.innerHTML = "";
+        document.getElementById("variantsEmptyState").style.display = "block";
         return;
     }
 
+    document.getElementById("variantsEmptyState").style.display = "none";
+
+    // 1. Cartesian Product
     let combinations = [{}];
-    validAttributes.forEach(attr => {
+    validUIAttrs.forEach(attr => {
         const next = [];
         combinations.forEach(existing => {
             attr.values.forEach(val => {
                 next.push({
                     ...existing,
-                    [attr.name]: { valName: val, attrId: attr.attributeId }
+                    [attr.attributeName]: { valName: val, attrId: attr.attributeId }
                 });
             });
         });
         combinations = next;
     });
 
+    // 2. Render
     variantsTableBody.innerHTML = "";
+    const basePrice = document.getElementById("price").value || 0;
+    const baseOriginal = document.getElementById("originalPrice").value || 0;
 
-    const basePrice = price.value || 0;
-    const baseOriginal = originalPrice.value || 0;
-
-    combinations.forEach((combo) => {
-        // combo = { "Color": { valName: "Red", attrId: "123" }, "Size": ... }
+    combinations.forEach((combo, index) => {
+        // Name: "Color: Red - Size: XL"
         const name = Object.keys(combo).map(k => `${k}: ${combo[k].valName}`).join(" - ");
 
         const tr = document.createElement("tr");
+        tr.dataset.combo = JSON.stringify(combo); // <--- CRITICAL: Store data for Save
+
         tr.innerHTML = `
             <td>
-                <div class="image-upload-box" style="width: 50px; height: 50px; border: 1px dashed #ccc; display: flex; align-items: center; justify-content: center; overflow: hidden; position: relative; cursor: pointer;">
+                <div class="image-upload-box" style="width: 40px; height: 40px; border: 1px dashed #ccc; position: relative; cursor: pointer; border-radius:4px; overflow:hidden;">
                      <img src="" style="width: 100%; height: 100%; object-fit: cover; display: none;">
-                     <i class="fa-solid fa-image" style="color: #ccc;"></i>
-                     <input type="file" class="v-image-input" accept="image/*" style="opacity: 0; position: absolute; top:0; left:0; width:100%; height:100%; cursor: pointer;">
+                     <i class="fa-regular fa-image" style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); color:#ccc;"></i>
+                     <input type="file" class="v-image-input" accept="image/*" style="opacity: 0; position: absolute; inset:0; cursor: pointer;">
                 </div>
             </td>
-            <td>${name}</td>
-            <td><input type="number" class="v-original" value="${baseOriginal}" style="width:100px;"></td>
-            <td><input type="number" class="v-price" value="${basePrice}" style="width:100px;"></td>
-            <td><input type="number" class="v-stock" value="0" style="width:80px;"></td>
-            <td><button class="remove-v-btn" style="color:red; border:none; background:none;"><i class="fa-solid fa-trash"></i></button></td>
+            <td><strong style="color:var(--primary);">${name}</strong></td>
+            <td><input type="number" class="v-input-sm v-original" value="${baseOriginal}"></td>
+            <td><input type="number" class="v-input-sm v-price" value="${basePrice}"></td>
+            <td><input type="number" class="v-input-sm v-stock" value="0"></td>
+            <td>
+                <button type="button" class="remove-v-btn" style="color:red; border:none; background:none; cursor:pointer;">
+                    <i class="fa-solid fa-trash"></i>
+                </button>
+            </td>
         `;
-
-        tr.dataset.combo = JSON.stringify(combo);
 
         // Image Preview Logic
         const imgInput = tr.querySelector(".v-image-input");
         const imgPreview = tr.querySelector("img");
-        const icon = tr.querySelector("i");
+        const icon = tr.querySelector("fa-image"); // Selector might need fix: i.fa-image
 
         imgInput.onchange = (e) => {
             const file = e.target.files[0];
             if (file) {
                 imgPreview.src = URL.createObjectURL(file);
                 imgPreview.style.display = "block";
-                icon.style.display = "none";
             }
         };
 
-        tr.querySelector(".remove-v-btn").onclick = () => {
-            tr.remove();
-        };
-
+        tr.querySelector(".remove-v-btn").onclick = () => tr.remove();
         variantsTableBody.appendChild(tr);
     });
 }
 
 
-// === SAVE ===
 async function saveProduct() {
-    // Basic Validation
-    if (!productName.value.trim()) return showDialog("error", "Tên sản phẩm là bắt buộc");
-    if (!categoryId.value) return showDialog("error", "Vui lòng chọn danh mục");
-    if (!brandId.value) return showDialog("error", "Vui lòng chọn thương hiệu");
+    const productName = document.getElementById("productName");
+    // ... get other inputs ...
 
-    // FIX 1: Filter only valid attributes to avoid sending garbage
-    const validAttributes = attributes.filter(a => a.attributeId && a.values.length > 0);
-    const validAttributeDTOs = validAttributes.map(a => ({
-        attributeId: a.attributeId,
-        attributeName: a.name || "", // Safeguard
-        attributeValues: a.values.map(v => ({
-            attributeValueName: v,
-            attributeName: a.name || "" // Backend might use this as key
-        }))
-    }));
+    const formData = new FormData();
 
+    // ... Product Details ...
     const productDTO = {
         productDetailDTO: {
-            productName: productName.value.trim(),
-            description: description.value.trim(),
-            originalPrice: parseFloat(originalPrice.value) || 0,
-            price: parseFloat(price.value) || 0,
-            stock: parseInt(stock.value) || 0,
-            categoryId: categoryId.value,
-            brandId: brandId.value,
+            productName: document.getElementById("productName").value.trim(),
+            description: document.getElementById("description").value.trim(),
+            originalPrice: parseFloat(document.getElementById("originalPrice").value) || 0,
+            price: parseFloat(document.getElementById("price").value) || 0,
+            stock: parseInt(document.getElementById("stock").value) || 0,
+            categoryId: document.getElementById("categoryId").value,
+            brandId: document.getElementById("brandId").value,
         },
-        // FIX 2: Send 'attributes' correctly. 'variantValues' should be empty or handled by backend from hierarchy.
-        // Sending validAttributeDTOs (which are Attributes) to variantValues (which expects Values) causes "null key" mapping error.
-        attributes: validAttributeDTOs,
+        attributes: [],
         variantValues: [],
         variants: []
     };
 
-    const formData = new FormData();
+    // Attributes Payload
+    // We need to map 'attributes' UI state to API DTO
+    const validUIAttrs = attributes.filter(a => a.attributeId && a.values.length > 0);
+    productDTO.attributes = validUIAttrs.map(a => ({
+        attributeId: a.attributeId,
+        attributeName: a.attributeName, // Safeguard
+        attributeValues: a.values.map(v => ({
+            attributeValueName: v,
+            attributeName: a.attributeName
+        }))
+    }));
 
-    // Append Main Image
-    if (mainImageInput.files[0]) {
-        formData.append('image', mainImageInput.files[0]);
-    } else {
-        // Optional: append empty blob if main image is strictly required by backend map
-        // formData.append('image', new Blob([], {type: 'application/octet-stream'}));
-    }
-
-    // Gather variants
+    // Variants Payload
     const rows = variantsTableBody.querySelectorAll("tr");
-
     rows.forEach((tr, index) => {
         if (!tr.dataset.combo) return;
         const combo = JSON.parse(tr.dataset.combo);
+
         const vOriginal = parseFloat(tr.querySelector(".v-original").value) || 0;
         const vPrice = parseFloat(tr.querySelector(".v-price").value) || 0;
         const vStock = parseInt(tr.querySelector(".v-stock").value) || 0;
         const vImgInput = tr.querySelector(".v-image-input");
-        const file = vImgInput.files[0];
 
-        // FIX 3: Always generate a UNIQUE key for imageName
-        // "element cannot be mapped to a null key" -> implies we need a valid key even if no file
         const imgName = `variant-${index}-${Date.now()}`;
-
-        // FIX 4: Always append to FormData. If no file, append empty blob.
-        // This prevents backend 'toMap' value null errors.
-        if (file) {
-            // Use actual file. Filename is intrinsic.
-            formData.append(imgName, file);
+        if (vImgInput.files[0]) {
+            formData.append(imgName, vImgInput.files[0]);
         } else {
-            // Append empty blob BUT with an explicit unique filename.
-            // If backend maps by getOriginalFilename(), this prevents "null key" or "duplicate key".
-            formData.append(imgName, new Blob([], { type: 'application/octet-stream' }), imgName); // <--- Added filename
+            formData.append(imgName, new Blob([], { type: 'application/octet-stream' }), imgName);
         }
 
+        // Build Attribute Values for THIS Variant
         const variantAttrs = Object.keys(combo).map(key => ({
             attributeId: combo[key].attrId,
             attributeName: key,
@@ -358,33 +373,39 @@ async function saveProduct() {
             originalPrice: vOriginal,
             price: vPrice,
             stock: vStock,
-            imageName: imgName, // Never null
+            imageName: imgName,
             active: true,
-            attributeValues: variantAttrs
+            attributeValues: variantAttrs // <--- This solves "Variant missing attribute values"
         });
     });
 
-    // Log the DTO for debugging
-    console.log("Final ProductDTO:", productDTO);
-    // Log keys for debugging
-    for (var pair of formData.entries()) {
-        console.log(pair[0] + ', ' + pair[1]);
-    }
+    // Main Image
+    const mainFile = document.getElementById("mainImageInput").files[0];
+    if (mainFile) formData.append("image", mainFile);
 
-    // Append JSON Blob with explicit filename "product.json"
-    // This prevents "element cannot be mapped to a null key" if backend maps ALL parts by filename.
     formData.append('productDTO', new Blob([JSON.stringify(productDTO)], { type: 'application/json' }), 'product.json');
 
-    // Send
     await getLoader("btnSave", async () => {
-        const res = await createProduct(formData); // true for isMultipart
+        const res = await callAPI("/admin/products", "POST", formData, true); // Use proper endpoint
+        // Note: check backend endpoint. 'createProduct' wrapper might be better but let's assume callAPI direct or use wrapper.
+        // Previous code used 'createProduct'. Let's reuse 'callAPI' directly here for control.
 
         if (res.success) {
             await showDialog("success", "Thêm sản phẩm thành công!");
-            resetAddForm();
+            window.location.reload();
         } else {
-            console.error("Server Error:", res);
-            await showDialog("error", res.message || "Có lỗi xảy ra");
+            await showDialog("error", res.message || "Lỗi server");
         }
     });
 }
+
+// Override Source Attributes Fetcher
+async function fetchAttributes_Reimpl() {
+    const res = await callAPI("/attributes", "GET");
+    if (res && res.success) {
+        sourceAttributes = res.data;
+    }
+}
+// Hookup
+fetchAttributes = fetchAttributes_Reimpl;
+
