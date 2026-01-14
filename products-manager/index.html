@@ -4,112 +4,141 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quản Lý Sản Phẩm - Tạp hóa Xanh</title>
+    <title>Thêm Sản Phẩm Mới - Tạp hóa Xanh</title>
 
-    <!-- Shared Styles -->
-    <link rel="stylesheet" href="/lib/public.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
-    <!-- Local Styles -->
-    <link rel="stylesheet" href="/products-manager/index.css">
-
-    <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <link rel="stylesheet" href="/products-manager/index.css?v=4">
 </head>
 
 <body>
-    <!-- Navbar will be injected here by navbar.js -->
+    <div id="navbar-placeholder"></div>
 
-    <div class="app-wrapper">
+    <div class="pm-container">
 
-        <!-- Header / Breadcrumbs -->
-        <div class="app-header">
-            <h1 class="page-heading">Thêm Sản Phẩm Mới</h1>
-            <div class="app-actions">
-                <button type="button" class="btn-text" id="btnCancel">Hủy bỏ</button>
-                <button type="button" class="btn-primary" id="btnSave">
-                    <i class="fa-solid fa-floppy-disk"></i> Lưu Sản Phẩm
-                </button>
+        <header class="pm-header">
+            <div class="pm-header-content">
+                <div class="pm-header-left">
+                    <h1 class="pm-title">Thêm Sản Phẩm Mới</h1>
+                    <p class="pm-subtitle">Điền đầy đủ thông tin sản phẩm bên dưới</p>
+                </div>
+                <div class="pm-header-actions">
+                    <button type="button" class="pm-btn pm-btn-secondary" id="btnCancel">
+                        <i class="fa-solid fa-xmark"></i>
+                        Hủy bỏ
+                    </button>
+                    <button type="button" class="pm-btn pm-btn-primary" id="btnSave">
+                        <i class="fa-solid fa-check"></i>
+                        Lưu Sản Phẩm
+                    </button>
+                </div>
             </div>
-        </div>
+        </header>
 
-        <div id="addView" class="view-container">
-            <form id="productForm" class="layout-v2">
+        <div class="pm-content">
+            <form id="productForm" class="pm-form-layout">
 
-                <!-- MAIN COLUMN -->
-                <div class="col-main">
+                <div class="pm-main-col">
 
-                    <!-- 1. General Info -->
-                    <div class="panel">
-                        <div class="panel-header">Thông tin chung</div>
-                        <div class="panel-body">
-                            <div class="form-group">
-                                <label class="label">Tên sản phẩm <span class="req">*</span></label>
-                                <input type="text" class="input-field" id="productName" required
-                                    placeholder="VD: Bánh quy bơ Danisa...">
+                    <div class="pm-card">
+                        <div class="pm-card-header">
+                            <h3 class="pm-card-title">
+                                <i class="fa-solid fa-circle-info"></i>
+                                Thông tin cơ bản
+                            </h3>
+                        </div>
+                        <div class="pm-card-body">
+                            <div class="pm-form-group">
+                                <label class="pm-label">
+                                    Tên sản phẩm <span class="pm-required">*</span>
+                                </label>
+                                <input type="text" class="pm-input" id="productName"
+                                    placeholder="VD: Bánh quy bơ Danisa 454g" required>
                             </div>
-                            <div class="form-group">
-                                <label class="label">Mô tả</label>
-                                <textarea class="input-field" id="description" rows="6"
-                                    placeholder="Mô tả chi tiết sản phẩm..."></textarea>
+
+                            <div class="pm-form-group">
+                                <label class="pm-label">Mô tả sản phẩm</label>
+                                <textarea class="pm-input pm-textarea" id="description" rows="5"
+                                    placeholder="Nhập mô tả chi tiết về sản phẩm, thành phần, công dụng..."></textarea>
                             </div>
                         </div>
                     </div>
 
-                    <!-- 2. Pricing & Stock -->
-                    <div class="panel">
-                        <div class="panel-header">Giá & Kho hàng</div>
-                        <div class="panel-body">
-                            <div class="row-group">
-                                <div class="form-group half">
-                                    <label class="label">Giá bán <span class="req">*</span></label>
-                                    <input type="number" class="input-field" id="price" required min="0" step="1000">
+                    <div class="pm-card">
+                        <div class="pm-card-header">
+                            <h3 class="pm-card-title">
+                                <i class="fa-solid fa-dollar-sign"></i>
+                                Giá & Kho hàng
+                            </h3>
+                        </div>
+                        <div class="pm-card-body">
+                            <div class="pm-form-row">
+                                <div class="pm-form-group">
+                                    <label class="pm-label">
+                                        Giá bán <span class="pm-required">*</span>
+                                    </label>
+                                    <div class="pm-input-group">
+                                        <input type="number" class="pm-input" id="price" placeholder="14000" min="0"
+                                            step="1000" required>
+                                        <span class="pm-input-suffix">đ</span>
+                                    </div>
                                 </div>
-                                <div class="form-group half">
-                                    <label class="label">Giá gốc</label>
-                                    <input type="number" class="input-field" id="originalPrice" min="0" step="1000">
+
+                                <div class="pm-form-group">
+                                    <label class="pm-label">Giá gốc</label>
+                                    <div class="pm-input-group">
+                                        <input type="number" class="pm-input" id="originalPrice" placeholder="18000"
+                                            min="0" step="1000">
+                                        <span class="pm-input-suffix">đ</span>
+                                    </div>
                                 </div>
                             </div>
-                            <div class="row-group">
-                                <div class="form-group half">
-                                    <label class="label">Tồn kho <span class="req">*</span></label>
-                                    <input type="number" class="input-field" id="stock" required min="0">
-                                </div>
-                                <div class="form-group half">
-                                    <label class="label">Đơn vị tính</label>
-                                    <input type="text" class="input-field" placeholder="VD: Hộp, Cái..." disabled
-                                        style="background:#f9fafb;">
-                                </div>
+
+                            <div class="pm-form-group">
+                                <label class="pm-label">
+                                    Số lượng tồn kho <span class="pm-required">*</span>
+                                </label>
+                                <input type="number" class="pm-input" id="stock" placeholder="100" min="0" required>
                             </div>
                         </div>
                     </div>
 
-                    <!-- 3. Variants -->
-                    <div class="panel">
-                        <div class="panel-header-action">
-                            <span>Phân loại hàng (Biến thể)</span>
-                            <button type="button" class="btn-small" id="btnAddAttribute">
-                                <i class="fa-solid fa-plus"></i> Thêm nhóm phân loại
+                    <div class="pm-card">
+                        <div class="pm-card-header pm-card-header-action">
+                            <h3 class="pm-card-title">
+                                <i class="fa-solid fa-layer-group"></i>
+                                Phân loại hàng (Biến thể)
+                            </h3>
+                            <button type="button" class="pm-btn pm-btn-sm pm-btn-outline" id="btnAddAttribute">
+                                <i class="fa-solid fa-plus"></i>
+                                Thêm phân loại
                             </button>
                         </div>
-                        <div class="panel-body">
-                            <div id="attributesSection" class="attributes-wrapper"></div>
+                        <div class="pm-card-body">
+                            <div id="attributesSection" class="pm-attributes-section"></div>
 
-                            <div class="variants-table-wrapper">
-                                <table class="custom-table" id="variantsTable">
-                                    <thead>
-                                        <tr>
-                                            <th width="60">Ảnh</th>
-                                            <th>Tên biến thể</th>
-                                            <th width="120">Giá gốc</th>
-                                            <th width="120">Giá bán</th>
-                                            <th width="80">Kho</th>
-                                            <th width="40"></th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="variantsTableBody"></tbody>
-                                </table>
-                                <div id="variantsEmptyState" class="empty-state">
-                                    Chưa có biến thể nào được tạo.
+                            <div class="pm-variants-wrapper">
+                                <div class="pm-table-container">
+                                    <table class="pm-table" id="variantsTable">
+                                        <thead>
+                                            <tr>
+                                                <th style="width: 60px;">Ảnh</th>
+                                                <th>Tên biến thể</th>
+                                                <th style="width: 120px;">Giá gốc</th>
+                                                <th style="width: 120px;">Giá bán</th>
+                                                <th style="width: 100px;">Kho</th>
+                                                <th style="width: 50px;"></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="variantsTableBody"></tbody>
+                                    </table>
+                                </div>
+                                <div id="variantsEmptyState" class="pm-empty-state">
+                                    <i class="fa-regular fa-folder-open"></i>
+                                    <p>Chưa có biến thể nào</p>
+                                    <span>Thêm nhóm phân loại để tạo biến thể</span>
                                 </div>
                             </div>
                         </div>
@@ -117,51 +146,62 @@
 
                 </div>
 
-                <!-- SIDEBAR -->
-                <div class="col-sidebar">
+                <aside class="pm-sidebar">
 
-                    <!-- Organization -->
-                    <div class="panel">
-                        <div class="panel-header">Tổ chức</div>
-                        <div class="panel-body">
-                            <div class="form-group">
-                                <label class="label">Danh mục <span class="req">*</span></label>
-                                <select class="input-field" id="categoryId" required>
-                                    <option value="">-- Chọn --</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label class="label">Thương hiệu <span class="req">*</span></label>
-                                <select class="input-field" id="brandId" required>
-                                    <option value="">-- Chọn --</option>
-                                </select>
-                            </div>
+                    <div class="pm-card pm-card-sticky">
+                        <div class="pm-card-header">
+                            <h3 class="pm-card-title">
+                                <i class="fa-solid fa-image"></i>
+                                Ảnh đại diện
+                            </h3>
                         </div>
-                    </div>
-
-                    <!-- Media -->
-                    <div class="panel">
-                        <div class="panel-header">Ảnh đại diện</div>
-                        <div class="panel-body">
-                            <div class="media-upload-area" id="mainImageArea">
-                                <div class="upload-content" id="mainImagePlaceholder">
-                                    <i class="fa-regular fa-image"></i>
-                                    <span>Thêm ảnh</span>
-                                </div>
-                                <img id="mainImagePreview" src="" class="preview-img" style="display:none;">
+                        <div class="pm-card-body">
+                            <div class="pm-image-upload" id="mainImageArea">
                                 <input type="file" id="mainImageInput" hidden accept="image/*">
+                                <div class="pm-image-placeholder" id="mainImagePlaceholder">
+                                    <i class="fa-solid fa-cloud-arrow-up"></i>
+                                    <span>Kéo thả ảnh vào đây</span>
+                                    <small>hoặc click để chọn</small>
+                                </div>
+                                <img id="mainImagePreview" class="pm-image-preview" style="display:none;" alt="Preview">
                             </div>
                         </div>
                     </div>
 
-                </div>
+                    <div class="pm-card">
+                        <div class="pm-card-header">
+                            <h3 class="pm-card-title">
+                                <i class="fa-solid fa-folder-tree"></i>
+                                Tổ chức
+                            </h3>
+                        </div>
+                        <div class="pm-card-body">
+                            <div class="pm-form-group">
+                                <label class="pm-label">
+                                    Danh mục <span class="pm-required">*</span>
+                                </label>
+                                <select class="pm-input pm-select" id="categoryId" required>
+                                    <option value="">-- Chọn danh mục --</option>
+                                </select>
+                            </div>
+
+                            <div class="pm-form-group">
+                                <label class="pm-label">
+                                    Thương hiệu <span class="pm-required">*</span>
+                                </label>
+                                <select class="pm-input pm-select" id="brandId" required>
+                                    <option value="">-- Chọn thương hiệu --</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                </aside>
 
             </form>
         </div>
 
     </div>
-
-    <!-- Dialog container if needed, but dialog.js appends to body -->
 
     <script type="module" src="/products-manager/index.js"></script>
 </body>
