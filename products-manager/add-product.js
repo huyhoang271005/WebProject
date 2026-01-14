@@ -306,7 +306,7 @@ async function saveProduct() {
         },
         attributes: [],
         variants: [],
-        variantValues: []
+        variants: [] // Ensure clean array
     };
 
     // Attributes Payload
@@ -368,8 +368,7 @@ async function saveProduct() {
             stock: vStock,
             imageName: imgName,
             active: true,
-            attributeValues: variantAttrs,
-            variantValues: variantAttrs // Try sending both to cover naming mismatch
+            attributeValues: variantAttrs
         });
     });
 
