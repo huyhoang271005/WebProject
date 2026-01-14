@@ -304,6 +304,7 @@ async function saveProduct() {
             categoryId: document.getElementById("categoryId").value,
             brandId: document.getElementById("brandId").value,
         },
+        attributes: [],
         variants: [],
         variantValues: [] // Ensure clean array
     };
