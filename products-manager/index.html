@@ -37,6 +37,38 @@
             </div>
         </header>
 
+        <!-- Search Product Section -->
+        <div class="pm-search-section" style="max-width: 600px; margin: 0 auto 24px;">
+            <div class="pm-card">
+                <div class="pm-card-header">
+                    <h3 class="pm-card-title">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                        Tìm sản phẩm để sửa/xóa
+                    </h3>
+                </div>
+                <div class="pm-card-body">
+                    <div class="pm-form-group">
+                        <label class="pm-label">Product ID</label>
+                        <div style="display: flex; gap: 8px;">
+                            <input type="text" class="pm-input" id="searchProductId"
+                                placeholder="Nhập Product ID (UUID)">
+                            <button type="button" class="pm-btn pm-btn-primary" id="btnSearch">
+                                <i class="fa-solid fa-search"></i>
+                                Tìm
+                            </button>
+                        </div>
+                    </div>
+                    <div id="searchResult"
+                        style="margin-top: 12px; padding: 12px; background: #f8f9fa; border-radius: 8px; display: none;">
+                        <p style="margin: 0; font-size: 14px; color: #666;">
+                            <i class="fa-solid fa-circle-info"></i>
+                            <span id="searchResultText"></span>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <div class="pm-content">
             <form id="productForm" class="pm-form-layout">
 
