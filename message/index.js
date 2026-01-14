@@ -2,7 +2,7 @@
 import { mockMessagesDB, state } from "/message/data.js";
 import { customLoadPage, customGetLoader } from "/message/helpers.js";
 import * as View from "/message/view.js";
-import {callAPI} from "../lib/api";
+import {callAPI} from "../lib/api.js";
 
 const result = await callAPI("room-chat");
 const roomChat = result.listData;
