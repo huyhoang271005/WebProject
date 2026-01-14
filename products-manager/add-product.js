@@ -292,13 +292,15 @@ async function saveProduct() {
     }));
 
     const productDTO = {
-        productName: productName.value.trim(),
-        description: description.value.trim(),
-        originalPrice: parseFloat(originalPrice.value) || 0,
-        price: parseFloat(price.value) || 0,
-        stock: parseInt(stock.value) || 0,
-        categoryId: categoryId.value,
-        brandId: brandId.value,
+        productDetailDTO: {
+            productName: productName.value.trim(),
+            description: description.value.trim(),
+            originalPrice: parseFloat(originalPrice.value) || 0,
+            price: parseFloat(price.value) || 0,
+            stock: parseInt(stock.value) || 0,
+            categoryId: categoryId.value,
+            brandId: brandId.value,
+        },
         // FIX 2: Send BOTH 'attributes' and 'variantValues' to satisfy Backend requirements
         attributes: validAttributeDTOs,
         variantValues: validAttributeDTOs,
