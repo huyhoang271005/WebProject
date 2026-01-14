@@ -1,10 +1,3 @@
-import {callAPI} from "/lib/api.js";
-
-export async function mockUsers () {
-    const result = await callAPI("room-chat");
-    return result.listData;
-};
-
 // fake tin nhắn
 export const mockMessagesDB = {
     1: [
