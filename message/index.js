@@ -10,8 +10,8 @@ customLoadPage(() => {
     // 1. Render danh sách user lần đầu
     View.renderUsers(roomChat, state.currentUserId, handleSwitchUser);
     
-    // 2. Chọn user mặc định (người đầu tiên)
-    handleSwitchUser(roomChat[0]);
+    // // 2. Chọn user mặc định (người đầu tiên)
+    // handleSwitchUser(roomChat[0]);
     
     // 3. Cài đặt sự kiện gửi tin
     setupEvents();
