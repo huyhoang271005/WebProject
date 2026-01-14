@@ -1,7 +1,7 @@
 // Import từ các file vệ tinh
-import { mockUsers, mockMessagesDB, state } from "./data.js";
-import { customLoadPage, customGetLoader } from "./helpers.js";
-import * as View from "./view.js";
+import { mockUsers, mockMessagesDB, state } from "/message/data.js";
+import { customLoadPage, customGetLoader } from "/message/helpers.js";
+import * as View from "/message/view.js";
 
 customLoadPage(() => {
     // 1. Render danh sách user lần đầu
