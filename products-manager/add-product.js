@@ -142,7 +142,7 @@ function renderAttributes() {
 
     selectedAttributeRows.forEach(row => {
         const el = document.createElement("div");
-        el.className = "attribute-box";
+        el.className = "pm-attribute-box"; // V3 Class
 
         // Options
         let optionsHtml = '<option value="">-- Chọn thuộc tính --</option>';
@@ -154,20 +154,21 @@ function renderAttributes() {
             }
         });
 
+        // V3 Structure
         el.innerHTML = `
-            <div class="attribute-header">
-                <select class="input-field attr-select" style="width: 200px;">
+            <div class="pm-attribute-header">
+                <select class="pm-input pm-select attr-select" style="max-width: 250px;">
                     ${optionsHtml}
                 </select>
-                <div class="remove-attr-btn"><i class="fa-solid fa-trash"></i></div>
+                <div class="pm-remove-attr-btn"><i class="fa-solid fa-trash"></i></div>
             </div>
-            <div class="tags-input-container">
+            <div class="pm-tags-container">
                 ${row.values.map(v => `
-                    <div class="tag">
+                    <div class="pm-tag">
                         ${v} <i class="fa-solid fa-xmark remove-tag-btn" data-val="${v}"></i>
                     </div>
                 `).join("")}
-                <input type="text" class="tags-input" placeholder="+ Thêm giá trị (Enter)">
+                <input type="text" class="pm-tags-input" placeholder="+ Thêm giá trị (Enter)">
             </div>
         `;
 
@@ -180,9 +181,9 @@ function renderAttributes() {
             generateVariants();
         });
 
-        el.querySelector(".remove-attr-btn").onclick = () => removeAttribute(row.id);
+        el.querySelector(".pm-remove-attr-btn").onclick = () => removeAttribute(row.id);
 
-        const tagInput = el.querySelector(".tags-input");
+        const tagInput = el.querySelector(".pm-tags-input");
         tagInput.addEventListener("keydown", (e) => {
             if (e.key === "Enter") {
                 e.preventDefault();
@@ -250,41 +251,38 @@ function generateVariants() {
 
         tr.innerHTML = `
             <td>
-                <div class="image-upload-box" style="width: 40px; height: 40px; border: 1px dashed #ccc; position: relative; cursor: pointer; border-radius:4px; overflow:hidden;">
-                     <img src="" style="width: 100%; height: 100%; object-fit: cover; display: none;">
-                     <i class="fa-regular fa-image" style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); color:#ccc;"></i>
-                     <input type="file" class="v-image-input" accept="image/*" style="opacity: 0; position: absolute; inset:0; cursor: pointer;">
+                <img src="" class="pm-variant-img" style="display:none;">
+                <div class="pm-variant-img-placeholder" style="width:48px;height:48px;border:1px dashed #ccc;border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;">
+                    <i class="fa-solid fa-camera" style="color:#ccc;"></i>
                 </div>
+                <input type="file" class="v-image-input" accept="image/*" style="display:none;">
             </td>
-            <td><strong style="color:var(--primary);">${name}</strong></td>
-            <td><input type="number" class="v-input-sm v-original" value="${baseOriginal}"></td>
-            <td><input type="number" class="v-input-sm v-price" value="${basePrice}"></td>
-            <td><input type="number" class="v-input-sm v-stock" value="0"></td>
+            <td><strong style="color:#667eea;">${name}</strong></td>
+            <td><input type="number" class="pm-variant-input v-original" value="${baseOriginal}"></td>
+            <td><input type="number" class="pm-variant-input v-price" value="${basePrice}"></td>
+            <td><input type="number" class="pm-variant-input v-stock" value="0"></td>
             <td>
-                <button type="button" class="remove-v-btn" style="color:red; border:none; background:none; cursor:pointer;">
-                    <i class="fa-solid fa-trash"></i>
+                <button type="button" class="remove-v-btn" style="color:#ef4444; border:none; background:none; cursor:pointer; font-size:16px;">
+                    <i class="fa-solid fa-trash-can"></i>
                 </button>
             </td>
         `;
 
         // Variant Image Logic
         const imgInput = tr.querySelector(".v-image-input");
-        const imgBox = tr.querySelector(".image-upload-box");
-        const imgPreview = tr.querySelector("img");
+        const imgPreview = tr.querySelector(".pm-variant-img");
+        const imgPlaceholder = tr.querySelector(".pm-variant-img-placeholder");
 
-        // FIX CLICK: Explicit handler
-        imgBox.onclick = (e) => {
-            // Avoid double trigger if clicking input directly (though it's hidden/0 opacity)
-            if (e.target !== imgInput) {
-                imgInput.click();
-            }
-        };
+        // Click Trigger
+        imgPlaceholder.onclick = () => imgInput.click();
+        imgPreview.onclick = () => imgInput.click();
 
         imgInput.onchange = (e) => {
             const file = e.target.files[0];
             if (file) {
                 imgPreview.src = URL.createObjectURL(file);
                 imgPreview.style.display = "block";
+                imgPlaceholder.style.display = "none";
             }
         };
 
@@ -293,10 +291,7 @@ function generateVariants() {
     });
 }
 
-function safeParseInt(val) {
-    const parsed = parseInt(val);
-    return isNaN(parsed) ? null : parsed;
-}
+// REMOVED safeParseInt - IDs are UUID Strings!
 
 async function saveProduct() {
     const formData = new FormData();
@@ -317,7 +312,7 @@ async function saveProduct() {
     };
 
     // Attributes Payload
-    /* 
+    /*
        Structure:
        attributes: [
           { attributeId: 1, attributeName: "Color", attributeValues: [{attributeValueName: "Red", attributeName: "Color"}, ...] }
@@ -328,7 +323,7 @@ async function saveProduct() {
         const src = sourceAttributes.find(s => s.attributeId == row.attributeId);
         const attrName = src ? src.attributeName : "Unknown";
         return {
-            attributeId: safeParseInt(row.attributeId), // Force Int
+            attributeId: row.attributeId, // UUID String
             attributeName: attrName,
             attributeValues: row.values.map(v => ({
                 attributeValueName: v,
@@ -349,15 +344,17 @@ async function saveProduct() {
         const vImgInput = tr.querySelector(".v-image-input");
 
         const imgName = `variant-${index}-${Date.now()}`;
+        // Correctly handle Blob vs File
         if (vImgInput.files[0]) {
-            formData.append(imgName, vImgInput.files[0]);
+            formData.append(imgName, vImgInput.files[0]); // Browser adds filename automatically
         } else {
-            formData.append(imgName, new Blob([], { type: 'application/octet-stream' }), imgName);
+            // Reverted: No filename needed if backend ignores it
+            formData.append(imgName, new Blob([], { type: 'application/octet-stream' }));
         }
 
-        // FIX: Ensure IDs are Int and Names are populated
+        // FIX: Ensure IDs are Strings (UUID)
         const variantAttrs = Object.keys(combo).map(key => ({
-            attributeId: safeParseInt(combo[key].attrId),
+            attributeId: combo[key].attrId, // UUID String
             attributeName: key,
             attributeValueName: combo[key].valName
         }));
