@@ -387,11 +387,31 @@ async function saveProduct() {
         });
     });
 
-    // Build root attributes array (AttributeDTO - only id and name)
-    productDTO.attributes = Array.from(usedAttributesMap.values());
+    // Build root attributes array with attributeValues
+    productDTO.attributes = Array.from(usedAttributesMap.values()).map(attr => {
+        // Collect unique attribute values for this attribute
+        const valuesForThisAttr = [];
+
+        // Iterate through attributeValueIdsMap to find values belonging to this attribute
+        attributeValueIdsMap.forEach((valueInfo, attributeValueId) => {
+            if (valueInfo.attrId === attr.attributeId) {
+                valuesForThisAttr.push({
+                    attributeValueId: attributeValueId,
+                    attributeValueName: valueInfo.valName
+                });
+            }
+        });
+
+        return {
+            attributeId: attr.attributeId,
+            attributeName: attr.attributeName,
+            attributeValues: valuesForThisAttr
+        };
+    });
 
     // Assign variantValues
     productDTO.variantValues = variantValuesArray;
+
 
 
     // Main Image
