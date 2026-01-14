@@ -305,8 +305,7 @@ async function saveProduct() {
             brandId: document.getElementById("brandId").value,
         },
         attributes: [],
-        variants: [],
-        variants: [] // Ensure clean array
+        variantValues: [] // Ensure clean array
     };
 
     // Attributes Payload
@@ -362,7 +361,7 @@ async function saveProduct() {
             };
         });
 
-        productDTO.variants.push({
+        productDTO.variantValues.push({
             originalPrice: vOriginal,
             price: vPrice,
             stock: vStock,
