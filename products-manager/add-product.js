@@ -318,22 +318,12 @@ async function saveProduct() {
           { attributeId: 1, attributeName: "Color", attributeValues: [{attributeValueName: "Red", attributeName: "Color"}, ...] }
        ]
     */
-    const validRows = selectedAttributeRows.filter(r => r.attributeId && r.values.length > 0);
-    productDTO.attributes = validRows.map(row => {
-        const src = sourceAttributes.find(s => s.attributeId == row.attributeId);
-        const attrName = src ? src.attributeName : "Unknown";
-        return {
-            attributeId: row.attributeId, // UUID String
-            attributeName: attrName,
-            attributeValues: row.values.map(v => ({
-                attributeValueName: v,
-                attributeName: attrName
-            }))
-        };
-    });
-
     // Variants
     const rows = variantsTableBody.querySelectorAll("tr");
+
+    // Helper to track unique attributes used across ALL variants
+    const usedAttributesMap = new Map();
+
     rows.forEach((tr, index) => {
         if (!tr.dataset.combo) return;
         const combo = JSON.parse(tr.dataset.combo);
@@ -353,11 +343,26 @@ async function saveProduct() {
         }
 
         // FIX: Ensure IDs are Strings (UUID)
-        const variantAttrs = Object.keys(combo).map(key => ({
-            attributeId: combo[key].attrId, // UUID String
-            attributeName: key,
-            attributeValueName: combo[key].valName
-        }));
+        const variantAttrs = Object.keys(combo).map(key => {
+            const attrId = combo[key].attrId;
+            const valName = combo[key].valName;
+
+            // Collect for root attributes list
+            if (!usedAttributesMap.has(attrId)) {
+                usedAttributesMap.set(attrId, {
+                    attributeId: attrId,
+                    attributeName: key,
+                    values: new Set()
+                });
+            }
+            usedAttributesMap.get(attrId).values.add(valName);
+
+            return {
+                attributeId: attrId, // UUID String
+                attributeName: key,
+                attributeValueName: valName
+            };
+        });
 
         productDTO.variants.push({
             originalPrice: vOriginal,
@@ -369,6 +374,16 @@ async function saveProduct() {
             variantValues: variantAttrs // Try sending both to cover naming mismatch
         });
     });
+
+    // Rebuild root attributes from the Map to ensure 100% consistency with variants
+    productDTO.attributes = Array.from(usedAttributesMap.values()).map(attr => ({
+        attributeId: attr.attributeId,
+        attributeName: attr.attributeName,
+        attributeValues: Array.from(attr.values).map(v => ({
+            attributeValueName: v,
+            attributeName: attr.attributeName
+        }))
+    }));
 
     // Main Image
     const mainFile = document.getElementById("mainImageInput").files[0];
