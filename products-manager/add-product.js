@@ -319,8 +319,10 @@ async function saveProduct() {
     // Variants
     const rows = variantsTableBody.querySelectorAll("tr");
 
-    // Helper to track unique attributes used across ALL variants
-    const usedAttributesMap = new Map();
+    // Collections for building payload
+    const usedAttributesMap = new Map(); // Track unique attributes
+    const variantValuesArray = []; // VariantValueDTO mappings
+    const attributeValueIdsMap = new Map(); // Track attribute value IDs
 
     rows.forEach((tr, index) => {
         if (!tr.dataset.combo) return;
@@ -332,55 +334,65 @@ async function saveProduct() {
         const vImgInput = tr.querySelector(".v-image-input");
 
         const imgName = `variant-${index}-${Date.now()}`;
-        // Correctly handle Blob vs File
+        // Handle variant image
         if (vImgInput.files[0]) {
-            formData.append(imgName, vImgInput.files[0]); // Browser adds filename automatically
+            formData.append(imgName, vImgInput.files[0]);
         } else {
-            // Reverted: No filename needed if backend ignores it
             formData.append(imgName, new Blob([], { type: 'application/octet-stream' }));
         }
 
-        // FIX: Ensure IDs are Strings (UUID)
-        const variantAttrs = Object.keys(combo).map(key => {
-            const attrId = combo[key].attrId;
-            const valName = combo[key].valName;
+        // Generate unique variant ID
+        const variantId = `variant-${index}`;
 
-            // Collect for root attributes list
+        // Process attribute values for this variant
+        Object.keys(combo).forEach(attrName => {
+            const attrId = combo[attrName].attrId;
+            const valName = combo[attrName].valName;
+
+            // Track attribute in root attributes list
             if (!usedAttributesMap.has(attrId)) {
                 usedAttributesMap.set(attrId, {
                     attributeId: attrId,
-                    attributeName: key,
-                    values: new Set()
+                    attributeName: attrName
                 });
             }
-            usedAttributesMap.get(attrId).values.add(valName);
 
-            return {
-                attributeId: attrId, // UUID String
-                attributeName: key,
-                attributeValueName: valName
-            };
+            // Create unique attributeValueId
+            const attributeValueId = `${attrName}-${valName}`;
+
+            // Store for later reference
+            if (!attributeValueIdsMap.has(attributeValueId)) {
+                attributeValueIdsMap.set(attributeValueId, {
+                    attrId,
+                    attrName,
+                    valName
+                });
+            }
+
+            // Add to variantValues array (VariantValueDTO)
+            variantValuesArray.push({
+                attributeValueId: attributeValueId,
+                variantId: variantId
+            });
         });
 
+        // Add variant WITHOUT attributeValues (VariantDTO doesn't have this field)
         productDTO.variants.push({
+            variantId: variantId,
             originalPrice: vOriginal,
             price: vPrice,
             stock: vStock,
             imageName: imgName,
-            active: true,
-            attributeValues: variantAttrs
+            active: true
         });
     });
 
-    // Rebuild root attributes from the Map to ensure 100% consistency with variants
-    productDTO.attributes = Array.from(usedAttributesMap.values()).map(attr => ({
-        attributeId: attr.attributeId,
-        attributeName: attr.attributeName,
-        attributeValues: Array.from(attr.values).map(v => ({
-            attributeValueName: v,
-            attributeName: attr.attributeName
-        }))
-    }));
+    // Build root attributes array (AttributeDTO - only id and name)
+    productDTO.attributes = Array.from(usedAttributesMap.values());
+
+    // Assign variantValues
+    productDTO.variantValues = variantValuesArray;
+
 
     // Main Image
     const mainFile = document.getElementById("mainImageInput").files[0];
