@@ -9,12 +9,9 @@
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
-    <!-- Bootstrap -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-
-    <!-- Shared Styles (Public) -->
+    <!-- Shared Styles -->
     <link rel="stylesheet" href="/lib/public.css">
 
     <!-- Local Styles -->
@@ -25,203 +22,182 @@
 </head>
 
 <body>
-    <div class="container my-4" style="max-width: 1400px;">
+    <div class="main-container">
 
-        <!-- ========== HEADER WITH TABS ========== -->
-        <div class="d-flex justify-content-between align-items-center mb-4">
+        <!-- ========== PAGE HEADER ========== -->
+        <div class="page-header">
             <div>
-                <h1 class="text-primary fw-bold mb-1">Quản Lý Sản Phẩm</h1>
-                <p class="text-muted mb-0">Quản lý kho hàng và giá cả</p>
+                <h1 class="page-title">Quản Lý Sản Phẩm</h1>
+                <p class="page-subtitle">Quản lý kho hàng, giá cả và biến thể sản phẩm</p>
             </div>
-            <div class="btn-group" role="group">
-                <button type="button" class="btn btn-success" id="btnTabAdd">
-                    <i class="bi bi-plus-circle me-2"></i>Thêm Sản Phẩm
+            <div class="btn-group" role="group" style="display:flex; gap:10px;">
+                <button type="button" class="btn btn-primary" id="btnTabAdd">
+                    <i class="bi bi-plus-circle"></i> Thêm Mới
                 </button>
-                <button type="button" class="btn btn-outline-primary" id="btnTabEdit">
-                    <i class="bi bi-pencil-square me-2"></i>Sửa / Xóa Sản Phẩm
+                <button type="button" class="btn btn-secondary" id="btnTabEdit">
+                    <i class="bi bi-pencil-square"></i> Sửa / Xóa
                 </button>
             </div>
         </div>
 
-        <!-- ========== ADD PRODUCT VIEW ========== -->
+        <!-- ========== VIEW: ADD PRODUCT ========== -->
         <div id="addView" class="view-container">
-            <div class="card shadow-sm border-0 mb-4">
-                <div class="card-header bg-white border-bottom">
-                    <h5 class="mb-0 fw-bold">
-                        <i class="bi bi-plus-circle text-success me-2"></i>Thêm Sản Phẩm Mới
-                    </h5>
-                </div>
-                <div class="card-body p-4">
-                    <form id="productForm">
-                        <div class="row">
-                            <!-- LEFT: INFO & VARIANTS -->
-                            <div class="col-lg-8">
-                                <!-- Basic Info -->
-                                <div class="card shadow-sm border-0 mb-4">
-                                    <div class="card-body p-4">
-                                        <h5 class="card-title fw-bold text-uppercase text-muted mb-3 small">Thông tin
-                                            chung</h5>
-                                        <div class="mb-3">
-                                            <label class="form-label fw-medium">Tên sản phẩm <span
-                                                    class="text-danger">*</span></label>
-                                            <input type="text" class="form-control" id="productName" required
-                                                placeholder="VD: Áo thun nam...">
-                                        </div>
-                                        <div class="mb-3">
-                                            <label class="form-label fw-medium">Mô tả</label>
-                                            <textarea class="form-control" id="description" rows="4"
-                                                placeholder="Mô tả chi tiết sản phẩm..."></textarea>
-                                        </div>
-                                    </div>
-                                </div>
+            <form id="productForm">
+                <div class="layout-grid">
 
-                                <!-- Variants -->
-                                <div class="card shadow-sm border-0 mb-4">
-                                    <div class="card-body p-4">
-                                        <div class="d-flex justify-content-between align-items-center mb-3">
-                                            <h5 class="card-title fw-bold text-uppercase text-muted mb-0 small">Phân
-                                                loại hàng</h5>
-                                            <div>
-                                                <button type="button" class="btn btn-outline-primary btn-sm me-2"
-                                                    id="btnAddAttribute">
-                                                    <i class="bi bi-plus-lg"></i> Thêm thuộc tính
-                                                </button>
-                                            </div>
-                                        </div>
-                                        <div id="attributesSection" class="mb-3"></div>
-                                        <div class="table-responsive">
-                                            <table class="table table-bordered table-hover" id="variantsTable">
-                                                <thead class="table-light">
-                                                    <tr>
-                                                        <th style="width: 70px;">Ảnh</th>
-                                                        <th>Phân loại</th>
-                                                        <th style="width: 120px;">Giá gốc</th>
-                                                        <th style="width: 120px;">Giá bán</th>
-                                                        <th style="width: 100px;">Kho</th>
-                                                        <th style="width: 50px;"></th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody></tbody>
-                                            </table>
-                                        </div>
-                                    </div>
-                                </div>
+                    <!-- LEFT COLUMN -->
+                    <div class="left-col">
+                        <!-- General Info -->
+                        <div class="card">
+                            <div class="card-header">
+                                <h3 class="card-title">Thông tin chung</h3>
                             </div>
-
-                            <!-- RIGHT: IMAGES, PRICE, CATEGORY -->
-                            <div class="col-lg-4">
-                                <!-- Image & Prices -->
-                                <div class="card shadow-sm border-0 mb-4">
-                                    <div class="card-body p-4">
-                                        <h5 class="card-title fw-bold text-uppercase text-muted mb-3 small">Ảnh & Giá
-                                        </h5>
-
-                                        <div class="mb-4 text-center group-image-upload">
-                                            <div class="position-relative d-inline-block w-100">
-                                                <img id="mainImagePreview" src="" class="border rounded w-100 h-100"
-                                                    style="height: 250px; object-fit: cover; display: none;">
-
-                                                <div id="mainImagePlaceholder"
-                                                    class="border rounded bg-light d-flex align-items-center justify-content-center"
-                                                    style="height: 250px; overflow: hidden; background-color: #f8f9fa;">
-                                                    <div class="text-center text-muted">
-                                                        <i class="bi bi-image fs-1 d-block mb-2"></i>
-                                                        <small>Chưa có ảnh</small>
-                                                    </div>
-                                                </div>
-                                                <label for="mainImageInput"
-                                                    class="btn btn-primary rounded-circle position-absolute bottom-0 end-0 m-3 shadow"
-                                                    style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
-                                                    <i class="bi bi-camera-fill"></i>
-                                                </label>
-                                            </div>
-                                            <input type="file" class="d-none" id="mainImageInput" accept="image/*">
-                                        </div>
-
-                                        <div class="mb-3">
-                                            <label class="form-label fw-medium">Giá gốc (VNĐ)</label>
-                                            <input type="number" class="form-control" id="originalPrice" min="0"
-                                                step="1000" required>
-                                        </div>
-                                        <div class="mb-3">
-                                            <label class="form-label fw-medium">Giá bán (VNĐ)</label>
-                                            <input type="number" class="form-control" id="price" min="0" step="1000"
-                                                required>
-                                        </div>
-                                        <div class="mb-3">
-                                            <label class="form-label fw-medium">Tồn kho</label>
-                                            <input type="number" class="form-control" id="stock" min="0" required>
-                                        </div>
-                                    </div>
+                            <div class="card-body">
+                                <div class="form-group mb-4">
+                                    <label class="form-label">Tên sản phẩm <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="productName" required
+                                        placeholder="VD: Áo thun Cotton 100%...">
                                 </div>
-
-                                <!-- Organization -->
-                                <div class="card shadow-sm border-0 mb-4">
-                                    <div class="card-body p-4">
-                                        <h5 class="card-title fw-bold text-uppercase text-muted mb-3 small">Phân loại
-                                        </h5>
-                                        <div class="mb-3">
-                                            <label class="form-label fw-medium">Danh mục</label>
-                                            <select class="form-select" id="categoryId" required>
-                                                <option value="">-- Chọn danh mục --</option>
-                                            </select>
-                                        </div>
-                                        <div class="mb-3">
-                                            <label class="form-label fw-medium">Thương hiệu</label>
-                                            <select class="form-select" id="brandId" required>
-                                                <option value="">-- Chọn thương hiệu --</option>
-                                            </select>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- Actions -->
-                                <div class="card shadow-sm border-0 bg-transparent">
-                                    <div class="d-grid gap-2">
-                                        <button type="button" class="btn btn-primary btn-lg fw-bold" id="btnSave">
-                                            Lưu Sản Phẩm
-                                        </button>
-                                        <button type="button" class="btn btn-outline-secondary" id="btnCancel">Làm Mới
-                                            Form</button>
-                                        <button type="button" class="btn btn-outline-danger d-none" id="btnDelete">
-                                            <i class="bi bi-trash me-2"></i>Xóa Sản Phẩm Này
-                                        </button>
-                                    </div>
+                                <div class="form-group">
+                                    <label class="form-label">Mô tả sản phẩm</label>
+                                    <textarea class="form-control" id="description" rows="5"
+                                        placeholder="Mô tả chi tiết, đặc điểm nổi bật..."></textarea>
                                 </div>
                             </div>
                         </div>
-                    </form>
+
+                        <!-- Variants -->
+                        <div class="card">
+                            <div class="card-header">
+                                <h3 class="card-title">Phân loại & Biến thể</h3>
+                                <button type="button" class="btn btn-sm btn-secondary" id="btnAddAttribute">
+                                    <i class="bi bi-plus-lg"></i> Thêm thuộc tính
+                                </button>
+                            </div>
+                            <div class="card-body">
+                                <div id="attributesSection" class="mb-4"></div>
+
+                                <div class="table-responsive">
+                                    <table class="table" id="variantsTable">
+                                        <thead>
+                                            <tr>
+                                                <th style="width: 80px;">Ảnh</th>
+                                                <th>Biến thể</th>
+                                                <th style="width: 140px;">Giá gốc</th>
+                                                <th style="width: 140px;">Giá bán</th>
+                                                <th style="width: 100px;">Kho</th>
+                                                <th style="width: 50px;"></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <!-- Rows generated by JS -->
+                                        </tbody>
+                                        <tfoot id="tableEmptyState" style="display:none;">
+                                            <tr>
+                                                <td colspan="6" class="text-center py-4 text-muted">
+                                                    Chưa có biến thể nào được tạo. Thêm thuộc tính để bắt đầu.
+                                                </td>
+                                            </tr>
+                                        </tfoot>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- RIGHT COLUMN -->
+                    <div class="right-col">
+                        <!-- Media -->
+                        <div class="card">
+                            <div class="card-header">
+                                <h3 class="card-title">Ảnh đại diện</h3>
+                            </div>
+                            <div class="card-body">
+                                <label for="mainImageInput" class="image-upload-area">
+                                    <img id="mainImagePreview" src="" style="display: none;">
+                                    <div id="mainImagePlaceholder" class="upload-placeholder">
+                                        <i class="bi bi-cloud-upload upload-icon"></i>
+                                        <div>Kéo thả hoặc click để tải lên</div>
+                                    </div>
+                                    <input type="file" class="d-none" id="mainImageInput" accept="image/*">
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Pricing & Organization -->
+                        <div class="card">
+                            <div class="card-header">
+                                <h3 class="card-title">Giá & Kho hàng</h3>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <label class="form-label">Giá gốc (VNĐ)</label>
+                                    <input type="number" class="form-control" id="originalPrice" min="0" step="1000"
+                                        placeholder="0">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Giá bán (VNĐ) <span class="text-danger">*</span></label>
+                                    <input type="number" class="form-control" id="price" min="0" step="1000" required
+                                        placeholder="0">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Tồn kho <span class="text-danger">*</span></label>
+                                    <input type="number" class="form-control" id="stock" min="0" required
+                                        placeholder="0">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Organization -->
+                        <div class="card">
+                            <div class="card-header">
+                                <h3 class="card-title">Phân loại</h3>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <label class="form-label">Danh mục <span class="text-danger">*</span></label>
+                                    <select class="form-select" id="categoryId" required>
+                                        <option value="">-- Chọn danh mục --</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Thương hiệu <span class="text-danger">*</span></label>
+                                    <select class="form-select" id="brandId" required>
+                                        <option value="">-- Chọn thương hiệu --</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                 </div>
-            </div>
+
+                <!-- STICKY ACTIONS BAR -->
+                <div class="sticky-actions">
+                    <button type="button" class="btn btn-secondary" id="btnCancel">Hủy bỏ</button>
+                    <button type="button" class="btn btn-primary" id="btnSave">
+                        <i class="bi bi-check-lg"></i> Lưu sản phẩm
+                    </button>
+                </div>
+            </form>
         </div>
 
-        <!-- ========== EDIT/DELETE PRODUCT VIEW ========== -->
+        <!-- ========== VIEW: EDIT/SEARCH ========== -->
         <div id="editView" class="view-container d-none">
-            <div class="card shadow-sm border-0 mb-4">
-                <div class="card-header bg-white border-bottom">
-                    <h5 class="mb-0 fw-bold">
-                        <i class="bi bi-pencil-square text-primary me-2"></i>Sửa / Xóa Sản Phẩm
-                    </h5>
-                </div>
-                <div class="card-body p-4">
-                    <div class="row justify-content-center">
-                        <div class="col-md-8 col-lg-6">
-                            <div class="text-center mb-4">
-                                <i class="bi bi-search fs-1 text-muted d-block mb-3"></i>
-                                <h5 class="fw-bold mb-2">Tìm kiếm sản phẩm</h5>
-                                <p class="text-muted">Nhập ID sản phẩm để tìm và chỉnh sửa</p>
-                            </div>
-                            <form id="searchProductForm">
-                                <div class="input-group input-group-lg mb-3">
-                                    <input type="text" class="form-control" id="searchProductInput"
-                                        placeholder="Nhập ID sản phẩm..." required>
-                                    <button class="btn btn-primary" type="submit" id="btnSearchProduct">
-                                        <i class="bi bi-search me-2"></i>Tìm kiếm
-                                    </button>
-                                </div>
-                            </form>
-                            <div id="searchResult" class="mt-4"></div>
-                        </div>
+            <div class="card">
+                <div class="card-body text-center py-5">
+                    <div style="max-width: 500px; margin: 0 auto;">
+                        <i class="bi bi-search"
+                            style="font-size: 3rem; color: #E5E7EB; display: block; margin-bottom: 16px;"></i>
+                        <h3 style="margin-bottom: 8px;">Tìm kiếm sản phẩm</h3>
+                        <p class="text-muted mb-4">Nhập ID sản phẩm để chỉnh sửa hoặc xóa</p>
+
+                        <form id="searchProductForm" class="d-flex gap-2">
+                            <input type="text" class="form-control" id="searchProductInput"
+                                placeholder="Nhập ID sản phẩm..." required>
+                            <button type="submit" class="btn btn-primary">Tìm kiếm</button>
+                        </form>
+                        <div id="searchResult" class="mt-4"></div>
                     </div>
                 </div>
             </div>
@@ -229,8 +205,6 @@
 
     </div>
 
-    <!-- Scripts -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script type="module" src="/products-manager/index.js"></script>
 </body>
 
