@@ -20,12 +20,10 @@ export async function initAddProduct() {
     // 1. Load Navbar
     await loadNavbar({ centerHTML: "" }); // Optional center content
 
-    // 2. Load Data
-    await Promise.all([
-        fetchAttributes(),
-        fetchCategories(),
-        fetchBrands()
-    ]);
+    // 2. Load Data (Sequential to avoid Refresh Token Race Condition)
+    await fetchAttributes();
+    await fetchCategories();
+    await fetchBrands();
 
     // 3. Setup Events
     setupEvents();
