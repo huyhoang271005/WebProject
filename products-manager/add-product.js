@@ -365,7 +365,8 @@ async function saveProduct() {
             stock: vStock,
             imageName: imgName,
             active: true,
-            attributeValues: variantAttrs
+            attributeValues: variantAttrs,
+            variantValues: variantAttrs // Try sending both to cover naming mismatch
         });
     });
 
@@ -376,16 +377,22 @@ async function saveProduct() {
     // Debug Payload
     console.log("Saving Product DTO:", JSON.stringify(productDTO, null, 2));
 
-    formData.append('productDTO', new Blob([JSON.stringify(productDTO)], { type: 'application/json' }), 'product.json');
+    formData.append("product", new Blob([JSON.stringify(productDTO)], { type: "application/json" }));
 
-    await getLoader("btnSave", async () => {
-        const res = await callAPI("/admin/products", "POST", formData, true);
+    try {
+        const res = await callAPI('/admin/products', 'POST', formData);
         if (res.success) {
-            await showDialog("success", "Thêm sản phẩm thành công!");
-            window.location.reload();
+            showDialog("success", "Thêm sản phẩm thành công!");
+            setTimeout(() => window.location.reload(), 1500);
         } else {
-            console.error(res);
-            await showDialog("error", res.message || "Lỗi server");
+            console.error("API Error Data:", res.data); // Log detailed validation errors
+            showDialog("error", res.message || "Lỗi khi lưu sản phẩm");
         }
-    });
+    } catch (e) {
+        console.error("Exception:", e);
+        showDialog("error", "Lỗi kết nối server");
+    } finally {
+        isSubmitting = false;
+        hideLoader();
+    }
 }
