@@ -284,9 +284,34 @@ function generateVariants() {
             }
         };
 
-        tr.querySelector(".remove-v-btn").onclick = () => tr.remove();
+        tr.querySelector(".remove-v-btn").onclick = () => {
+            tr.remove();
+            updateMainStock(); // Update when variant removed
+        };
+
+        // Update stock when variant stock changes
+        tr.querySelector(".v-stock").addEventListener("input", updateMainStock);
+
         variantsTableBody.appendChild(tr);
     });
+
+    // Update main stock after generating variants
+    updateMainStock();
+}
+
+// Auto-calculate main stock from all variants
+function updateMainStock() {
+    const allStockInputs = document.querySelectorAll(".v-stock");
+    let totalStock = 0;
+
+    allStockInputs.forEach(input => {
+        totalStock += parseInt(input.value) || 0;
+    });
+
+    const stockInput = document.getElementById("stock");
+    if (stockInput) {
+        stockInput.value = totalStock;
+    }
 }
 
 // REMOVED safeParseInt - IDs are UUID Strings!
