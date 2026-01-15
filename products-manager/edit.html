@@ -4,12 +4,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Thêm Sản Phẩm Mới - Tạp hóa Xanh</title>
+    <title>Sửa Sản Phẩm - Tạp hóa Xanh</title>
 
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
     <link rel="stylesheet" href="/products-manager/index.css?v=4">
 </head>
 
@@ -21,29 +19,61 @@
         <header class="pm-header">
             <div class="pm-header-content">
                 <div class="pm-header-left">
-                    <h1 class="pm-title">Thêm Sản Phẩm Mới</h1>
-                    <p class="pm-subtitle">Điền đầy đủ thông tin sản phẩm bên dưới</p>
+                    <h1 class="pm-title">Sửa / Xóa Sản Phẩm</h1>
                 </div>
                 <div class="pm-header-actions">
                     <button type="button" class="pm-btn"
                         style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: white;"
-                        onclick="window.location.href='/products-manager/edit.html'">
-                        <i class="fa-solid fa-pen-to-square"></i>
-                        Sửa Sản Phẩm
+                        onclick="window.location.href='/products-manager/index.html'">
+                        <i class="fa-solid fa-plus"></i>
+                        Thêm Sản Phẩm
                     </button>
                     <button type="button" class="pm-btn pm-btn-secondary" id="btnCancel">
                         <i class="fa-solid fa-xmark"></i>
                         Hủy bỏ
                     </button>
-                    <button type="button" class="pm-btn pm-btn-primary" id="btnSave">
+                    <button type="button" class="pm-btn pm-btn-primary" id="btnSave" style="display:none;">
                         <i class="fa-solid fa-check"></i>
-                        Lưu Sản Phẩm
+                        Cập Nhật
                     </button>
                 </div>
             </div>
         </header>
 
-        <div class="pm-content">
+        <!-- Search Product Section -->
+        <div class="pm-search-section" style="max-width: 600px; margin: 0 auto 24px; display: none;">
+            <div class="pm-card">
+                <div class="pm-card-header">
+                    <h3 class="pm-card-title">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                        Tìm sản phẩm
+                    </h3>
+                </div>
+                <div class="pm-card-body">
+                    <div class="pm-form-group">
+                        <label class="pm-label">Product ID <span class="pm-required">*</span></label>
+                        <div style="display: flex; gap: 8px;">
+                            <input type="text" class="pm-input" id="searchProductId"
+                                placeholder="Nhập Product ID (UUID)">
+                            <button type="button" class="pm-btn pm-btn-primary" id="btnSearch">
+                                <i class="fa-solid fa-search"></i>
+                                Tìm
+                            </button>
+                        </div>
+                    </div>
+                    <div id="searchResult"
+                        style="margin-top: 12px; padding: 12px; background: #f8f9fa; border-radius: 8px; display: none;">
+                        <p style="margin: 0; font-size: 14px; color: #666;">
+                            <i class="fa-solid fa-circle-info"></i>
+                            <span id="searchResultText"></span>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Product Form (Initially Hidden) -->
+        <div class="pm-content" id="productFormSection" style="display:none;">
             <form id="productForm" class="pm-form-layout">
 
                 <div class="pm-main-col">
@@ -114,41 +144,34 @@
                         </div>
                     </div>
 
-                    <div class="pm-card">
-                        <div class="pm-card-header pm-card-header-action">
+                    <!-- Variants Section (Editable) -->
+                    <div class="pm-card" id="variantsSection" style="display:none;">
+                        <div class="pm-card-header"
+                            style="display: flex; justify-content: space-between; align-items: center;">
                             <h3 class="pm-card-title">
                                 <i class="fa-solid fa-layer-group"></i>
-                                Phân loại hàng (Biến thể)
+                                Biến thể
                             </h3>
-                            <button type="button" class="pm-btn pm-btn-sm pm-btn-outline" id="btnAddAttribute">
-                                <i class="fa-solid fa-plus"></i>
-                                Thêm phân loại
-                            </button>
+                            <div style="font-size: 14px; color: #666;">
+                                <strong>Tổng kho:</strong> <span id="totalStock">0</span>
+                            </div>
                         </div>
                         <div class="pm-card-body">
-                            <div id="attributesSection" class="pm-attributes-section"></div>
-
-                            <div class="pm-variants-wrapper">
-                                <div class="pm-table-container">
-                                    <table class="pm-table" id="variantsTable">
-                                        <thead>
-                                            <tr>
-                                                <th style="width: 60px;">Ảnh</th>
-                                                <th>Tên biến thể</th>
-                                                <th style="width: 120px;">Giá gốc</th>
-                                                <th style="width: 120px;">Giá bán</th>
-                                                <th style="width: 100px;">Kho</th>
-                                                <th style="width: 50px;"></th>
-                                            </tr>
-                                        </thead>
-                                        <tbody id="variantsTableBody"></tbody>
-                                    </table>
-                                </div>
-                                <div id="variantsEmptyState" class="pm-empty-state">
-                                    <i class="fa-regular fa-folder-open"></i>
-                                    <p>Chưa có biến thể nào</p>
-                                    <span>Thêm nhóm phân loại để tạo biến thể</span>
-                                </div>
+                            <div class="pm-table-container">
+                                <table class="pm-table" id="variantsTable">
+                                    <thead>
+                                        <tr>
+                                            <th style="width: 60px;">Ảnh</th>
+                                            <th>Tên biến thể</th>
+                                            <th style="width: 130px;">Giá gốc</th>
+                                            <th style="width: 130px;">Giá bán</th>
+                                            <th style="width: 110px;">Kho</th>
+                                            <th style="width: 80px;">Đã bán</th>
+                                            <th style="width: 150px;">Thao tác</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="variantsTableBody"></tbody>
+                                </table>
                             </div>
                         </div>
                     </div>
@@ -212,7 +235,7 @@
 
     </div>
 
-    <script type="module" src="/products-manager/index.js"></script>
+    <script type="module" src="/products-manager/edit.js"></script>
 </body>
 
 </html>
