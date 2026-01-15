@@ -401,6 +401,14 @@ window.readNoti = async (id, link, el) => {
     document.dispatchEvent(
       new CustomEvent("update-noti-badge", { detail: -1 })
     );
+
+    try {
+      // Body là một Mảng chứa ID: ["id"]
+      const res = await callAPI("/notifications", "PATCH", [id]);
+      console.log("Đã đọc:", res);
+    } catch (e) {
+      console.error("Lỗi đọc noti:", e);
+    }
   }
   if (link && link !== "#" && link !== "null") window.location.href = link;
 };

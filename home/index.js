@@ -7,7 +7,9 @@ let apiCategories = [];
 document.addEventListener("DOMContentLoaded", async () => {
   toggleLoading(true);
   try {
-    // 1. Load Navbar và chèn thanh tìm kiếm
+    // 1. [QUAN TRỌNG] Gọi Navbar trước tiên và CHỜ nó xong hẳn.
+    // Tại sao? Để nếu Token hết hạn, chỉ 1 mình thằng này đi Refresh thôi.
+    // Các thằng sau sẽ được hưởng Token mới mà không cần gọi lại.
     await loadNavbar({
       centerHTML: `
         <div class="nav-cat-btn" id="catBtn">
@@ -21,20 +23,21 @@ document.addEventListener("DOMContentLoaded", async () => {
         </div>`,
     });
 
-    // 2. Load dữ liệu
+    // 2. Sau khi Navbar (và Refresh Token nếu có) chạy xong -> Mới gọi 2 ông này
+    // Lúc này Token đã tươi mới (nếu vừa refresh), nên 2 ông này chạy bao mượt
     await Promise.all([fetchCategories(), renderHomeSections()]);
 
     // 3. Render và Gắn sự kiện
     renderNavCategories();
     setupNavbarEvents();
   } catch (e) {
-    console.error(e);
+    console.error("Lỗi tải trang chủ:", e);
   } finally {
     setTimeout(() => toggleLoading(false), 300);
   }
 });
 
-// --- 1. DANH MỤC ---
+// --- CÁC HÀM KHÁC GIỮ NGUYÊN NHƯ CŨ ---
 async function fetchCategories() {
   try {
     const res = await callAPI("/categories", "GET");
@@ -67,9 +70,7 @@ function renderNavCategories() {
     .join("");
 }
 
-// --- 2. SỰ KIỆN TÌM KIẾM ---
 function setupNavbarEvents() {
-  // Toggle Danh mục
   const catBtn = document.getElementById("catBtn");
   const catDropdown = document.getElementById("catDropdown");
   if (catBtn) {
@@ -82,10 +83,8 @@ function setupNavbarEvents() {
     });
   }
 
-  // Logic Tìm kiếm (Click icon hoặc Enter)
   const searchInput = document.getElementById("homeSearch");
   const searchBtn = document.getElementById("homeSearchBtn");
-
   const doSearch = () => {
     const productName = searchInput.value.trim();
     if (productName) {
@@ -105,7 +104,6 @@ function setupNavbarEvents() {
   }
 }
 
-// --- 3. HIỂN THỊ SẢN PHẨM ---
 async function renderHomeSections() {
   const container = document.getElementById("homeContainer");
   if (!container) return;
@@ -115,7 +113,6 @@ async function renderHomeSections() {
 
   if (res && res.success) {
     const listData = res.data?.listData || [];
-
     if (listData.length > 0) {
       container.insertAdjacentHTML(
         "beforeend",
@@ -147,7 +144,6 @@ function createProductHTML(p) {
     currency: "VND",
   }).format(p.price || 0);
 
-  // [FIX] Logic hiển thị giảm giá & Giá gốc
   let discountBadge = "";
   let originalPriceHTML = "";
 
@@ -161,8 +157,6 @@ function createProductHTML(p) {
             <div style="color:white; text-transform:uppercase; font-size:0.6rem;">GIẢM</div>
             <div style="position:absolute; bottom:-4px; left:0; border-width:0 18px 4px; border-style:solid; border-color:transparent rgba(255,212,36,.95); width:0;"></div>
         </div>`;
-
-    // Format giá gốc
     const originFormatted = new Intl.NumberFormat("vi-VN", {
       style: "currency",
       currency: "VND",
@@ -171,7 +165,6 @@ function createProductHTML(p) {
   }
 
   const starsHTML = renderStars(p.ratingAvg || 0);
-  // [FIX] Hiển thị số lượng đã bán
   const salesText = p.totalSales > 0 ? `Đã bán ${p.totalSales}` : "";
 
   return `

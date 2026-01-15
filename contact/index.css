@@ -473,3 +473,25 @@ button.loading {
 
     header h1 { font-size: 1.5rem; }
 }
+
+/* Validation Errors */
+.error-message {
+    color: var(--danger-color);
+    font-size: 0.85rem;
+    margin-top: 5px;
+    display: none; /* Hidden by default */
+    align-items: center;
+    gap: 5px;
+    animation: fadeIn 0.3s ease;
+}
+
+.error-message::before {
+    content: '\f06a'; /* FontAwesome exclamation circle */
+    font-family: "Font Awesome 5 Free";
+    font-weight: 900;
+}
+
+.form-group.error input {
+    border-color: var(--danger-color);
+    box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.15); /* Red Glow */
+}

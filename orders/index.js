@@ -13,13 +13,15 @@ const STATUS_MAP = {
     4: 'CANCELED',
     5: 'DELIVERING',
     6: 'DELIVERED',
+    7: 'COMPLETED',
     'WAITING': 'WAITING',
     'PAYING': 'PAYING',
     'PENDING': 'PENDING',
     'CONFIRMED': 'CONFIRMED',
     'CANCELED': 'CANCELED',
     'DELIVERING': 'DELIVERING',
-    'DELIVERED': 'DELIVERED'
+    'DELIVERED': 'DELIVERED',
+    'COMPLETED': 'COMPLETED'
 };
 
 const STATUS_CONFIG = {
@@ -27,13 +29,13 @@ const STATUS_CONFIG = {
         label: 'Chờ thanh toán',
         icon: 'fa-clock',
         color: '#f59e0b',
-        actions: ['detail', 'cancel']
+        actions: ['detail', 'cancel', 'pay']
     },
     PAYING: {
-        label: 'Chờ thanh toán',
+        label: 'Đang thanh toán',
         icon: 'fa-spinner fa-spin',
         color: '#f59e0b',
-        actions: ['detail', 'cancel']
+        actions: ['detail']
     },
     PENDING: {
         label: 'Đang xử lý',
@@ -43,15 +45,9 @@ const STATUS_CONFIG = {
     },
     CONFIRMED: {
         label: 'Đã xác nhận',
-        icon: 'fa-check-circle',
+        icon: 'fa-clipboard-check',
         color: '#10b981',
         actions: ['detail']
-    },
-    CANCELED: {
-        label: 'Đã hủy',
-        icon: 'fa-times-circle',
-        color: '#6b7280',
-        actions: ['detail', 'reorder']
     },
     DELIVERING: {
         label: 'Đang giao',
@@ -60,9 +56,21 @@ const STATUS_CONFIG = {
         actions: ['detail']
     },
     DELIVERED: {
-        label: 'Đã giao',
+        label: 'Đã giao hàng',
         icon: 'fa-box-open',
         color: '#10b981',
+        actions: ['detail', 'confirm']
+    },
+    COMPLETED: {
+        label: 'Đã hoàn thành',
+        icon: 'fa-check-circle',
+        color: '#10b981',
+        actions: ['detail', 'feedback', 'reorder']
+    },
+    CANCELED: {
+        label: 'Đã hủy',
+        icon: 'fa-times-circle',
+        color: '#6b7280',
         actions: ['detail', 'reorder']
     }
 };
@@ -367,6 +375,10 @@ function renderOrderActions(orderIndex, statusConfig, orderFromList) {
     const actions = statusConfig.actions || ['detail'];
     let html = '';
 
+    const order = orderFromList || filteredOrders[orderIndex];
+    if (!order) return html;
+
+    // 1. Detail (Always first)
     if (actions.includes('detail')) {
         html += `
             <button class="btn-action btn-detail" onclick="viewOrderDetail(${orderIndex})">
@@ -375,18 +387,24 @@ function renderOrderActions(orderIndex, statusConfig, orderFromList) {
         `;
     }
 
-    const order = orderFromList || filteredOrders[orderIndex];
-    if (!order) return html;
-
+    // 2. Pay (VNPay WAITING)
+    // Note: defined in STATUS_CONFIG for WAITING, but we double check payment method if needed?
+    // Actually, let's trust STATUS_CONFIG. But for VNPay, we might want to ensure it's actually PAYABLE.
+    // User instruction: "WAITING thì được phép hủy".
+    // "PAYING" logic is tricky. Let's assume if it is WAITING/PAYING and is VN_PAY, we show Pay button.
     const isVNPay = String(order.paymentMethod).toUpperCase() === 'VN_PAY';
-    
-    // Logic mới: WAITING/PAYING luôn hủy được. PENDING chỉ hủy được nếu KHÔNG phải VNPay (mặc định là COD)
-    let canCancel = actions.includes('cancel');
-    if (order.orderStatus === 'PENDING' && !isVNPay) {
-        canCancel = true;
+    if ((order.orderStatus === 'WAITING' || order.orderStatus === 'PAYING') && isVNPay) {
+        // Only show if not already showing via STATUS_CONFIG?
+        // Let's add it explicitly if it matches conditions, to be safe.
+        html += `
+            <button class="btn-action btn-pay" onclick="payOrder(${orderIndex})" style="background-color: #ee4d2d; color: white; border: none;">
+                <i class="fas fa-credit-card"></i> Thanh toán
+            </button>
+        `;
     }
 
-    if (canCancel) {
+    // 3. Cancel (Strictly WAITING)
+    if (actions.includes('cancel')) {
         html += `
             <button class="btn-action btn-cancel" onclick="cancelOrder(${orderIndex})">
                 <i class="fas fa-times"></i> Hủy đơn
@@ -394,18 +412,29 @@ function renderOrderActions(orderIndex, statusConfig, orderFromList) {
         `;
     }
 
-    if (actions.includes('reorder')) {
+    // 4. Confirm Received (DELIVERED)
+    if (actions.includes('confirm')) {
         html += `
-            <button class="btn-action btn-reorder" onclick="reorder(${orderIndex})">
-                <i class="fas fa-redo"></i> Mua lại
+            <button class="btn-action btn-confirm" onclick="confirmOrderReceived(${orderIndex})" style="background-color: #10b981; color: white; border: none;">
+                <i class="fas fa-check"></i> Đã nhận hàng
             </button>
         `;
     }
 
-    if ((order.orderStatus === 'WAITING' || order.orderStatus === 'PAYING') && isVNPay) {
+    // 5. Feedback (CONFIRMED)
+    if (actions.includes('feedback')) {
         html += `
-            <button class="btn-action btn-pay" onclick="payOrder(${orderIndex})" style="background-color: #ee4d2d; color: white; border: none;">
-                <i class="fas fa-credit-card"></i> Thanh toán
+            <button class="btn-action btn-feedback" onclick="giveFeedback(${orderIndex})" style="background-color: #f59e0b; color: white; border: none;">
+                <i class="fas fa-star"></i> Đánh giá
+            </button>
+        `;
+    }
+
+    // 6. Reorder
+    if (actions.includes('reorder')) {
+        html += `
+            <button class="btn-action btn-reorder" onclick="reorder(${orderIndex})">
+                <i class="fas fa-redo"></i> Mua lại
             </button>
         `;
     }
@@ -577,11 +606,16 @@ function showOrderDetailModal(order, orderIndex) {
         </div>
     `;
 
-    const isCOD = order && String(order.paymentMethod).toUpperCase() === 'COD';
-    const canCancel = ['WAITING', 'PAYING'].includes(order.orderStatus) || (order.orderStatus === 'PENDING' && isCOD);
+    // Updated logic: Only WAITING can be canceled
+    // Updated logic: Only WAITING can be canceled
+    const canCancel = order.orderStatus === 'WAITING';
+    const canPay = (order.orderStatus === 'WAITING' || order.orderStatus === 'PAYING') && String(order.paymentMethod).toUpperCase() === 'VN_PAY';
+    const canConfirm = order.orderStatus === 'DELIVERED';
+    const canFeedback = order.orderStatus === 'COMPLETED';
+    const canReorder = ['COMPLETED', 'CANCELED', 'DELIVERED'].includes(order.orderStatus);
 
-    if (canCancel || (order.paymentMethod === 'VN_PAY' && ['WAITING', 'PAYING'].includes(order.orderStatus))) {
-        modalBody.innerHTML += `<div class="modal-actions" style="margin-top: 20px; display: flex; gap: 10px; justify-content: flex-end;"></div>`;
+    if (canCancel || canPay || canConfirm || canFeedback || canReorder) {
+        modalBody.innerHTML += `<div class="modal-actions" style="margin-top: 20px; display: flex; gap: 10px; justify-content: flex-end; flex-wrap: wrap;"></div>`;
         const actionContainer = modalBody.querySelector('.modal-actions');
 
         if (canCancel) {
@@ -592,10 +626,34 @@ function showOrderDetailModal(order, orderIndex) {
             `;
         }
 
-        if (order.paymentMethod === 'VN_PAY' && ['WAITING', 'PAYING'].includes(order.orderStatus)) {
+        if (canPay) {
             actionContainer.innerHTML += `
                 <button class="btn-action btn-pay" onclick="payOrder(${orderIndex})" style="background-color: #ee4d2d; color: white; border: none; padding: 12px 24px; border-radius: 4px; cursor: pointer; font-weight: 600; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
                     <i class="fas fa-credit-card"></i> THANH TOÁN QUA VNPAY
+                </button>
+            `;
+        }
+        
+         if (canConfirm) {
+            actionContainer.innerHTML += `
+                <button class="btn-action btn-confirm" onclick="confirmOrderReceived(${orderIndex})" style="background-color: #10b981; color: white; border: none; padding: 12px 24px; border-radius: 4px; cursor: pointer; font-weight: 600; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                    <i class="fas fa-check"></i> ĐÃ NHẬN HÀNG
+                </button>
+            `;
+        }
+        
+        if (canFeedback) {
+            actionContainer.innerHTML += `
+                <button class="btn-action btn-feedback" onclick="giveFeedback(${orderIndex})" style="background-color: #f59e0b; color: white; border: none; padding: 12px 24px; border-radius: 4px; cursor: pointer; font-weight: 600; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                    <i class="fas fa-star"></i> ĐÁNH GIÁ
+                </button>
+            `;
+        }
+        
+        if (canReorder) {
+             actionContainer.innerHTML += `
+                <button class="btn-action btn-reorder" onclick="reorder(${orderIndex})" style="background-color: white; color: #10b981; border: 1px solid #10b981; padding: 12px 24px; border-radius: 4px; cursor: pointer; font-weight: 600;">
+                    <i class="fas fa-redo"></i> MUA LẠI
                 </button>
             `;
         }
@@ -797,3 +855,39 @@ function escapeHtml(text) {
     div.textContent = text;
     return div.innerHTML;
 }
+
+/**
+ * Confirm Order Received
+ */
+window.confirmOrderReceived = async (orderIndex) => {
+    const order = filteredOrders[orderIndex];
+    if (!order || !order.orderId) return;
+
+    if (!confirm('Bạn xác nhận đã nhận được hàng và hài lòng với sản phẩm?')) return;
+
+    try {
+        if (typeof toggleLoading === 'function') toggleLoading(true);
+        const response = await callAPI(`/orders/${order.orderId}`, 'PATCH', 'COMPLETED');
+
+        if (response.success) {
+            showNotification('Đã xác nhận nhận hàng thành công!', 'success');
+            await loadOrders(); 
+        } else {
+            showNotification(response.message || 'Lỗi khi xác nhận', 'error');
+        }
+    } catch (e) {
+        console.error("Lỗi confirm:", e);
+        showNotification("Lỗi kết nối", 'error');
+    } finally {
+        if (typeof toggleLoading === 'function') toggleLoading(false);
+    }
+};
+
+/**
+ * Give Feedback
+ */
+window.giveFeedback = (orderIndex) => {
+    const order = filteredOrders[orderIndex];
+    if (!order) return;
+    window.location.href = `../feedback/index.html?orderId=${order.orderId}`;
+};

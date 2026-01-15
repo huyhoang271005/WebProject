@@ -31,9 +31,9 @@ loadPage(async () => {
 
     if (!productId) {
         showNotification("Không tìm thấy ID sản phẩm!", 'error');
-        setTimeout(() => {
-            window.location.href = '/';
-        }, 2000);
+        // setTimeout(() => {
+        //     window.location.href = '/';
+        // }, 2000);
         return;
     }
 
@@ -230,6 +230,36 @@ function renderBasicInfo() {
         productDetail.description || "Chưa có mô tả cho sản phẩm này.";
 
     updateStockDisplay(null);
+
+    // Check Admin Role for Edit Button
+    try {
+        const cached = sessionStorage.getItem("homeData");
+        if (cached) {
+            const userData = JSON.parse(cached);
+            if (userData.roleName === 'ADMIN') {
+                const titleEl = document.getElementById('productName');
+                // Avoid adding multiple buttons if re-render
+                if (!titleEl.querySelector('.edit-product-btn')) {
+                    const editBtn = document.createElement('a');
+                    editBtn.className = 'edit-product-btn';
+                    editBtn.href = `../products-manager/edit.html?id=${productDetail.productId}`;
+                    editBtn.innerHTML = '<i class="fa-solid fa-pen-to-square"></i>';
+                    editBtn.style.fontSize = '1rem';
+                    editBtn.style.color = '#6b7280';
+                    editBtn.style.marginLeft = '10px';
+                    editBtn.style.textDecoration = 'none';
+                    editBtn.title = 'Chỉnh sửa sản phẩm';
+                    
+                    editBtn.onmouseover = () => editBtn.style.color = '#10B981';
+                    editBtn.onmouseout = () => editBtn.style.color = '#6b7280';
+
+                    titleEl.appendChild(editBtn);
+                }
+            }
+        }
+    } catch (e) {
+        console.error("Error checking admin role:", e);
+    }
 }
 
 function renderStars(rating) {
@@ -299,8 +329,8 @@ function handleAttributeSelect(attrId, valId, btnElement, attrName) {
     if (errorEl) errorEl.style.display = 'none';
 
     // Show feedback
-    const selectedValue = btnElement.innerText;
-    showNotification(`Đã chọn ${attrName}: ${selectedValue}`, 'success');
+    // const selectedValue = btnElement.innerText;
+    // showNotification(`Đã chọn ${attrName}: ${selectedValue}`, 'success');
 
     // Find matching variant
     findMatchingVariant();
@@ -426,7 +456,7 @@ function setupEventListeners() {
         if (val > 1) {
             input.value = val - 1;
         } else {
-            showNotification("Số lượng tối thiểu là 1", 'info');
+            // showNotification("Số lượng tối thiểu là 1", 'info');
         }
     });
 
@@ -435,7 +465,7 @@ function setupEventListeners() {
 
         if (val < 1) {
             input.value = 1;
-            showNotification("Số lượng tối thiểu là 1", 'warning');
+            // showNotification("Số lượng tối thiểu là 1", 'warning');
             return;
         }
 
