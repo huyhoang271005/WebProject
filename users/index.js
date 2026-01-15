@@ -49,7 +49,7 @@ function renderUsers(users) {
 
         // Click chuyển sang trang detail
         tr.onclick = () => {
-            window.location.href = `/user-detail?uid=${user.userId}`;
+            window.location.href = `/user-detail/?uid=${user.userId}`;
         };
 
         tbody.appendChild(tr);
