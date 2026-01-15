@@ -1,6 +1,6 @@
-import { callAPI } from "../lib/api.js";
-import { showDialog } from "../dialog/index.js";
-import { loadPage, convertToVNTime, getLoader, noImage } from "../lib/public.js";
+import { callAPI } from "/lib/api.js";
+import { showDialog } from "/dialog/index.js";
+import { loadPage, convertToVNTime, getLoader, noImage } from "/lib/public.js";
 import { loadNavbar } from "../navbar/navbar.js";
 const loadMore = document.getElementById('loadMore');
 let page = 0;
@@ -49,7 +49,7 @@ function renderUsers(users) {
 
         // Click chuyển sang trang detail
         tr.onclick = () => {
-            window.location.href = `../user-detail?uid=${user.userId}`;
+            window.location.href = `/user-detail?uid=${user.userId}`;
         };
 
         tbody.appendChild(tr);
