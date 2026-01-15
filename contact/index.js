@@ -34,6 +34,11 @@ window.addEventListener('DOMContentLoaded', async () => {
 function attachEventHandlers() {
     addressForm.addEventListener('submit', handleFormSubmit);
     cancelBtn.addEventListener('click', resetForm);
+
+    // Clear errors on input
+    ['contact_name', 'phone', 'address'].forEach(id => {
+        document.getElementById(id).addEventListener('input', () => clearFieldError(id));
+    });
 }
 
 async function handleFormSubmit(event) {
@@ -45,12 +50,69 @@ async function handleFormSubmit(event) {
         address: document.getElementById('address').value.trim()
     };
 
+    if (!validateForm(data)) return;
+
     const contactId = contactIdInput.value;
 
     if (contactId) {
         await updateAddress(contactId, data);
     } else {
         await addNewAddress(data);
+    }
+}
+
+// Validation Logic
+function validateForm(data) {
+    let isValid = true;
+
+    // Validate Name
+    if (!data.contactName) {
+        showFieldError('contact_name', 'Vui lòng nhập họ và tên');
+        isValid = false;
+    } else if (data.contactName.length < 2) {
+        showFieldError('contact_name', 'Họ tên phải có ít nhất 2 ký tự');
+        isValid = false;
+    }
+
+    // Validate Phone
+    const phoneRegex = /^(0[3|5|7|8|9])+([0-9]{8})$/;
+    if (!data.phone) {
+        showFieldError('phone', 'Vui lòng nhập số điện thoại');
+        isValid = false;
+    } else if (!phoneRegex.test(data.phone)) {
+        showFieldError('phone', 'Số điện thoại không hợp lệ. Bắt đầu bằng 0 và có 10 số');
+        isValid = false;
+    }
+
+    // Validate Address
+    if (!data.address) {
+        showFieldError('address', 'Vui lòng nhập địa chỉ chi tiết');
+        isValid = false;
+    } 
+    return isValid;
+}
+
+function showFieldError(fieldId, message) {
+    const errorEl = document.getElementById(`error_${fieldId}`);
+    const inputEl = document.getElementById(fieldId);
+    if (errorEl) {
+        errorEl.innerText = message;
+        errorEl.style.display = 'flex';
+    }
+    if (inputEl) {
+        inputEl.closest('.form-group').classList.add('error');
+    }
+}
+
+function clearFieldError(fieldId) {
+    const errorEl = document.getElementById(`error_${fieldId}`);
+    const inputEl = document.getElementById(fieldId);
+    if (errorEl) {
+        errorEl.style.display = 'none';
+        errorEl.innerText = '';
+    }
+    if (inputEl) {
+        inputEl.closest('.form-group').classList.remove('error');
     }
 }
 
