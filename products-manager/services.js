@@ -18,3 +18,23 @@ export async function createProduct(formData) {
     // Note: formData should be prepared by the caller (appending JSON blob and files)
     return await callAPI("/admin/products", "POST", formData, true); // true = isMultipart
 }
+
+export async function getProduct(productId) {
+    return await callAPI(`/admin/products/${productId}`, "GET");
+}
+
+export async function updateProduct(formData) {
+    return await callAPI("/admin/products", "PUT", formData, true); // true = isMultipart
+}
+
+export async function deleteProduct(productId) {
+    return await callAPI(`/admin/products/${productId}`, "DELETE");
+}
+
+export async function updateVariant(formData) {
+    return await callAPI("/admin/products/variants", "PUT", formData, true); // true = isMultipart
+}
+
+export async function deleteVariant(variantId) {
+    return await callAPI(`/admin/products/variants/${variantId}`, "DELETE");
+}
