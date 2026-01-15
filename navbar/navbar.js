@@ -169,24 +169,16 @@ export async function loadNavbar(options = {}) {
   // HIỂN THỊ CACHE TRƯỚC
   const cached = sessionStorage.getItem("homeData");
   if (cached) {
-    try {
-      homeData = JSON.parse(cached);
-      updateNavbarUI(homeData);
-    } catch (e) {
-      console.error(e);
-    }
+    homeData = JSON.parse(cached);
+    updateNavbarUI(homeData);
   }
-
-  // GỌI API LẤY MỚI
-  try {
+  else {
     const res = await callAPI("/home", "GET");
     if (res && res.success && res.data) {
       homeData = res.data;
       sessionStorage.setItem("homeData", JSON.stringify(homeData));
       updateNavbarUI(homeData);
     }
-  } catch (err) {
-    console.error("Lỗi cập nhật navbar:", err);
   }
 
   await connectSse("/sse");
