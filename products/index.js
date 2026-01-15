@@ -2,11 +2,11 @@ import { loadNavbar } from "../navbar/navbar.js";
 import { callAPI } from "../lib/api.js";
 import { toggleLoading } from "../lib/loader.js";
 
-// Trạng thái trang (Thống nhất dùng productName)
+// Trạng thái trang
 let state = {
   page: 0,
-  size: 20,
-  productName: "", // Đổi từ keyword -> productName cho đồng bộ
+  size: 12,
+  productName: "",
   categoryId: null,
   sort: "productId,desc",
   isLoading: false,
@@ -15,36 +15,42 @@ let state = {
 document.addEventListener("DOMContentLoaded", async () => {
   toggleLoading(true);
 
-  // 1. Load Navbar với thanh tìm kiếm
-  await loadNavbar({
-    centerHTML: `
+  // 1. Lấy tham số URL
+  const params = new URLSearchParams(window.location.search);
+  if (params.get("search")) state.productName = params.get("search");
+  if (params.get("cat")) state.categoryId = params.get("cat");
+
+  try {
+    // 2. [QUAN TRỌNG] Gọi Navbar trước tiên và CHỜ (await) nó xong.
+    // Đây là "phát súng mở màn". Nếu token hết hạn, chỉ request này đi refresh.
+    await loadNavbar({
+      centerHTML: `
         <div style="position:relative; width:100%; max-width:500px; display:flex; align-items:center;">
             <input type="text" class="nav-search-input" id="navSearch" placeholder="Tìm kiếm sản phẩm..." 
                 style="width:100%; padding:10px 15px 10px 20px; border-radius:20px; border:1px solid #e5e7eb; outline:none; background:#f9fafb;">
             <i class="fa-solid fa-magnifying-glass" id="navSearchBtn" 
                style="position:absolute; right:15px; color:#10B981; cursor:pointer;"></i>
         </div>`,
-  });
+    });
 
-  // 2. Lấy tham số từ URL (khi từ trang khác chuyển sang)
-  const params = new URLSearchParams(window.location.search);
-  if (params.get("search")) state.productName = params.get("search");
-  if (params.get("cat")) state.categoryId = params.get("cat");
+    // 3. Sau khi Navbar (và Refresh Token nếu có) xong xuôi -> Mới gọi 2 API này song song.
+    // Lúc này token đã "sạch", 2 API này sẽ chạy mượt mà không bị lỗi 401.
+    await Promise.all([fetchCategories(), fetchProducts()]);
 
-  // 3. Sync dữ liệu vào ô tìm kiếm Navbar
-  if (state.productName) {
-    const searchInput = document.getElementById("navSearch");
-    if (searchInput) searchInput.value = state.productName;
+    // 4. Sync dữ liệu vào ô tìm kiếm (Lúc này HTML Navbar đã có)
+    if (state.productName) {
+      const searchInput = document.getElementById("navSearch");
+      if (searchInput) searchInput.value = state.productName;
+      const title = document.getElementById("pageTitle");
+      if (title) title.innerHTML = `Kết quả tìm: "${state.productName}"`;
+    }
 
-    const title = document.getElementById("pageTitle");
-    if (title) title.innerHTML = `Kết quả tìm: "${state.productName}"`;
+    setupEvents();
+  } catch (e) {
+    console.error("Lỗi tải trang sản phẩm:", e);
+  } finally {
+    toggleLoading(false);
   }
-
-  // 4. Load dữ liệu & Gắn sự kiện
-  await Promise.all([fetchCategories(), fetchProducts()]);
-  setupEvents();
-
-  toggleLoading(false);
 });
 
 // --- API ---
@@ -52,17 +58,16 @@ async function fetchProducts() {
   if (state.isLoading) return;
   state.isLoading = true;
   const grid = document.getElementById("productGrid");
-  if (grid)
+
+  if (grid && state.page === 0)
     grid.innerHTML =
       '<div style="grid-column:1/-1;text-align:center;padding:40px;"><i class="fa-solid fa-spinner fa-spin fa-2x" style="color:#10B981"></i></div>';
 
   try {
     let url = `/products?page=${state.page}&size=${state.size}`;
 
-    // [QUAN TRỌNG] Gửi tham số 'productName' chuẩn Swagger
     if (state.productName)
       url += `&productName=${encodeURIComponent(state.productName)}`;
-
     if (state.categoryId && state.categoryId !== "all")
       url += `&categoryId=${state.categoryId}`;
     if (state.sort) url += `&sort=${state.sort}`;
@@ -72,6 +77,12 @@ async function fetchProducts() {
       const data = res.data;
       const list = data.listData || (Array.isArray(data) ? data : []) || [];
       const totalPages = data.totalPage || 1;
+
+      if (state.page > 0) {
+        const content = document.querySelector(".product-content");
+        if (content) content.scrollIntoView({ behavior: "smooth" });
+      }
+
       renderGrid(list);
       renderPagination(totalPages);
     } else {
@@ -88,15 +99,14 @@ async function fetchProducts() {
   }
 }
 
+// ... (Các hàm renderGrid, renderStars, fetchCategories, setupEvents... GIỮ NGUYÊN NHƯ CŨ) ...
+// (Bro chỉ cần copy phần setupEvents, renderGrid... từ code cũ vào dưới đây là được)
+
 function renderGrid(products) {
   const grid = document.getElementById("productGrid");
   if (!grid) return;
-
   if (products.length === 0) {
-    grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:50px;color:#666;">
-        <i class="fa-solid fa-box-open" style="font-size:3rem; color:#e5e7eb; margin-bottom:10px;"></i><br>
-        Không tìm thấy sản phẩm nào
-    </div>`;
+    grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:50px;color:#666;"><i class="fa-solid fa-box-open" style="font-size:3rem; color:#e5e7eb; margin-bottom:10px;"></i><br>Không tìm thấy sản phẩm nào</div>`;
     return;
   }
 
@@ -132,17 +142,10 @@ function renderGrid(products) {
         <div class="p-img"><img src="${img}" loading="lazy" alt="${p.productName}"></div>
         <div class="p-info">
           <div class="p-name" title="${p.productName}">${p.productName}</div>
-          <div class="p-meta-price">
-             <div class="p-price">${price}</div>
-             ${originalPriceHTML}
-          </div>
-          <div class="p-meta-bottom">
-             <div class="p-rating">${starsHTML}</div>
-             <div class="p-sold">${salesText}</div>
-          </div>
+          <div class="p-meta-price"><div class="p-price">${price}</div>${originalPriceHTML}</div>
+          <div class="p-meta-bottom"><div class="p-rating">${starsHTML}</div><div class="p-sold">${salesText}</div></div>
         </div>
-      </div>
-    `;
+      </div>`;
     })
     .join("");
 }
@@ -172,18 +175,17 @@ async function fetchCategories() {
     else {
       let html = `<li class="cat-item ${
         !state.categoryId ? "active" : ""
-      }" onclick="filterByCat(null, this)">
-            <i class="fa-solid fa-border-all"></i> Tất cả
-        </li>`;
+      }" onclick="filterByCat(null, this)"><i class="fa-solid fa-circle-notch"></i> Tất cả</li>`;
       html += cats
         .map(
           (c) =>
             `<li class="cat-item ${
               state.categoryId == (c.categoryId || c.id) ? "active" : ""
-            }" 
-             onclick="filterByCat('${c.categoryId || c.id}', this)">
-             <i class="fa-solid fa-caret-right"></i> ${c.categoryName || c.name}
-        </li>`
+            }" onclick="filterByCat('${
+              c.categoryId || c.id
+            }', this)"><i class="fa-solid fa-caret-right"></i> ${
+              c.categoryName || c.name
+            }</li>`
         )
         .join("");
       listEl.innerHTML = html;
@@ -194,24 +196,19 @@ async function fetchCategories() {
 }
 
 function setupEvents() {
-  // [FIX] Sự kiện tìm kiếm trên Navbar (đã load ở trên)
   const navSearch = document.getElementById("navSearch");
   const navSearchBtn = document.getElementById("navSearchBtn");
-
   const doSearch = () => {
     if (!navSearch) return;
-    state.productName = navSearch.value.trim(); // Cập nhật state.productName
+    state.productName = navSearch.value.trim();
     state.page = 0;
-
     const title = document.getElementById("pageTitle");
     if (title)
       title.innerText = state.productName
         ? `Tìm: "${state.productName}"`
         : "Tất cả sản phẩm";
-
     fetchProducts();
   };
-
   if (navSearch) {
     navSearch.addEventListener("keyup", (e) => {
       if (e.key === "Enter") doSearch();
@@ -220,8 +217,6 @@ function setupEvents() {
   if (navSearchBtn) {
     navSearchBtn.onclick = doSearch;
   }
-
-  // Sự kiện Sort
   const sortSelect = document.querySelector(".ph-sort select");
   if (sortSelect) {
     sortSelect.addEventListener("change", (e) => {
@@ -235,23 +230,17 @@ function setupEvents() {
   }
 }
 
-// --- GLOBAL FUNCTIONS ---
 window.filterByCat = (catId, el) => {
   document
     .querySelectorAll(".cat-item")
     .forEach((i) => i.classList.remove("active"));
   el.classList.add("active");
-
   state.categoryId = catId;
   state.page = 0;
-  state.productName = ""; // Reset từ khóa khi chọn danh mục
-
-  // Clear ô tìm kiếm navbar
+  state.productName = "";
   const navSearch = document.getElementById("navSearch");
   if (navSearch) navSearch.value = "";
-
   document.getElementById("pageTitle").innerText = el.innerText.trim();
-
   fetchProducts();
   if (window.innerWidth < 992) toggleSidebar();
 };
