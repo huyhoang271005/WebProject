@@ -19,6 +19,14 @@ async function init() {
 
     // Setup events
     setupEvents();
+
+    // Check URL params for product ID (linking from other pages)
+    const urlParams = new URLSearchParams(window.location.search);
+    const productId = urlParams.get('id');
+    if (productId) {
+        console.log("Auto-loading product from URL:", productId);
+        await searchProduct(productId);
+    }
 }
 
 // Load dropdown data

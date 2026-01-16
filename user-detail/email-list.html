@@ -1,5 +1,39 @@
-<h3 style="margin: 5px;">Danh sách email</h3>
+<style>
+  .email-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+  }
+  .email-header h3 {
+    margin: 0;
+    font-size: 1.1rem;
+    color: #374151;
+    font-weight: 700;
+  }
+
+  #addEmailBtn {
+    background: #fff;
+    border: 1px dashed #3b82f6;
+    color: #3b82f6;
+    padding: 6px 15px;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    font-weight: 600;
+    transition: 0.2s;
+  }
+  #addEmailBtn:hover {
+    background: #eff6ff;
+    border-style: solid;
+  }
+</style>
+
+<div class="email-header">
+  <h3>
+    <i class="fa-solid fa-envelope" style="color: #6366f1"></i> Danh sách Email
+  </h3>
+  <button id="addEmailBtn"><i class="fa-solid fa-plus"></i> Thêm</button>
+</div>
 
 <div id="emailList"></div>
-
-<button id="addEmailBtn">Thêm email</button>
