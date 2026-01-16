@@ -35,21 +35,29 @@ body {
 }
 
 .checkout-header {
-    margin-bottom: 40px;
+    margin-bottom: 32px;
     text-align: center;
 }
 
 .checkout-header h1 {
     font-family: var(--font-heading);
-    font-size: 2.5rem;
+    font-size: 2.25rem;
     color: var(--text-main);
     margin-bottom: 8px;
     letter-spacing: -0.025em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+}
+
+.checkout-header i {
+    color: var(--primary);
 }
 
 .checkout-header p {
     color: var(--text-muted);
-    font-size: 1.1rem;
+    font-size: 1.05rem;
 }
 
 .checkout-grid {
@@ -71,7 +79,7 @@ body {
     padding: 32px;
     box-shadow: var(--shadow-md);
     border: 1px solid var(--border-color);
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    transition: all 0.2s ease;
 }
 
 .card-section:hover {
@@ -101,6 +109,51 @@ body {
     font-size: 1rem;
 }
 
+/* Empty State */
+.empty-state-checkout {
+    text-align: center;
+    padding: 48px 24px;
+}
+
+.empty-state-checkout i {
+    font-size: 4rem;
+    color: var(--primary-light);
+    margin-bottom: 16px;
+    display: block;
+}
+
+.empty-state-checkout h3 {
+    font-family: var(--font-heading);
+    font-size: 1.25rem;
+    color: var(--text-main);
+    margin-bottom: 8px;
+}
+
+.empty-state-checkout p {
+    color: var(--text-muted);
+    margin-bottom: 24px;
+}
+
+.btn-add-address {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--primary);
+    color: white;
+    padding: 12px 24px;
+    border-radius: 12px;
+    text-decoration: none;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
+}
+
+.btn-add-address:hover {
+    background: var(--primary-dark);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(16, 185, 129, 0.3);
+}
+
 /* Address Section */
 #listAddress {
     display: flex;
@@ -121,6 +174,8 @@ body {
 .address-box:hover {
     border-color: var(--primary);
     background: var(--bg-main);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
 }
 
 .address-box.selected {
@@ -133,11 +188,13 @@ body {
     display: block;
     margin-bottom: 4px;
     font-size: 1.05rem;
+    color: var(--text-main);
 }
 
 .address-box p {
     color: var(--text-muted);
     font-size: 0.95rem;
+    line-height: 1.6;
 }
 
 .address-box.selected::after {
@@ -149,22 +206,24 @@ body {
     top: 50%;
     transform: translateY(-50%);
     color: var(--primary);
-    font-size: 1.25rem;
+    font-size: 1.5rem;
 }
 
 .manage-address-link {
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
     margin-top: 20px;
     color: var(--primary);
     text-decoration: none;
     font-weight: 600;
     font-size: 0.95rem;
-    transition: color 0.2s;
+    transition: all 0.2s;
 }
 
 .manage-address-link:hover {
     color: var(--primary-dark);
-    text-decoration: underline;
+    gap: 12px;
 }
 
 /* Payment Section */
@@ -185,23 +244,34 @@ body {
 .payment-card-content {
     border: 2px solid var(--border-color);
     border-radius: 12px;
-    padding: 20px;
+    padding: 24px;
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 12px;
     transition: all 0.3s ease;
+    text-align: center;
 }
 
 .payment-card-content i {
-    font-size: 1.5rem;
+    font-size: 2rem;
     color: var(--text-muted);
+    transition: all 0.3s;
+}
+
+.payment-card-content span {
+    font-weight: 600;
+    font-size: 1.05rem;
+}
+
+.payment-card-content small {
+    color: var(--text-muted);
+    font-size: 0.85rem;
 }
 
 .payment-method-card input:checked + .payment-card-content {
     border-color: var(--primary);
     background-color: var(--primary-light);
-    color: var(--text-main);
 }
 
 .payment-method-card input:checked + .payment-card-content i {
@@ -210,6 +280,8 @@ body {
 
 .payment-method-card:hover .payment-card-content {
     border-color: var(--primary);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
 }
 
 /* Order Summary (Sidebar) */
@@ -314,9 +386,10 @@ body {
     cursor: pointer;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
+    position: relative;
 }
 
-.btn-checkout:hover {
+.btn-checkout:hover:not(:disabled) {
     background: var(--primary-dark);
     transform: translateY(-2px);
     box-shadow: 0 8px 20px rgba(16, 185, 129, 0.3);
@@ -324,6 +397,36 @@ body {
 
 .btn-checkout:active {
     transform: translateY(0);
+}
+
+.btn-checkout:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.btn-checkout.loading .btn-text {
+    display: none;
+}
+
+.btn-checkout.loading .btn-loading {
+    display: inline-flex !important;
+    align-items: center;
+    gap: 8px;
+}
+
+.checkout-security {
+    margin-top: 16px;
+    text-align: center;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.checkout-security i {
+    color: var(--primary);
 }
 
 @media (max-width: 992px) {
@@ -337,9 +440,9 @@ body {
 
 @media (max-width: 640px) {
     .checkout-header h1 {
-        font-size: 2rem;
+        font-size: 1.75rem;
     }
     .card-section {
-        padding: 24px;
+        padding: 24px 20px;
     }
 }
