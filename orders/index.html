@@ -37,9 +37,6 @@
             <button class="tab-btn" data-status="PENDING" onclick="filterByStatus('PENDING')">
                 <i class="fas fa-hourglass-half"></i> Đang xử lý
             </button>
-            <button class="tab-btn" data-status="CONFIRMED" onclick="filterByStatus('CONFIRMED')">
-                <i class="fas fa-clipboard-check"></i> Đã xác nhận
-            </button>
             <button class="tab-btn" data-status="DELIVERING" onclick="filterByStatus('DELIVERING')">
                 <i class="fas fa-shipping-fast"></i> Đang giao
             </button>
@@ -74,16 +71,6 @@
                 <i class="fas fa-shopping-cart"></i> Mua sắm ngay
             </a>
         </div>
-
-        <!-- Pagination -->
-        <div id="pagination" class="pagination" style="display: none;">
-            <button id="prevBtn" class="page-btn" onclick="changePage(-1)">
-                <i class="fas fa-chevron-left"></i> Trước
-            </button>
-            <span id="pageInfo" class="page-info">Trang 1</span>
-            <button id="nextBtn" class="page-btn" onclick="changePage(1)">
-                Sau <i class="fas fa-chevron-right"></i>
-            </button>
         </div>
     </div>
 </div>

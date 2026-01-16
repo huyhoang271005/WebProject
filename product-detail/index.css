@@ -385,42 +385,21 @@ body {
     gap: 12px;
 }
 
-#notification::before {
-    font-family: "Font Awesome 6 Free";
-    font-weight: 900;
-    font-size: 18px;
-}
-
+/* Notification Icons handled in JS now */
 #notification.success {
     background: linear-gradient(135deg, #16A34A 0%, #15803d 100%);
-}
-
-#notification.success::before {
-    content: '\f00c'; /* fa-check */
 }
 
 #notification.error {
     background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%);
 }
 
-#notification.error::before {
-    content: '\f06a'; /* fa-exclamation-circle */
-}
-
 #notification.warning {
     background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
 }
 
-#notification.warning::before {
-    content: '\f071'; /* fa-exclamation-triangle */
-}
-
 #notification.info {
     background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
-}
-
-#notification.info::before {
-    content: '\f05a'; /* fa-info-circle */
 }
 
 #notification.show {

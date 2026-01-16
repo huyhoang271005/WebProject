@@ -2,7 +2,10 @@ import { callAPI } from "../lib/api.js";
 import { loadNavbar } from "../navbar/navbar.js";
 import { toggleLoading } from "../lib/loader.js";
 
-// DOM Elements
+const PHONE_PATTERN = /^(0[3|5|7|8|9])+([0-9]{8})$/;
+const MIN_NAME_LENGTH = 2;
+const NOTIFICATION_DURATION = 3000;
+
 const addressForm = document.getElementById('addressForm');
 const addressListEl = document.getElementById('addressList');
 const saveBtn = document.getElementById('saveAddressBtn');
@@ -12,30 +15,32 @@ const contactIdInput = document.getElementById('contactId');
 const formTitle = document.getElementById('formTitle');
 const addressCount = document.getElementById('addressCount');
 
-// State
 let currentAddresses = [];
 let isEditMode = false;
 
-// Initialize
 window.addEventListener('DOMContentLoaded', async () => {
     const loadPageEl = document.getElementById('loadPage');
     const infoEl = document.getElementById('info');
 
-    console.log("Trang Quản lý Địa chỉ đã sẵn sàng.");
+    toggleLoading(true);
 
-    await loadAddresses();
-    attachEventHandlers();
-
-    if (loadPageEl) loadPageEl.style.display = 'none';
-    if (infoEl) infoEl.style.display = 'block';
+    try {
+        await loadNavbar();
+        await loadAddresses();
+        attachEventHandlers();
+    } catch (error) {
+        console.error(error);
+        showNotification("Có lỗi khi tải trang", 'error');
+    } finally {
+        toggleLoading(false);
+        if (loadPageEl) loadPageEl.style.display = 'none';
+        if (infoEl) infoEl.style.display = 'block';
+    }
 });
 
-// Event Handlers
 function attachEventHandlers() {
     addressForm.addEventListener('submit', handleFormSubmit);
     cancelBtn.addEventListener('click', resetForm);
-
-    // Clear errors on input
     ['contact_name', 'phone', 'address'].forEach(id => {
         document.getElementById(id).addEventListener('input', () => clearFieldError(id));
     });
@@ -61,34 +66,30 @@ async function handleFormSubmit(event) {
     }
 }
 
-// Validation Logic
 function validateForm(data) {
     let isValid = true;
 
-    // Validate Name
     if (!data.contactName) {
         showFieldError('contact_name', 'Vui lòng nhập họ và tên');
         isValid = false;
-    } else if (data.contactName.length < 2) {
-        showFieldError('contact_name', 'Họ tên phải có ít nhất 2 ký tự');
+    } else if (data.contactName.length < MIN_NAME_LENGTH) {
+        showFieldError('contact_name', `Họ tên phải có ít nhất ${MIN_NAME_LENGTH} ký tự`);
         isValid = false;
     }
 
-    // Validate Phone
-    const phoneRegex = /^(0[3|5|7|8|9])+([0-9]{8})$/;
     if (!data.phone) {
         showFieldError('phone', 'Vui lòng nhập số điện thoại');
         isValid = false;
-    } else if (!phoneRegex.test(data.phone)) {
+    } else if (!PHONE_PATTERN.test(data.phone)) {
         showFieldError('phone', 'Số điện thoại không hợp lệ. Bắt đầu bằng 0 và có 10 số');
         isValid = false;
     }
 
-    // Validate Address
     if (!data.address) {
         showFieldError('address', 'Vui lòng nhập địa chỉ chi tiết');
         isValid = false;
-    } 
+    }
+    
     return isValid;
 }
 
@@ -116,7 +117,6 @@ function clearFieldError(fieldId) {
     }
 }
 
-// Load and Display Addresses
 async function loadAddresses() {
     if (!addressListEl) return;
 
@@ -139,17 +139,18 @@ function renderAddressList() {
     }
 
     updateAddressCount(currentAddresses.length);
-
     const html = currentAddresses.map(address => createAddressItemHTML(address)).join('');
     addressListEl.innerHTML = html;
+    attachAddressListeners();
+}
 
-    // Attach event listeners
+function attachAddressListeners() {
     currentAddresses.forEach(address => {
         const item = addressListEl.querySelector(`[data-id="${address.contactId}"]`);
-        if (item) {
-            item.querySelector('.edit-btn').addEventListener('click', () => editAddress(address.contactId));
-            item.querySelector('.delete-btn').addEventListener('click', () => deleteAddress(address.contactId));
-        }
+        if (!item) return;
+        
+        item.querySelector('.edit-btn').addEventListener('click', () => editAddress(address.contactId));
+        item.querySelector('.delete-btn').addEventListener('click', () => deleteAddress(address.contactId));
     });
 }
 
@@ -182,16 +183,16 @@ function createAddressItemHTML(address) {
     `;
 }
 
-// CRUD Operations
+function isResponseSuccessful(result) {
+    return result.success || result.contactId;
+}
+
 async function addNewAddress(data) {
     startButtonLoading('Đang thêm...');
-
     const result = await callAPI("/contacts", "POST", data);
 
-    // Support both wrapped response (success: true) and direct object response (has contactId)
-    if (result.success || result.contactId) {
+    if (isResponseSuccessful(result)) {
         showNotification("Thêm địa chỉ mới thành công!");
-        // Extract contactId from either root or data object
         const newId = result.contactId || result.data?.contactId;
         const newAddress = { contactId: newId, ...data };
         currentAddresses.unshift(newAddress);
@@ -206,12 +207,10 @@ async function addNewAddress(data) {
 
 async function updateAddress(id, data) {
     startButtonLoading('Đang cập nhật...');
-
     const updateData = { contactId: id, ...data };
     const result = await callAPI("/contacts", "PUT", updateData);
 
-    // Support both wrapped response and direct object response
-    if (result.success || result.contactId) {
+    if (isResponseSuccessful(result)) {
         showNotification("Cập nhật địa chỉ thành công!");
         const index = currentAddresses.findIndex(addr => addr.contactId === id);
         if (index !== -1) {
@@ -240,8 +239,7 @@ async function deleteAddress(id) {
         }
 
         currentAddresses = currentAddresses.filter(addr => addr.contactId !== id);
-
-        renderAddressList();;
+        renderAddressList();
     } else {
         showNotification(`Lỗi xóa: ${result.message || 'Không rõ'}`, 'error');
     }
@@ -275,7 +273,6 @@ function editAddress(id) {
     document.getElementById('contact_name').focus();
 }
 
-// Form Management
 function resetForm() {
     addressForm.reset();
     contactIdInput.value = '';
@@ -290,7 +287,6 @@ function resetForm() {
     renderAddressList();
 }
 
-// UI Helper Functions
 function startButtonLoading(text) {
     saveBtn.disabled = true;
     saveBtn.classList.add('loading');
@@ -342,35 +338,18 @@ function updateAddressCount(count) {
 
 function showNotification(message, type = 'success') {
     const noti = document.getElementById('notification');
-
     noti.innerText = message;
-    noti.className = type + " show";
-
-    // Hiện
+    noti.className = `${type} show`;
     noti.classList.remove("hidden");
 
-    // 3 giây sau tự biến mất
     setTimeout(() => {
         noti.classList.remove("show");
         setTimeout(() => noti.classList.add("hidden"), 500);
-    }, 3000);
+    }, NOTIFICATION_DURATION);
 }
 
-// Utility Functions
 function escapeHtml(text) {
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
 }
-
-document.addEventListener("DOMContentLoaded", async () => {
-    // Bật loading cho chuyên nghiệp
-    toggleLoading(true);
-
-    // 2. Gọi Navbar
-    // Cách 1: Gọi đơn giản (Mặc định)
-    await loadNavbar();
-
-    // Tắt loading
-    toggleLoading(false);
-});

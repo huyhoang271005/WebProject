@@ -3,37 +3,46 @@ import {loadPage, noImage} from '../lib/public.js';
 import {loadNavbar} from "../navbar/navbar.js";
 import {toggleLoading} from "../lib/loader.js";
 
-// --- Global Variables ---
+const NOTIFICATION_DURATION = 3500;
+const NOTIFICATION_HIDE_DELAY = 400;
+const REDIRECT_DELAY = 2000;
+const INFO_NOTIFICATION_DELAY = 1000;
+const MAX_STARS = 5;
+const MIN_QUANTITY = 1;
+const DEFAULT_AVATAR = "https://cdn-icons-png.flaticon.com/512/847/847969.png";
+
 let productDetail = null;
 let variants = [];
 let selectedAttributes = {};
 let currentVariant = null;
 
-// --- Enhanced Notification System ---
 function showNotification(message, type = 'success') {
     const noti = document.getElementById('notification');
+    
+    const icons = {
+        success: '<i class="fa-solid fa-check-circle"></i>',
+        error: '<i class="fa-solid fa-circle-exclamation"></i>',
+        warning: '<i class="fa-solid fa-triangle-exclamation"></i>',
+        info: '<i class="fa-solid fa-circle-info"></i>'
+    };
 
-    noti.innerText = message;
+    noti.innerHTML = `${icons[type] || ''} <span>${message}</span>`;
     noti.className = `${type} show`;
     noti.classList.remove("hidden");
 
-    // Auto hide after 3.5 seconds
     setTimeout(() => {
         noti.classList.remove("show");
-        setTimeout(() => noti.classList.add("hidden"), 400);
-    }, 3500);
+        setTimeout(() => noti.classList.add("hidden"), NOTIFICATION_HIDE_DELAY);
+    }, NOTIFICATION_DURATION);
 }
 
-// --- Main Execution ---
 loadPage(async () => {
     const urlParams = new URLSearchParams(window.location.search);
     const productId = urlParams.get('id');
 
     if (!productId) {
         showNotification("Không tìm thấy ID sản phẩm!", 'error');
-        // setTimeout(() => {
-        //     window.location.href = '/';
-        // }, 2000);
+        setTimeout(() => window.location.href = '/', REDIRECT_DELAY);
         return;
     }
 
@@ -41,7 +50,6 @@ loadPage(async () => {
     await getFeedbacks(productId);
 });
 
-// --- API Functions ---
 async function getProductDetail(id) {
     const endpoint = `/products/${id}`;
 
@@ -56,20 +64,16 @@ async function getProductDetail(id) {
             renderAttributes(res.data.attributeDTOList);
             setupEventListeners();
 
-            // Hiển thị hướng dẫn nếu có variants
             if (variants.length > 0) {
                 setTimeout(() => {
                     showNotification("Vui lòng chọn phân loại sản phẩm trước khi mua", 'info');
-                }, 1000);
+                }, INFO_NOTIFICATION_DELAY);
             }
         } else {
             showNotification(res.message || "Lỗi tải dữ liệu sản phẩm", 'error');
-            setTimeout(() => {
-                window.history.back();
-            }, 2000);
+            setTimeout(() => window.history.back(), REDIRECT_DELAY);
         }
     } catch (error) {
-        console.error("Error loading product:", error);
         showNotification("Không thể kết nối đến server. Vui lòng thử lại!", 'error');
     }
 }
@@ -119,20 +123,15 @@ async function getFeedbacks(productId) {
 }
 
 function renderFeedbackItem(item, isAdmin) {
-    const avatar = item.imageUrl || "https://cdn-icons-png.flaticon.com/512/847/847969.png";
+    const avatar = item.imageUrl || DEFAULT_AVATAR;
     const date = new Date(item.createdAt).toLocaleString('vi-VN');
     
-    // Render Stars
-    let starsHtml = '';
-    for(let i=1; i<=5; i++) {
-        if(item.rating >= i) starsHtml += '<i class="fa-solid fa-star"></i>';
-        else starsHtml += '<i class="fa-regular fa-star"></i>';
-    }
+    const starsHtml = createStarRating(item.rating);
 
     let replyHtml = '';
     if (item.reply) {
         const replyDate = new Date(item.reply.createdAt).toLocaleString('vi-VN');
-        const adminAvatar = item.reply.imageUrl || "https://cdn-icons-png.flaticon.com/512/847/847969.png";
+        const adminAvatar = item.reply.imageUrl || DEFAULT_AVATAR;
         replyHtml = `
             <div class="fb-reply-box">
                 <div class="fb-header">
@@ -212,7 +211,6 @@ window.submitReply = async function(feedbackId) {
     }
 }
 
-// --- Render Logic ---
 function renderBasicInfo() {
     const imgEl = document.getElementById('mainImage');
     imgEl.src = productDetail.imageUrl ? productDetail.imageUrl : noImage;
@@ -242,7 +240,7 @@ function renderBasicInfo() {
                 if (!titleEl.querySelector('.edit-product-btn')) {
                     const editBtn = document.createElement('a');
                     editBtn.className = 'edit-product-btn';
-                    editBtn.href = `../products-manager/edit.html?id=${productDetail.productId}`;
+                    editBtn.href = `/products-manager/edit.html?id=${productDetail.productId}`;
                     editBtn.innerHTML = '<i class="fa-solid fa-pen-to-square"></i>';
                     editBtn.style.fontSize = '1rem';
                     editBtn.style.color = '#6b7280';
@@ -264,8 +262,12 @@ function renderBasicInfo() {
 
 function renderStars(rating) {
     const container = document.getElementById('stars');
+    container.innerHTML = createStarRating(rating);
+}
+
+function createStarRating(rating) {
     let html = '';
-    for (let i = 1; i <= 5; i++) {
+    for (let i = 1; i <= MAX_STARS; i++) {
         if (rating >= i) {
             html += '<i class="fa-solid fa-star"></i>';
         } else if (rating >= i - 0.5) {
@@ -274,7 +276,7 @@ function renderStars(rating) {
             html += '<i class="fa-regular fa-star"></i>';
         }
     }
-    container.innerHTML = html;
+    return html;
 }
 
 function renderAttributes(attributeList) {
@@ -312,27 +314,18 @@ function renderAttributes(attributeList) {
     });
 }
 
-// --- Attribute Selection Logic ---
 function handleAttributeSelect(attrId, valId, btnElement, attrName) {
-    // UI: Remove active from siblings
     const siblings = btnElement.parentElement.children;
     for (let sib of siblings) {
         sib.classList.remove('active');
     }
     btnElement.classList.add('active');
 
-    // Logic: Save state
     selectedAttributes[attrId] = valId;
 
-    // Hide error message if visible
     const errorEl = document.getElementById('attributeError');
     if (errorEl) errorEl.style.display = 'none';
 
-    // Show feedback
-    // const selectedValue = btnElement.innerText;
-    // showNotification(`Đã chọn ${attrName}: ${selectedValue}`, 'success');
-
-    // Find matching variant
     findMatchingVariant();
 }
 
@@ -428,7 +421,6 @@ function updateStockDisplay(stock) {
     }
 }
 
-// --- Event Listeners ---
 function setupEventListeners() {
     const input = document.getElementById('inputQuantity');
     const btnIncrease = document.getElementById('btnIncrease');
@@ -456,7 +448,7 @@ function setupEventListeners() {
         if (val > 1) {
             input.value = val - 1;
         } else {
-            // showNotification("Số lượng tối thiểu là 1", 'info');
+            // Minimum quantity is 1
         }
     });
 
@@ -465,7 +457,6 @@ function setupEventListeners() {
 
         if (val < 1) {
             input.value = 1;
-            // showNotification("Số lượng tối thiểu là 1", 'warning');
             return;
         }
 
@@ -484,14 +475,12 @@ function setupEventListeners() {
         }
     });
 
-    // Add to Cart Button
     document.getElementById('btnAddToCart').addEventListener('click', async () => {
         if (!validateSelection()) return;
 
         const quantity = parseInt(input.value);
         const btnCart = document.getElementById('btnAddToCart');
 
-        // Prevent double click
         if (btnCart.classList.contains('loading')) return;
 
         btnCart.classList.add('loading');
@@ -506,7 +495,6 @@ function setupEventListeners() {
 
             if (result.success) {
                 showNotification(`Đã thêm ${quantity} sản phẩm vào giỏ hàng!`, 'success');
-                // Optional: Update cart badge/count here
             } else {
                 showNotification(result.message || "Không thể thêm vào giỏ hàng", 'error');
             }
@@ -518,17 +506,20 @@ function setupEventListeners() {
         }
     });
 
-    // Buy Now Button
     document.getElementById('btnBuyNow').addEventListener('click', () => {
         if (!validateSelection()) return;
         const quantity = parseInt(document.getElementById('inputQuantity').value);
-        // Confirm before proceeding
         showNotification(`Đang chuyển đến trang thanh toán...`, 'info');
 
         const selectedAttrNames = [];
+        const selectedAttrValues = [];
+        
         document.querySelectorAll('.attribute-row').forEach(row => {
             const activeBtn = row.querySelector('.attr-item.active');
-            if (activeBtn) selectedAttrNames.push(activeBtn.innerText);
+            if (activeBtn) {
+                selectedAttrNames.push(activeBtn.innerText);
+                selectedAttrValues.push(activeBtn.innerText);
+            }
         });
 
         const buyNowData = {
@@ -536,20 +527,16 @@ function setupEventListeners() {
             quantity: quantity,
             productName: productDetail.productName,
             price: currentVariant.price,
+            originalPrice: currentVariant.originalPrice || currentVariant.price,
             thumbnail: currentVariant.imageUrl || productDetail.imageUrl,
-            variantName: selectedAttrNames.join(' - ')
+            imageUrl: currentVariant.imageUrl || productDetail.imageUrl,
+            variantName: selectedAttrNames.join(' - '),
+            attributeValues: selectedAttrValues
         };
 
-        // 4. Quan trọng: Dọn dẹp dữ liệu cũ để tránh nhầm lẫn luồng
-        localStorage.removeItem("checkoutItems"); // Xóa dữ liệu chờ từ giỏ hàng (nếu có)
-
-        // 5. Lưu dữ liệu mua ngay vào sessionStorage (dữ liệu tạm thời phiên làm việc)
         sessionStorage.setItem('buyNowData', JSON.stringify(buyNowData));
 
-        // 6. Redirect
-        setTimeout(() => {
-            window.location.href = '../checkout/index.html'; // Điều chỉnh đường dẫn đúng file của bạn
-        }, 500);
+        window.location.href = '../checkout/index.html';
     });
 }
 
@@ -593,14 +580,12 @@ function highlightAttributes() {
     }
 }
 
-// --- DOMContentLoaded ---
 document.addEventListener("DOMContentLoaded", async () => {
     toggleLoading(true);
 
     try {
         await loadNavbar();
     } catch (error) {
-        console.error("Error loading navbar:", error);
         showNotification("Không thể tải thanh điều hướng", 'warning');
     } finally {
         toggleLoading(false);
