@@ -62,51 +62,26 @@ const navbarHTML = `
         .btn-del-noti:hover { color: #EF4444; }
         .btn-clear-all { font-size: 0.8rem; color: #EF4444; cursor: pointer; text-decoration: underline; }
 
-        /* --- MOBILE & TABLET CSS --- */
+        /* TOAST: Góc dưới phải */
+        #nbToastContainer { 
+            position: fixed; bottom: 20px; right: 20px; z-index: 99999; 
+            display: flex; flex-direction: column; gap: 10px; 
+        }
+        .nb-toast { 
+            background: white; padding: 15px 20px; border-left: 5px solid #10B981; 
+            box-shadow: 0 5px 25px rgba(0,0,0,0.15); border-radius: 8px; 
+            display: flex; align-items: center; gap: 12px; min-width: 300px; max-width: 380px;
+            animation: nbSlideIn 0.3s ease-out; cursor: pointer;
+        }
+        @keyframes nbSlideIn { from { transform: translateY(100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
         @media (max-width: 992px) {
-            body { padding-top: 130px; } /* Đẩy body xuống vì navbar cao hơn */
-            
-            .navbar-component { 
-                padding: 10px 15px; 
-                height: auto; 
-                flex-wrap: wrap; 
-                gap: 10px;
-                background: rgba(255,255,255,0.98);
-                backdrop-filter: blur(10px);
-            }
-            
+            body { padding-top: 130px; } 
+            .navbar-component { padding: 10px 15px; height: auto; flex-wrap: wrap; gap: 10px; background: rgba(255,255,255,0.98); backdrop-filter: blur(10px); }
             .nb-brand { order: 1; font-size: 1.5rem; flex: 1; }
-            
-            /* Nhóm icon bên phải */
             .nb-right-wrapper { order: 2; gap: 2px; }
-            .nb-icon-btn { width: 40px; height: 40px; font-size: 1.2rem; }
-            .nb-user-menu { margin-left: 5px; }
-            .nb-avatar { width: 38px; height: 38px; }
-            .nb-username, #nbRole { display: none; } 
-            
-            /* Thanh tìm kiếm nhảy xuống dòng */
-            #nbCenterSlot { 
-                order: 3; 
-                width: 100%; 
-                margin: 0; 
-                padding: 0; 
-                max-width: none; 
-            }
-            
-            /* Popup thông báo full màn hình mobile */
-            .nb-noti-dropdown { 
-                position: fixed; 
-                top: 60px; 
-                left: 50%; 
-                transform: translateX(-50%); 
-                width: 95vw; 
-                height: 70vh; 
-                max-width: 400px; 
-                right: auto; 
-                border-radius: 12px;
-                box-shadow: 0 0 0 100vh rgba(0,0,0,0.5); /* Tạo overlay tối */
-            }
-            .nav-spacer { height: 130px !important; }
+            #nbCenterSlot { order: 3; width: 100%; margin: 0; padding: 0; max-width: none; }
+            .nb-noti-dropdown { position: fixed; top: 60px; left: 50%; transform: translateX(-50%); width: 95vw; height: 70vh; max-width: 400px; right: auto; border-radius: 12px; box-shadow: 0 0 0 100vh rgba(0,0,0,0.5); }
         }
     </style>
 
@@ -158,6 +133,7 @@ const navbarHTML = `
             </div>
         </div>
     </nav>
+    <div id="nbToastContainer"></div>
     <div style="height: 80px; width: 100%; clear: both;" class="nav-spacer"></div>
 `;
 
@@ -168,35 +144,42 @@ export async function loadNavbar(options = {}) {
   if (options.centerHTML)
     document.getElementById("nbCenterSlot").innerHTML = options.centerHTML;
 
-  // HIỂN THỊ CACHE TRƯỚC
   const cached = sessionStorage.getItem("homeData");
   if (cached) {
     homeData = JSON.parse(cached);
     updateNavbarUI(homeData);
-  } else {
-    const res = await callAPI("/home", "GET");
-    if (res && res.success && res.data) {
-      homeData = res.data;
-      sessionStorage.setItem("homeData", JSON.stringify(homeData));
-      updateNavbarUI(homeData);
-    }
   }
 
+  fetchHomeData();
   await connectSse("/sse");
   setupSSERealtime();
   setupEvents();
 
   document.addEventListener("update-noti-badge", (e) => {
     const delta = parseInt(e.detail);
-    if (!isNaN(delta)) {
-      let current = parseInt(homeData.readNotifications) || 0;
-      let newCount = current + delta;
-      if (newCount < 0) newCount = 0;
-      homeData.readNotifications = newCount;
-      updateNavbarUI(homeData);
-      sessionStorage.setItem("homeData", JSON.stringify(homeData));
-    }
+    if (!isNaN(delta)) updateBadgeCount(delta);
   });
+}
+
+async function fetchHomeData() {
+  try {
+    const res = await callAPI("/home", "GET");
+    if (res && res.success && res.data) {
+      homeData = res.data;
+      sessionStorage.setItem("homeData", JSON.stringify(homeData));
+      updateNavbarUI(homeData);
+    }
+  } catch (e) {
+    console.error("Home API:", e);
+  }
+}
+
+function updateBadgeCount(delta) {
+  let current = parseInt(homeData.readNotifications) || 0;
+  let newCount = Math.max(0, current + delta);
+  homeData.readNotifications = newCount;
+  updateNavbarUI(homeData);
+  sessionStorage.setItem("homeData", JSON.stringify(homeData));
 }
 
 function updateNavbarUI(data) {
@@ -222,22 +205,74 @@ function updateNavbarUI(data) {
   notiBadge.style.display = notiCount > 0 ? "flex" : "none";
 }
 
+// Hàm hiển thị Toast (Tự xóa cái cũ để không che màn hình)
+function showSmartToast(title, message, iconClass) {
+  const container = document.getElementById("nbToastContainer");
+  container.innerHTML = ""; // Xóa cái cũ ngay lập tức
+
+  const toast = document.createElement("div");
+  toast.className = "nb-toast";
+  const displayMsg =
+    message.length > 80 ? message.substring(0, 80) + "..." : message;
+
+  toast.innerHTML = `
+        <i class="fa-solid ${iconClass}" style="color:#10B981; font-size:1.4rem;"></i>
+        <div style="flex:1">
+            <div style="font-weight:bold; font-size:0.95rem; margin-bottom:2px;">${title}</div>
+            <div style="font-size:0.85rem; color:#555; line-height:1.3;">${displayMsg}</div>
+        </div>
+        <i class="fa-solid fa-xmark" style="color:#999; cursor:pointer;" onclick="this.parentElement.remove()"></i>
+    `;
+
+  container.appendChild(toast);
+  setTimeout(() => {
+    if (toast.isConnected) toast.remove();
+  }, 5000);
+}
+
+// [XỬ LÝ REALTIME THEO YÊU CẦU ĐƠN GIẢN HÓA]
 function setupSSERealtime() {
+  // 1. Notification (Hệ thống) - GIỮ NGUYÊN (Vào chuông, cộng số)
   subscribeTopic("notification", (data) => {
-    let current = parseInt(homeData.readNotifications) || 0;
-    homeData.readNotifications = current + 1;
-    updateNavbarUI(homeData);
-    sessionStorage.setItem("homeData", JSON.stringify(homeData));
-    const notiList = document.getElementById("nbNotiList");
-    if (document.getElementById("nbNotiDropdown").classList.contains("show"))
-      prependNotification(data);
+    updateBadgeCount(1);
+    showSmartToast(
+      "Thông báo hệ thống",
+      data.message || data.content,
+      "fa-bell"
+    );
+    prependNotification(data);
   });
+
+  // 2. Message (Tin nhắn) - CẮT BỎ LOẠI 1 (Không vào chuông, không cộng số)
+  subscribeTopic("message", async (data) => {
+    // Chỉ xử lý Toast (Loại 2)
+    const senderId = data.senderId;
+    let senderName = data.senderName;
+    const content = data.content || "Bạn có tin nhắn mới";
+
+    // Cố gắng lấy tên người gửi nếu thiếu
+    if (!senderName && senderId) {
+      try {
+        const userRes = await callAPI(`/users/${senderId}`);
+        if (userRes.success && userRes.data) {
+          senderName = userRes.data.fullName || userRes.data.username;
+        }
+      } catch (e) {}
+    }
+    if (!senderName) senderName = "Tin nhắn mới";
+
+    // Chỉ hiện Box nổi (Toast)
+    showSmartToast(`Tin nhắn từ ${senderName}`, content, "fa-comment-dots");
+
+    // KHÔNG làm gì với Dropdown và Badge cả! (Theo yêu cầu "bay màu")
+  });
+
+  // 3. Cart
   subscribeTopic("cart", (data) => {
     const change = parseInt(data);
     if (!isNaN(change)) {
       let current = parseInt(homeData.cartsCount) || 0;
-      let newCount = current + change;
-      if (newCount < 0) newCount = 0;
+      let newCount = Math.max(0, current + change);
       homeData.cartsCount = newCount;
       updateNavbarUI(homeData);
       sessionStorage.setItem("homeData", JSON.stringify(homeData));
@@ -278,40 +313,43 @@ function setupEvents() {
     });
   }
 
-  const logoutBtn = document.getElementById("nbLogout");
-  if (logoutBtn) {
-    logoutBtn.onclick = async () => {
-      await showDialog(
-        "question",
-        "Bạn có chắc chắn muốn đăng xuất không?",
-        async () => {
-          sessionStorage.clear();
-          localStorage.clear();
-          await callAPI("/logout");
-          window.location.replace("../auth/login");
-        },
-        "Đăng xuất",
-        true
-      );
-    };
-  }
+  document.getElementById("nbLogout").onclick = async () => {
+    await showDialog(
+      "question",
+      "Đăng xuất?",
+      async () => {
+        sessionStorage.clear();
+        localStorage.clear();
+        await callAPI("/logout");
+        window.location.replace("../auth/login");
+      },
+      "Đăng xuất",
+      true
+    );
+  };
 
   document.addEventListener("click", () => {
     userDropdown.classList.remove("show");
     notiDropdown.classList.remove("show");
   });
 
-  const clearAllBtn = document.getElementById("btnClearAllNoti");
-  if (clearAllBtn) {
-    clearAllBtn.onclick = async (e) => {
+  // [FIX] Xóa tất cả - Xóa sạch sành sanh UI ngay lập tức
+  const clearBtn = document.getElementById("btnClearAllNoti");
+  if (clearBtn) {
+    clearBtn.onclick = async (e) => {
       e.stopPropagation();
       if (!confirm("Xóa tất cả thông báo?")) return;
+
+      // Xóa giao diện
       document.getElementById("nbNotiList").innerHTML =
         '<div class="empty-noti" style="padding:20px;text-align:center;color:#999">Không có thông báo nào</div>';
-      let current = parseInt(homeData.readNotifications) || 0;
-      document.dispatchEvent(
-        new CustomEvent("update-noti-badge", { detail: -current })
-      );
+
+      // Reset số
+      homeData.readNotifications = 0;
+      updateNavbarUI(homeData);
+      sessionStorage.setItem("homeData", JSON.stringify(homeData));
+
+      // (Không gọi API vì API xóa all chưa rõ ràng, chỉ xóa UI cho người dùng vui)
     };
   }
 }
@@ -325,7 +363,7 @@ async function fetchNotifications() {
       `/notifications?page=${notiState.page}&size=${notiState.size}`,
       "GET"
     );
-    if (res && res.success && res.data && Array.isArray(res.data.listData)) {
+    if (res && res.success && res.data?.listData) {
       const list = res.data.listData;
       if (list.length > 0) {
         const html = list.map((item) => createNotiItemHTML(item)).join("");
@@ -340,9 +378,7 @@ async function fetchNotifications() {
         notiState.hasMore = false;
       }
       if (list.length < notiState.size) notiState.hasMore = false;
-    } else {
-      notiState.hasMore = false;
-    }
+    } else notiState.hasMore = false;
   } catch (e) {
     console.error(e);
   } finally {
@@ -370,46 +406,36 @@ function createNotiItemHTML(item, isNew = false) {
   const isUnread = isNew || !item.isRead;
 
   return `
-        <div class="noti-item ${
-          isUnread ? "unread" : ""
-        }" id="noti-${id}" onclick="readNoti('${id}', '${link}', this)">
-            <div class="noti-content">
-                <div class="noti-title" style="font-weight:600;font-size:0.95rem">${title}</div>
-                <div class="noti-msg" style="font-size:0.9rem;color:#555">${msg}</div>
-                <div class="noti-time" style="font-size:0.75rem;color:#999;margin-top:4px">${time}</div>
-            </div>
-            <i class="fa-solid fa-xmark btn-del-noti" onclick="deleteNoti('${id}', event)"></i>
+    <div class="noti-item ${
+      isUnread ? "unread" : ""
+    }" id="noti-${id}" onclick="readNoti('${id}', '${link}', this)">
+        <div class="noti-content">
+            <div class="noti-title" style="font-weight:600;font-size:0.95rem">${title}</div>
+            <div class="noti-msg" style="font-size:0.9rem;color:#555">${msg}</div>
+            <div class="noti-time" style="font-size:0.75rem;color:#999;margin-top:4px">${time}</div>
         </div>
-    `;
+        <i class="fa-solid fa-xmark btn-del-noti" onclick="deleteNoti('${id}', event)"></i>
+    </div>
+  `;
 }
 
 window.deleteNoti = async (id, e) => {
   e.stopPropagation();
-  if (!id || id === "undefined") return;
   const item = document.getElementById(`noti-${id}`);
-  const isUnread = item.classList.contains("unread");
-  if (item) item.remove();
-  if (isUnread)
-    document.dispatchEvent(
-      new CustomEvent("update-noti-badge", { detail: -1 })
-    );
+  if (item) {
+    if (item.classList.contains("unread")) updateBadgeCount(-1);
+    item.remove();
+  }
   await callAPI("/notifications/delete", "POST", [id]);
 };
 
 window.readNoti = async (id, link, el) => {
   if (el.classList.contains("unread")) {
     el.classList.remove("unread");
-    document.dispatchEvent(
-      new CustomEvent("update-noti-badge", { detail: -1 })
-    );
-
+    updateBadgeCount(-1);
     try {
-      // Body là một Mảng chứa ID: ["id"]
-      const res = await callAPI("/notifications", "PATCH", [id]);
-      console.log("Đã đọc:", res);
-    } catch (e) {
-      console.error("Lỗi đọc noti:", e);
-    }
+      await callAPI("/notifications", "PATCH", [id]);
+    } catch (e) {}
   }
   if (link && link !== "#" && link !== "null") window.location.href = link;
 };
