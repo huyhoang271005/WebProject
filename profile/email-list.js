@@ -102,7 +102,7 @@ export function initEmailList(initialEmails = []) {
     // Xoá email
     document.querySelectorAll(".removeEmailBtn").forEach((btn) => {
       btn.onclick = async () => {
-        if (emails.length < 1) return; // Logic gốc là < 2 nhưng UI cho phép xóa hết thì tốt hơn, tùy bro giữ < 2
+        if (emails.length < 2) return; // Logic gốc là < 2 nhưng UI cho phép xóa hết thì tốt hơn, tùy bro giữ < 2
         const idx = btn.dataset.index;
         const email = emails[idx];
         if (email.validated === true || email.validated === false) {

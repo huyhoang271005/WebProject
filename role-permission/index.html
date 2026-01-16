@@ -5,6 +5,8 @@
     <title>Quản lý chức vụ</title>
     <link rel="stylesheet" href="../dialog/index.css">
     <link rel="stylesheet" href="../lib/public.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <style>
         body {
             align-items: flex-start;
@@ -48,6 +50,69 @@
             grid-template-columns: 1fr 1fr;
             gap: 5%;
         }
+        /* ================= MOBILE RESPONSIVE ================= */
+        @media (max-width: 768px) {
+
+            body {
+                padding: 10px;
+            }
+
+            .card {
+                width: 100%;
+                padding: 15px;
+            }
+
+            /* Role list từ 2 cột -> 1 cột */
+            #roleList {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+
+            .role {
+                padding: 12px;
+            }
+
+            .role-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+
+            .role-header button {
+                width: 100%;
+            }
+
+            /* Permission hiển thị gọn hơn */
+            .permission,
+            .permission-row {
+                flex-wrap: wrap;
+                gap: 8px;
+            }
+
+            .permission button,
+            .remove-perm-btn {
+                width: 100%;
+            }
+
+            /* Add role section */
+            #newRoleName {
+                width: 100%;
+                margin-bottom: 10px;
+                padding: 10px;
+                box-sizing: border-box;
+            }
+
+            #addRoleBtn {
+                width: 100%;
+                padding: 12px;
+            }
+
+            /* Delete role button */
+            .delete-role-btn {
+                width: 100%;
+            }
+        }
+
     </style>
 </head>
 <body>

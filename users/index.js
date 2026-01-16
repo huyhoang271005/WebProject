@@ -17,7 +17,7 @@ let searchText = ""; // Biến lưu từ khóa tìm kiếm
 async function loadUsers() {
   // [TODO FOR BACKEND]: Sửa param 'search' thành tên đúng trong API sau này
   const query = `/users?page=${page}&size=${size}${
-    searchText ? `&search=${encodeURIComponent(searchText)}` : ""
+    searchText ? `&email=${encodeURIComponent(searchText)}` : null
   }`;
 
   const result = await callAPI(query);

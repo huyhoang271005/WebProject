@@ -1,7 +1,8 @@
 import { callAPI } from "../lib/api.js";
 import { showDialog } from "../dialog/index.js";
-import { getLoader, loadPage } from "../lib/public.js";
+import { loadPage } from "../lib/public.js";
 import { loadNavbar } from "../navbar/navbar.js";
+import {toggleLoading} from "../lib/loader.js";
 let ROLE_PERMISSIONS = [];
 let ALL_PERMISSIONS = [];
 await loadPage(async() => {
@@ -150,10 +151,9 @@ addRoleBtn.onclick = async() => {
     const data = {
         roleName: name
     }
-    let result = null;
-    await getLoader('addRoleBtn', async() => {
-        result = await callAPI('/roles', 'POST', data);
-    });
+    toggleLoading(true);
+    const result = await callAPI('/roles', 'POST', data);
+    toggleLoading(false);
     if(result.success){
         ROLE_PERMISSIONS.push({ roleId: result.data.roleId, roleName: name, permissions: []});
         newRoleName.value = "";
