@@ -7,6 +7,10 @@ let currentUserId = null;
 let rooms = [];
 let senderMap = {}; // Cache toàn cục cho thông tin người dùng
 let currentRoomId = null;
+let hasMoreMessages = true;
+let page = 0;
+let size = 20;
+const messages = [];
 
 /* ================= DOM ELEMENTS ================= */
 const chatContainerEl = document.getElementById("chatContainer");
@@ -66,11 +70,15 @@ async function openRoom(roomId) {
     const room = rooms.find(r => String(r.roomChatId) === String(roomId));
     if (!room) return;
 
+    hasMoreMessages = true;
+    page = 0;
+    messages.length = 0;
+
     showChatRoom();
     renderRooms();
     chatAvatarEl.src = room.imageUrl || noImage;
     chatUsernameEl.textContent = room.roomChatName;
-    chatMessagesEl.innerHTML = `<div style="text-align:center; padding:20px; color:#666;">Đang tải...</div>`;
+    chatMessagesEl.innerHTML = ``;
 
     await loadMembers(roomId); // Lấy currentUserId và danh sách người trong phòng
     await loadMessages(roomId);
@@ -88,17 +96,28 @@ async function loadMembers(roomId) {
     } catch (e) { console.error(e); }
 }
 
-async function loadMessages(roomId) {
+async function loadMessages(roomId, isLazy = false) {
     try {
-        const res = await callAPI(`/room-chat/${roomId}/messages`);
+        if(hasMoreMessages === false) return;
+        const prevScrollHeight = chatMessagesEl.scrollHeight;
+        const res = await callAPI(`/room-chat/${roomId}/messages?page=${page}&&size=${size}`);
         const msgList = res.data?.listData;
-        chatMessagesEl.innerHTML = msgList.length === 0 ? `<div style="text-align:center;color:#999;margin-top:20px;">Chưa có tin nhắn</div>` : "";
-        msgList.forEach(m => appendMessage(m));
+        messages.unshift(...msgList);
+        msgList.forEach(m => appendMessage(m, true));
         chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight;
+        hasMoreMessages = res.data.hasMore;
+        page++;
+        if(isLazy) {
+            const newScrollHeight = chatMessagesEl.scrollHeight;
+            chatMessagesEl.scrollTop = newScrollHeight - prevScrollHeight;
+        }
+        else {
+            chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight;
+        }
     } catch (e) { console.error(e); }
 }
 
-function appendMessage(msg) {
+function appendMessage(msg, isPrepend = false) {
     const isMe = String(msg.senderId) === String(currentUserId);
     const sender = senderMap[msg.senderId] || {};
 
@@ -114,8 +133,13 @@ function appendMessage(msg) {
         <div class="message-content">${msg.content}</div>
         <div class="message-time">${convertToVNTime(msg.time)}</div>
     `;
-    chatMessagesEl.appendChild(div);
-    chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight;
+    if (isPrepend) {
+        chatMessagesEl.prepend(div);
+    } else {
+        chatMessagesEl.appendChild(div);
+        chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight;
+    }
+
 }
 
 function sendMessage() {
@@ -165,5 +189,10 @@ function sendMessage() {
 
         const urlRoomId = new URLSearchParams(window.location.search).get("roomId");
         if (urlRoomId) openRoom(urlRoomId); else showEmptyChat();
+        chatMessagesEl.addEventListener("scroll", async () => {
+            if(chatMessagesEl.scrollTop === 0){
+                await loadMessages(currentRoomId, true);
+            }
+        })
     } catch (e) { console.error(e); }
 })();
