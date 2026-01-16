@@ -1,159 +1,451 @@
 <!DOCTYPE html>
 <html lang="vi">
-<head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Chi tiết người dùng</title>
-<link rel="stylesheet" href="../dialog/index.css"/>
-<link rel="stylesheet" href="../lib/public.css"/>
-<script src="https://kit.fontawesome.com/e9c281dd3f.js" crossorigin="anonymous"></script>
-<style>
-.profile {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    grid-template-rows: auto;
-    gap: 5%;
-}
-.avatar-wrapper {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    margin-bottom: 15px;
-}
-.avatar-img {
-    width: 120px;
-    height: 120px;
-    border-radius: 50%;
-    object-fit: cover;
-    border: 3px solid #3B82F6;
-}
-.info {
-    text-align: start;
-}
-.info label {
-    font-weight: 500;
-    font-size: 0.9rem;
-    color: #333;
-}
-.info>div {
-    margin-bottom: 8px;
-    padding: 6px 0;
-    width: 100%;
-    box-sizing: border-box;
-}
-.email-row {
-    display: flex;
-    align-items: center;
-    gap: 3%;
-    margin-bottom: 8px;
-}
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
+    <title>Chi tiết người dùng - Tạp Hóa Xanh</title>
+    <link
+      rel="icon"
+      href="https://cdn-icons-png.flaticon.com/512/847/847969.png"
+    />
+    <link rel="stylesheet" href="../dialog/index.css" />
+    <script
+      src="https://kit.fontawesome.com/e9c281dd3f.js"
+      crossorigin="anonymous"
+    ></script>
+    <style>
+      * {
+        box-sizing: border-box;
+      }
 
-.email-input {
-    flex: 1;                    /* Input chiếm phần còn lại → icon + nút có không gian */
-    padding: 6px 10px;
-}
+      body {
+        margin: 0;
+        padding: 0;
+        font-family: "Segoe UI", sans-serif;
+        color: #374151;
+        background: url("https://img.freepik.com/free-vector/blue-sky-with-clouds-background_1017-26302.jpg")
+          no-repeat center center fixed;
+        background-size: cover;
+        padding-top: 80px;
+        display: flex;
+        justify-content: center;
+        min-height: 100vh;
+      }
 
-.status-icon {
-    font-size: 18px;
-    line-height: 1;
-}
+      .profile-container {
+        width: 100%;
+        max-width: 1000px;
+        padding: 40px 20px;
+      }
 
-.verify-icon {
-    cursor: pointer;
-    transition: transform 0.15s ease, opacity 0.15s ease;
-}
+      .card-detail {
+        background: rgba(255, 255, 255, 0.95);
+        border-radius: 16px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+        backdrop-filter: blur(8px);
+        border: 1px solid rgba(255, 255, 255, 0.6);
+        animation: slideUp 0.4s ease-out;
+      }
 
-/* Hover: phóng to nhẹ + sáng màu */
-.verify-icon:hover {
-    transform: scale(1.15);
-    opacity: 0.9;
-}
+      @keyframes slideUp {
+        from {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
 
-/* Click: thu nhỏ nhẹ */
-.verify-icon:active {
-    transform: scale(0.9);
-    opacity: 0.7;
-}
+      .card-header {
+        padding: 20px 30px;
+        border-bottom: 1px solid #e5e7eb;
+        background: #fff;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .card-header h2 {
+        margin: 0;
+        font-size: 1.4rem;
+        color: #111827;
+        font-weight: 700;
+      }
 
-#addEmailBtn {
-    margin-top: 5px;
-}
-.date-info {
-    font-size: 0.75rem;
-    color: #9CA3AF;
-    margin-top: 5px;
-}
-/* Nút gửi thông báo */
-.action-buttons .secondary {
-    background-color: #F3F4F6;
-    color: #111827;
-    border: 1px solid #D1D5DB;
-}
+      .card-body {
+        padding: 30px;
+      }
 
-.action-buttons .secondary:hover {
-    background-color: #E5E7EB;
-}
-@media (max-width:700px){
-    .profile { display: inline-block; }
-}
-</style>
-</head>
-<body>
-<div class="card">
-    <h2>Chi tiết người dùng</h2>
-    <div id="loadPage"></div>
+      .detail-grid {
+        display: grid;
+        grid-template-columns: 280px 1fr;
+        gap: 40px;
+      }
 
-    <div id="info">
-        <div class="profile">
-            <!-- Email bên trái -->
-            <div class="avatar-wrapper">
-                <img id="avatarPreview" src="" class="avatar-img" />
-                <div id="emailsSection"></div>
-                <div class="action-buttons">
-                    <button id="btnSendMessage" class="primary">
-                        <i class="fa-solid fa-paper-plane"></i>
-                        Gửi tin nhắn
-                    </button>
+      /* Cột Trái */
+      .left-col {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        border-right: 1px dashed #e5e7eb;
+        padding-right: 20px;
+      }
+      .avatar-img {
+        width: 160px;
+        height: 160px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 4px solid #fff;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        margin-bottom: 20px;
+      }
 
-                    <button id="btnSendNotification" class="secondary">
-                        <i class="fa-solid fa-bell"></i>
-                        Gửi thông báo
-                    </button>
-                </div>
-            </div>
+      .action-buttons {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+      .btn-action {
+        width: 100%;
+        padding: 10px;
+        border-radius: 8px;
+        border: none;
+        font-weight: 600;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        transition: 0.2s;
+        font-size: 0.95rem;
+      }
+      .btn-primary {
+        background: #3b82f6;
+        color: white;
+      }
+      .btn-primary:hover {
+        background: #2563eb;
+        transform: translateY(-2px);
+      }
+      .btn-secondary {
+        background: #f3f4f6;
+        color: #374151;
+        border: 1px solid #d1d5db;
+      }
+      .btn-secondary:hover {
+        background: #e5e7eb;
+        transform: translateY(-2px);
+      }
 
-            <!-- Thông tin user -->
-            <div class="info">
-                <label>Biệt danh</label>
-                <div id="username"></div>
+      /* Cột Phải */
+      .right-col {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+      }
+      .info-group {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+      }
+      .info-label {
+        font-size: 0.85rem;
+        color: #6b7280;
+        font-weight: 600;
+        text-transform: uppercase;
+      }
+      .info-value {
+        font-size: 1rem;
+        color: #111827;
+        font-weight: 500;
+        padding: 8px 0;
+        border-bottom: 1px solid #f3f4f6;
+      }
 
-                <label>Họ và tên</label>
-                <div id="fullName"></div>
+      /* Admin Area (Đã xóa tiêu đề) */
+      .admin-section {
+        background: #fff;
+        padding: 20px;
+        border-radius: 12px;
+        border: 1px solid #e5e7eb;
+        margin-top: 20px;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+      }
 
-                <label>Ngày sinh</label>
-                <div id="birthday"></div>
+      .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 15px;
+        margin-bottom: 15px;
+      }
+      select {
+        width: 100%;
+        padding: 10px;
+        border-radius: 6px;
+        border: 1px solid #d1d5db;
+        outline: none;
+        font-size: 0.95rem;
+      }
 
-                <label>Giới tính</label>
-                <div id="gender"></div>
+      .btn-update {
+        background: #10b981;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 6px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: 0.2s;
+      }
+      .btn-update:hover {
+        background: #059669;
+      }
 
-                <div class="date-info">
-                    <div>Ngày tham gia: <span id="createdAt"></span></div>
-                </div>
-                <!-- Admin-only fields -->
-                <div id="adminFields" style="margin-top:10px;">
-                    <label>Chức vụ</label>
-                    <select id="roleSelect"></select>
+      .btn-logout {
+        background: #fff;
+        color: #ef4444;
+        border: 1px solid #ef4444;
+        padding: 10px 20px;
+        border-radius: 6px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: 0.2s;
+        margin-left: 10px;
+      }
+      .btn-logout:hover {
+        background: #fef2f2;
+      }
 
-                    <label>Status</label>
-                    <select id="statusSelect"></select>
-                    <button id = "btnUpdate">Cập nhật</button>
-                    <button id = "btnLogout" class = "delete">Đăng xuất người dùng trên tất cả thiết bị</button>
-                </div>
-            </div>
+      .divider {
+        height: 1px;
+        background: #e5e7eb;
+        margin: 30px 0;
+      }
+
+      /* Modal */
+      #notiModal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 1000;
+        align-items: center;
+        justify-content: center;
+        backdrop-filter: blur(3px);
+      }
+      .noti-box {
+        background: white;
+        width: 90%;
+        max-width: 400px;
+        padding: 25px;
+        border-radius: 12px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        animation: popIn 0.3s;
+      }
+      @keyframes popIn {
+        from {
+          transform: scale(0.8);
+          opacity: 0;
+        }
+        to {
+          transform: scale(1);
+          opacity: 1;
+        }
+      }
+      .noti-box input,
+      .noti-box textarea {
+        width: 100%;
+        padding: 10px;
+        margin-bottom: 10px;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        outline: none;
+        font-family: inherit;
+      }
+      .noti-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+        margin-top: 10px;
+      }
+
+      @media (max-width: 768px) {
+        .detail-grid {
+          grid-template-columns: 1fr;
+          gap: 30px;
+        }
+        .left-col {
+          border-right: none;
+          border-bottom: 1px dashed #e5e7eb;
+          padding-bottom: 20px;
+          padding-right: 0;
+        }
+        .form-row {
+          grid-template-columns: 1fr;
+        }
+        .btn-logout {
+          margin-left: 0;
+          margin-top: 10px;
+          width: 100%;
+        }
+        .btn-update {
+          width: 100%;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="notiModal">
+      <div class="noti-box">
+        <h3 style="margin-top: 0; color: #111827">Gửi thông báo</h3>
+        <input type="text" id="notiTitle" placeholder="Tiêu đề thông báo" />
+        <textarea
+          id="notiContent"
+          rows="4"
+          placeholder="Nội dung thông báo..."
+        ></textarea>
+        <div class="noti-actions">
+          <button
+            class="btn-secondary"
+            onclick="closeNotiModal()"
+            style="width: auto; padding: 8px 15px"
+          >
+            Hủy
+          </button>
+          <button
+            class="btn-primary"
+            id="confirmSendNoti"
+            style="width: auto; padding: 8px 15px"
+          >
+            Gửi ngay
+          </button>
         </div>
+      </div>
     </div>
-</div>
 
-<script type="module" src="/user-detail/index.js"></script>
-</body>
+    <div class="profile-container">
+      <div id="loadPage"></div>
+
+      <div class="card-detail" id="info">
+        <div class="card-header">
+          <h2>
+            <i class="fa-solid fa-address-book" style="color: #10b981"></i>
+            Thông tin chi tiết
+          </h2>
+        </div>
+
+        <div class="card-body">
+          <div class="detail-grid">
+            <div class="left-col">
+              <img id="avatarPreview" src="" class="avatar-img" />
+              <div class="action-buttons">
+                <button id="btnSendMessage" class="btn-action btn-primary">
+                  <i class="fa-solid fa-paper-plane"></i> Nhắn tin
+                </button>
+                <button
+                  id="btnSendNotification"
+                  class="btn-action btn-secondary"
+                >
+                  <i class="fa-solid fa-bell"></i> Gửi thông báo
+                </button>
+              </div>
+            </div>
+
+            <div class="right-col">
+              <div
+                style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px"
+              >
+                <div class="info-group">
+                  <span class="info-label">Biệt danh</span>
+                  <div class="info-value" id="username">...</div>
+                </div>
+                <div class="info-group">
+                  <span class="info-label">Họ và tên</span>
+                  <div class="info-value" id="fullName">...</div>
+                </div>
+              </div>
+
+              <div
+                style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px"
+              >
+                <div class="info-group">
+                  <span class="info-label">Ngày sinh</span>
+                  <div class="info-value" id="birthday">...</div>
+                </div>
+                <div class="info-group">
+                  <span class="info-label">Giới tính</span>
+                  <div class="info-value" id="gender">...</div>
+                </div>
+              </div>
+
+              <div class="info-group">
+                <span class="info-label">Ngày tham gia</span>
+                <div class="info-value" id="createdAt">...</div>
+              </div>
+
+              <div id="adminFields" class="admin-section" style="display: none">
+                <div class="form-row">
+                  <div>
+                    <label
+                      style="
+                        font-size: 0.85rem;
+                        font-weight: 600;
+                        margin-bottom: 5px;
+                        display: block;
+                      "
+                      >Chức vụ (Role)</label
+                    >
+                    <select id="roleSelect"></select>
+                  </div>
+                  <div>
+                    <label
+                      style="
+                        font-size: 0.85rem;
+                        font-weight: 600;
+                        margin-bottom: 5px;
+                        display: block;
+                      "
+                      >Trạng thái (Status)</label
+                    >
+                    <select id="statusSelect"></select>
+                  </div>
+                </div>
+
+                <div
+                  style="display: flex; flex-wrap: wrap; align-items: center"
+                >
+                  <button id="btnUpdate" class="btn-update">
+                    <i class="fa-solid fa-rotate"></i> Cập nhật
+                  </button>
+                  <button id="btnLogout" class="btn-logout">
+                    <i class="fa-solid fa-right-from-bracket"></i> Đăng xuất
+                    User
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="divider"></div>
+          <div id="emailsSection"></div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      function closeNotiModal() {
+        document.getElementById("notiModal").style.display = "none";
+      }
+    </script>
+    <script type="module" src="/user-detail/index.js"></script>
+  </body>
 </html>

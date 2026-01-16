@@ -2,167 +2,364 @@
 <html lang="vi">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Hồ sơ cá nhân</title>
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
+    <title>Hồ sơ cá nhân - Tạp Hóa Xanh</title>
+    <link
+      rel="icon"
+      href="https://cdn-icons-png.flaticon.com/512/847/847969.png"
+    />
     <link rel="stylesheet" href="../dialog/index.css" />
-    <link rel="stylesheet" href="../lib/public.css" />
     <script
       src="https://kit.fontawesome.com/e9c281dd3f.js"
       crossorigin="anonymous"
     ></script>
     <style>
-      .profile {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        grid-template-rows: auto;
-        gap: 5%;
+      /* --- CSS PROFILE --- */
+      * {
+        box-sizing: border-box;
       }
-      .avatar-wrapper {
+
+      html,
+      body {
+        width: 100%;
+        min-height: 100vh;
+        margin: 0;
+        padding: 0;
+        font-family: "Segoe UI", sans-serif;
+        color: #374151;
+        background: url("https://img.freepik.com/free-vector/blue-sky-with-clouds-background_1017-26302.jpg")
+          no-repeat center center fixed;
+        background-size: cover;
+        display: block;
+      }
+
+      /* Container chính */
+      .profile-container {
+        width: 100%;
+        max-width: 1000px;
+        margin: 0 auto;
+        /* Cách navbar (80px) + khoảng hở (40px) = 120px */
+        padding: 12px 20px 40px 20px;
+      }
+
+      /* Card bao quanh */
+      .card-profile {
+        background: rgba(255, 255, 255, 0.95);
+        border-radius: 16px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+        backdrop-filter: blur(8px);
+        border: 1px solid rgba(255, 255, 255, 0.7);
+        animation: slideUp 0.4s ease-out;
+      }
+
+      @keyframes slideUp {
+        from {
+          opacity: 0;
+          transform: translateY(30px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      /* Header của Card */
+      .card-header {
+        padding: 20px 30px;
+        border-bottom: 1px solid #e5e7eb;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        background: #fff;
+      }
+      .card-header h2 {
+        margin: 0;
+        font-size: 1.4rem;
+        color: #111827;
+        font-weight: 700;
+      }
+
+      .card-body {
+        padding: 40px;
+      }
+
+      /* Layout 2 cột: Avatar (Trái) - Info (Phải) */
+      .profile-grid {
+        display: grid;
+        grid-template-columns: 260px 1fr;
+        gap: 50px;
+      }
+
+      /* CỘT TRÁI: AVATAR */
+      .avatar-section {
         display: flex;
         flex-direction: column;
         align-items: center;
-        margin-bottom: 15px;
+        text-align: center;
       }
-
+      .avatar-wrapper {
+        position: relative;
+        width: 180px;
+        height: 180px;
+        margin-bottom: 20px;
+      }
       .avatar-img {
-        width: 120px;
-        height: 120px;
+        width: 100%;
+        height: 100%;
         border-radius: 50%;
         object-fit: cover;
-        border: 3px solid #3b82f6;
+        border: 5px solid #fff;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+        transition: 0.3s;
       }
-      .date-info {
-        font-size: 0.75rem;
-        color: #9ca3af; /* xám nhạt hơn */
+      .avatar-img:hover {
+        transform: scale(1.02);
+      }
+
+      .btn-change-avatar {
         margin-top: 5px;
-        text-align: left;
-      }
-      .info {
-        text-align: start;
-      }
-      .info label {
-        font-weight: 500;
-        font-size: 0.9rem;
-        color: #333;
-      }
-      .email-row {
-        display: flex;
-        align-items: center;
-        gap: 3%;
-        margin-bottom: 8px;
-      }
-
-      .email-input {
-        flex: 1; /* Input chiếm phần còn lại → icon + nút có không gian */
-        padding: 6px 10px;
-      }
-
-      .status-icon {
-        font-size: 18px;
-        line-height: 1;
-      }
-
-      .removeEmailBtn {
-        padding: 6px 15px;
-        margin: 8px 0;
-      }
-
-      .verify-icon {
         cursor: pointer;
-        transition: transform 0.15s ease, opacity 0.15s ease;
+        background: #ecfdf5;
+        color: #10b981;
+        padding: 8px 18px;
+        border-radius: 50px;
+        font-weight: 600;
+        font-size: 0.9rem;
+        transition: 0.2s;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        border: 1px solid transparent;
+      }
+      .btn-change-avatar:hover {
+        background: #10b981;
+        color: white;
+        box-shadow: 0 4px 10px rgba(16, 185, 129, 0.3);
       }
 
-      /* Hover: phóng to nhẹ + sáng màu */
-      .verify-icon:hover {
-        transform: scale(1.15);
-        opacity: 0.9;
+      .meta-info {
+        margin-top: 25px;
+        width: 100%;
+        text-align: left;
+        font-size: 0.85rem;
+        color: #6b7280;
+        background: #f9fafb;
+        padding: 15px;
+        border-radius: 12px;
+        border: 1px solid #f3f4f6;
+      }
+      .meta-info div {
+        margin-bottom: 8px;
+        display: flex;
+        justify-content: space-between;
+      }
+      .meta-info span {
+        color: #374151;
+        font-weight: 600;
       }
 
-      /* Click: thu nhỏ nhẹ */
-      .verify-icon:active {
-        transform: scale(0.9);
-        opacity: 0.7;
+      /* CỘT PHẢI: FORM */
+      .info-section {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
       }
 
-      #addEmailBtn {
-        margin-top: 5px;
+      .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
       }
-      @media (max-width: 700px) {
-        .profile {
-          display: inline-block;
+
+      .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .form-group label {
+        font-weight: 600;
+        font-size: 0.9rem;
+        color: #374151;
+      }
+
+      .form-group input,
+      .form-group select {
+        width: 100%;
+        padding: 12px 15px;
+        border: 1px solid #d1d5db;
+        border-radius: 8px;
+        font-size: 0.95rem;
+        transition: 0.2s;
+        outline: none;
+        background: #fff;
+      }
+      .form-group input:focus,
+      .form-group select:focus {
+        border-color: #10b981;
+        box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+      }
+      .form-group input[readonly] {
+        background-color: #f9fafb;
+        cursor: default;
+        color: #6b7280;
+        border-color: #e5e7eb;
+      }
+
+      /* Nút Lưu */
+      #saveBtn {
+        margin-top: 15px;
+        background: #10b981;
+        color: white;
+        border: none;
+        padding: 14px;
+        border-radius: 10px;
+        font-weight: 600;
+        font-size: 1rem;
+        cursor: pointer;
+        width: 100%;
+        transition: 0.2s;
+        box-shadow: 0 4px 10px rgba(16, 185, 129, 0.3);
+      }
+      #saveBtn:hover {
+        background: #059669;
+        transform: translateY(-2px);
+      }
+
+      /* Divider */
+      .divider {
+        height: 1px;
+        background: #e5e7eb;
+        margin: 35px 0;
+      }
+
+      /* --- RESPONSIVE MOBILE --- */
+      @media (max-width: 768px) {
+        body {
+          background-size: auto 100vh; /* Giữ hình nền đẹp trên mobile */
         }
-        .removeEmailBtn {
-          padding: 6px 10px;
+
+        .profile-container {
+          padding: 100px 15px 30px 15px; /* Navbar mobile cao hơn chút */
+        }
+
+        .card-body {
+          padding: 20px;
+        }
+
+        .profile-grid {
+          grid-template-columns: 1fr; /* Chuyển thành 1 cột dọc */
+          gap: 30px;
+        }
+
+        .avatar-section {
+          padding-right: 0;
+          border-right: none;
+          border-bottom: 1px dashed #e5e7eb;
+          padding-bottom: 25px;
+        }
+
+        .avatar-wrapper {
+          width: 140px;
+          height: 140px;
+        } /* Avatar nhỏ hơn xíu */
+
+        /* Input trên mobile xếp dọc cho dễ nhập */
+        .form-row {
+          grid-template-columns: 1fr;
+          gap: 15px;
+        }
+
+        .card-header h2 {
+          font-size: 1.2rem;
         }
       }
     </style>
   </head>
   <body>
-    <div class="card">
-      <h2>Hồ sơ cá nhân</h2>
-      <div id="loadPage"></div>
-      <div id="info">
-        <div class="profile">
-          <div class="avatar-wrapper">
-            <img
-              id="avatarPreview"
-              src="https://cdn-icons-png.flaticon.com/512/847/847969.png"
-              class="avatar-img"
-            />
-            <label
-              for="avatar"
-              style="cursor: pointer; color: #3b82f6; margin-top: 5px"
-              >Đổi ảnh</label
-            >
-            <input
-              type="file"
-              id="avatar"
-              accept="image/*"
-              style="display: none"
-            />
-            <div id="emailsSection"></div>
-          </div>
+    <div class="profile-container">
+      <div class="card-profile" id="info">
+        <div class="card-header">
+          <i
+            class="fa-solid fa-address-card"
+            style="font-size: 1.5rem; color: #10b981"
+          ></i>
+          <h2>Hồ sơ cá nhân</h2>
+        </div>
 
-          <div class="info">
-            <label for="username">Biệt danh</label>
-            <input type="text" id="username" placeholder="Biệt danh" />
+        <div class="card-body">
+          <div class="profile-grid">
+            <div class="avatar-section">
+              <div class="avatar-wrapper">
+                <img
+                  id="avatarPreview"
+                  src="https://cdn-icons-png.flaticon.com/512/847/847969.png"
+                  class="avatar-img"
+                />
+              </div>
+              <label for="avatar" class="btn-change-avatar">
+                <i class="fa-solid fa-camera"></i> Đổi ảnh
+              </label>
+              <input
+                type="file"
+                id="avatar"
+                accept="image/*"
+                style="display: none"
+              />
 
-            <label for="fullName">Họ và tên</label>
-            <input type="text" id="fullName" placeholder="Họ và tên" />
-
-            <label for="birthday">Ngày sinh</label>
-            <input type="date" id="birthday" placeholder="Ngày sinh" />
-
-            <label for="gender">Giới tính</label>
-            <select id="gender">
-              <option value="MALE">Nam</option>
-              <option value="FEMALE">Nữ</option>
-              <option value="OTHER">Khác</option>
-            </select>
-
-            <label for="role">Chức vụ</label>
-            <input type="text" id="role" placeholder="Chức vụ" readonly />
-
-            <div class="date-info">
-              <div>Ngày tạo: <span id="createdAt">01/01/2024</span></div>
-              <div>
-                Cập nhật lần cuối: <span id="updatedAt">15/11/2025</span>
+              <div class="meta-info">
+                <div>Ngày tham gia: <span id="createdAt">...</span></div>
+                <div>Cập nhật cuối: <span id="updatedAt">...</span></div>
               </div>
             </div>
 
-            <div
-              style="
-                margin-top: 20px;
-                display: flex;
-                gap: 10px;
-                flex-wrap: wrap;
-              "
-            >
-              <button id="saveBtn" style="margin-top: 0; flex: 1">
-                Cập nhật trang cá nhân
+            <div class="info-section">
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="username">Biệt danh</label>
+                  <input
+                    type="text"
+                    id="username"
+                    placeholder="Nhập biệt danh"
+                  />
+                </div>
+                <div class="form-group">
+                  <label for="role">Chức vụ</label>
+                  <input type="text" id="role" readonly />
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="fullName">Họ và tên</label>
+                <input type="text" id="fullName" placeholder="Nhập họ và tên" />
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="birthday">Ngày sinh</label>
+                  <input type="date" id="birthday" />
+                </div>
+                <div class="form-group">
+                  <label for="gender">Giới tính</label>
+                  <select id="gender">
+                    <option value="MALE">Nam</option>
+                    <option value="FEMALE">Nữ</option>
+                    <option value="OTHER">Khác</option>
+                  </select>
+                </div>
+              </div>
+
+              <button id="saveBtn">
+                <i class="fa-solid fa-floppy-disk"></i> Lưu thay đổi
               </button>
             </div>
           </div>
+
+          <div class="divider"></div>
+          <div id="emailsSection"></div>
         </div>
       </div>
     </div>
