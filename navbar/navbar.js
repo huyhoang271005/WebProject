@@ -136,6 +136,8 @@ const navbarHTML = `
                     <div style="font-size:0.75rem; color:#888;" id="nbRole">GUEST</div>
                 </div>
                 <div class="nb-dropdown" id="nbUserDropdown">
+                    <a href="../home"><i class="fa-solid fa-house" style="color: #10B981 ; width:20px; text-align:center;"></i> Trang chủ</a>
+                    <a href="../products"><i class="fa-solid fa-compass" style="color: #F59E0B ; width:20px; text-align:center;"></i> Khám phá sản phẩm</a>
                     <a href="../profile"><i class="fa-regular fa-user" style="color: #3B82F6; width:20px; text-align:center;"></i> Hồ sơ</a>
                     <a href="../session"><i class="fa-solid fa-shield-halved" style="color: #8B5CF6; width:20px; text-align:center;"></i> Phiên đăng nhập</a>
                     <a href="../contact"><i class="fa-solid fa-map-location-dot" style="color: #F59E0B; width:20px; text-align:center;"></i> Sổ địa chỉ</a>
@@ -171,8 +173,7 @@ export async function loadNavbar(options = {}) {
   if (cached) {
     homeData = JSON.parse(cached);
     updateNavbarUI(homeData);
-  }
-  else {
+  } else {
     const res = await callAPI("/home", "GET");
     if (res && res.success && res.data) {
       homeData = res.data;
