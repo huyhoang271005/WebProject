@@ -2,159 +2,152 @@ import { loadNavbar } from "../navbar/navbar.js";
 import { callAPI } from "../lib/api.js";
 import { toggleLoading } from "../lib/loader.js";
 
-let categoriesData = [];
-let currentFilter = {
-  keyword: null,
-  categoryId: null,
+// Trạng thái trang
+let state = {
   page: 0,
-  size: 20,
-  totalPages: 1,
+  size: 12,
+  productName: "",
+  categoryId: null,
+  sort: "productId,desc",
+  isLoading: false,
 };
 
 document.addEventListener("DOMContentLoaded", async () => {
   toggleLoading(true);
 
-  await loadNavbar({
-    centerHTML: `
-      <div style="position:relative; width: 100%; max-width: 500px;">
-          <input type="text" class="nav-search-input" id="navbarSearchInput" style="width:100%; padding-left: 20px;" placeholder="Tìm kiếm sản phẩm...">
-          <i class="fa-solid fa-magnifying-glass" id="navbarSearchBtn" style="position:absolute; right:15px; top:50%; transform:translateY(-50%); color:#10B981; cursor:pointer;"></i>
-      </div>`,
-  });
+  // 1. Lấy tham số URL
+  const params = new URLSearchParams(window.location.search);
+  if (params.get("search")) state.productName = params.get("search");
+  if (params.get("cat")) state.categoryId = params.get("cat");
 
-  const urlParams = new URLSearchParams(window.location.search);
-  if (urlParams.get("cat")) currentFilter.categoryId = urlParams.get("cat");
-  if (urlParams.get("search")) currentFilter.keyword = urlParams.get("search");
-  if (urlParams.get("page"))
-    currentFilter.page = parseInt(urlParams.get("page"));
+  try {
+    // 2. [QUAN TRỌNG] Gọi Navbar trước tiên và CHỜ (await) nó xong.
+    // Đây là "phát súng mở màn". Nếu token hết hạn, chỉ request này đi refresh.
+    await loadNavbar({
+      centerHTML: `
+        <div style="position:relative; width:100%; max-width:500px; display:flex; align-items:center;">
+            <input type="text" class="nav-search-input" id="navSearch" placeholder="Tìm kiếm sản phẩm..." 
+                style="width:100%; padding:10px 15px 10px 20px; border-radius:20px; border:1px solid #e5e7eb; outline:none; background:#f9fafb;">
+            <i class="fa-solid fa-magnifying-glass" id="navSearchBtn" 
+               style="position:absolute; right:15px; color:#10B981; cursor:pointer;"></i>
+        </div>`,
+    });
 
-  await fetchCategories();
-  renderSidebarCategories();
-  setupEvents();
-  await fetchProducts();
-  toggleLoading(false);
+    // 3. Sau khi Navbar (và Refresh Token nếu có) xong xuôi -> Mới gọi 2 API này song song.
+    // Lúc này token đã "sạch", 2 API này sẽ chạy mượt mà không bị lỗi 401.
+    await Promise.all([fetchCategories(), fetchProducts()]);
+
+    // 4. Sync dữ liệu vào ô tìm kiếm (Lúc này HTML Navbar đã có)
+    if (state.productName) {
+      const searchInput = document.getElementById("navSearch");
+      if (searchInput) searchInput.value = state.productName;
+      const title = document.getElementById("pageTitle");
+      if (title) title.innerHTML = `Kết quả tìm: "${state.productName}"`;
+    }
+
+    setupEvents();
+  } catch (e) {
+    console.error("Lỗi tải trang sản phẩm:", e);
+  } finally {
+    toggleLoading(false);
+  }
 });
 
-// [API] LẤY DANH MỤC: /categories (Public)
-async function fetchCategories() {
-  try {
-    const res = await callAPI("/categories", "GET", null);
-    if (res && res.success && Array.isArray(res.data.listData)) {
-      categoriesData = res.data;
-    } else {
-      categoriesData = [
-        { id: "an-vat", name: "Đồ ăn vặt" },
-        { id: "nuoc-ngot", name: "Nước giải khát" },
-      ];
-    }
-  } catch (e) {
-    console.error("Lỗi danh mục:", e);
-  }
-}
-
-// [API] LẤY SẢN PHẨM: /auth/products
+// --- API ---
 async function fetchProducts() {
+  if (state.isLoading) return;
+  state.isLoading = true;
   const grid = document.getElementById("productGrid");
-  const pagination = document.getElementById("pagination");
-  if (!grid) return;
 
-  grid.innerHTML =
-    '<div style="grid-column:1/-1; text-align:center; padding:40px; color:#666;"><i class="fa-solid fa-circle-notch fa-spin"></i> Đang tải sản phẩm...</div>';
+  if (grid && state.page === 0)
+    grid.innerHTML =
+      '<div style="grid-column:1/-1;text-align:center;padding:40px;"><i class="fa-solid fa-spinner fa-spin fa-2x" style="color:#10B981"></i></div>';
 
   try {
-    let endpoint = "/products";
-    const params = [];
-    params.push(`page=${currentFilter.page}`);
-    params.push(`size=${currentFilter.size}`);
+    let url = `/products?page=${state.page}&size=${state.size}`;
 
-    if (currentFilter.keyword)
-      params.push(`keyword=${encodeURIComponent(currentFilter.keyword)}`);
+    if (state.productName)
+      url += `&productName=${encodeURIComponent(state.productName)}`;
+    if (state.categoryId && state.categoryId !== "all")
+      url += `&categoryId=${state.categoryId}`;
+    if (state.sort) url += `&sort=${state.sort}`;
 
-    if (
-      currentFilter.categoryId &&
-      currentFilter.categoryId !== "all" &&
-      currentFilter.categoryId !== "other"
-    ) {
-      params.push(`categoryId=${encodeURIComponent(currentFilter.categoryId)}`);
-    }
-
-    if (params.length > 0) endpoint += "?" + params.join("&");
-
-    const res = await callAPI(endpoint, "GET", null);
-    grid.innerHTML = "";
-
+    const res = await callAPI(url, "GET");
     if (res && res.success) {
-      const list = res.data?.listData || [];
-      if (res.data?.totalPages !== undefined)
-        currentFilter.totalPages = res.data.totalPages;
-      else
-        currentFilter.totalPages =
-          list.length < currentFilter.size
-            ? currentFilter.page + 1
-            : currentFilter.page + 2;
+      const data = res.data;
+      const list = data.listData || (Array.isArray(data) ? data : []) || [];
+      const totalPages = data.totalPage || 1;
 
-      if (list.length > 0) {
-        grid.innerHTML = list.map((p) => createProductHTML(p)).join("");
-        renderPagination();
-      } else {
-        grid.innerHTML =
-          '<div style="grid-column:1/-1; text-align:center; padding:50px; color:#888; font-style:italic;">Không tìm thấy sản phẩm nào</div>';
-        pagination.innerHTML = "";
+      if (state.page > 0) {
+        const content = document.querySelector(".product-content");
+        if (content) content.scrollIntoView({ behavior: "smooth" });
       }
+
+      renderGrid(list);
+      renderPagination(totalPages);
     } else {
-      grid.innerHTML = `<div style="text-align:center; color:red;">${
-        res?.message || "Lỗi tải dữ liệu"
-      }</div>`;
+      if (grid)
+        grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;color:red;">${
+          res.message || "Lỗi tải dữ liệu"
+        }</div>`;
     }
   } catch (e) {
-    grid.innerHTML =
-      '<div style="text-align:center; color:red;">Lỗi kết nối Server!</div>';
+    if (grid)
+      grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;">Lỗi kết nối Server</div>`;
+  } finally {
+    state.isLoading = false;
   }
 }
 
-function createProductHTML(p) {
-  const imgUrl =
-    p.imageUrl || "https://cdn-icons-png.flaticon.com/512/2748/2748558.png";
-  const priceFormatted = new Intl.NumberFormat("vi-VN", {
-    style: "currency",
-    currency: "VND",
-  }).format(p.price || 0);
+// ... (Các hàm renderGrid, renderStars, fetchCategories, setupEvents... GIỮ NGUYÊN NHƯ CŨ) ...
+// (Bro chỉ cần copy phần setupEvents, renderGrid... từ code cũ vào dưới đây là được)
 
-  let discountBadge = "";
-  if (p.originalPrice && p.originalPrice > p.price) {
-    const percent = Math.round(
-      ((p.originalPrice - p.price) / p.originalPrice) * 100
-    );
-    discountBadge = `
-            <div style="position:absolute; top:0; right:0; background-color: rgba(255,212,36,.95); width:40px; height:36px; text-align:center; padding-top:4px; font-weight:700; font-size:0.75rem; z-index:2;">
-                <span style="color:#ee4d2d;">${percent}%</span>
-                <div style="color:white; text-transform:uppercase; font-size:0.6rem;">GIẢM</div>
-                <div style="position:absolute; bottom:-4px; left:0; border-width:0 20px 4px; border-style:solid; border-color:transparent rgba(255,212,36,.95); width:0;"></div>
-            </div>`;
+function renderGrid(products) {
+  const grid = document.getElementById("productGrid");
+  if (!grid) return;
+  if (products.length === 0) {
+    grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:50px;color:#666;"><i class="fa-solid fa-box-open" style="font-size:3rem; color:#e5e7eb; margin-bottom:10px;"></i><br>Không tìm thấy sản phẩm nào</div>`;
+    return;
   }
 
-  const rating = p.ratingAvg || 0;
-  const starsHTML = renderStars(rating);
-  const soldCount = "88";
+  grid.innerHTML = products
+    .map((p) => {
+      const img =
+        p.imageUrl || "https://cdn-icons-png.flaticon.com/512/2748/2748558.png";
+      const price = new Intl.NumberFormat("vi-VN", {
+        style: "currency",
+        currency: "VND",
+      }).format(p.price);
 
-  return `
-        <div class="product-card" onclick="window.location.href='../product-detail/index.html?id=${p.productId}'">
-            ${discountBadge}
-            <div class="p-img">
-                <img src="${imgUrl}" alt="${p.productName}" loading="lazy">
-            </div>
-            <div class="p-info">
-                <div class="p-name" title="${p.productName}">${p.productName}</div>
-                <div style="margin-top:auto;">
-                    <span style="color:#ee4d2d; font-size:1.1rem; font-weight:600;">${priceFormatted}</span>
-                </div>
-                <div class="p-meta">
-                    <div class="p-rating">${starsHTML}</div>
-                    <div class="p-sold">Đã bán ${soldCount}</div>
-                </div>
-            </div>
+      let badge = "";
+      let originalPriceHTML = "";
+      if (p.originalPrice && p.originalPrice > p.price) {
+        const percent = Math.round(
+          ((p.originalPrice - p.price) / p.originalPrice) * 100
+        );
+        badge = `<div class="discount-badge"><span>${percent}%</span><span class="discount-text">GIẢM</span></div>`;
+        const origin = new Intl.NumberFormat("vi-VN", {
+          style: "currency",
+          currency: "VND",
+        }).format(p.originalPrice);
+        originalPriceHTML = `<div class="p-origin-price">${origin}</div>`;
+      }
+
+      const starsHTML = renderStars(p.ratingAvg || 0);
+      const salesText = p.totalSales > 0 ? `Đã bán ${p.totalSales}` : "";
+
+      return `
+      <div class="product-card" onclick="window.location.href='../product-detail/index.html?id=${p.productId}'">
+        ${badge}
+        <div class="p-img"><img src="${img}" loading="lazy" alt="${p.productName}"></div>
+        <div class="p-info">
+          <div class="p-name" title="${p.productName}">${p.productName}</div>
+          <div class="p-meta-price"><div class="p-price">${price}</div>${originalPriceHTML}</div>
+          <div class="p-meta-bottom"><div class="p-rating">${starsHTML}</div><div class="p-sold">${salesText}</div></div>
         </div>
-    `;
+      </div>`;
+    })
+    .join("");
 }
 
 function renderStars(rating) {
@@ -169,117 +162,137 @@ function renderStars(rating) {
   return html;
 }
 
-function renderPagination() {
-  const el = document.getElementById("pagination");
-  if (!el) return;
-  if (currentFilter.totalPages <= 1) {
-    el.innerHTML = "";
-    return;
-  }
+async function fetchCategories() {
+  const listEl = document.getElementById("catFilterList");
+  if (!listEl) return;
+  try {
+    const res = await callAPI("/categories", "GET");
+    let cats = [];
+    if (res && res.success)
+      cats = Array.isArray(res.data) ? res.data : res.data.listData || [];
 
-  let html = "";
-  const curr = currentFilter.page;
-  const total = currentFilter.totalPages;
-
-  html += `<div class="page-btn ${
-    curr === 0 ? "disabled" : ""
-  }" onclick="gotoPage(${
-    curr - 1
-  })"><i class="fa-solid fa-chevron-left"></i></div>`;
-  let start = Math.max(0, curr - 2);
-  let end = Math.min(total - 1, curr + 2);
-  if (start > 0) {
-    html += `<div class="page-btn" onclick="gotoPage(0)">1</div>`;
-    if (start > 1) html += `<div class="page-dots">...</div>`;
+    if (cats.length === 0) listEl.innerHTML = `<li class="cat-item">Trống</li>`;
+    else {
+      let html = `<li class="cat-item ${
+        !state.categoryId ? "active" : ""
+      }" onclick="filterByCat(null, this)"><i class="fa-solid fa-circle-notch"></i> Tất cả</li>`;
+      html += cats
+        .map(
+          (c) =>
+            `<li class="cat-item ${
+              state.categoryId == (c.categoryId || c.id) ? "active" : ""
+            }" onclick="filterByCat('${
+              c.categoryId || c.id
+            }', this)"><i class="fa-solid fa-caret-right"></i> ${
+              c.categoryName || c.name
+            }</li>`
+        )
+        .join("");
+      listEl.innerHTML = html;
+    }
+  } catch (e) {
+    listEl.innerHTML = "<li>Lỗi tải</li>";
   }
-  for (let i = start; i <= end; i++) {
-    html += `<div class="page-btn ${
-      i === curr ? "active" : ""
-    }" onclick="gotoPage(${i})">${i + 1}</div>`;
-  }
-  if (end < total - 1) {
-    if (end < total - 2) html += `<div class="page-dots">...</div>`;
-    html += `<div class="page-btn" onclick="gotoPage(${
-      total - 1
-    })">${total}</div>`;
-  }
-  html += `<div class="page-btn ${
-    curr >= total - 1 ? "disabled" : ""
-  }" onclick="gotoPage(${
-    curr + 1
-  })"><i class="fa-solid fa-chevron-right"></i></div>`;
-  el.innerHTML = html;
-}
-
-window.gotoPage = (page) => {
-  if (
-    page < 0 ||
-    page >= currentFilter.totalPages ||
-    page === currentFilter.page
-  )
-    return;
-  currentFilter.page = page;
-  window.scrollTo({ top: 0, behavior: "smooth" });
-  fetchProducts();
-};
-
-function renderSidebarCategories() {
-  const list = document.getElementById("catFilterList");
-  if (!list) return;
-  let html = `<li class="cat-item ${
-    !currentFilter.categoryId ? "active" : ""
-  }" onclick="changeCategory(null, this)"><i class="fa-solid fa-border-all"></i> Tất cả</li>`;
-  html += categoriesData
-    .map(
-      (c) =>
-        `<li class="cat-item ${
-          currentFilter.categoryId === c.id ? "active" : ""
-        }" onclick="changeCategory('${
-          c.id
-        }', this)"><i class="fa-solid fa-caret-right"></i> ${c.name}</li>`
-    )
-    .join("");
-  html += `<li class="cat-item ${
-    currentFilter.categoryId === "other" ? "active" : ""
-  }" onclick="changeCategory('other', this)"><i class="fa-solid fa-ellipsis"></i> Khác</li>`;
-  list.innerHTML = html;
 }
 
 function setupEvents() {
-  const navSearch = document.getElementById("navbarSearchInput");
-  const sidebarSearch = document.getElementById("sidebarSearch");
-  const doSearch = (val) => {
-    currentFilter.keyword = val.trim();
-    currentFilter.page = 0;
+  const navSearch = document.getElementById("navSearch");
+  const navSearchBtn = document.getElementById("navSearchBtn");
+  const doSearch = () => {
+    if (!navSearch) return;
+    state.productName = navSearch.value.trim();
+    state.page = 0;
+    const title = document.getElementById("pageTitle");
+    if (title)
+      title.innerText = state.productName
+        ? `Tìm: "${state.productName}"`
+        : "Tất cả sản phẩm";
     fetchProducts();
   };
-  if (navSearch)
-    navSearch.onkeypress = (e) => {
-      if (e.key === "Enter") doSearch(navSearch.value);
-    };
-  if (sidebarSearch)
-    sidebarSearch.oninput = (e) => {
-      clearTimeout(window.searchTimeout);
-      window.searchTimeout = setTimeout(() => doSearch(e.target.value), 500);
-    };
+  if (navSearch) {
+    navSearch.addEventListener("keyup", (e) => {
+      if (e.key === "Enter") doSearch();
+    });
+  }
+  if (navSearchBtn) {
+    navSearchBtn.onclick = doSearch;
+  }
+  const sortSelect = document.querySelector(".ph-sort select");
+  if (sortSelect) {
+    sortSelect.addEventListener("change", (e) => {
+      const val = e.target.value;
+      if (val === "Mới nhất") state.sort = "productId,desc";
+      else if (val === "Giá tăng dần") state.sort = "price,asc";
+      else if (val === "Giá giảm dần") state.sort = "price,desc";
+      state.page = 0;
+      fetchProducts();
+    });
+  }
 }
 
-window.changeCategory = (catId, element) => {
+window.filterByCat = (catId, el) => {
   document
     .querySelectorAll(".cat-item")
-    .forEach((el) => el.classList.remove("active"));
-  element.classList.add("active");
-  currentFilter.categoryId = catId;
-  currentFilter.page = 0;
+    .forEach((i) => i.classList.remove("active"));
+  el.classList.add("active");
+  state.categoryId = catId;
+  state.page = 0;
+  state.productName = "";
+  const navSearch = document.getElementById("navSearch");
+  if (navSearch) navSearch.value = "";
+  document.getElementById("pageTitle").innerText = el.innerText.trim();
   fetchProducts();
-  // [FIX] Nếu đang ở mobile thì tự đóng sidebar khi chọn xong
-  if (window.innerWidth < 992) window.toggleSidebar();
+  if (window.innerWidth < 992) toggleSidebar();
 };
 
-// [FIX] Hàm bật tắt Sidebar Mobile
+window.changePage = (page) => {
+  if (page < 0) return;
+  state.page = page;
+  fetchProducts();
+  const content = document.querySelector(".product-content");
+  if (content) content.scrollIntoView({ behavior: "smooth" });
+};
+
 window.toggleSidebar = () => {
   const sidebar = document.getElementById("mainSidebar");
   const overlay = document.getElementById("sidebarOverlay");
   if (sidebar) sidebar.classList.toggle("active");
   if (overlay) overlay.classList.toggle("active");
+  if (sidebar && sidebar.classList.contains("active"))
+    document.body.style.overflow = "hidden";
+  else document.body.style.overflow = "";
 };
+
+function renderPagination(totalPages) {
+  const container = document.getElementById("pagination");
+  if (!container) return;
+  if (totalPages <= 1) {
+    container.innerHTML = "";
+    return;
+  }
+  let html = "";
+  html += `<div class="page-btn ${
+    state.page === 0 ? "disabled" : ""
+  }" onclick="changePage(${
+    state.page - 1
+  })"><i class="fa-solid fa-chevron-left"></i></div>`;
+  for (let i = 0; i < totalPages; i++) {
+    if (
+      i === 0 ||
+      i === totalPages - 1 ||
+      (i >= state.page - 1 && i <= state.page + 1)
+    ) {
+      html += `<div class="page-btn ${
+        i === state.page ? "active" : ""
+      }" onclick="changePage(${i})">${i + 1}</div>`;
+    } else if (i === state.page - 2 || i === state.page + 2) {
+      html += `<div class="page-dots">...</div>`;
+    }
+  }
+  html += `<div class="page-btn ${
+    state.page === totalPages - 1 ? "disabled" : ""
+  }" onclick="changePage(${
+    state.page + 1
+  })"><i class="fa-solid fa-chevron-right"></i></div>`;
+  container.innerHTML = html;
+}

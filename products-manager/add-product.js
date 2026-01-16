@@ -1,225 +1,236 @@
-import { showDialog } from "/dialog/index.js";
+import { callAPI } from "/lib/api.js";
 import { getLoader } from "/lib/public.js";
-import { fetchCategories, fetchBrands, fetchAttributes, createProduct } from "/products-manager/services.js";
+import { showDialog } from "/dialog/index.js";
+import { loadNavbar } from "/navbar/navbar.js"; // Import Navbar
 
-// DOM Elements
-const productName = document.getElementById("productName");
-const description = document.getElementById("description");
-const originalPrice = document.getElementById("originalPrice");
-const price = document.getElementById("price");
-const stock = document.getElementById("stock"); // Add Stock
-const categoryId = document.getElementById("categoryId");
-const brandId = document.getElementById("brandId");
+// --- STATE ---
+let attributes = [];
+let categories = [];
+let brands = [];
+let sourceAttributes = []; // Global source attributes to keep sync
+let selectedAttributeRows = []; // State for UI rows
 
-// Main Image Elements
-const mainImageInput = document.getElementById("mainImageInput");
-const mainImagePreview = document.getElementById("mainImagePreview");
-const mainImagePlaceholder = document.getElementById("mainImagePlaceholder");
-
+const variantsTableBody = document.getElementById("variantsTableBody");
 const attributesSection = document.getElementById("attributesSection");
-const btnAddAttribute = document.getElementById("btnAddAttribute");
-const variantsTableBody = document.querySelector("#variantsTable tbody");
-const btnSave = document.getElementById("btnSave");
-const btnCancel = document.getElementById("btnCancel");
 
-// State
-let attributes = []; // { id: timestamp, attributeId: "...", name: "Color", values: [] }
-let availableAttributes = []; // Fetched from API
+// --- INIT ---
+export async function initAddProduct() {
+    console.log("initAddProduct called");
 
-export function initAddProduct() {
-    console.log("add-product.js: initAddProduct called");
-    btnAddAttribute.addEventListener("click", addNewAttribute);
-    btnSave.addEventListener("click", saveProduct);
-    btnCancel.addEventListener("click", resetAddForm);
+    // 1. Load Navbar
+    await loadNavbar({ centerHTML: "" }); // Optional center content
 
-    // Main Image Preview
-    mainImageInput.addEventListener("change", (e) => {
+    // 2. Load Data (Sequential to avoid Refresh Token Race Condition)
+    await fetchAttributes();
+    await fetchCategories();
+    await fetchBrands();
+
+    // 3. Setup Events
+    setupEvents();
+}
+
+// --- FETCH DATA ---
+function getListData(res) {
+    if (!res) return [];
+    if (Array.isArray(res.data)) return res.data;
+    if (res.data && Array.isArray(res.data.listData)) return res.data.listData;
+    if (Array.isArray(res)) return res;
+    return [];
+}
+
+async function fetchAttributes() {
+    try {
+        const res = await callAPI("/attributes", "GET");
+        const list = getListData(res);
+        sourceAttributes = list;
+        // Note: we don't init 'attributes' state here anymore, it's dynamic
+    } catch (e) {
+        console.error("Error fetching attributes", e);
+    }
+}
+
+async function fetchCategories() {
+    try {
+        const res = await callAPI("/categories", "GET");
+        categories = getListData(res);
+
+        const sel = document.getElementById("categoryId");
+        sel.innerHTML = '<option value="">-- Chọn --</option>';
+
+        categories.forEach(c => {
+            const opt = document.createElement("option");
+            opt.value = c.categoryId;
+            opt.textContent = c.categoryName;
+            sel.appendChild(opt);
+        });
+    } catch (e) {
+        console.error("Error fetching categories", e);
+    }
+}
+
+async function fetchBrands() {
+    try {
+        const res = await callAPI("/brands", "GET");
+        brands = getListData(res);
+
+        const sel = document.getElementById("brandId");
+        sel.innerHTML = '<option value="">-- Chọn --</option>';
+
+        brands.forEach(b => {
+            const opt = document.createElement("option");
+            opt.value = b.brandId;
+            opt.textContent = b.brandName;
+            sel.appendChild(opt);
+        });
+    } catch (e) {
+        console.error("Error fetching brands", e);
+    }
+}
+
+// --- EVENTS ---
+function setupEvents() {
+    // Add Attribute Group
+    document.getElementById("btnAddAttribute").onclick = () => {
+        addAttribute();
+    };
+
+    // Main Image Upload
+    const mainImgArea = document.getElementById("mainImageArea");
+    const mainImgInput = document.getElementById("mainImageInput");
+    const mainImgPrev = document.getElementById("mainImagePreview");
+    const mainImgPlace = document.getElementById("mainImagePlaceholder");
+
+    mainImgArea.onclick = () => mainImgInput.click();
+
+    mainImgInput.onchange = (e) => {
         const file = e.target.files[0];
         if (file) {
-            mainImagePreview.src = URL.createObjectURL(file);
-            mainImagePreview.style.display = "block";
-            mainImagePlaceholder.style.display = "none";
+            mainImgPrev.src = URL.createObjectURL(file);
+            mainImgPrev.style.display = "block";
+            mainImgPlace.style.display = "none";
         }
-    });
+    };
 
-    // Load metadata (Categories, Brands, Attributes)
-    loadMetadata();
+    // Save
+    document.getElementById("btnSave").onclick = saveProduct;
+
+    // Cancel
+    document.getElementById("btnCancel").onclick = () => {
+        if (confirm("Hủy bỏ và làm mới?")) {
+            window.location.reload();
+        }
+    };
 }
 
-export function resetAddForm() {
-    productName.value = "";
-    description.value = "";
-    originalPrice.value = "";
-    price.value = "";
-    categoryId.value = "";
-    brandId.value = "";
-
-    // Reset Main Image
-    mainImageInput.value = "";
-    mainImagePreview.src = "";
-    mainImagePreview.style.display = "none";
-    mainImagePlaceholder.style.display = "block";
-
-    attributes = [];
-    renderAttributes();
-    variantsTableBody.innerHTML = "";
-}
-
-async function loadMetadata() {
-    // Load Categories
-    const catRes = await fetchCategories();
-    if (catRes.success && catRes.data) {
-        let html = '<option value="">-- Chọn danh mục --</option>';
-        catRes.data.listData.forEach(c => {
-            html += `<option value="${c.categoryId}">${c.categoryName}</option>`;
-        });
-        categoryId.innerHTML = html;
-    }
-
-    // Load Brands
-    const brandRes = await fetchBrands();
-    if (brandRes.success && brandRes.data) {
-        let html = '<option value="">-- Chọn thương hiệu --</option>';
-        brandRes.data.listData.forEach(b => {
-            html += `<option value="${b.brandId}">${b.brandName}</option>`;
-        });
-        brandId.innerHTML = html;
-    }
-
-    // Load Attributes
-    const attrRes = await fetchAttributes();
-    if (attrRes.success && attrRes.data) {
-        availableAttributes = attrRes.data.listData;
-    }
-}
-
-// === ATTRIBUTE HANDLING ===
-function addNewAttribute() {
-    const id = Date.now();
-    attributes.push({ id, attributeId: "", name: "", values: [] });
+// --- ATTRIBUTE LOGIC ---
+function addAttribute() {
+    const id = Date.now() + Math.random();
+    selectedAttributeRows.push({ id: id, attributeId: "", values: [] });
     renderAttributes();
 }
 
 function removeAttribute(id) {
-    attributes = attributes.filter(a => a.id !== id);
+    selectedAttributeRows = selectedAttributeRows.filter(r => r.id !== id);
     renderAttributes();
     generateVariants();
 }
 
-function updateAttributeSelection(id, attrId) {
-    const attr = attributes.find(a => a.id === id);
-    const selected = availableAttributes.find(a => a.attributeId === attrId);
-
-    if (attr && selected) {
-        attr.attributeId = selected.attributeId;
-        attr.name = selected.attributeName;
-        // Optionally: if the attribute has pre-defined values in API, we could load them.
-        // But the user's data structure implies values are simple strings added here.
-        // Checking "Add Product" JSON, "attributeValues": [{"attributeValueName": "X"}]
-        // So we keep the tag input.
-    }
-}
-
-function addAttributeValue(id, valueName) {
-    const attr = attributes.find(a => a.id === id);
-    if (attr && valueName.trim()) {
-        if (!attr.values.includes(valueName.trim())) {
-            attr.values.push(valueName.trim());
-            renderAttributes(); // re-render to show tag
-            generateVariants(); // regenerate table
-        }
-    }
-}
-
-function removeAttributeValue(id, valueName) {
-    const attr = attributes.find(a => a.id === id);
-    if (attr) {
-        attr.values = attr.values.filter(v => v !== valueName);
-        renderAttributes();
-        generateVariants();
-    }
-}
-
 function renderAttributes() {
     attributesSection.innerHTML = "";
-    attributes.forEach(attr => {
-        const el = document.createElement("div");
-        el.className = "attribute-item";
 
-        // Build Options for Select
+    selectedAttributeRows.forEach(row => {
+        const el = document.createElement("div");
+        el.className = "pm-attribute-box"; // V3 Class
+
+        // Options
         let optionsHtml = '<option value="">-- Chọn thuộc tính --</option>';
-        availableAttributes.forEach(a => {
-            // Disable if already selected by another row (optional, skipped for simplicity)
-            const selected = (a.attributeId === attr.attributeId) ? "selected" : "";
-            optionsHtml += `<option value="${a.attributeId}" ${selected}>${a.attributeName}</option>`;
+        sourceAttributes.forEach(src => {
+            const isUsed = selectedAttributeRows.some(r => r.attributeId == src.attributeId && r.id !== row.id);
+            if (!isUsed) {
+                const selected = (src.attributeId == row.attributeId) ? "selected" : "";
+                optionsHtml += `<option value="${src.attributeId}" ${selected}>${src.attributeName}</option>`;
+            }
         });
 
+        // V3 Structure
         el.innerHTML = `
-            <div class="attribute-header">
-                <select class="attr-select" style="width: 200px; padding: 6px; border:1px solid #ddd; border-radius:4px;">
+            <div class="pm-attribute-header">
+                <select class="pm-input pm-select attr-select" style="max-width: 250px;">
                     ${optionsHtml}
                 </select>
-                <button class="remove-attr-btn"><i class="fa-solid fa-trash"></i></button>
+                <div class="pm-remove-attr-btn"><i class="fa-solid fa-trash"></i></div>
             </div>
-            <div class="tags-input-container">
-                ${attr.values.map(v => `
-                    <div class="tag">
+            <div class="pm-tags-container">
+                ${row.values.map(v => `
+                    <div class="pm-tag">
                         ${v} <i class="fa-solid fa-xmark remove-tag-btn" data-val="${v}"></i>
                     </div>
                 `).join("")}
-                <input type="text" class="tags-input" placeholder="+ Thêm giá trị (Enter)">
+                <input type="text" class="pm-tags-input" placeholder="+ Thêm giá trị (Enter)">
             </div>
         `;
 
         // Events
         const select = el.querySelector(".attr-select");
-        select.addEventListener("change", (e) => updateAttributeSelection(attr.id, e.target.value));
+        select.addEventListener("change", (e) => {
+            row.attributeId = e.target.value;
+            row.values = [];
+            renderAttributes();
+            generateVariants();
+        });
 
-        el.querySelector(".remove-attr-btn").onclick = () => removeAttribute(attr.id);
+        el.querySelector(".pm-remove-attr-btn").onclick = () => removeAttribute(row.id);
 
-        const tagInput = el.querySelector(".tags-input");
+        const tagInput = el.querySelector(".pm-tags-input");
         tagInput.addEventListener("keydown", (e) => {
             if (e.key === "Enter") {
                 e.preventDefault();
-
-                // VALIDATION: Check if attribute name is selected
-                if (!attr.attributeId) {
-                    showDialog("error", "Vui lòng chọn tên thuộc tính trước khi nhập giá trị!");
+                if (!row.attributeId) {
+                    showDialog("error", "Vui lòng chọn thuộc tính!");
                     return;
                 }
-
-                addAttributeValue(attr.id, tagInput.value);
-                tagInput.value = "";
-                tagInput.focus();
+                const val = tagInput.value.trim();
+                if (val && !row.values.includes(val)) {
+                    row.values.push(val);
+                    renderAttributes();
+                    generateVariants();
+                }
             }
         });
 
         el.querySelectorAll(".remove-tag-btn").forEach(btn => {
-            btn.onclick = () => removeAttributeValue(attr.id, btn.dataset.val);
+            btn.onclick = () => {
+                row.values = row.values.filter(v => v !== btn.dataset.val);
+                renderAttributes();
+                generateVariants();
+            };
         });
 
         attributesSection.appendChild(el);
     });
 }
 
-// === VARIANT GENERATION ===
 function generateVariants() {
-    // Cartesian product
-    const validAttributes = attributes.filter(a => a.attributeId && a.values.length > 0);
+    const validRows = selectedAttributeRows.filter(r => r.attributeId && r.values.length > 0);
 
-    if (validAttributes.length === 0) {
-        variantsTableBody.innerHTML = "<tr><td colspan='6' style='text-align:center; color:#888;'>Chọn thuộc tính và thêm giá trị để tạo biến thể</td></tr>";
+    if (validRows.length === 0) {
+        variantsTableBody.innerHTML = "";
+        document.getElementById("variantsEmptyState").style.display = "block";
         return;
     }
+    document.getElementById("variantsEmptyState").style.display = "none";
 
     let combinations = [{}];
-    validAttributes.forEach(attr => {
+    validRows.forEach(row => {
+        const src = sourceAttributes.find(s => s.attributeId == row.attributeId);
+        const attrName = src ? src.attributeName : "Unknown";
+
         const next = [];
         combinations.forEach(existing => {
-            attr.values.forEach(val => {
+            row.values.forEach(val => {
                 next.push({
                     ...existing,
-                    [attr.name]: { valName: val, attrId: attr.attributeId }
+                    [attrName]: { valName: val, attrId: row.attributeId }
                 });
             });
         });
@@ -227,158 +238,232 @@ function generateVariants() {
     });
 
     variantsTableBody.innerHTML = "";
+    const basePrice = document.getElementById("price").value || 0;
+    const baseOriginal = document.getElementById("originalPrice").value || 0;
 
-    const basePrice = price.value || 0;
-    const baseOriginal = originalPrice.value || 0;
-
-    combinations.forEach((combo) => {
-        // combo = { "Color": { valName: "Red", attrId: "123" }, "Size": ... }
+    combinations.forEach((combo, index) => {
         const name = Object.keys(combo).map(k => `${k}: ${combo[k].valName}`).join(" - ");
 
         const tr = document.createElement("tr");
-        tr.innerHTML = `
-            <td>
-                <div class="image-upload-box" style="width: 50px; height: 50px; border: 1px dashed #ccc; display: flex; align-items: center; justify-content: center; overflow: hidden; position: relative; cursor: pointer;">
-                     <img src="" style="width: 100%; height: 100%; object-fit: cover; display: none;">
-                     <i class="fa-solid fa-image" style="color: #ccc;"></i>
-                     <input type="file" class="v-image-input" accept="image/*" style="opacity: 0; position: absolute; top:0; left:0; width:100%; height:100%; cursor: pointer;">
-                </div>
-            </td>
-            <td>${name}</td>
-            <td><input type="number" class="v-original" value="${baseOriginal}" style="width:100px;"></td>
-            <td><input type="number" class="v-price" value="${basePrice}" style="width:100px;"></td>
-            <td><input type="number" class="v-stock" value="0" style="width:80px;"></td>
-            <td><button class="remove-v-btn" style="color:red; border:none; background:none;"><i class="fa-solid fa-trash"></i></button></td>
-        `;
-
         tr.dataset.combo = JSON.stringify(combo);
 
-        // Image Preview Logic
+        tr.innerHTML = `
+            <td>
+                <img src="" class="pm-variant-img" style="display:none;">
+                <div class="pm-variant-img-placeholder" style="width:48px;height:48px;border:1px dashed #ccc;border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;">
+                    <i class="fa-solid fa-camera" style="color:#ccc;"></i>
+                </div>
+                <input type="file" class="v-image-input" accept="image/*" style="display:none;">
+            </td>
+            <td><strong style="color:#667eea;">${name}</strong></td>
+            <td><input type="number" class="pm-variant-input v-original" value="${baseOriginal}"></td>
+            <td><input type="number" class="pm-variant-input v-price" value="${basePrice}"></td>
+            <td><input type="number" class="pm-variant-input v-stock" value="0"></td>
+            <td>
+                <button type="button" class="remove-v-btn" style="color:#ef4444; border:none; background:none; cursor:pointer; font-size:16px;">
+                    <i class="fa-solid fa-trash-can"></i>
+                </button>
+            </td>
+        `;
+
+        // Variant Image Logic
         const imgInput = tr.querySelector(".v-image-input");
-        const imgPreview = tr.querySelector("img");
-        const icon = tr.querySelector("i");
+        const imgPreview = tr.querySelector(".pm-variant-img");
+        const imgPlaceholder = tr.querySelector(".pm-variant-img-placeholder");
+
+        // Click Trigger
+        imgPlaceholder.onclick = () => imgInput.click();
+        imgPreview.onclick = () => imgInput.click();
 
         imgInput.onchange = (e) => {
             const file = e.target.files[0];
             if (file) {
                 imgPreview.src = URL.createObjectURL(file);
                 imgPreview.style.display = "block";
-                icon.style.display = "none";
+                imgPlaceholder.style.display = "none";
             }
         };
 
         tr.querySelector(".remove-v-btn").onclick = () => {
             tr.remove();
+            updateMainStock(); // Update when variant removed
         };
+
+        // Update stock when variant stock changes
+        tr.querySelector(".v-stock").addEventListener("input", updateMainStock);
 
         variantsTableBody.appendChild(tr);
     });
+
+    // Update main stock after generating variants
+    updateMainStock();
 }
 
+// Auto-calculate main stock from all variants
+function updateMainStock() {
+    const allStockInputs = document.querySelectorAll(".v-stock");
+    let totalStock = 0;
 
-// === SAVE ===
+    allStockInputs.forEach(input => {
+        totalStock += parseInt(input.value) || 0;
+    });
+
+    const stockInput = document.getElementById("stock");
+    if (stockInput) {
+        stockInput.value = totalStock;
+    }
+}
+
+// REMOVED safeParseInt - IDs are UUID Strings!
+
 async function saveProduct() {
-    // Basic Validation
-    if (!productName.value.trim()) return showDialog("error", "Tên sản phẩm là bắt buộc");
-    if (!categoryId.value) return showDialog("error", "Vui lòng chọn danh mục");
-    if (!brandId.value) return showDialog("error", "Vui lòng chọn thương hiệu");
-
-    // FIX 1: Filter only valid attributes to avoid sending garbage
-    const validAttributes = attributes.filter(a => a.attributeId && a.values.length > 0);
-    const validAttributeDTOs = validAttributes.map(a => ({
-        attributeId: a.attributeId,
-        attributeName: a.name,
-        attributeValues: a.values.map(v => ({ attributeValueName: v }))
-    }));
-
-    const productDTO = {
-        productName: productName.value.trim(),
-        description: description.value.trim(),
-        originalPrice: parseFloat(originalPrice.value) || 0,
-        price: parseFloat(price.value) || 0,
-        stock: parseInt(stock.value) || 0,
-        categoryId: categoryId.value,
-        brandId: brandId.value,
-        // FIX 2: Send BOTH 'attributes' and 'variantValues' to satisfy Backend requirements
-        attributes: validAttributeDTOs,
-        variantValues: validAttributeDTOs,
-        variants: []
-    };
-
     const formData = new FormData();
 
-    // Append Main Image
-    if (mainImageInput.files[0]) {
-        formData.append('image', mainImageInput.files[0]);
-    } else {
-        // Optional: append empty blob if main image is strictly required by backend map
-        // formData.append('image', new Blob([], {type: 'application/octet-stream'}));
-    }
+    const productDTO = {
+        productDetailDTO: {
+            productName: document.getElementById("productName").value.trim(),
+            description: document.getElementById("description").value.trim(),
+            originalPrice: parseFloat(document.getElementById("originalPrice").value) || 0,
+            price: parseFloat(document.getElementById("price").value) || 0,
+            stock: parseInt(document.getElementById("stock").value) || 0,
+            categoryId: document.getElementById("categoryId").value,
+            brandId: document.getElementById("brandId").value,
+        },
+        attributes: [],
+        variants: [],
+        variantValues: [] // Ensure clean array
+    };
 
-    // Gather variants
+    // Attributes Payload
+    /*
+       Structure:
+       attributes: [
+          { attributeId: 1, attributeName: "Color", attributeValues: [{attributeValueName: "Red", attributeName: "Color"}, ...] }
+       ]
+    */
+    // Variants
     const rows = variantsTableBody.querySelectorAll("tr");
+
+    // Collections for building payload
+    const usedAttributesMap = new Map(); // Track unique attributes
+    const variantValuesArray = []; // VariantValueDTO mappings
+    const attributeValueIdsMap = new Map(); // Track attribute value IDs
 
     rows.forEach((tr, index) => {
         if (!tr.dataset.combo) return;
         const combo = JSON.parse(tr.dataset.combo);
+
         const vOriginal = parseFloat(tr.querySelector(".v-original").value) || 0;
         const vPrice = parseFloat(tr.querySelector(".v-price").value) || 0;
         const vStock = parseInt(tr.querySelector(".v-stock").value) || 0;
         const vImgInput = tr.querySelector(".v-image-input");
-        const file = vImgInput.files[0];
 
-        // FIX 3: Always generate a UNIQUE key for imageName
-        // "element cannot be mapped to a null key" -> implies we need a valid key even if no file
         const imgName = `variant-${index}-${Date.now()}`;
-
-        // FIX 4: Always append to FormData. If no file, append empty blob.
-        // This prevents backend 'toMap' value null errors.
-        if (file) {
-            // Use actual file. Filename is intrinsic.
-            formData.append(imgName, file);
+        // Handle variant image
+        if (vImgInput.files[0]) {
+            formData.append(imgName, vImgInput.files[0]);
         } else {
-            // Append empty blob BUT with an explicit unique filename.
-            // If backend maps by getOriginalFilename(), this prevents "null key" or "duplicate key".
-            formData.append(imgName, new Blob([], { type: 'application/octet-stream' }), imgName); // <--- Added filename
+            formData.append(imgName, new Blob([], { type: 'application/octet-stream' }));
         }
 
-        const variantAttrs = Object.keys(combo).map(key => ({
-            attributeId: combo[key].attrId,
-            attributeName: key,
-            attributeValueName: combo[key].valName
-        }));
+        // Generate unique variant ID
+        const variantId = `variant-${index}`;
 
+        // Process attribute values for this variant
+        Object.keys(combo).forEach(attrName => {
+            const attrId = combo[attrName].attrId;
+            const valName = combo[attrName].valName;
+
+            // Track attribute in root attributes list
+            if (!usedAttributesMap.has(attrId)) {
+                usedAttributesMap.set(attrId, {
+                    attributeId: attrId,
+                    attributeName: attrName
+                });
+            }
+
+            // Create unique attributeValueId
+            const attributeValueId = `${attrName}-${valName}`;
+
+            // Store for later reference
+            if (!attributeValueIdsMap.has(attributeValueId)) {
+                attributeValueIdsMap.set(attributeValueId, {
+                    attrId,
+                    attrName,
+                    valName
+                });
+            }
+
+            // Add to variantValues array (VariantValueDTO)
+            variantValuesArray.push({
+                attributeValueId: attributeValueId,
+                variantId: variantId
+            });
+        });
+
+        // Add variant WITHOUT attributeValues (VariantDTO doesn't have this field)
         productDTO.variants.push({
+            variantId: variantId,
             originalPrice: vOriginal,
             price: vPrice,
             stock: vStock,
-            imageName: imgName, // Never null
-            active: true,
-            attributeValues: variantAttrs
+            imageName: imgName,
+            active: true
         });
     });
 
-    // Log the DTO for debugging
-    console.log("Final ProductDTO:", productDTO);
-    // Log keys for debugging
-    for (var pair of formData.entries()) {
-        console.log(pair[0] + ', ' + pair[1]);
-    }
+    // Build root attributes array with attributeValues
+    productDTO.attributes = Array.from(usedAttributesMap.values()).map(attr => {
+        // Collect unique attribute values for this attribute
+        const valuesForThisAttr = [];
 
-    // Append JSON Blob with explicit filename "product.json"
-    // This prevents "element cannot be mapped to a null key" if backend maps ALL parts by filename.
-    formData.append('productDTO', new Blob([JSON.stringify(productDTO)], { type: 'application/json' }), 'product.json');
+        // Iterate through attributeValueIdsMap to find values belonging to this attribute
+        attributeValueIdsMap.forEach((valueInfo, attributeValueId) => {
+            if (valueInfo.attrId === attr.attributeId) {
+                valuesForThisAttr.push({
+                    attributeValueId: attributeValueId,
+                    attributeValueName: valueInfo.valName
+                });
+            }
+        });
 
-    // Send
-    await getLoader("btnSave", async () => {
-        const res = await createProduct(formData); // true for isMultipart
-
-        if (res.success) {
-            await showDialog("success", "Thêm sản phẩm thành công!");
-            resetAddForm();
-        } else {
-            console.error("Server Error:", res);
-            await showDialog("error", res.message || "Có lỗi xảy ra");
-        }
+        return {
+            attributeId: attr.attributeId,
+            attributeName: attr.attributeName,
+            attributeValues: valuesForThisAttr
+        };
     });
+
+    // Assign variantValues
+    productDTO.variantValues = variantValuesArray;
+
+
+
+    // Main Image
+    const mainFile = document.getElementById("mainImageInput").files[0];
+    if (mainFile) formData.append("productImage", mainFile);
+
+    // Debug Payload
+    console.log("Saving Product DTO:", JSON.stringify(productDTO, null, 2));
+
+    // Revert key to 'productDTO' and add filename + content-type
+    formData.append("productDTO", new Blob([JSON.stringify(productDTO)], { type: "application/json" }), "product.json");
+
+    try {
+        // FIX: Must pass `true` for isMultipart argument
+        const res = await callAPI('/admin/products', 'POST', formData, true);
+        if (res.success) {
+            showDialog("success", "Thêm sản phẩm thành công!");
+            setTimeout(() => window.location.reload(), 1500);
+        } else {
+            console.error("API Error Data:", res.data); // Log detailed validation errors
+            showDialog("error", res.message || "Lỗi khi lưu sản phẩm");
+        }
+    } catch (e) {
+        console.error("Exception:", e);
+        showDialog("error", "Lỗi kết nối server");
+    } finally {
+        isSubmitting = false;
+        hideLoader();
+    }
 }

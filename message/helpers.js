@@ -1,4 +1,5 @@
 import { convertToVNTime } from "../lib/public.js";
+import {callAPI} from "/lib/api.js";
 
 export function formatTime(isoString) {
     try {
@@ -9,15 +10,18 @@ export function formatTime(isoString) {
     }
 }
 
-export function customLoadPage(callback) {
+export async function customLoadPage(callback) {
     window.addEventListener('DOMContentLoaded', async () => {
         const loadPageDiv = document.getElementById('loadPage');
         if (loadPageDiv) loadPageDiv.style.display = 'none';
         
         const infoDiv = document.getElementById('info');
         if (infoDiv) infoDiv.style.display = 'block';
+
+        const result = await callAPI("/room-chat");
+        const roomChat = result.data.listData;
         
-        if (callback) await callback();
+        if (callback) await callback(roomChat);
     });
 }
 
