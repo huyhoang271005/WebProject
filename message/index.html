@@ -1,56 +1,43 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hệ thống Chat</title>
-    <link rel="stylesheet" href="/lib/public.css">
-    <link rel="stylesheet" href="/message/index.css">
-    <script src="https://kit.fontawesome.com/e9c281dd3f.js" crossorigin="anonymous"></script>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>Chat App - Responsive</title>
+    <link rel="stylesheet" href="/message/index.css" />
 </head>
 <body>
 
-    <div id="loadPage"></div>
-
-    <div id="info">
-        <div class="card chat-layout">
-            
-            <div class="sidebar">
-                <div class="sidebar-header">
-                    <h2>Tin nhắn</h2>
-                </div>
-                
-                <div class="search-wrapper">
-                    <input type="text" placeholder="Tìm khách hàng..." />   
-                </div>
-
-                <div class="user-list" id="user-list">
-                    </div>
-            </div>
-
-            <div class="chat-main">
-                <div class="chat-header">
-                    <div class="chat-target">
-                        <div class="avatar-small">?</div>
-                        <div class="target-info">
-                            <h3>Đang tải...</h3>
-                            <span class="status-online">...</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div id="message-list" class="message-container">
-                    </div>
-
-                <div class="chat-input-area">
-                    <button class="btn-att"><i class="fa-solid fa-paperclip"></i></button>
-                    <input type="text" id="msg-content" placeholder="Nhập tin nhắn tư vấn..." autocomplete="off">
-                    <button id="btn-send"><i class="fa-solid fa-paper-plane"></i></button>
-                </div>
-            </div>
-        </div>
+<div class="chat-container" id="chatContainer">
+    <div class="room-list" id="roomList">
     </div>
 
-    <script type="module" src="index.js"></script>
+    <div class="chat-content">
+
+        <div id="chatHeader" class="chat-header hidden">
+            <button id="backBtn" class="back-btn">←</button>
+            <div class="chat-user">
+                <img id="chatAvatar" class="chat-avatar" src="" alt="" />
+                <span id="chatUsername" class="chat-username"></span>
+            </div>
+        </div>
+
+        <div id="chatMessages" class="chat-messages hidden">
+        </div>
+
+        <div id="chatInput" class="chat-input hidden">
+            <input type="text" placeholder="Nhập tin nhắn..." id="messageInput"/>
+            <button id="sendBtn">➤</button>
+        </div>
+
+        <div id="chatEmpty" class="chat-empty">
+            <div class="chat-empty-icon">💬</div>
+            <p>Chọn một cuộc trò chuyện để bắt đầu</p>
+        </div>
+
+    </div>
+</div>
+
+<script src="/message/index.js" type="module"></script>
 </body>
 </html>
