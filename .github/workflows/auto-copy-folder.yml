@@ -4,6 +4,7 @@ on:
   push:
     branches-ignore:
       - main
+      - tung
 
 permissions:
   contents: write
@@ -30,8 +31,8 @@ jobs:
             echo "folders=orders contact checkout product-detail payment" >> $GITHUB_OUTPUT
           elif [ "$BRANCH" = "nhat" ]; then
             echo "folders=products-manager feedback" >> $GITHUB_OUTPUT
-          elif [ "$BRANCH" = "tung" ]; then
-            echo "folders=session home navbar products notification" >> $GITHUB_OUTPUT
+#          elif [ "$BRANCH" = "tung" ]; then
+#            echo "folders=session home navbar products notification" >> $GITHUB_OUTPUT
           elif [ "$BRANCH" = "thanh" ]; then
             echo "folders= catalog-management cart order-manager" >> $GITHUB_OUTPUT
           else
