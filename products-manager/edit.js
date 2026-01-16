@@ -238,14 +238,22 @@ function loadVariants(productDTO) {
         const tr = document.createElement("tr");
         tr.dataset.variantId = variant.variantId;
 
-        // Image HTML với error handling
-        const imageHTML = variant.imageUrl
-            ? `<img src="${variant.imageUrl}" alt="Variant" style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px;"
-                    onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-               <div style="width: 50px; height: 50px; background: #f3f4f6; border-radius: 4px; display: none; align-items: center; justify-content: center;">
-                   <i class="fa-solid fa-image" style="color: #9ca3af;"></i>
-               </div>`
-            : '<div style="width: 50px; height: 50px; background: #f3f4f6; border-radius: 4px; display: flex; align-items: center; justify-content: center;"><i class="fa-solid fa-image" style="color: #9ca3af;"></i></div>';
+        // Image HTML với input file để upload ảnh mới
+        const imageHTML = `
+            <div style="position: relative; width: 50px; height: 50px;">
+                ${variant.imageUrl
+                ? `<img src="${variant.imageUrl}" class="variant-img-${variant.variantId}" alt="Variant" style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px;"
+                            onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                       <div style="width: 50px; height: 50px; background: #f3f4f6; border-radius: 4px; display: none; align-items: center; justify-content: center;">
+                           <i class="fa-solid fa-image" style="color: #9ca3af;"></i>
+                       </div>`
+                : `<div class="variant-img-${variant.variantId}" style="width: 50px; height: 50px; background: #f3f4f6; border-radius: 4px; display: flex; align-items: center; justify-content: center;"><i class="fa-solid fa-image" style="color: #9ca3af;"></i></div>`
+            }
+                <input type="file" class="variant-file-input" data-variant-id="${variant.variantId}" accept="image/*" 
+                       style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer;" 
+                       title="Click để thay đổi ảnh">
+            </div>
+        `;
 
         tr.innerHTML = `
             <td>${imageHTML}</td>
@@ -263,6 +271,37 @@ function loadVariants(productDTO) {
                 </button>
             </td>
         `;
+
+        // Event listener cho input file upload ảnh
+        const fileInput = tr.querySelector('.variant-file-input');
+        if (fileInput) {
+            fileInput.addEventListener('change', function (e) {
+                const file = e.target.files[0];
+                if (file) {
+                    const variantId = this.dataset.variantId;
+                    const imgElement = document.querySelector(`.variant-img-${variantId}`);
+
+                    // Preview ảnh mới
+                    const reader = new FileReader();
+                    reader.onload = function (event) {
+                        if (imgElement.tagName === 'IMG') {
+                            imgElement.src = event.target.result;
+                            imgElement.style.display = 'block';
+                        } else {
+                            // Thay div bằng img
+                            const newImg = document.createElement('img');
+                            newImg.className = `variant-img-${variantId}`;
+                            newImg.src = event.target.result;
+                            newImg.style.cssText = 'width: 50px; height: 50px; object-fit: cover; border-radius: 4px;';
+                            imgElement.replaceWith(newImg);
+                        }
+                    };
+                    reader.readAsDataURL(file);
+
+                    console.log('Ảnh variant đã chọn:', file.name);
+                }
+            });
+        }
 
         variantsTableBody.appendChild(tr);
     });
@@ -305,6 +344,14 @@ window.saveVariant = async function (variantId) {
         "variant.json"
     );
 
+    // Lấy file ảnh nếu user đã chọn ảnh mới
+    const fileInput = tr.querySelector('.variant-file-input');
+    if (fileInput && fileInput.files && fileInput.files[0]) {
+        const imageFile = fileInput.files[0];
+        formData.append("variantImage", imageFile);
+        console.log("Uploading variant image:", imageFile.name);
+    }
+
     try {
         const res = await updateVariant(formData);
 
@@ -315,6 +362,16 @@ window.saveVariant = async function (variantId) {
             if (res.data && res.data.sold !== undefined) {
                 const soldCell = tr.cells[5]; // Cell thứ 6 (index 5)
                 soldCell.textContent = res.data.sold;
+            }
+
+            // Reload lại product để cập nhật ảnh mới
+            if (currentProductId) {
+                setTimeout(async () => {
+                    const productRes = await getProduct(currentProductId);
+                    if (productRes.success && productRes.data) {
+                        loadProductData(productRes.data);
+                    }
+                }, 500);
             }
 
             console.log("Variant updated successfully, UI refreshed");
