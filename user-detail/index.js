@@ -79,7 +79,12 @@ async function render(user) {
                 userIds: [user.userId]
             };
             const result = await callAPI("/room-chat", "POST", data);
-            await showDialog(result.success ? "success" : "error", result.message);
+            if(result.success){
+                window.location.href = "/message/?roomId=" + result.data.roomChatId;
+            }
+            else {
+                await showDialog("error", result.message);
+            }
         });
 
     } else {
