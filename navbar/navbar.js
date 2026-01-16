@@ -144,13 +144,18 @@ export async function loadNavbar(options = {}) {
   if (options.centerHTML)
     document.getElementById("nbCenterSlot").innerHTML = options.centerHTML;
 
+  // [LOGIC AN TOÀN TRÁNH 2 LẦN REFRESH]
   const cached = sessionStorage.getItem("homeData");
   if (cached) {
+    // 1. Có cache -> Dùng luôn, KHÔNG gọi API /home
     homeData = JSON.parse(cached);
     updateNavbarUI(homeData);
+  } else {
+    // 2. Không cache -> Gọi API và ĐỢI (await) nó xong
+    await fetchHomeData();
   }
 
-  fetchHomeData();
+  // 3. Sau đó mới kết nối SSE (Tránh xung đột token)
   await connectSse("/sse");
   setupSSERealtime();
   setupEvents();
@@ -205,7 +210,7 @@ function updateNavbarUI(data) {
   notiBadge.style.display = notiCount > 0 ? "flex" : "none";
 }
 
-// Hàm hiển thị Toast (Tự xóa cái cũ để không che màn hình)
+// Hàm hiển thị Toast (Plan B: Tự xóa cũ, thêm mới)
 function showSmartToast(title, message, iconClass) {
   const container = document.getElementById("nbToastContainer");
   container.innerHTML = ""; // Xóa cái cũ ngay lập tức
@@ -230,9 +235,9 @@ function showSmartToast(title, message, iconClass) {
   }, 5000);
 }
 
-// [XỬ LÝ REALTIME THEO YÊU CẦU ĐƠN GIẢN HÓA]
+// [XỬ LÝ REALTIME - PLAN B]
 function setupSSERealtime() {
-  // 1. Notification (Hệ thống) - GIỮ NGUYÊN (Vào chuông, cộng số)
+  // 1. Notification (Hệ thống) - VẪN GIỮ (Hiện chuông, cộng số)
   subscribeTopic("notification", (data) => {
     updateBadgeCount(1);
     showSmartToast(
@@ -243,9 +248,8 @@ function setupSSERealtime() {
     prependNotification(data);
   });
 
-  // 2. Message (Tin nhắn) - CẮT BỎ LOẠI 1 (Không vào chuông, không cộng số)
+  // 2. Message (Tin nhắn) - CẮT BỎ LOẠI 1 (Chỉ hiện Toast, ko vào chuông)
   subscribeTopic("message", async (data) => {
-    // Chỉ xử lý Toast (Loại 2)
     const senderId = data.senderId;
     let senderName = data.senderName;
     const content = data.content || "Bạn có tin nhắn mới";
@@ -264,7 +268,7 @@ function setupSSERealtime() {
     // Chỉ hiện Box nổi (Toast)
     showSmartToast(`Tin nhắn từ ${senderName}`, content, "fa-comment-dots");
 
-    // KHÔNG làm gì với Dropdown và Badge cả! (Theo yêu cầu "bay màu")
+    // KHÔNG làm gì với Dropdown và Badge (Theo yêu cầu)
   });
 
   // 3. Cart
@@ -333,7 +337,7 @@ function setupEvents() {
     notiDropdown.classList.remove("show");
   });
 
-  // [FIX] Xóa tất cả - Xóa sạch sành sanh UI ngay lập tức
+  // [FIX] Xóa tất cả - Xóa sạch UI
   const clearBtn = document.getElementById("btnClearAllNoti");
   if (clearBtn) {
     clearBtn.onclick = async (e) => {
@@ -348,8 +352,6 @@ function setupEvents() {
       homeData.readNotifications = 0;
       updateNavbarUI(homeData);
       sessionStorage.setItem("homeData", JSON.stringify(homeData));
-
-      // (Không gọi API vì API xóa all chưa rõ ràng, chỉ xóa UI cho người dùng vui)
     };
   }
 }
