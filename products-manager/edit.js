@@ -325,32 +325,40 @@ window.saveVariant = async function (variantId) {
     const tr = document.querySelector(`tr[data-variant-id="${variantId}"]`);
     if (!tr) return;
 
-    const originalPrice = parseFloat(tr.querySelector('[data-field="originalPrice"]').value) || 0;
-    const price = parseFloat(tr.querySelector('[data-field="price"]').value) || 0;
-    const stock = parseInt(tr.querySelector('[data-field="stock"]').value) || 0;
-
+    // Build variantDTO
     const variantDTO = {
         variantId: variantId,
-        originalPrice: originalPrice,
-        price: price,
-        stock: stock
+        originalPrice: parseFloat(tr.querySelector('[data-field="originalPrice"]').value) || 0,
+        price: parseFloat(tr.querySelector('[data-field="price"]').value) || 0,
+        stock: parseInt(tr.querySelector('[data-field="stock"]').value) || 0
     };
 
-    console.log("Updating Variant:", JSON.stringify(variantDTO, null, 2));
-
     const formData = new FormData();
-    formData.append("variantDTO",
-        new Blob([JSON.stringify(variantDTO)], { type: "application/json" }),
-        "variant.json"
-    );
 
     // Lấy file ảnh nếu user đã chọn ảnh mới
     const fileInput = tr.querySelector('.variant-file-input');
     if (fileInput && fileInput.files && fileInput.files[0]) {
         const imageFile = fileInput.files[0];
-        formData.append("variantImage", imageFile);
-        console.log("Uploading variant image:", imageFile.name);
+
+        // Tạo tên file unique giống add-product.js
+        const imageName = `variant-${variantId}-${Date.now()}`;
+
+        // Append file với tên unique
+        formData.append(imageName, imageFile);
+
+        // Thêm imageName vào DTO để backend biết file nào
+        variantDTO.imageName = imageName;
+
+        console.log("Uploading variant image:", imageFile.name, "as", imageName);
     }
+
+    // Append variantDTO sau khi đã thêm imageName (nếu có)
+    formData.append("variantDTO",
+        new Blob([JSON.stringify(variantDTO)], { type: "application/json" }),
+        "variant.json"
+    );
+
+    console.log("Updating Variant:", JSON.stringify(variantDTO, null, 2));
 
     try {
         const res = await updateVariant(formData);
