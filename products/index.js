@@ -21,8 +21,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   if (params.get("cat")) state.categoryId = params.get("cat");
 
   try {
-    // 2. [QUAN TRỌNG] Gọi Navbar trước tiên và CHỜ (await) nó xong.
-    // Đây là "phát súng mở màn". Nếu token hết hạn, chỉ request này đi refresh.
     await loadNavbar({
       centerHTML: `
         <div style="position:relative; width:100%; max-width:500px; display:flex; align-items:center;">
@@ -33,9 +31,12 @@ document.addEventListener("DOMContentLoaded", async () => {
         </div>`,
     });
 
-    // 3. Sau khi Navbar (và Refresh Token nếu có) xong xuôi -> Mới gọi 2 API này song song.
-    // Lúc này token đã "sạch", 2 API này sẽ chạy mượt mà không bị lỗi 401.
-    await Promise.all([fetchCategories(), fetchProducts()]);
+    // 3. [FIX CHÍNH XÁC] Chạy tuần tự các API dữ liệu.
+    // KHÔNG DÙNG Promise.all để tránh đua refresh token nếu navbar cache.
+
+    await fetchCategories(); // Chạy trước
+
+    await fetchProducts(); // Chạy sau khi cái trên đã xong (token an toàn)
 
     // 4. Sync dữ liệu vào ô tìm kiếm (Lúc này HTML Navbar đã có)
     if (state.productName) {
@@ -136,8 +137,9 @@ function renderGrid(products) {
       const starsHTML = renderStars(p.ratingAvg || 0);
       const salesText = p.totalSales > 0 ? `Đã bán ${p.totalSales}` : "";
 
+      // [CLEAN URL] Đã bỏ index.html
       return `
-      <div class="product-card" onclick="window.location.href='../product-detail/index.html?id=${p.productId}'">
+      <div class="product-card" onclick="window.location.href='../product-detail/?id=${p.productId}'">
         ${badge}
         <div class="p-img"><img src="${img}" loading="lazy" alt="${p.productName}"></div>
         <div class="p-info">
@@ -249,8 +251,6 @@ window.changePage = (page) => {
   if (page < 0) return;
   state.page = page;
   fetchProducts();
-  const content = document.querySelector(".product-content");
-  if (content) content.scrollIntoView({ behavior: "smooth" });
 };
 
 window.toggleSidebar = () => {
