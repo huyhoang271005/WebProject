@@ -83,10 +83,8 @@ async function loadMembers(roomId) {
             res.data.forEach(u => {
                 senderMap[u.userId] = u; // Cập nhật cache người dùng
                 if (u.isMe) currentUserId = u.userId;
-                console.log(u);
             });
         }
-        console.log(currentUserId);
     } catch (e) { console.error(e); }
 }
 
