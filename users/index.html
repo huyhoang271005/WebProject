@@ -1,102 +1,363 @@
 <!DOCTYPE html>
 <html lang="vi">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Danh sách người dùng</title>
-
-    <link rel="stylesheet" href="../lib/public.css">
-    <link rel="stylesheet" href="../dialog/index.css">
-    <script src="https://kit.fontawesome.com/e9c281dd3f.js" crossorigin="anonymous"></script>
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
+    <title>Danh sách người dùng - Tạp Hóa Xanh</title>
+    <link
+      rel="icon"
+      href="https://cdn-icons-png.flaticon.com/512/847/847969.png"
+    />
+    <link rel="stylesheet" href="../dialog/index.css" />
+    <script
+      src="https://kit.fontawesome.com/e9c281dd3f.js"
+      crossorigin="anonymous"
+    ></script>
 
     <style>
+      * {
+        box-sizing: border-box;
+      }
 
-    table {
+      body {
+        margin: 0;
+        padding: 0;
+        font-family: "Segoe UI", sans-serif;
+        color: #374151;
+        background: url("https://img.freepik.com/free-vector/blue-sky-with-clouds-background_1017-26302.jpg")
+          no-repeat center center fixed;
+        background-size: cover;
+        padding-top: 80px;
+        display: flex;
+        justify-content: center;
+        min-height: 100vh;
+      }
+
+      .user-container {
         width: 100%;
-        border-collapse: collapse;
-        margin-top: 15px;
-    }
+        max-width: 800px;
+        padding: 40px 20px;
+      }
 
-    th, td {
-        padding: 12px 14px;
-        border-bottom: 1px solid #e5e7eb;
-    }
+      .card-users {
+        background: rgba(255, 255, 255, 0.95);
+        border-radius: 16px;
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.6);
+        display: flex;
+        flex-direction: column;
+        min-height: 400px;
+        animation: slideUp 0.4s ease-out;
+      }
 
-    th {
-        background: #3B82F6;
-        color: white;
-        text-align: left;
-    }
+      @keyframes slideUp {
+        from {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
 
-    tr:hover {
-        background: #f3f4f6;
-        cursor: pointer;
-    }
-
-    .avatar {
-        width: 40px;
-        height: 40px;
-        border-radius: 50%;
-        object-fit: cover;
-        margin-right: 10px;
-    }
-
-    .user-info {
+      /* HEADER & SEARCH AREA */
+      .card-header {
+        padding: 20px 30px;
+        border-bottom: 1px solid #f0f0f0;
+        background: #fff;
         display: flex;
         align-items: center;
-        font-weight: 600;
-    }
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 15px;
+      }
+      .card-header h2 {
+        margin: 0;
+        font-size: 1.3rem;
+        color: #111827;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
 
-    .sub {
+      /* Group Search + Reload */
+      .header-actions {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .search-wrapper {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        background: #f9fafb;
+        padding: 6px 12px;
+        border-radius: 50px;
+        border: 1px solid #e5e7eb;
+        transition: 0.2s;
+      }
+      .search-wrapper:focus-within {
+        border-color: #10b981;
+        background: #fff;
+        box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+      }
+      .search-input {
+        border: none;
+        background: transparent;
+        outline: none;
+        padding: 5px;
+        font-size: 0.9rem;
+        color: #374151;
+        width: 180px;
+      }
+      .search-btn {
+        background: transparent;
+        color: #6b7280;
+        border: none;
+        cursor: pointer;
+        font-size: 1rem;
+        transition: 0.2s;
+        padding: 0;
+      }
+      .search-btn:hover {
+        color: #10b981;
+        transform: scale(1.1);
+      }
+
+      /* Nút Reload */
+      .reload-btn {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        border: 1px solid #e5e7eb;
+        background: #fff;
+        color: #6b7280;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: 0.2s;
+      }
+      .reload-btn:hover {
+        border-color: #10b981;
+        color: #10b981;
+        background: #ecfdf5;
+        transform: rotate(180deg);
+      }
+
+      /* LIST ITEMS */
+      .user-list {
+        padding: 0;
+        margin: 0;
+        list-style: none;
+      }
+
+      .user-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 15px 30px;
+        border-bottom: 1px solid #f3f4f6;
+        transition: 0.2s;
+        cursor: pointer;
+        background: transparent;
+      }
+      .user-item:hover {
+        background-color: #ecfdf5;
+        padding-left: 35px;
+      }
+      .user-item:last-child {
+        border-bottom: none;
+      }
+
+      .user-left {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        flex: 1;
+        min-width: 0;
+      }
+      .avatar {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 2px solid #fff;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        flex-shrink: 0;
+      }
+      .user-info {
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
+      .user-name {
+        font-weight: 600;
+        font-size: 1rem;
+        color: #1f2937;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .user-role {
+        font-size: 0.8rem;
+        color: #9ca3af;
+        margin-top: 2px;
+      }
+
+      .user-right {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        text-align: right;
+        flex-shrink: 0;
+      }
+      .join-date {
         font-size: 0.85rem;
         color: #6b7280;
-        margin-top: 3px;
-    }
+        font-weight: 500;
+        background: #f9fafb;
+        padding: 4px 10px;
+        border-radius: 20px;
+        border: 1px solid #e5e7eb;
+      }
+      .arrow-icon {
+        color: #d1d5db;
+        transition: 0.2s;
+        font-size: 0.9rem;
+      }
+      .user-item:hover .arrow-icon {
+        color: #10b981;
+        transform: translateX(3px);
+      }
 
-    /* Responsive */
-    @media (max-width: 700px) {
-        table, tbody, th, td, tr { display: block; }
-        thead { display: none; }
+      .action-area {
+        padding: 20px;
+        text-align: center;
+        background: #fff;
+        border-top: 1px solid #f3f4f6;
+        margin-top: auto;
+      }
+      #loadMore {
+        background: #10b981;
+        color: white;
+        border: none;
+        padding: 10px 25px;
+        border-radius: 30px;
+        font-weight: 600;
+        font-size: 0.9rem;
+        cursor: pointer;
+        transition: 0.2s;
+        box-shadow: 0 4px 10px rgba(16, 185, 129, 0.3);
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+      }
+      #loadMore:hover {
+        background: #059669;
+        transform: translateY(-2px);
+      }
 
-        tr {
-            margin-bottom: 12px;
-            padding: 12px;
-            border: 1px solid #ddd;
-            border-radius: 10px;
+      @media (max-width: 600px) {
+        body {
+          padding-top: 100px;
         }
-
-        td {
-            display: flex;
-            justify-content: space-between;
-            padding: 6px 0;
+        .user-container {
+          padding: 20px 15px;
         }
-
-        td::before {
-            content: attr(data-label);
-            font-weight: 600;
-            margin-right: 10px;
+        .card-header {
+          padding: 15px 20px;
+          flex-direction: column;
+          align-items: stretch;
         }
-    }
+        .header-actions {
+          width: 100%;
+          justify-content: space-between;
+        }
+        .search-wrapper {
+          flex: 1;
+        }
+        .search-input {
+          width: 100%;
+        }
+        .user-item {
+          padding: 12px 15px;
+        }
+        .user-item:hover {
+          padding-left: 15px;
+        }
+        .avatar {
+          width: 40px;
+          height: 40px;
+        }
+        .user-left {
+          gap: 10px;
+        }
+        .user-name {
+          font-size: 0.9rem;
+        }
+        .join-date {
+          font-size: 0.75rem;
+          padding: 2px 8px;
+        }
+        .arrow-icon {
+          display: none;
+        }
+      }
     </style>
-</head>
+  </head>
 
-<body>
-    <div class="card">
-        <h2>Danh sách người dùng</h2>
+  <body>
+    <div class="user-container">
+      <div class="card-users">
+        <div class="card-header">
+          <h2>
+            <i class="fa-solid fa-users" style="color: #10b981"></i> Danh sách
+          </h2>
+
+          <div class="header-actions">
+            <div class="search-wrapper">
+              <input
+                type="text"
+                id="searchInput"
+                class="search-input"
+                placeholder="Tìm kiếm..."
+                autocomplete="off"
+              />
+              <button id="searchBtn" class="search-btn">
+                <i class="fa-solid fa-magnifying-glass"></i>
+              </button>
+            </div>
+            <button
+              id="reloadBtn"
+              class="reload-btn"
+              title="Làm mới / Tắt tìm kiếm"
+            >
+              <i class="fa-solid fa-rotate-right"></i>
+            </button>
+          </div>
+        </div>
+
         <div id="loadPage"></div>
 
-        <table id="info">
-            <thead>
-                <tr>
-                    <th>Người dùng</th>
-                    <th>Ngày tham gia</th>
-                </tr>
-            </thead>
-            <tbody></tbody>
-        </table>
-        <button id = "loadMore">Hiển thị thêm</button>
+        <div class="user-list" id="userList"></div>
+
+        <div class="action-area">
+          <button id="loadMore" style="display: none">
+            Xem thêm <i class="fa-solid fa-chevron-down"></i>
+          </button>
+        </div>
+      </div>
     </div>
 
     <script type="module" src="/users/index.js"></script>
-</body>
+  </body>
 </html>
