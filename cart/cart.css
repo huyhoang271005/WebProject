@@ -4,9 +4,9 @@ html, body {
     padding: 0 !important;
     width: 100% !important;
     min-height: 100vh;
-    background-size: cover;
     font-family: 'Segoe UI', sans-serif;
-    display: block !important;
+    display: block !important; 
+    background-size: cover; 
 }
 
 /* === LAYOUT === */
@@ -147,8 +147,9 @@ html, body {
     -moz-appearance: none;
 
     /* 2. Kích thước & Font chữ */
-    width: 100%;            /* Luôn full chiều rộng để không bị cắt chữ */
-    max-width: 100%;        /* Đảm bảo không tràn ra ngoài */
+    width: auto !important;       /* Để tự động co theo nội dung, hoặc set cứng 150px */
+    min-width: 0 !important;      /* QUAN TRỌNG: Hủy bỏ quy tắc 300px của public.css */
+    max-width: 200px !important;
     padding: 10px 40px 10px 15px; /* Padding phải rộng để chứa mũi tên */
     font-size: 14px;
     font-weight: 500;
@@ -203,18 +204,7 @@ html, body {
     border-radius: 6px;
     background: white;
     height: 36px !important;
-    margin-top: 20px;
-    margin-right: 15px; /* Thêm khoảng cách nhỏ với nút xóa */
-}
-
-.qty-control {
-    display: flex;
-    align-items: center;
-    border: 1px solid #E5E7EB;
-    border-radius: 6px;
-    background: white;
-    height: 36px !important;
-    margin-top: 20px;
+    margin-top: 10px;
     margin-right: 15px; /* Thêm khoảng cách nhỏ với nút xóa */
 }
 
@@ -239,7 +229,9 @@ html, body {
 }
 
 .qty-input {
-    width: 40px;
+    width: 100px !important;       /* Chỉ lấy 40px là đủ cho số lượng */
+    min-width: 0 !important;      /* QUAN TRỌNG: Hủy bỏ quy tắc 300px của public.css */
+    flex: none !important;
     height: 100%;
     border: none;
     border-left: 1px solid #E5E7EB;
