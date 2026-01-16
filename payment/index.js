@@ -1,11 +1,12 @@
 // Xử lý logic hiển thị trạng thái thanh toán
 // Chạy ngay khi file được load (module type)
 
-(function initPaymentPage() {
+document.addEventListener('DOMContentLoaded', () => {
     const urlParams = new URLSearchParams(window.location.search);
-    // Lấy giá trị success, mặc định là 'true' nếu không có
-    // Tuy nhiên đề bài yêu cầu xử lý case true/false rõ ràng
+    // Lấy giá trị success
     const successParam = urlParams.get('success');
+    
+    console.log("Payment URL param 'success':", successParam); // Log để check
 
     const card = document.getElementById('paymentCard');
     if (!card) return;
@@ -16,10 +17,10 @@
     if (successParam === 'false') {
         renderFailure(card);
     } else {
-        // Mặc định là success (bao gồm 'true' hoặc không có param)
+        // Mặc định là success
         renderSuccess(card);
     }
-})();
+});
 
 function renderSuccess(container) {
     // Thêm class cho body để có thể style background nếu cần
