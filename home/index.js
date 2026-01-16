@@ -2,14 +2,14 @@ import { loadNavbar } from "../navbar/navbar.js";
 import { callAPI } from "../lib/api.js";
 import { toggleLoading } from "../lib/loader.js";
 
+// Biến toàn cục lưu danh sách danh mục
 let apiCategories = [];
 
+// Hàm chạy khi trang load
 document.addEventListener("DOMContentLoaded", async () => {
   toggleLoading(true);
   try {
-    // 1. [QUAN TRỌNG] Gọi Navbar trước tiên và CHỜ nó xong hẳn.
-    // Tại sao? Để nếu Token hết hạn, chỉ 1 mình thằng này đi Refresh thôi.
-    // Các thằng sau sẽ được hưởng Token mới mà không cần gọi lại.
+    // 1. Khởi tạo Navbar trước
     await loadNavbar({
       centerHTML: `
         <div class="nav-cat-btn" id="catBtn">
@@ -23,21 +23,26 @@ document.addEventListener("DOMContentLoaded", async () => {
         </div>`,
     });
 
-    // 2. Sau khi Navbar (và Refresh Token nếu có) chạy xong -> Mới gọi 2 ông này
-    // Lúc này Token đã tươi mới (nếu vừa refresh), nên 2 ông này chạy bao mượt
-    await Promise.all([fetchCategories(), renderHomeSections()]);
+    // 2. Lấy dữ liệu theo thứ tự
 
-    // 3. Render và Gắn sự kiện
+    await fetchCategories(); // Lấy danh mục trước
+
+    await renderHomeSections(); // Sau đó mới lấy sản phẩm gợi ý
+
+    // 3. Render dữ liệu lên màn hình và gán sự kiện
     renderNavCategories();
     setupNavbarEvents();
   } catch (e) {
     console.error("Lỗi tải trang chủ:", e);
   } finally {
+    // Tắt loading sau khi mọi thứ hoàn tất
     setTimeout(() => toggleLoading(false), 300);
   }
 });
 
-// --- CÁC HÀM KHÁC GIỮ NGUYÊN NHƯ CŨ ---
+/**
+ * Gọi API lấy danh sách danh mục sản phẩm
+ */
 async function fetchCategories() {
   try {
     const res = await callAPI("/categories", "GET");
@@ -47,10 +52,13 @@ async function fetchCategories() {
         apiCategories = res.data.listData;
     }
   } catch (e) {
-    console.error(e);
+    console.error("Lỗi lấy danh mục:", e);
   }
 }
 
+/**
+ * Hiển thị danh sách danh mục lên menu dropdown
+ */
 function renderNavCategories() {
   const el = document.getElementById("catDropdown");
   if (!el) return;
@@ -58,10 +66,12 @@ function renderNavCategories() {
     el.innerHTML = '<div style="padding:15px; text-align:center;">Trống</div>';
     return;
   }
+
+  // Tạo link sạch
   el.innerHTML = apiCategories
     .map(
       (c) =>
-        `<a href="../products/index.html?cat=${
+        `<a href="../products/?cat=${
           c.categoryId || c.id
         }"><i class="fa-solid fa-caret-right"></i> ${
           c.categoryName || c.name
@@ -70,9 +80,14 @@ function renderNavCategories() {
     .join("");
 }
 
+/**
+ * Gán sự kiện cho các nút trên Navbar (Tìm kiếm, Dropdown)
+ */
 function setupNavbarEvents() {
   const catBtn = document.getElementById("catBtn");
   const catDropdown = document.getElementById("catDropdown");
+
+  // Toggle menu danh mục
   if (catBtn) {
     catBtn.onclick = (e) => {
       e.stopPropagation();
@@ -83,12 +98,13 @@ function setupNavbarEvents() {
     });
   }
 
+  // Xử lý tìm kiếm
   const searchInput = document.getElementById("homeSearch");
   const searchBtn = document.getElementById("homeSearchBtn");
   const doSearch = () => {
     const productName = searchInput.value.trim();
     if (productName) {
-      window.location.href = `../products/index.html?search=${encodeURIComponent(
+      window.location.href = `../products/?search=${encodeURIComponent(
         productName
       )}`;
     } else {
@@ -104,12 +120,16 @@ function setupNavbarEvents() {
   }
 }
 
+/**
+ * Gọi API lấy sản phẩm và hiển thị phần "Gợi ý hôm nay"
+ */
 async function renderHomeSections() {
   const container = document.getElementById("homeContainer");
   if (!container) return;
   container.innerHTML = "";
 
-  const res = await callAPI("/products?page=0&size=15", "GET");
+  // Giới hạn lấy 10 sản phẩm (size=10)
+  const res = await callAPI("/products?page=0&size=10", "GET");
 
   if (res && res.success) {
     const listData = res.data?.listData || [];
@@ -122,7 +142,7 @@ async function renderHomeSections() {
                 <div class="section-title">
                     <i class="fa-solid fa-fire" style="color:#ee4d2d; margin-right:5px;"></i> GỢI Ý HÔM NAY
                 </div>
-                <a href="../products/index.html" class="btn-see-more">Xem tất cả </a>
+                <a href="../products/" class="btn-see-more">Xem tất cả </a>
             </div>
             <div class="product-grid-5">
                 ${listData.map((p) => createProductHTML(p)).join("")}
@@ -136,6 +156,9 @@ async function renderHomeSections() {
   }
 }
 
+/**
+ * Tạo HTML cho từng thẻ sản phẩm
+ */
 function createProductHTML(p) {
   const imgUrl =
     p.imageUrl || "https://cdn-icons-png.flaticon.com/512/2748/2748558.png";
@@ -147,6 +170,7 @@ function createProductHTML(p) {
   let discountBadge = "";
   let originalPriceHTML = "";
 
+  // Tính toán giảm giá
   if (p.originalPrice && p.originalPrice > p.price) {
     const percent = Math.round(
       ((p.originalPrice - p.price) / p.originalPrice) * 100
@@ -168,7 +192,7 @@ function createProductHTML(p) {
   const salesText = p.totalSales > 0 ? `Đã bán ${p.totalSales}` : "";
 
   return `
-    <div class="product-card" onclick="window.location.href='../product-detail/index.html?id=${p.productId}'">
+    <div class="product-card" onclick="window.location.href='../product-detail/?id=${p.productId}'">
         ${discountBadge}
         <div class="p-img">
             <img src="${imgUrl}" alt="${p.productName}" loading="lazy">
@@ -190,6 +214,9 @@ function createProductHTML(p) {
   `;
 }
 
+/**
+ * Render số sao đánh giá
+ */
 function renderStars(rating) {
   if (!rating) rating = 0;
   let html = "";
