@@ -1,6 +1,6 @@
-import { loadPage, convertToVNTime, getLoader, noImage } from "../public/public.js";
+import { loadPage, convertToVNTime, getLoader, noImage } from "../lib/public.js";
 import { showDialog } from "../dialog/index.js";
-import { callAPI } from "../public/api.js";
+import { callAPI } from "../lib/api.js";
 import { initEmailList } from "./email-list.js";
 import { loadNavbar } from "../navbar/navbar.js";
 await loadPage(async()=>{
@@ -20,7 +20,7 @@ async function render(user) {
     document.getElementById("username").textContent = user.username;
     document.getElementById("fullName").textContent = user.fullName;
     document.getElementById("birthday").textContent = user.birthday;
-    document.getElementById("gender").textContent = user.gender == 'MALE' ? 'Nam': user.gender == 'FEMALE' ? 'Nữ' : 'Khác';
+    document.getElementById("gender").textContent = user.gender === 'MALE' ? 'Nam': user.gender == 'FEMALE' ? 'Nữ' : 'Khác';
     document.getElementById("createdAt").textContent = convertToVNTime(user.createdAt);
     if(user.extendUserResponse){
         const resultRoles = await callAPI('/roles');
@@ -33,7 +33,7 @@ async function render(user) {
         const emailsSection = document.getElementById("emailsSection");
         const btnUpdate = document.getElementById('btnUpdate');
         const btnLogout = document.getElementById('btnLogout');
-        const html = await fetch("./email-list.html");
+        const html = await fetch("/user-detail/email-list.html");
         const text = await html.text();
         emailsSection.insertAdjacentHTML('beforeend', text);
         initEmailList(user.userId, user.extendUserResponse.emails);
@@ -72,6 +72,19 @@ async function render(user) {
                 const result = await callAPI(`/logout-all/${user.userId}`);
                 await showDialog(result.success ? 'success' : 'error', result.message);
             })
+        });
+        const btnSendMessage = document.getElementById("btnSendMessage");
+        btnSendMessage.addEventListener('click', async () => {
+            const data = {
+                userIds: [user.userId]
+            };
+            const result = await callAPI("/room-chat", "POST", data);
+            if(result.success){
+                window.location.href = "/message/?roomId=" + result.data.roomChatId;
+            }
+            else {
+                await showDialog("error", result.message);
+            }
         });
 
     } else {

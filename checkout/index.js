@@ -1,82 +1,102 @@
-import { callAPI } from '../public/api.js';
-import { toggleLoading } from '../public/loader.js';
+import { callAPI } from '../lib/api.js';
+import { toggleLoading } from '../lib/loader.js';
 
 const formatter = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' });
 let selectedContactId = null;
-let currentCheckoutItems = []; // Lưu danh sách items đã chọn (đã flatten)
+let currentCheckoutItems = [];
+let isBuyNowMode = false;
 
 document.addEventListener("DOMContentLoaded", async () => {
-    // 1. Lấy danh sách ID từ localStorage
-    const checkedIds = JSON.parse(localStorage.getItem("checkoutItems") || "[]");
-    if (checkedIds.length === 0) {
-        alert("Giỏ hàng của bạn đang trống hoặc chưa chọn sản phẩm!");
+    // BƯỚC 1: Kiểm tra xem khách đang đi theo luồng nào
+    const buyNowDataRaw = sessionStorage.getItem("buyNowData");
+    const cartItemIds = JSON.parse(localStorage.getItem("checkoutItems") || "[]");
+
+    if (buyNowDataRaw) {
+        // LUỒNG 1: MUA NGAY
+        isBuyNowMode = true;
+        const item = JSON.parse(buyNowDataRaw);
+        await loadDataForBuyNow(item);
+    } else if (cartItemIds.length > 0) {
+        // LUỒNG 2: THANH TOÁN TỪ GIỎ HÀNG
+        isBuyNowMode = false;
+        await loadDataFromCart(cartItemIds);
+    } else {
+        alert("Thông tin thanh toán không hợp lệ hoặc đã hết hạn!");
         window.location.href = "../cart/index.html";
         return;
     }
 
-    await loadData(checkedIds);
-
-    // 2. Gắn sự kiện nút đặt hàng
+    // Gắn sự kiện nút đặt hàng
     document.getElementById("btnConfirmOrder").onclick = handleOrder;
 });
 
 /**
- * Load dữ liệu địa chỉ và sản phẩm từ API
+ * Xử lý Load dữ liệu cho luồng MUA NGAY
  */
-async function loadData(checkedIds) {
+async function loadDataForBuyNow(item) {
     try {
         if (typeof toggleLoading === 'function') toggleLoading(true);
 
-        // Gọi đồng thời API lấy Địa chỉ và Giỏ hàng
-        const [resAddr, resCart] = await Promise.all([
-            callAPI('/contacts', 'GET'),           // ✅ SỬA: Bỏ /auth vì endpoint đúng là /contacts
-            callAPI('/auth/carts?page=0&size=999', 'GET')
-        ]);
-
-        // ✅ SỬA: Render địa chỉ với cấu trúc đúng
+        // Chỉ cần lấy địa chỉ người dùng
+        const resAddr = await callAPI('/contacts', 'GET');
         if (resAddr.success && resAddr.data?.listData?.length > 0) {
             renderAddresses(resAddr.data.listData);
         } else {
-            // Không có địa chỉ -> Chuyển sang trang thêm địa chỉ
-            if (confirm("Bạn chưa có địa chỉ giao hàng. Chuyển đến trang thêm địa chỉ?")) {
-                window.location.href = "../contact/index.html";
-            } else {
-                window.location.href = "../cart/index.html";
-            }
+            handleNoAddress();
             return;
         }
 
-        // ✅ SỬA: Xử lý dữ liệu giỏ hàng đúng cấu trúc
+        // Chuyển đổi dữ liệu sang mảng chung
+        currentCheckoutItems = [{
+            variantId: item.variantId,
+            productName: item.productName,
+            variantName: item.variantName,
+            thumbnail: item.thumbnail,
+            price: item.price,
+            quantity: item.quantity
+        }];
+
+        renderProducts(currentCheckoutItems);
+    } catch (err) {
+        console.error("Lỗi mua ngay:", err);
+    } finally {
+        finishLoading();
+    }
+}
+
+/**
+ * Xử lý Load dữ liệu cho luồng GIỎ HÀNG (Logic cũ của bạn)
+ */
+async function loadDataFromCart(checkedIds) {
+    try {
+        if (typeof toggleLoading === 'function') toggleLoading(true);
+
+        const [resAddr, resCart] = await Promise.all([
+            callAPI('/contacts', 'GET'),
+            callAPI('/carts?page=0&size=999', 'GET')
+        ]);
+
+        if (resAddr.success && resAddr.data?.listData?.length > 0) {
+            renderAddresses(resAddr.data.listData);
+        } else {
+            handleNoAddress();
+            return;
+        }
+
         if (resCart.success && resCart.data?.listData) {
-            const cartData = resCart.data.listData; // Mảng products
-
-            // Flatten: Lấy tất cả items từ cartItemDTOList của mỗi product
             const allItems = [];
-            cartData.forEach(product => {
+            resCart.data.listData.forEach(product => {
                 product.cartItemDTOList.forEach(item => {
-                    // Tìm variant tương ứng
-                    const variant = product.productVariantsDTOList.find(
-                        v => v.variantId === item.variantId
-                    );
-
-                    if (variant && checkedIds.includes(item.cartItemId)) {
+                    const variant = product.productVariantsDTOList?.find(v => v.variantId === item.variantId);
+                    // Chuyển cả hai sang String để so sánh chính xác (tránh lỗi type mismatch giữa Number và String)
+                    const isChecked = checkedIds.some(id => String(id) === String(item.cartItemId));
+                    
+                    if (variant && isChecked) {
                         allItems.push({
-                            cartItemId: item.cartItemId,
+                            cartItemId: item.cartItemId, // Lưu lại để xóa sau khi đặt hàng
                             variantId: item.variantId,
                             productName: product.productName,
-                            variantName: variant.attributeValueIdList
-                                .map(id => {
-                                    // Tìm tên attribute value
-                                    for (const attr of product.attributes) {
-                                        const val = attr.attributeValues.find(
-                                            av => av.attributeValueId === id
-                                        );
-                                        if (val) return val.attributeValueName;
-                                    }
-                                    return '';
-                                })
-                                .filter(Boolean)
-                                .join(' - '),
+                            variantName: getVariantName(product, variant),
                             thumbnail: variant.imageUrl || 'https://via.placeholder.com/80',
                             price: variant.price,
                             quantity: item.quantity
@@ -84,155 +104,137 @@ async function loadData(checkedIds) {
                     }
                 });
             });
-
-            if (allItems.length === 0) {
-                alert("Dữ liệu sản phẩm đã thay đổi hoặc không tìm thấy. Vui lòng quay lại giỏ hàng.");
-                window.location.href = "../cart/index.html";
-                return;
-            }
-
             currentCheckoutItems = allItems;
             renderProducts(allItems);
-        } else {
-            alert("Không thể tải giỏ hàng. Vui lòng thử lại!");
-            window.location.href = "../cart/index.html";
         }
-
     } catch (err) {
-        console.error("Lỗi load trang checkout:", err);
-        alert("Đã xảy ra lỗi khi tải dữ liệu. Vui lòng thử lại!");
+        console.error("Lỗi load giỏ hàng:", err);
     } finally {
-        if (typeof toggleLoading === 'function') toggleLoading(false);
-        document.getElementById('loadPage').style.display = 'none';
-        document.getElementById('info').style.display = 'block';
+        finishLoading();
     }
 }
 
-/**
- * Render danh sách địa chỉ
- */
+// Hàm bổ trợ lấy tên phân loại
+function getVariantName(product, variant) {
+    if (!product.attributes) return '';
+    return variant.attributeValueIdList.map(id => {
+        for (const attr of product.attributes) {
+            const val = attr.attributeValues.find(av => av.attributeValueId === id);
+            if (val) return val.attributeValueName;
+        }
+        return '';
+    }).filter(Boolean).join(' - ');
+}
+
+function handleNoAddress() {
+    if (confirm("Bạn chưa có địa chỉ giao hàng. Chuyển đến trang thêm địa chỉ?")) {
+        window.location.href = "../contact/index.html";
+    }
+}
+
+function finishLoading() {
+    if (typeof toggleLoading === 'function') toggleLoading(false);
+    document.getElementById('loadPage').style.display = 'none';
+    document.getElementById('info').style.display = 'block';
+}
+
 function renderAddresses(list) {
     const container = document.getElementById("listAddress");
-
     container.innerHTML = list.map((addr, index) => `
         <div class="address-box ${index === 0 ? 'selected' : ''}" 
              onclick="changeAddress(this, '${addr.contactId}')">
             <strong>${escapeHtml(addr.contactName)} - ${escapeHtml(addr.phone)}</strong>
-            <p style="font-size: 13px; color: #666; margin: 5px 0 0 0;">
-                ${escapeHtml(addr.address)}
-            </p>
+            <p>${escapeHtml(addr.address)}</p>
         </div>
     `).join('<div style="height:10px"></div>');
-
-    // Mặc định chọn địa chỉ đầu tiên
     selectedContactId = list[0].contactId;
 }
 
-/**
- * Thay đổi địa chỉ được chọn
- */
 window.changeAddress = (el, id) => {
     document.querySelectorAll('.address-box').forEach(b => b.classList.remove('selected'));
     el.classList.add('selected');
     selectedContactId = id;
 };
 
-/**
- * Render danh sách sản phẩm đã chọn
- */
 function renderProducts(items) {
     const container = document.getElementById("listOrderItems");
     let total = 0;
-
     container.innerHTML = items.map(item => {
         const subTotal = item.price * item.quantity;
         total += subTotal;
-
         return `
             <div class="product-item">
-                <img src="${item.thumbnail}" alt="${escapeHtml(item.productName)}">
+                <img src="${item.thumbnail}">
                 <div class="product-info">
                     <b>${escapeHtml(item.productName)}</b><br>
                     <small>Phân loại: ${escapeHtml(item.variantName)}</small><br>
                     <span>${formatter.format(item.price)} x ${item.quantity}</span>
                 </div>
-                <div class="product-total">
-                    ${formatter.format(subTotal)}
-                </div>
-            </div>
-        `;
+                <div class="product-total">${formatter.format(subTotal)}</div>
+            </div>`;
     }).join('');
-
     document.getElementById("txtTotalPrice").innerText = formatter.format(total);
 }
 
-/**
- * Xử lý đặt hàng
- */
 async function handleOrder() {
-    if (!selectedContactId) {
-        alert("Vui lòng chọn địa chỉ nhận hàng!");
-        return;
-    }
-
-    // Lấy phương thức thanh toán
+    if (!selectedContactId) return alert("Vui lòng chọn địa chỉ!");
     const paymentMethodEl = document.querySelector('input[name="paymentType"]:checked');
-    if (!paymentMethodEl) {
-        alert("Vui lòng chọn phương thức thanh toán!");
-        return;
-    }
+    if (!paymentMethodEl) return alert("Vui lòng chọn phương thức thanh toán!");
 
-    // ✅ SỬA: Payload đúng theo API backend
     const payload = {
         contactId: selectedContactId,
-        paymentMethod: paymentMethodEl.value, // VN_PAY hoặc COD
+        paymentMethod: paymentMethodEl.value,
         orderItemDTOList: currentCheckoutItems.map(item => ({
             variantId: item.variantId,
             quantity: item.quantity
         }))
     };
 
-    if (!confirm("Xác nhận đặt hàng và thanh toán?")) {
-        return;
-    }
+    if (!confirm("Xác nhận đặt hàng?")) return;
 
     try {
-        if (typeof toggleLoading === 'function') toggleLoading(true);
-
-        // Gọi API tạo đơn hàng
-        const res = await callAPI('/auth/orders', 'POST', payload);
-
+        toggleLoading(true);
+        const res = await callAPI('/orders', 'POST', payload);
         if (res.success) {
-            // ✅ SỬA: Xóa giỏ hàng đúng cách (gọi API delete với array IDs)
-            const cartItemIds = currentCheckoutItems.map(item => item.cartItemId);
-            await callAPI('/auth/carts/delete', 'POST', cartItemIds);
-
-            // Dọn dẹp localStorage
-            localStorage.removeItem("checkoutItems");
-
-            // Điều hướng theo phương thức thanh toán
-            if (payload.paymentMethod === 'VN_PAY' && res.data?.paymentUrl) {
-                // Chuyển sang trang thanh toán VNPay
-                window.location.href = res.data.paymentUrl;
+            // Xử lý dọn dẹp sau khi đặt hàng thành công
+            if (isBuyNowMode) {
+                sessionStorage.removeItem("buyNowData");
             } else {
-                // Thanh toán COD thành công
+                const cartItemIds = currentCheckoutItems.map(item => item.cartItemId);
+                await callAPI('/carts/delete', 'POST', cartItemIds);
+                localStorage.removeItem("checkoutItems");
+            }
+
+            if (payload.paymentMethod === 'VN_PAY') {
+                const orderId = res.data.orderId;
+                if (orderId) {
+                    try {
+                        const payRes = await callAPI(`/payment/vn-pay/${orderId}`, 'GET');
+                        if (payRes.success && (payRes.data?.paymentUrl || payRes.data)) {
+                            window.location.href = payRes.data.paymentUrl || payRes.data;
+                            return;
+                        }
+                    } catch (payErr) {
+                        console.error("Lỗi lấy link thanh toán:", payErr);
+                    }
+                }
+                // Nếu không lấy được link hoặc lỗi, vẫn về trang đơn hàng
+                alert("Đặt hàng thành công! Vui lòng thanh toán trong chi tiết đơn hàng.");
+                window.location.href = "../orders/index.html";
+            } else {
                 alert("Đặt hàng thành công!");
                 window.location.href = "../orders/index.html";
             }
         } else {
-            alert("Lỗi: " + (res.message || "Không thể đặt hàng"));
+            alert("Lỗi: " + res.message);
         }
     } catch (e) {
-        console.error("Lỗi đặt hàng:", e);
-        alert("Đã xảy ra lỗi không xác định. Vui lòng thử lại!");
+        alert("Đã xảy ra lỗi.");
     } finally {
-        if (typeof toggleLoading === 'function') toggleLoading(false);
+        toggleLoading(false);
     }
 }
 
-/**
- * Escape HTML để tránh XSS
- */
 function escapeHtml(text) {
     const div = document.createElement('div');
     div.textContent = text;

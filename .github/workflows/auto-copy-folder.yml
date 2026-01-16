@@ -27,13 +27,13 @@ jobs:
         run: |
           BRANCH=${GITHUB_REF#refs/heads/}
           if [ "$BRANCH" = "huy" ]; then
-            echo "folders=orders contact checkout product-detail" >> $GITHUB_OUTPUT
+            echo "folders=orders contact checkout product-detail payment" >> $GITHUB_OUTPUT
           elif [ "$BRANCH" = "nhat" ]; then
-            echo "folders=message products-manager" >> $GITHUB_OUTPUT
+            echo "folders=products-manager feedback" >> $GITHUB_OUTPUT
           elif [ "$BRANCH" = "tung" ]; then
             echo "folders=session home navbar products notification" >> $GITHUB_OUTPUT
           elif [ "$BRANCH" = "thanh" ]; then
-            echo "folders= catalog-management cart" >> $GITHUB_OUTPUT
+            echo "folders= catalog-management cart order-manager" >> $GITHUB_OUTPUT
           else
             echo "folders=" >> $GITHUB_OUTPUT
           fi

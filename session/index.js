@@ -1,6 +1,7 @@
-import { callAPI } from "../public/api.js";
+import { callAPI } from "../lib/api.js";
 import { showDialog } from "../dialog/index.js";
-import { loadPage, convertToVNTime } from "../public/public.js";
+import { loadPage, convertToVNTime } from "../lib/public.js";
+import { loadNavbar } from "../navbar/navbar.js"; // 1. Import Navbar
 
 // --- CẤU HÌNH API ---
 const API_GET_SESSION = "/sessions?page=0&size=20";
@@ -11,6 +12,12 @@ const API_LOGOUT_OTHERS = "/logout-all";
 const currentListEl = document.getElementById("currentDeviceList");
 const otherListEl = document.getElementById("otherDeviceList");
 const contentDiv = document.getElementById("info");
+
+// --- HÀM KHỞI TẠO CHÍNH ---
+await loadPage(async () => {
+  await loadNavbar(); // 2. Load Navbar trước khi load nội dung
+  await loadSessions();
+});
 
 // 1. Hàm tính thời gian tương đối (Relative Time)
 function timeAgo(dateString) {
@@ -98,16 +105,10 @@ function createDeviceHTML(session, isCurrent) {
   const icon = getDeviceIcon(iconStr);
   const location = formatLocation(session.address);
 
-  // 1. Xử lý Thời gian tương đối
+  // Xử lý thông tin hiển thị
   const relativeTime = timeAgo(session.lastLogin);
-
-  // 2. Xử lý Timezone cho tooltip
   const timezone = session.address?.timezone || "Không xác định";
-
-  // 3. Xử lý UserAgent cho tooltip
   const fullUserAgent = session.userAgent || "Không có thông tin chi tiết";
-
-  // 4. Xử lý ngày tạo (Góc trên phải)
   const createdTime = convertToVNTime(session.createdAt);
 
   let statusBadge = "";
@@ -122,20 +123,20 @@ function createDeviceHTML(session, isCurrent) {
       rowClass = "row-inactive";
       actionBtns = `
                 <div class="action-group">
-                     <button class="icon-btn delete-btn" data-id="${session.sessionId}" title="Xóa lịch sử phiên này">
+                      <button class="icon-btn delete-btn" data-id="${session.sessionId}" title="Xóa lịch sử phiên này">
                         <i class="fa-solid fa-xmark"></i>
-                     </button>
+                      </button>
                 </div>`;
     } else {
       statusBadge = '<span class="status-badge active">Đang hoạt động</span>';
       actionBtns = `
                 <div class="action-group">
-                     <button class="icon-btn logout-btn" data-id="${session.sessionId}" title="Đăng xuất thiết bị này">
+                      <button class="icon-btn logout-btn" data-id="${session.sessionId}" title="Đăng xuất thiết bị này">
                         <i class="fa-solid fa-right-from-bracket"></i>
-                     </button>
-                     <button class="icon-btn delete-btn" data-id="${session.sessionId}" title="Xóa phiên">
+                      </button>
+                      <button class="icon-btn delete-btn" data-id="${session.sessionId}" title="Xóa phiên">
                         <i class="fa-solid fa-xmark"></i>
-                     </button>
+                      </button>
                 </div>`;
     }
   }
@@ -187,7 +188,7 @@ function initButtonEvents() {
   });
 }
 
-// --- CÁC HÀM XỬ LÝ (Giữ nguyên logic cũ) ---
+// --- CÁC HÀM XỬ LÝ SỰ KIỆN ---
 async function handleLogoutOne(sessionId) {
   await showDialog("question", "Đăng xuất thiết bị này?", async () => {
     const result = await callAPI(`${API_LOGOUT_ONE}/${sessionId}`);
@@ -233,7 +234,3 @@ document
       }
     );
   });
-
-await loadPage(async () => {
-  await loadSessions();
-});

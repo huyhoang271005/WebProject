@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Đơn Hàng Của Tôi</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="index.css">
+    <link rel="stylesheet" href="/orders/index.css">
 </head>
 <body>
 <!-- Navigation sẽ được load động -->
@@ -32,16 +32,13 @@
                 <i class="fas fa-list"></i> Tất cả
             </button>
             <button class="tab-btn" data-status="WAITING" onclick="filterByStatus('WAITING')">
-                <i class="fas fa-clock"></i> Chờ xác nhận
+                <i class="fas fa-clock"></i> Chờ thanh toán
             </button>
             <button class="tab-btn" data-status="PENDING" onclick="filterByStatus('PENDING')">
                 <i class="fas fa-hourglass-half"></i> Đang xử lý
             </button>
             <button class="tab-btn" data-status="CONFIRMED" onclick="filterByStatus('CONFIRMED')">
-                <i class="fas fa-check-circle"></i> Đã xác nhận
-            </button>
-            <button class="tab-btn" data-status="PAINTED" onclick="filterByStatus('PAINTED')">
-                <i class="fas fa-paint-brush"></i> Đã đóng gói
+                <i class="fas fa-clipboard-check"></i> Đã xác nhận
             </button>
             <button class="tab-btn" data-status="DELIVERING" onclick="filterByStatus('DELIVERING')">
                 <i class="fas fa-shipping-fast"></i> Đang giao
@@ -49,11 +46,11 @@
             <button class="tab-btn" data-status="DELIVERED" onclick="filterByStatus('DELIVERED')">
                 <i class="fas fa-box-open"></i> Đã giao
             </button>
+            <button class="tab-btn" data-status="COMPLETED" onclick="filterByStatus('COMPLETED')">
+                <i class="fas fa-check-circle"></i> Đã hoàn thành
+            </button>
             <button class="tab-btn" data-status="CANCELED" onclick="filterByStatus('CANCELED')">
                 <i class="fas fa-times-circle"></i> Đã hủy
-            </button>
-            <button class="tab-btn" data-status="REJECTED" onclick="filterByStatus('REJECTED')">
-                <i class="fas fa-ban"></i> Từ chối
             </button>
         </div>
 
@@ -109,6 +106,6 @@
 <!-- Notification Toast -->
 <div id="notification" class="notification hidden"></div>
 
-<script type="module" src="index.js"></script>
+<script type="module" src="/orders/index.js"></script>
 </body>
 </html>

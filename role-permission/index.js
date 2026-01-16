@@ -1,13 +1,13 @@
-import { callAPI } from "../public/api.js";
+import { callAPI } from "../lib/api.js";
 import { showDialog } from "../dialog/index.js";
-import { getLoader, loadPage } from "../public/public.js";
+import { getLoader, loadPage } from "../lib/public.js";
 import { loadNavbar } from "../navbar/navbar.js";
 let ROLE_PERMISSIONS = [];
 let ALL_PERMISSIONS = [];
 await loadPage(async() => {
     await loadNavbar();
     const resultRolePermission = await callAPI('/role-permission');
-    const resultPermission = await callAPI('/permission');
+    const resultPermission = await callAPI('/permissions');
 
     if(!resultRolePermission.success){
         await showDialog('error', resultRolePermission.message);
@@ -81,7 +81,7 @@ async function initEvents() {
             const idx = btn.dataset.index;
             await showDialog('question', `Bạn có muốn xoá chức vụ ${ROLE_PERMISSIONS[idx].roleName} không?`,
                 async() => {
-                    const result = await callAPI(`/role?roleId=${ROLE_PERMISSIONS[idx].roleId}`, 'DELETE');
+                    const result = await callAPI(`/roles/${ROLE_PERMISSIONS[idx].roleId}`, 'DELETE');
                     if(result.success){
                         ROLE_PERMISSIONS.splice(idx, 1);
                         await render();
@@ -101,7 +101,7 @@ async function initEvents() {
             await showDialog('question', `Bạn có muốn xoá quyền ${ROLE_PERMISSIONS[roleIdx].permissions[permIdx].permissionName} 
                 cho chức vụ ${ROLE_PERMISSIONS[roleIdx].roleName} không?`, 
                 async() => {
-                    const result = await callAPI(`/role-permission?rolePermissionId=${rolePermissionId}`, 'DELETE');
+                    const result = await callAPI(`/role-permission/${rolePermissionId}`, 'DELETE');
                     if(result.success){
                         ROLE_PERMISSIONS[roleIdx].permissions.splice(permIdx, 1);
                         await render();
@@ -152,7 +152,7 @@ addRoleBtn.onclick = async() => {
     }
     let result = null;
     await getLoader('addRoleBtn', async() => {
-        result = await callAPI('/role', 'POST', data);
+        result = await callAPI('/roles', 'POST', data);
     });
     if(result.success){
         ROLE_PERMISSIONS.push({ roleId: result.data.roleId, roleName: name, permissions: []});

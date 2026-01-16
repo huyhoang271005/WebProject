@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Chi tiết người dùng</title>
 <link rel="stylesheet" href="../dialog/index.css"/>
-<link rel="stylesheet" href="../public/public.css"/>
+<link rel="stylesheet" href="../lib/public.css"/>
 <script src="https://kit.fontawesome.com/e9c281dd3f.js" crossorigin="anonymous"></script>
 <style>
 .profile {
@@ -83,6 +83,16 @@
     color: #9CA3AF;
     margin-top: 5px;
 }
+/* Nút gửi thông báo */
+.action-buttons .secondary {
+    background-color: #F3F4F6;
+    color: #111827;
+    border: 1px solid #D1D5DB;
+}
+
+.action-buttons .secondary:hover {
+    background-color: #E5E7EB;
+}
 @media (max-width:700px){
     .profile { display: inline-block; }
 }
@@ -99,6 +109,17 @@
             <div class="avatar-wrapper">
                 <img id="avatarPreview" src="" class="avatar-img" />
                 <div id="emailsSection"></div>
+                <div class="action-buttons">
+                    <button id="btnSendMessage" class="primary">
+                        <i class="fa-solid fa-paper-plane"></i>
+                        Gửi tin nhắn
+                    </button>
+
+                    <button id="btnSendNotification" class="secondary">
+                        <i class="fa-solid fa-bell"></i>
+                        Gửi thông báo
+                    </button>
+                </div>
             </div>
 
             <!-- Thông tin user -->
@@ -133,6 +154,6 @@
     </div>
 </div>
 
-<script type="module" src="index.js"></script>
+<script type="module" src="/user-detail/index.js"></script>
 </body>
 </html>

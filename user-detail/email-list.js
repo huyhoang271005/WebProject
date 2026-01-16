@@ -1,5 +1,5 @@
 import { showDialog } from "../dialog/index.js";
-import { callAPI } from "../public/api.js";
+import { callAPI } from "../lib/api.js";
 export function initEmailList(userId, initialEmails = []) {
     let emails = [...initialEmails];
 
@@ -45,7 +45,8 @@ export function initEmailList(userId, initialEmails = []) {
                     if (addEmail.success){
                         const result = await callAPI('/auth/send-verify-email', 'POST', {email: email.email});
                         if(result.success){
-                            email.validated = false;
+                            email.emailId = result.data.emailId;
+                            email.validated = result.data.validated;
                             render();
                         }
                         await showDialog(result.success ? 'success' : 'error', result.message);

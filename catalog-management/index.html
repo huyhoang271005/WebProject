@@ -6,65 +6,65 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Quản lý Dữ liệu</title>
     <link rel="stylesheet" href="../dialog/index.css">
-    <link rel="stylesheet" href="../public/public.css">
-    <link rel="stylesheet" href="index.css">
+    <link rel="stylesheet" href="/catalog-management/index.css">
     <script src="https://kit.fontawesome.com/e9c281dd3f.js" crossorigin="anonymous"></script>
 </head>
 
 <body>
-    <div class="card">
-        <div style="margin-bottom: 15px;">
-            <button id="backBtn" class="back-btn">
-                <i class="fa-solid fa-arrow-left"></i> Trở về Trang chủ
-            </button>
-        </div>
-        <div class="tabs-container">
-            <button class="tab-btn active" data-type="category">Danh mục</button>
-            <button class="tab-btn" data-type="brand">Thương hiệu</button>
-            <button class="tab-btn" data-type="attribute">Thuộc tính</button>
-        </div>
-
-        <h2 id="pageTitle">Quản lý Danh mục</h2>
-        <div id="loadPage"></div>
-
-        <div id="info">
-            <div class="table-wrapper">
-                <table id="dataTable">
-                    <thead>
-                        <tr>
-                            <th style="text-align: left;">Tên hiển thị</th>
-                            <th id="descHeader" style="text-align: left;">Mô tả</th>
-                            <th style="width: 120px; text-align: center;">Thao tác</th>
-                        </tr>
-                    </thead>
-                    <tbody></tbody>
-                </table>
+    <div class="container">
+        <div class="card">
+            <div class="tabs-container">
+                <button class="tab-btn active" data-type="category">Danh mục</button>
+                <button class="tab-btn" data-type="brand">Thương hiệu</button>
+                <button class="tab-btn" data-type="attribute">Thuộc tính</button>
             </div>
-            <button id="loadMore" style="display: none; margin-top: 10px; background: #9CA3AF;">Xem thêm</button>
 
-            <div class="form-container">
-                <h3 id="formTitle"><i class="fa-solid fa-plus-circle"></i> Thêm mới</h3>
-                <input type="hidden" id="dataId">
+            <h2 id="pageTitle">Quản lý Danh mục</h2>
+            <div id="loadPage"></div>
 
-                <div class="input-group">
-                    <label>Tên hiển thị:</label>
-                    <input type="text" id="dataName" placeholder="Nhập tên...">
+            <div id="info">
+                <div class="table-wrapper">
+                    <table id="dataTable">
+                        <thead>
+                            <tr>
+                                <th style="text-align: center;">Tên</th>
+                                <th id="descHeader" style="text-align: center;">Mô tả</th>
+                                <th style="width: 120px; text-align: center;">Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
                 </div>
+                <button id="loadMore" style="display: none; margin-top: 10px; background: #9CA3AF;">Xem thêm</button>
 
-                <div class="input-group" id="descGroup">
-                    <label>Mô tả:</label>
-                    <input type="text" id="dataDesc" placeholder="Nhập mô tả chi tiết...">
-                </div>
+                <div class="form-container">
+                    <h3 id="formTitle"><i class="fa-solid fa-plus-circle"></i> Thêm mới</h3>
+                    <input type="hidden" id="dataId">
 
-                <div class="btn-group" style="text-align: right;">
-                    <button id="cancelBtn"
-                        style="display: none; width: auto; background: #6B7280; margin-right: 10px;">Hủy</button>
-                    <button id="saveBtn" style="width: auto;">Lưu dữ liệu</button>
+                    <div class="input-group">
+                        <label>Tên hiển thị:</label>
+                        <input type="text" id="dataName" placeholder="Nhập tên...">
+                    </div>
+
+                    <div class="input-group" id="descGroup">
+                        <label>Mô tả:</label>
+                        <input type="text" id="dataDesc" placeholder="Nhập mô tả chi tiết...">
+                    </div>
+
+                    <div class="btn-group" style="text-align: right;">
+                        <button id="cancelBtn"
+                            style="display: none; width: auto; background: #6B7280; margin-right: 10px;">Hủy</button>
+                        <button id="saveBtn" style="width: auto;">Lưu dữ liệu</button>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-    <script type="module" src="index.js"></script>
+    <script type="module" src="/catalog-management/index.js"></script>
+    <script type="module">
+        import { loadNavbar } from '../navbar/navbar.js';
+        loadNavbar({}); 
+    </script>
 </body>
 
 </html>

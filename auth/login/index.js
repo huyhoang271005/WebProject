@@ -1,6 +1,6 @@
-import {callAPI} from "../../public/api.js";
+import {callAPI} from "../../lib/api.js";
 import {showDialog} from "../../dialog/index.js";
-import {  getLoader, getEye} from "../../public/public.js";
+import {  getLoader, getEye} from "../../lib/public.js";
 
 const usernameInput = document.getElementById('username');
 const passwordInput = document.getElementById('password');
@@ -38,16 +38,15 @@ loginBtn.addEventListener('click', async () => {
                 statusDiv.textContent += err.error + '\n';
             });
         }
-        else if (!result.data){
-            status = 'error';
-        }
-        else {
-            status = 'question';
-        }
-        await showDialog(status, result.message, async () => await verify(result.data, username), 
-        status == 'error' || status == 'success' ? 'Đồng ý': 'Gửi email xác thực');
+        
     }
     else {
+        if(result.data.verifiedEmail === false || result.data.verifiedDevice === false){
+            status = 'question';
+            await showDialog(status, result.message, async () => await verify(result.data, username), 
+            status == 'error' || status == 'success' ? 'Đồng ý': 'Gửi email xác thực');
+            return;
+        }
         if(rememberUser.checked){
             localStorage.setItem('rememberUser', 'true');
         }

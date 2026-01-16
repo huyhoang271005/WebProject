@@ -1,6 +1,6 @@
-import { callAPI } from "../public/api.js";
+import { callAPI } from "../lib/api.js";
 import { showDialog } from "../dialog/index.js";
-import { getLoader, loadPage } from "../public/public.js";
+import { getLoader, loadPage } from "../lib/public.js";
 
 // === 1. CẤU HÌNH TRUNG TÂM ===
 let currentType = 'category';
@@ -217,9 +217,4 @@ loadMoreBtn.addEventListener("click", () => {
 await loadPage(async () => {
     updateUI();
     await loadData();
-});
-
-// Xử lý nút Quay lại
-document.getElementById('backBtn').addEventListener('click', () => {
-    window.history.back();
 });
