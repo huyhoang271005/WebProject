@@ -1,6 +1,5 @@
 import { loadNavbar } from "/navbar/navbar.js";
 import { callAPI } from "/lib/api.js";
-import { showDialog } from "/dialog/index.js";
 import { loadPage, getLoader } from "/lib/public.js";
 
 // [IMPORT LOADER] Lấy hàm từ file bro vừa gửi
@@ -19,18 +18,6 @@ await loadPage(async () => {
       await loadNavbar();
     } catch (e) {
       console.error("Navbar Err:", e);
-    }
-
-    // B. Check quyền Admin (Logic chống đá về Home bậy bạ)
-    const cached = sessionStorage.getItem("homeData");
-    if (cached) {
-      const user = JSON.parse(cached);
-      if (user.roleName !== "ADMIN") {
-        toggleLoading(false); // Tắt load trước khi hiện dialog
-        await showDialog("error", "Bạn không có quyền truy cập trang này!");
-        window.location.replace("/home");
-        return; // Dừng luôn
-      }
     }
 
     // C. Tải dữ liệu Roles
