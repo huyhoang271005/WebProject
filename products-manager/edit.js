@@ -340,16 +340,10 @@ window.saveVariant = async function (variantId) {
     if (fileInput && fileInput.files && fileInput.files[0]) {
         const imageFile = fileInput.files[0];
 
-        // Tạo tên file unique giống add-product.js
-        const imageName = `variant-${variantId}-${Date.now()}`;
+        // Backend expects field name 'image'
+        formData.append("image", imageFile);
 
-        // Append file với tên unique
-        formData.append(imageName, imageFile);
-
-        // Thêm imageName vào DTO để backend biết file nào
-        variantDTO.imageName = imageName;
-
-        console.log("Uploading variant image:", imageFile.name, "as", imageName);
+        console.log("✅ Uploading variant image:", imageFile.name);
     }
 
     // Append variantDTO sau khi đã thêm imageName (nếu có)
@@ -547,7 +541,9 @@ async function updateProductHandler() {
         // Main image if changed
         const mainFile = document.getElementById("mainImageInput").files[0];
         if (mainFile) {
-            formData.append("productImage", mainFile);
+            // Backend expects field name 'image'
+            formData.append("image", mainFile);
+            console.log("✅ Uploading main image:", mainFile.name);
         }
 
         const res = await updateProduct(formData);
