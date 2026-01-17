@@ -1,10 +1,10 @@
-import { loadNavbar } from "../navbar/navbar.js";
-import { callAPI } from "../lib/api.js";
-import { showDialog } from "../dialog/index.js";
-import { toggleLoading } from "../lib/loader.js";
-import { loadPage, getLoader } from "../lib/public.js";
+import { loadNavbar } from "/navbar/navbar.js";
+import { callAPI } from "/lib/api.js";
+import { showDialog } from "/dialog/index.js";
+import { toggleLoading } from "/lib/loader.js";
+import { loadPage, getLoader } from "/lib/public.js";
 
-let currentMode = "all"; // 'all' hoặc 'role'
+let currentMode = "all";
 
 // 1. Khởi tạo trang
 await loadPage(async () => {

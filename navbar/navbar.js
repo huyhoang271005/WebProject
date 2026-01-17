@@ -1,6 +1,6 @@
-import { callAPI } from "../lib/api.js";
-import { showDialog } from "../dialog/index.js";
-import { connectSse, subscribeTopic } from "../lib/sse.js";
+import { callAPI } from "/lib/api.js";
+import { showDialog } from "/dialog/index.js";
+import { connectSse, subscribeTopic } from "/lib/sse.js";
 
 const noImage = "https://cdn-icons-png.flaticon.com/512/847/847969.png";
 
@@ -86,10 +86,10 @@ const navbarHTML = `
     </style>
 
     <nav class="navbar-component">
-        <a href="../home/index.html" class="nb-brand"><i class="fa-solid fa-leaf"></i> Tạp Hóa Xanh</a>
+        <a href="/home" class="nb-brand"><i class="fa-solid fa-leaf"></i> Tạp Hóa Xanh</a>
         <div id="nbCenterSlot"></div>
         <div class="nb-right-wrapper">
-            <a href="../cart/index.html" class="nb-icon-btn" title="Giỏ hàng">
+            <a href="/cart" class="nb-icon-btn" title="Giỏ hàng">
                 <i class="fa-solid fa-cart-shopping"></i>
                 <span class="nb-badge" id="cartBadge">0</span>
             </a>
@@ -111,20 +111,20 @@ const navbarHTML = `
                     <div style="font-size:0.75rem; color:#888;" id="nbRole">GUEST</div>
                 </div>
                 <div class="nb-dropdown" id="nbUserDropdown">
-                    <a href="../home"><i class="fa-solid fa-house" style="color: #10B981 ; width:20px; text-align:center;"></i> Trang chủ</a>
-                    <a href="../products"><i class="fa-solid fa-compass" style="color: #F59E0B ; width:20px; text-align:center;"></i> Khám phá sản phẩm</a>
-                    <a href="../profile"><i class="fa-regular fa-user" style="color: #3B82F6; width:20px; text-align:center;"></i> Hồ sơ</a>
-                    <a href="../session"><i class="fa-solid fa-shield-halved" style="color: #8B5CF6; width:20px; text-align:center;"></i> Phiên đăng nhập</a>
-                    <a href="../contact"><i class="fa-solid fa-map-location-dot" style="color: #F59E0B; width:20px; text-align:center;"></i> Sổ địa chỉ</a>
-                    <a href="../orders"><i class="fa-solid fa-clipboard-list" style="color: #10B981; width:20px; text-align:center;"></i> Đơn hàng của tôi</a>
+                    <a href="/home"><i class="fa-solid fa-house" style="color: #10B981 ; width:20px; text-align:center;"></i> Trang chủ</a>
+                    <a href="/products"><i class="fa-solid fa-compass" style="color: #F59E0B ; width:20px; text-align:center;"></i> Khám phá sản phẩm</a>
+                    <a href="/profile"><i class="fa-regular fa-user" style="color: #3B82F6; width:20px; text-align:center;"></i> Hồ sơ</a>
+                    <a href="/session"><i class="fa-solid fa-shield-halved" style="color: #8B5CF6; width:20px; text-align:center;"></i> Phiên đăng nhập</a>
+                    <a href="/contact"><i class="fa-solid fa-map-location-dot" style="color: #F59E0B; width:20px; text-align:center;"></i> Sổ địa chỉ</a>
+                    <a href="/orders"><i class="fa-solid fa-clipboard-list" style="color: #10B981; width:20px; text-align:center;"></i> Đơn hàng của tôi</a>
                     
                     <div class="nb-admin-only" style="border-top:1px solid #eee; margin:5px 0"></div>
-                    <a href="../products-manager" class="nb-admin-only"><i class="fa-solid fa-boxes-stacked" style="color: #EC4899; width:20px; text-align:center;"></i> QL Sản phẩm</a>
-                    <a href="../catalog-management" class="nb-admin-only"><i class="fa-solid fa-layer-group" style="color: #6366F1; width:20px; text-align:center;"></i> QL Danh mục</a>
-                    <a href="../users" class="nb-admin-only"><i class="fa-solid fa-users-gear" style="color: #0EA5E9; width:20px; text-align:center;"></i> QL Người dùng</a>
-                    <a href="../role-permission" class="nb-admin-only"><i class="fa-solid fa-user-lock" style="color: #EF4444; width:20px; text-align:center;"></i> Phân quyền</a>
-                    <a href="../order-manager" class="nb-admin-only"><i class="fa-solid fa-file-invoice-dollar" style="color: #14B8A6; width:20px; text-align:center;"></i> Quản lí đơn hàng</a>
-                    <a href="../notification" class="nb-admin-only"><i class="fa-solid fa-bullhorn" style="color: #F97316; width:20px; text-align:center;"></i> Gửi thông báo</a>
+                    <a href="/products-manager" class="nb-admin-only"><i class="fa-solid fa-boxes-stacked" style="color: #EC4899; width:20px; text-align:center;"></i> QL Sản phẩm</a>
+                    <a href="/catalog-management" class="nb-admin-only"><i class="fa-solid fa-layer-group" style="color: #6366F1; width:20px; text-align:center;"></i> QL Danh mục</a>
+                    <a href="/users" class="nb-admin-only"><i class="fa-solid fa-users-gear" style="color: #0EA5E9; width:20px; text-align:center;"></i> QL Người dùng</a>
+                    <a href="/role-permission" class="nb-admin-only"><i class="fa-solid fa-user-lock" style="color: #EF4444; width:20px; text-align:center;"></i> Phân quyền</a>
+                    <a href="/order-manager" class="nb-admin-only"><i class="fa-solid fa-file-invoice-dollar" style="color: #14B8A6; width:20px; text-align:center;"></i> Quản lí đơn hàng</a>
+                    <a href="/notification" class="nb-admin-only"><i class="fa-solid fa-bullhorn" style="color: #F97316; width:20px; text-align:center;"></i> Gửi thông báo</a>
                     
                     <button id="nbLogout" style="color:#e11d48; border-top:1px solid #eee; margin-top:5px">
                         <i class="fa-solid fa-right-from-bracket" style="width:20px; text-align:center;"></i> Đăng xuất
@@ -325,7 +325,7 @@ function setupEvents() {
         sessionStorage.clear();
         localStorage.clear();
         await callAPI("/logout");
-        window.location.replace("../auth/login");
+        window.location.replace("/auth/login");
       },
       "Đăng xuất",
       true,
