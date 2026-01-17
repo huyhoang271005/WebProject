@@ -12,6 +12,10 @@ body {
     overflow: hidden; /* Ngăn cuộn trang web chính */
 }
 
+.nav-spacer {
+    height: 0 !important;
+}
+
 /* ================= CONTAINER ================= */
 .chat-container {
     display: flex;
@@ -269,9 +273,6 @@ body {
 
 /* ================= RESPONSIVE: MOBILE ( < 768px ) ================= */
 @media (max-width: 768px) {
-    .nav-spacer {
-        height: 60px !important;
-    }
     .room-list {
         width: 100%;
         border-right: none;
