@@ -44,7 +44,7 @@ loginBtn.addEventListener('click', async () => {
         if(result.data.verifiedEmail === false || result.data.verifiedDevice === false){
             status = 'question';
             await showDialog(status, result.message, async () => await verify(result.data, username), 
-            status == 'error' || status == 'success' ? 'Đồng ý': 'Gửi email xác thực');
+            status === 'error' || status === 'success' ? 'Đồng ý': 'Gửi email xác thực');
             return;
         }
         if(rememberUser.checked){
@@ -53,7 +53,7 @@ loginBtn.addEventListener('click', async () => {
         else {
             localStorage.setItem('rememberUser', 'false');
         }
-        window.location.replace('../../home');
+        window.location.replace('/home');
     }
 });
 
