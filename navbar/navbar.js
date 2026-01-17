@@ -164,10 +164,6 @@ export async function loadNavbar(options = {}) {
     const delta = parseInt(e.detail);
     if (!isNaN(delta)) updateBadgeCount(delta);
   });
-
-  document.addEventListener("update-cart-badge", () => {
-    fetchHomeData();
-  });
 }
 
 async function fetchHomeData() {
@@ -247,7 +243,7 @@ function setupSSERealtime() {
     showSmartToast(
       "Thông báo hệ thống",
       data.message || data.content,
-      "fa-bell"
+      "fa-bell",
     );
     prependNotification(data);
   });
@@ -332,7 +328,7 @@ function setupEvents() {
         window.location.replace("../auth/login");
       },
       "Đăng xuất",
-      true
+      true,
     );
   };
 
@@ -367,7 +363,7 @@ async function fetchNotifications() {
   try {
     const res = await callAPI(
       `/notifications?page=${notiState.page}&size=${notiState.size}`,
-      "GET"
+      "GET",
     );
     if (res && res.success && res.data?.listData) {
       const list = res.data.listData;
