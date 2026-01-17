@@ -67,7 +67,6 @@ body {
 
 .room-last-message {
     font-size: 13px;
-    color: #65676b;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;

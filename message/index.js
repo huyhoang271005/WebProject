@@ -52,7 +52,8 @@ function renderRooms() {
             <div class="room-avatar"><img src="${room.imageUrl || noImage}"></div>
             <div class="room-info">
                 <div class="room-name">${room.roomChatName}</div>
-                <div class="room-last-message">${room.lastMessage || "Bắt đầu cuộc trò chuyện"}</div>
+                <div class="room-last-message" style = "${room.messageSentCount > 0 ? 'color: black; font-weight: bolder' : 'color: #65676b; font-weight: normal'}">
+                    ${room.lastMessage || "Bắt đầu cuộc trò chuyện"}</div>
             </div>
             <div class="room-time">${room.lastMessageTime ? convertToVNTime(room.lastMessageTime) : ""}</div>
         `;
@@ -70,6 +71,8 @@ async function openRoom(roomId) {
     const room = rooms.find(r => String(r.roomChatId) === String(roomId));
     if (!room) return;
 
+    room.messageSentCount = 0;
+
     hasMoreMessages = true;
     page = 0;
     messages.length = 0;
@@ -82,6 +85,8 @@ async function openRoom(roomId) {
 
     await loadMembers(roomId); // Lấy currentUserId và danh sách người trong phòng
     await loadMessages(roomId);
+
+    send("/app/chat.read", { roomId: currentRoomId });
 }
 
 async function loadMembers(roomId) {
@@ -169,6 +174,7 @@ function sendMessage() {
                         // Lưu cả tên và nội dung vào room để render
                         r.lastMessage = senderName ? `${senderName}: ${msg.content}` : msg.content;
                         r.lastMessageTime = msg.time;
+                        r.messageSentCount+=1;
 
                         renderRooms(); // Vẽ lại danh sách
                     }
