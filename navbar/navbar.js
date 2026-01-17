@@ -164,6 +164,10 @@ export async function loadNavbar(options = {}) {
     const delta = parseInt(e.detail);
     if (!isNaN(delta)) updateBadgeCount(delta);
   });
+
+  document.addEventListener("update-cart-badge", () => {
+    fetchHomeData();
+  });
 }
 
 async function fetchHomeData() {
