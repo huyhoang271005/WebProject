@@ -7,13 +7,21 @@
       content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
     />
     <title>Gửi Thông Báo Hệ Thống</title>
-    <link rel="stylesheet" href="../lib/public.css" />
-    <link rel="stylesheet" href="../dialog/index.css" />
+    <link rel="stylesheet" href="/lib/public.css" />
+    <link rel="stylesheet" href="/dialog/index.css" />
     <script
       src="https://kit.fontawesome.com/e9c281dd3f.js"
       crossorigin="anonymous"
     ></script>
     <style>
+      body {
+        background-image: url("https://img.freepik.com/free-vector/blue-sky-with-clouds-background_1017-26302.jpg");
+        background-size: cover; /* Phủ kín màn hình */
+        background-position: center; /* Căn giữa */
+        background-attachment: fixed; /* Cố định nền khi cuộn */
+        background-repeat: no-repeat;
+        min-height: 100vh;
+      }
       /* --- DESKTOP STYLES --- */
       .container {
         max-width: 800px; /* Mở rộng chiều ngang cho thoáng trên Laptop */
@@ -219,7 +227,7 @@
 
           <div
             class="tab-item tab-link"
-            onclick="window.location.href='../users/index.html'"
+            onclick="window.location.href='/users/index.html'"
           >
             <i class="fa-solid fa-user-pen"></i> Gửi cho cá nhân
           </div>
@@ -263,11 +271,6 @@
           <button id="btnSend" onclick="sendNotification()">
             <i class="fa-solid fa-paper-plane"></i> Gửi Ngay
           </button>
-
-          <div class="back-link">
-            <a href="../home"
-              ><i class="fa-solid fa-arrow-left"></i> Quay về trang chủ</a
-            >
           </div>
         </div>
       </div>
