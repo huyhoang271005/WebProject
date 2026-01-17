@@ -19,7 +19,7 @@ body {
 /* ================= CONTAINER ================= */
 .chat-container {
     display: flex;
-    height: 100vh;
+    height: 88vh;
     width: 100vw;
     background: #ffffff;
     position: relative;
