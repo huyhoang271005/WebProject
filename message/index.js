@@ -1,6 +1,7 @@
 import { callAPI } from "/lib/api.js";
 import { noImage, convertToVNTime } from "/lib/public.js";
 import { connectStomp, subscribe, send } from "/lib/websocket.js";
+import {loadNavbar} from "../navbar/navbar.js";
 
 /* ================= STATE ================= */
 let currentUserId = null;
@@ -155,7 +156,7 @@ function sendMessage() {
 }
 
 /* ================= INIT ================= */
-(async function init() {
+async function init() {
     try {
         const res = await callAPI("/room-chat");
         rooms = res.data.listData || [];
@@ -201,4 +202,9 @@ function sendMessage() {
             }
         })
     } catch (e) { console.error(e); }
-})();
+}
+
+document.addEventListener("DOMContentLoaded", async () => {
+    await loadNavbar();
+    await init();
+})
