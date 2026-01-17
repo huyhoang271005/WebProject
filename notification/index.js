@@ -8,8 +8,39 @@ let currentMode = "all";
 
 // 1. Khởi tạo trang
 await loadPage(async () => {
-  await loadNavbar();
-  await fetchRoles(); // Tải danh sách role để dùng cho tab Role
+  // A. Load Navbar an toàn
+  try {
+    await loadNavbar();
+  } catch (e) {
+    console.error("Navbar Err:", e);
+  }
+
+  // B. [FIX] Kiểm tra quyền Admin trước khi gọi API
+  // Tránh việc gọi API bị lỗi 403 rồi bị đá văng
+  const cached = sessionStorage.getItem("homeData");
+  if (cached) {
+    const user = JSON.parse(cached);
+    // Nếu không phải ADMIN thì hiện thông báo rồi mới đá (cho user hiểu)
+    if (user.roleName !== "ADMIN") {
+      await showDialog("error", "Bạn không có quyền truy cập trang này!");
+      window.location.replace("/home");
+      return;
+    }
+  }
+
+  // C. [FIX] Bọc fetchRoles để nếu lỗi cũng không sập trang
+  try {
+    await fetchRoles();
+  } catch (e) {
+    console.warn("Lỗi tải roles:", e);
+    // Nếu lỗi thì disable tính năng gửi theo nhóm
+    const tabRole = document.getElementById("tabRole");
+    if (tabRole) {
+      tabRole.style.opacity = "0.5";
+      tabRole.style.pointerEvents = "none";
+      tabRole.title = "Không tải được danh sách nhóm";
+    }
+  }
 });
 
 // 2. Chuyển Tab
@@ -41,6 +72,9 @@ async function fetchRoles() {
     select.innerHTML = res.data
       .map((r) => `<option value="${r.roleId}">${r.roleName}</option>`)
       .join("");
+  } else {
+    // Nếu API báo lỗi logic (không phải lỗi mạng)
+    throw new Error(res.message || "API Roles Failed");
   }
 }
 
@@ -74,6 +108,10 @@ window.sendNotification = async () => {
     confirmMsg = "Gửi thông báo cho TOÀN BỘ hệ thống?";
   } else {
     // Gửi theo Role: POST /notifications/roles/{roleId}
+    if (!roleId) {
+      await showDialog("error", "Vui lòng chọn nhóm người nhận!");
+      return;
+    }
     endpoint = `/notifications/roles/${roleId}`;
     const roleSelect = document.getElementById("roleSelect");
     const roleName = roleSelect.options[roleSelect.selectedIndex].text;
