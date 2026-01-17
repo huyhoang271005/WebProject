@@ -4,98 +4,111 @@ import { convertToVNTime, getLoader, noImage } from "../lib/public.js";
 import { loadNavbar } from "../navbar/navbar.js";
 import { toggleLoading } from "../lib/loader.js";
 
+/* ================= DOM ================= */
 const loadMore = document.getElementById("loadMore");
 const searchInput = document.getElementById("searchInput");
 const searchBtn = document.getElementById("searchBtn");
 const reloadBtn = document.getElementById("reloadBtn");
 
+/* ================= STATE ================= */
 let page = 0;
 let size = 7;
-let searchText = ""; // Biến lưu từ khóa tìm kiếm
+let searchText = "";
+let isLoading = false; // 🔴 CHỐNG LOAD TRÙNG
 
-// Hàm load User
+/* ================= API ================= */
 async function loadUsers() {
-  // [TODO FOR BACKEND]: Sửa param 'search' thành tên đúng trong API sau này
-  const query = `/users?page=${page}&size=${size}${
-    searchText ? `&email=${encodeURIComponent(searchText)}` : null
-  }`;
+  if (isLoading) return [];
+  isLoading = true;
 
-  const result = await callAPI(query);
-  if (!result.success) {
-    await showDialog("error", result.message);
-    return [];
-  } else {
-    page += 1;
-    if (result.data.hasMore) {
-      loadMore.style.display = "inline-flex";
-    } else {
-      loadMore.style.display = "none";
+  try {
+    const query = `/users?page=${page}&size=${size}${
+        searchText ? `&email=${encodeURIComponent(searchText)}` : ""
+    }`;
+
+    const result = await callAPI(query);
+
+    if (!result.success) {
+      await showDialog("error", result.message);
+      return [];
     }
-    return result.data.listData;
+
+    const list = result.data.listData || [];
+
+    // ✅ chỉ tăng page khi có data
+    if (list.length > 0) page += 1;
+
+    // Hiển thị / ẩn Load more
+    loadMore.style.display = result.data.hasMore ? "inline-flex" : "none";
+
+    return list;
+  } finally {
+    isLoading = false;
   }
 }
 
+/* ================= INIT ================= */
 document.addEventListener("DOMContentLoaded", async () => {
   toggleLoading(true);
   try {
     await loadNavbar();
+    page = 0;
     const data = await loadUsers();
-    renderUsers(data);
-    setupActions(); // Cài đặt sự kiện tìm kiếm & reload
+    renderUsers(data, false);
+    setupActions();
   } catch (e) {
-    console.error("Lỗi tải trang Users:", e);
+    console.error("Lỗi tải Users:", e);
   } finally {
     setTimeout(() => toggleLoading(false), 300);
   }
 });
 
+/* ================= LOAD MORE ================= */
 if (loadMore) {
-  loadMore.addEventListener("click", async () => {
+  loadMore.onclick = async () => {
+    if (isLoading) return;
+
     await getLoader("loadMore", async () => {
       const moreUsers = await loadUsers();
-      if (moreUsers && moreUsers.length > 0) {
+      if (moreUsers.length > 0) {
         renderUsers(moreUsers, true);
       }
     });
-  });
+  };
 }
 
-// Cài đặt sự kiện cho Search & Reload
+/* ================= ACTIONS ================= */
 function setupActions() {
-  // 1. Xử lý Tìm kiếm
   const doSearch = async () => {
     const val = searchInput.value.trim();
-    // Nếu không có gì thay đổi thì thôi (tránh spam)
     if (val === searchText && page > 0) return;
 
     searchText = val;
-    page = 0; // Reset về trang đầu
+    page = 0;
 
-    toggleLoading(true); // Hiệu ứng load
+    toggleLoading(true);
     const data = await loadUsers();
-    renderUsers(data, false); // Xóa cũ, render mới
+    renderUsers(data, false);
     setTimeout(() => toggleLoading(false), 300);
   };
 
   searchBtn.onclick = doSearch;
-  searchInput.onkeypress = (e) => {
+  searchInput.onkeydown = (e) => {
     if (e.key === "Enter") doSearch();
   };
 
-  // 2. Xử lý Reload (Tắt tìm kiếm)
   if (reloadBtn) {
     reloadBtn.onclick = async () => {
-      searchInput.value = ""; // Xóa chữ trong ô
-      searchText = ""; // Xóa từ khóa trong biến
-      page = 0; // Reset trang
+      searchInput.value = "";
+      searchText = "";
+      page = 0;
 
-      // Xoay icon reload 1 vòng chơi cho vui mắt
       const icon = reloadBtn.querySelector("i");
-      if (icon) icon.style.transition = "transform 0.5s";
-      if (icon) icon.style.transform = "rotate(360deg)";
-      setTimeout(() => {
-        if (icon) icon.style.transform = "none";
-      }, 500);
+      if (icon) {
+        icon.style.transition = "transform 0.5s";
+        icon.style.transform = "rotate(360deg)";
+        setTimeout(() => (icon.style.transform = "none"), 500);
+      }
 
       toggleLoading(true);
       const data = await loadUsers();
@@ -105,20 +118,19 @@ function setupActions() {
   }
 }
 
-/**
- * Render danh sách List
- */
+/* ================= RENDER ================= */
 function renderUsers(users, append = false) {
   const listContainer = document.getElementById("userList");
 
   if (!append) {
     listContainer.innerHTML = "";
+
     if (!users || users.length === 0) {
       listContainer.innerHTML = `
-                <div style="text-align:center; padding: 50px 20px; color:#9ca3af;">
-                    <i class="fa-solid fa-user-slash" style="font-size: 3rem; margin-bottom: 10px; opacity: 0.5;"></i><br>
-                    Không tìm thấy thành viên nào.
-                </div>`;
+        <div style="text-align:center; padding:50px 20px; color:#9ca3af;">
+          <i class="fa-solid fa-user-slash" style="font-size:3rem; opacity:.5;"></i><br>
+          Không tìm thấy thành viên nào.
+        </div>`;
       return;
     }
   }
@@ -131,20 +143,18 @@ function renderUsers(users, append = false) {
     const item = document.createElement("div");
     item.className = "user-item";
     item.innerHTML = `
-            <div class="user-left">
-                <img src="${
-                  user.imageUrl ? user.imageUrl : noImage
-                }" class="avatar" />
-                <div class="user-info">
-                    <div class="user-name">${name}</div>
-                    <div class="user-role">${subText}</div>
-                </div>
-            </div>
-            <div class="user-right">
-                <div class="join-date">${date}</div>
-                <i class="fa-solid fa-chevron-right arrow-icon"></i>
-            </div>
-        `;
+      <div class="user-left">
+        <img src="${user.imageUrl || noImage}" class="avatar" />
+        <div class="user-info">
+          <div class="user-name">${name}</div>
+          <div class="user-role">${subText}</div>
+        </div>
+      </div>
+      <div class="user-right">
+        <div class="join-date">${date}</div>
+        <i class="fa-solid fa-chevron-right arrow-icon"></i>
+      </div>
+    `;
 
     item.onclick = () => {
       window.location.href = `/user-detail/?uid=${user.userId}`;
