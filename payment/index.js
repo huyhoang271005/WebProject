@@ -61,10 +61,10 @@ function renderFailure(container) {
             Vui lòng thử lại hoặc chọn phương thức thanh toán khác.
         </p>
         <div class="action-buttons">
-            <a href="../orders/index.html" class="btn btn-failure">
+            <a href="/orders/index.html" class="btn btn-failure">
                 <i class="fa-solid fa-rotate-right"></i> Thử lại
             </a>
-            <a href="../contact/index.html" class="btn btn-outline">
+            <a href="/contact/index.html" class="btn btn-outline">
                <i class="fa-solid fa-headset"></i> Liên hệ hỗ trợ
             </a>
         </div>
