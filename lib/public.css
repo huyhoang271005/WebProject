@@ -1,5 +1,6 @@
 body {
-  background: linear-gradient(135deg, #f0fdf4, #e0f2fe);
+  background: url("https://img.freepik.com/free-vector/blue-sky-with-clouds-background_1017-26302.jpg") no-repeat center center fixed;
+  background-size: cover;
   min-height: 97vh;
   display: flex;
   justify-content: center;

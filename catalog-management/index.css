@@ -19,15 +19,6 @@ body {
     font-family: 'Poppins', sans-serif;
 }
 
-/* --- Card chính --- */
-.card {
-    border-top: 5px solid var(--primary-color);
-    /* Viền trên màu xanh */
-    box-shadow: 0 10px 25px rgba(16, 185, 129, 0.1);
-    /* Đổ bóng xanh nhẹ */
-    border-radius: 16px;
-}
-
 h2 {
     color: var(--primary-hover);
     text-transform: uppercase;

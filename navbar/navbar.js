@@ -76,7 +76,6 @@ const navbarHTML = `
         @keyframes nbSlideIn { from { transform: translateY(100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 
         @media (max-width: 992px) {
-            body { padding-top: 130px; } 
             .navbar-component { padding: 10px 15px; height: auto; flex-wrap: wrap; gap: 10px; background: rgba(255,255,255,0.98); backdrop-filter: blur(10px); }
             .nb-brand { order: 1; font-size: 1.5rem; flex: 1; }
             .nb-right-wrapper { order: 2; gap: 2px; }
