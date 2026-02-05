@@ -1,11 +1,12 @@
 <!DOCTYPE html>
 <html lang="vi">
+
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Đăng nhập</title>
-    <link rel="stylesheet" href="/dialog/index.css"/>
-    <link rel="stylesheet" href="/lib/public.css"/>
+    <link rel="stylesheet" href="/dialog/index.css" />
+    <link rel="stylesheet" href="/lib/public.css" />
     <script src="https://kit.fontawesome.com/e9c281dd3f.js" crossorigin="anonymous"></script>
     <style>
         .checkbox-row {
@@ -21,28 +22,31 @@
         }
     </style>
 </head>
+
 <body>
-<div class="card">
-    <img src="https://cdn-icons-png.flaticon.com/512/3064/3064185.png" width="80" alt="User Icon"
-         style="display: block; margin: auto; padding-bottom: 10px" />
-    <h1>Đăng nhập</h1>
-    <input type="text" id="username" placeholder="Email" />
-    <div class = "password-layout">
-        <input type="password" id="password" class = 'password' placeholder="Mật khẩu" />
-    </div>
+    <div class="card">
+        <img src="https://cdn-icons-png.flaticon.com/512/3064/3064185.png" width="80" alt="User Icon"
+            style="display: block; margin: auto; padding-bottom: 10px" />
+        <h1>Đăng nhập</h1>
+        <input type="text" id="username" placeholder="Email" />
+        <div class="password-layout">
+            <input type="password" id="password" class='password' placeholder="Mật khẩu" />
+        </div>
 
-    <div class="checkbox-row">
-        <input type="checkbox" id="rememberUser">
-        <label for="rememberUser">Ghi nhớ tôi</label>
-    </div>
+        <div class="checkbox-row">
+            <input type="checkbox" id="rememberUser">
+            <label for="rememberUser">Ghi nhớ tôi</label>
+        </div>
 
-    <button id="loginBtn">Đăng nhập</i></button>
-    <div class="status error" id="status"></div>
-    <div style="margin-top: 15px; font-size: 0.9rem; text-align: center;">
-        <a href="#" id="forgotPassword" style="margin-right: 5px; color: #3B82F6; text-decoration: none;">Quên mật khẩu?</a>
-        <a href="/auth/register" id="register" style="color: #3B82F6; text-decoration: none;">Đăng ký</a>
+        <button id="loginBtn">Đăng nhập</i></button>
+        <div class="status error" id="status"></div>
+        <div style="margin-top: 15px; font-size: 0.9rem; text-align: center;">
+            <a href="#" id="forgotPassword" style="margin-right: 5px; color: #10b981; text-decoration: none;">Quên mật
+                khẩu?</a>
+            <a href="/auth/register" id="register" style="color: #10b981; text-decoration: none;">Đăng ký</a>
+        </div>
     </div>
-</div>
-<script type="module" src="/auth/login/index.js"></script>
+    <script type="module" src="/auth/login/index.js"></script>
 </body>
+
 </html>
