@@ -1,6 +1,9 @@
 body {
-  background: url("https://img.freepik.com/free-vector/blue-sky-with-clouds-background_1017-26302.jpg") no-repeat center center fixed;
+  background-image: url("https://img.freepik.com/free-vector/blue-sky-with-clouds-background_1017-26302.jpg");
+  background-position: center;
+  background-repeat: no-repeat;
   background-size: cover;
+  background-attachment: fixed;
   min-height: 97vh;
   display: flex;
   justify-content: center;

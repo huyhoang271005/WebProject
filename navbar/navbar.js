@@ -1,8 +1,7 @@
 import { callAPI } from "/lib/api.js";
 import { showDialog } from "/dialog/index.js";
 import { connectSse, subscribeTopic } from "/lib/sse.js";
-
-const noImage = "https://cdn-icons-png.flaticon.com/512/847/847969.png";
+import {noImage} from "/lib/public.js";
 
 let homeData = {
   imageUrl: noImage,
@@ -134,7 +133,6 @@ const navbarHTML = `
         </div>
     </nav>
     <div id="nbToastContainer"></div>
-    <div style="height: 80px; width: 100%; clear: both;" class="nav-spacer"></div>
 `;
 
 export async function loadNavbar(options = {}) {
