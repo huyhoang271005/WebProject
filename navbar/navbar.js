@@ -21,6 +21,7 @@ let notiState = {
 };
 
 const navbarHTML = `
+    <link rel="stylesheet" href="/dialog/index.css">
     <style>
         body { padding-top: 80px; }
         .navbar-component {
