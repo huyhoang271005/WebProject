@@ -130,6 +130,10 @@ body {
     font-weight: 500;
     transition: all 0.3s ease;
     white-space: nowrap;
+    width: auto !important;
+    /* Override public.css */
+    margin-top: 0 !important;
+    /* Override public.css */
 }
 
 .tab-btn i {

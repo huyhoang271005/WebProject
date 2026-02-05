@@ -10,9 +10,16 @@
   <link rel="stylesheet" href="../dialog/index.css" />
   <script src="https://kit.fontawesome.com/e9c281dd3f.js" crossorigin="anonymous"></script>
   <style>
+    /* Override public.css min-width conflict */
+    input,
+    select {
+      min-width: 0 !important;
+    }
+
     * {
       box-sizing: border-box;
     }
+
 
     body {
       margin: 0;
@@ -337,7 +344,7 @@
   <div class="profile-container">
     <div id="loadPage"></div>
 
-    <div class="card-detail" id="info">
+    <div class="card-detail" id="user-detail-content">
       <div class="card-header">
         <h2>
           <i class="fa-solid fa-address-book" style="color: #10b981"></i>

@@ -11,6 +11,14 @@ body {
     padding: 0 15px;
 }
 
+/* FIX: Override public.css global button styles that break layout */
+.admin-order-container button,
+.tab-btn,
+.search-box-container button {
+    width: auto !important;
+    margin-top: 0 !important;
+}
+
 /* === 2. KHUNG CARD CHÍNH (NỀN TRẮNG) === */
 .card {
     background-color: white;
