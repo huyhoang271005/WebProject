@@ -20,7 +20,6 @@
 
 body {
     font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: linear-gradient(135deg, #f0fdf4 0%, #e0f2fe 100%);
     min-height: 100vh;
     padding-bottom: 40px;
 }

@@ -8,8 +8,8 @@
 
 body {
     padding-top: 0;
-    background-color: #f0f2f5;
-    overflow: hidden; /* Ngăn cuộn trang web chính */
+    overflow: hidden;
+    /* Ngăn cuộn trang web chính */
 }
 
 .nav-spacer {
@@ -60,7 +60,8 @@ body {
 .room-info {
     margin-left: 12px;
     flex: 1;
-    overflow: hidden; /* Để xử lý text-overflow */
+    overflow: hidden;
+    /* Để xử lý text-overflow */
 }
 
 .room-name {
@@ -90,7 +91,8 @@ body {
     display: flex;
     flex-direction: column;
     position: relative;
-    min-width: 0; /* Quan trọng để flex child không bị tràn */
+    min-width: 0;
+    /* Quan trọng để flex child không bị tràn */
 }
 
 /* HEADER */
@@ -105,7 +107,8 @@ body {
 }
 
 .back-btn {
-    display: none; /* Mặc định ẩn trên PC */
+    display: none;
+    /* Mặc định ẩn trên PC */
     background: none;
     border: none;
     font-size: 24px;
@@ -188,7 +191,7 @@ body {
     background: #ffffff;
     color: #050505;
     border-radius: 18px 18px 18px 4px;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 .sender-info {
@@ -285,7 +288,8 @@ body {
         width: 100%;
         height: 100%;
         z-index: 10;
-        display: none; /* Ẩn mặc định trên mobile */
+        display: none;
+        /* Ẩn mặc định trên mobile */
     }
 
     /* Khi có class .mobile-active được thêm vào .chat-container bằng JS */
@@ -298,7 +302,8 @@ body {
     }
 
     .back-btn {
-        display: block; /* Hiện nút quay lại trên mobile */
+        display: block;
+        /* Hiện nút quay lại trên mobile */
     }
 
     .chat-message {

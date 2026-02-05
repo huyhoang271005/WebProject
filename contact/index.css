@@ -3,18 +3,24 @@
    ========================================= */
 :root {
     /* Color Palette - Green & White Theme */
-    --primary-color: #10B981;       /* Emerald 500 */
-    --primary-dark: #059669;        /* Emerald 600 */
-    --primary-light: #D1FAE5;       /* Emerald 100 */
+    --primary-color: #10B981;
+    /* Emerald 500 */
+    --primary-dark: #059669;
+    /* Emerald 600 */
+    --primary-light: #D1FAE5;
+    /* Emerald 100 */
 
-    --secondary-color: #6B7280;     /* Cool Gray */
+    --secondary-color: #6B7280;
+    /* Cool Gray */
     --secondary-dark: #4B5563;
 
     --danger-color: #EF4444;
     --danger-dark: #DC2626;
 
-    --bg-gradient-start: #34D399;   /* Light Green */
-    --bg-gradient-end: #065F46;     /* Dark Green */
+    --bg-gradient-start: #34D399;
+    /* Light Green */
+    --bg-gradient-end: #065F46;
+    /* Dark Green */
 
     --bg-light: #F9FAFB;
     --bg-white: #FFFFFF;
@@ -39,7 +45,6 @@
 
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: linear-gradient(135deg, var(--bg-gradient-start) 0%, var(--bg-gradient-end) 100%);
     min-height: 100vh;
     padding: 20px;
     color: var(--text-primary);
@@ -119,12 +124,13 @@ header .subtitle {
     color: var(--text-white);
     padding: 2px 10px;
     border-radius: 20px;
-    margin-left: auto; /* Đẩy badge sang phải */
+    margin-left: auto;
+    /* Đẩy badge sang phải */
     font-weight: 600;
 }
 
 .add-address-section form,
-.list-address-section > div:not(.section-header) {
+.list-address-section>div:not(.section-header) {
     padding: 24px;
 }
 
@@ -163,7 +169,8 @@ header .subtitle {
 .form-group input:focus {
     outline: none;
     border-color: var(--primary-color);
-    box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.15); /* Green Glow */
+    box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.15);
+    /* Green Glow */
 }
 
 .form-group input:disabled {
@@ -244,15 +251,19 @@ button.loading {
 #addressList::-webkit-scrollbar {
     width: 6px;
 }
+
 #addressList::-webkit-scrollbar-track {
     background: transparent;
 }
+
 #addressList::-webkit-scrollbar-thumb {
     background: #CBD5E1;
     border-radius: 3px;
 }
+
 #addressList::-webkit-scrollbar-thumb:hover {
-    background: var(--primary-color); /* Green on hover */
+    background: var(--primary-color);
+    /* Green on hover */
 }
 
 .address-item {
@@ -290,8 +301,10 @@ button.loading {
 
 .address-item.editing {
     border-color: var(--primary-color);
-    background: var(--primary-light); /* Light Green BG */
+    background: var(--primary-light);
+    /* Light Green BG */
 }
+
 .address-item.editing::before {
     background: var(--primary-dark);
 }
@@ -327,7 +340,7 @@ button.loading {
     gap: 10px;
     margin-top: 16px;
     padding-top: 16px;
-    border-top: 1px solid rgba(0,0,0,0.05);
+    border-top: 1px solid rgba(0, 0, 0, 0.05);
 }
 
 .address-actions button {
@@ -369,7 +382,8 @@ button.loading {
 
 .empty-state i {
     font-size: 4rem;
-    color: var(--primary-light); /* Green-tinted gray */
+    color: var(--primary-light);
+    /* Green-tinted gray */
     margin-bottom: 16px;
 }
 
@@ -404,12 +418,21 @@ button.loading {
 }
 
 @keyframes spin {
-    100% { transform: rotate(360deg); }
+    100% {
+        transform: rotate(360deg);
+    }
 }
 
 @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 /* Notification Toast */
@@ -460,18 +483,23 @@ button.loading {
 }
 
 @media (max-width: 640px) {
-    body { padding: 12px; }
+    body {
+        padding: 12px;
+    }
 
     .add-address-section form,
-    .list-address-section > div:not(.section-header) {
+    .list-address-section>div:not(.section-header) {
         padding: 16px;
     }
 
-    .btn-group, .address-actions {
+    .btn-group,
+    .address-actions {
         flex-direction: column;
     }
 
-    header h1 { font-size: 1.5rem; }
+    header h1 {
+        font-size: 1.5rem;
+    }
 }
 
 /* Validation Errors */
@@ -479,19 +507,22 @@ button.loading {
     color: var(--danger-color);
     font-size: 0.85rem;
     margin-top: 5px;
-    display: none; /* Hidden by default */
+    display: none;
+    /* Hidden by default */
     align-items: center;
     gap: 5px;
     animation: fadeIn 0.3s ease;
 }
 
 .error-message::before {
-    content: '\f06a'; /* FontAwesome exclamation circle */
+    content: '\f06a';
+    /* FontAwesome exclamation circle */
     font-family: "Font Awesome 5 Free";
     font-weight: 900;
 }
 
 .form-group.error input {
     border-color: var(--danger-color);
-    box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.15); /* Red Glow */
+    box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.15);
+    /* Red Glow */
 }

@@ -1,333 +1,342 @@
 <!doctype html>
 <html lang="vi">
-  <head>
-    <meta charset="UTF-8" />
-    <meta
-      name="viewport"
-      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
-    />
-    <title>Quản lý phiên đăng nhập</title>
 
-    <link rel="stylesheet" href="/lib/public.css" />
-    <link rel="stylesheet" href="/dialog/index.css" />
-    <script
-      src="https://kit.fontawesome.com/e9c281dd3f.js"
-      crossorigin="anonymous"
-    ></script>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Quản lý phiên đăng nhập</title>
 
-    <style>
+  <link rel="stylesheet" href="/lib/public.css" />
+  <link rel="stylesheet" href="/dialog/index.css" />
+  <script src="https://kit.fontawesome.com/e9c281dd3f.js" crossorigin="anonymous"></script>
+
+  <style>
+    body {
+      min-height: 100vh;
+    }
+
+    /* --- GLOBAL STYLES --- */
+    .section-title {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: #6b7280;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+      margin-top: 25px;
+      text-align: left;
+      letter-spacing: 0.5px;
+      padding-left: 5px;
+      /* Căn lề nhẹ */
+    }
+
+    .device-list-container {
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      /* Bo tròn mềm hơn */
+      overflow: hidden;
+    }
+
+    .device-card {
+      display: flex;
+      align-items: center;
+      padding: 16px;
+      border-bottom: 1px solid #e5e7eb;
+      transition: background 0.2s;
+      position: relative;
+    }
+
+    .device-card:last-child {
+      border-bottom: none;
+    }
+
+    .device-card:hover {
+      background-color: #f9fafb;
+    }
+
+    /* Dòng đã đăng xuất thì mờ đi */
+    .row-inactive {
+      background-color: #f9fafb;
+      opacity: 0.75;
+    }
+
+    .row-inactive:hover {
+      opacity: 1;
+    }
+
+    .device-icon-wrapper {
+      width: 48px;
+      height: 48px;
+      background-color: #f3f4f6;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      color: #4b5563;
+      margin-right: 16px;
+      flex-shrink: 0;
+    }
+
+    /* Icon màu mè cho sinh động */
+    .current .device-icon-wrapper {
+      background-color: #ecfdf5;
+      color: #10b981;
+    }
+
+    .row-inactive .device-icon-wrapper {
+      background-color: #e5e7eb;
+      color: #9ca3af;
+    }
+
+    .device-details {
+      flex: 1;
+      text-align: left;
+      overflow: hidden;
+      padding-right: 10px;
+      /* Tránh dính nút bấm */
+    }
+
+    .device-name {
+      font-weight: 600;
+      font-size: 1rem;
+      color: #111827;
+      margin-bottom: 4px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 90%;
+    }
+
+    .device-meta {
+      font-size: 0.85rem;
+      color: #6b7280;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      flex-wrap: wrap;
+    }
+
+    /* --- NGÀY TẠO (Góc trên) --- */
+    .created-at-label {
+      position: absolute;
+      top: 8px;
+      right: 12px;
+      font-size: 0.7rem;
+      color: #9ca3af;
+      font-weight: 500;
+      background: rgba(255, 255, 255, 0.8);
+      padding: 0 4px;
+      border-radius: 4px;
+    }
+
+    /* --- TRẠNG THÁI (STATUS) --- */
+    .status-badge {
+      font-size: 0.7rem;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      display: inline-block;
+    }
+
+    .current-badge {
+      background: #d1fae5;
+      color: #065f46;
+      border: 1px solid #a7f3d0;
+    }
+
+    /* --- NÚT BẤM (Actions) --- */
+    .action-group {
+      display: flex;
+      gap: 8px;
+    }
+
+    .icon-btn {
+      background: white;
+      border: 1px solid #e5e7eb;
+      font-size: 1rem;
+      cursor: pointer;
+      width: 40px;
+      /* To hơn chút để dễ bấm */
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+      color: #6b7280;
+    }
+
+    /* Hover effects */
+    .logout-btn:hover {
+      color: #3b82f6;
+      border-color: #3b82f6;
+      background: #eff6ff;
+    }
+
+    .delete-btn:hover {
+      color: #ef4444;
+      border-color: #ef4444;
+      background: #fef2f2;
+    }
+
+    /* Khu vực nút dưới cùng */
+    .action-area {
+      margin-top: 30px;
+      padding-top: 20px;
+      border-top: 1px dashed #e5e7eb;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .btn-danger-outline {
+      background: white;
+      border: 1px solid #ef4444;
+      color: #ef4444;
+      font-weight: 600;
+      padding: 12px;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .btn-danger-outline:hover {
+      background: #fef2f2;
+    }
+
+    .btn-back {
+      background: #f3f4f6;
+      color: #374151;
+      padding: 12px;
+      border-radius: 10px;
+      border: none;
+      cursor: pointer;
+      font-weight: 600;
+      transition: 0.2s;
+    }
+
+    .btn-back:hover {
+      background: #e5e7eb;
+    }
+
+    /* --- MOBILE RESPONSIVE (Tối ưu riêng cho điện thoại) --- */
+    @media (max-width: 600px) {
       body {
-        background-image: url("https://img.freepik.com/free-vector/blue-sky-with-clouds-background_1017-26302.jpg");
-        background-size: cover; /* Phủ kín màn hình */
-        background-position: center; /* Căn giữa */
-        background-attachment: fixed; /* Cố định nền khi cuộn */
-        background-repeat: no-repeat;
-        min-height: 100vh;
-      }
-      /* --- GLOBAL STYLES --- */
-      .section-title {
-        font-size: 0.85rem;
-        font-weight: 700;
-        color: #6b7280;
-        text-transform: uppercase;
-        margin-bottom: 12px;
-        margin-top: 25px;
-        text-align: left;
-        letter-spacing: 0.5px;
-        padding-left: 5px; /* Căn lề nhẹ */
+        background-color: #f9fafb;
+        /* Nền xám nhẹ để nổi bật card */
       }
 
+      .card {
+        max-width: 100% !important;
+        margin: 0 !important;
+        padding: 15px !important;
+        box-shadow: none !important;
+        background: transparent !important;
+        border: none !important;
+      }
+
+      h2 {
+        font-size: 1.5rem;
+        margin-top: 10px;
+      }
+
+      /* Tách danh sách thành các Card rời nhau */
       .device-list-container {
-        background: #fff;
-        border: 1px solid #e5e7eb;
-        border-radius: 12px; /* Bo tròn mềm hơn */
-        overflow: hidden;
+        background: transparent;
+        border: none;
+        overflow: visible;
       }
 
       .device-card {
-        display: flex;
-        align-items: center;
-        padding: 16px;
-        border-bottom: 1px solid #e5e7eb;
-        transition: background 0.2s;
-        position: relative;
-      }
-      .device-card:last-child {
-        border-bottom: none;
-      }
-      .device-card:hover {
-        background-color: #f9fafb;
+        background: #fff;
+        margin-bottom: 12px;
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        padding: 15px;
       }
 
-      /* Dòng đã đăng xuất thì mờ đi */
-      .row-inactive {
-        background-color: #f9fafb;
-        opacity: 0.75;
-      }
-      .row-inactive:hover {
-        opacity: 1;
+      .device-card:last-child {
+        border-bottom: 1px solid #e5e7eb;
+        /* Trả lại border cho card cuối */
       }
 
       .device-icon-wrapper {
-        width: 48px;
-        height: 48px;
-        background-color: #f3f4f6;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 1.5rem;
-        color: #4b5563;
-        margin-right: 16px;
-        flex-shrink: 0;
-      }
-      /* Icon màu mè cho sinh động */
-      .current .device-icon-wrapper {
-        background-color: #ecfdf5;
-        color: #10b981;
-      }
-      .row-inactive .device-icon-wrapper {
-        background-color: #e5e7eb;
-        color: #9ca3af;
+        width: 42px;
+        height: 42px;
+        font-size: 1.2rem;
       }
 
-      .device-details {
-        flex: 1;
-        text-align: left;
-        overflow: hidden;
-        padding-right: 10px; /* Tránh dính nút bấm */
-      }
-      .device-name {
-        font-weight: 600;
-        font-size: 1rem;
-        color: #111827;
-        margin-bottom: 4px;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        max-width: 90%;
-      }
-      .device-meta {
-        font-size: 0.85rem;
-        color: #6b7280;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        display: flex;
-        align-items: center;
-        gap: 5px;
-        flex-wrap: wrap;
-      }
-
-      /* --- NGÀY TẠO (Góc trên) --- */
-      .created-at-label {
-        position: absolute;
-        top: 8px;
-        right: 12px;
-        font-size: 0.7rem;
-        color: #9ca3af;
-        font-weight: 500;
-        background: rgba(255, 255, 255, 0.8);
-        padding: 0 4px;
-        border-radius: 4px;
-      }
-
-      /* --- TRẠNG THÁI (STATUS) --- */
-      .status-badge {
-        font-size: 0.7rem;
-        padding: 2px 8px;
-        border-radius: 12px;
-        font-weight: 700;
-        text-transform: uppercase;
-        display: inline-block;
-      }
-      .current-badge {
-        background: #d1fae5;
-        color: #065f46;
-        border: 1px solid #a7f3d0;
-      }
-
-      /* --- NÚT BẤM (Actions) --- */
-      .action-group {
-        display: flex;
-        gap: 8px;
-      }
+      /* Nút bấm trên mobile to hơn */
       .icon-btn {
-        background: white;
-        border: 1px solid #e5e7eb;
-        font-size: 1rem;
-        cursor: pointer;
-        width: 40px; /* To hơn chút để dễ bấm */
-        height: 40px;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        transition: all 0.2s;
-        color: #6b7280;
-      }
-      /* Hover effects */
-      .logout-btn:hover {
-        color: #3b82f6;
-        border-color: #3b82f6;
-        background: #eff6ff;
-      }
-      .delete-btn:hover {
-        color: #ef4444;
-        border-color: #ef4444;
-        background: #fef2f2;
+        width: 44px;
+        height: 44px;
+        font-size: 1.1rem;
       }
 
-      /* Khu vực nút dưới cùng */
-      .action-area {
-        margin-top: 30px;
-        padding-top: 20px;
-        border-top: 1px dashed #e5e7eb;
-        display: flex;
-        flex-direction: column;
-        gap: 12px;
-      }
-
-      .btn-danger-outline {
-        background: white;
-        border: 1px solid #ef4444;
-        color: #ef4444;
-        font-weight: 600;
-        padding: 12px;
-        border-radius: 10px;
-        cursor: pointer;
-        transition: 0.2s;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 8px;
-      }
-      .btn-danger-outline:hover {
-        background: #fef2f2;
-      }
-
+      .btn-danger-outline,
       .btn-back {
-        background: #f3f4f6;
-        color: #374151;
-        padding: 12px;
-        border-radius: 10px;
-        border: none;
-        cursor: pointer;
-        font-weight: 600;
-        transition: 0.2s;
+        padding: 14px;
+        /* Nút to dễ bấm */
       }
-      .btn-back:hover {
-        background: #e5e7eb;
-      }
+    }
+  </style>
+</head>
 
-      /* --- MOBILE RESPONSIVE (Tối ưu riêng cho điện thoại) --- */
-      @media (max-width: 600px) {
-        body {
-          background-color: #f9fafb; /* Nền xám nhẹ để nổi bật card */
-        }
-
-        .card {
-          max-width: 100% !important;
-          margin: 0 !important;
-          padding: 15px !important;
-          box-shadow: none !important;
-          background: transparent !important;
-          border: none !important;
-        }
-
-        h2 {
-          font-size: 1.5rem;
-          margin-top: 10px;
-        }
-
-        /* Tách danh sách thành các Card rời nhau */
-        .device-list-container {
-          background: transparent;
-          border: none;
-          overflow: visible;
-        }
-
-        .device-card {
-          background: #fff;
-          margin-bottom: 12px;
-          border: 1px solid #e5e7eb;
-          border-radius: 12px;
-          box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-          padding: 15px;
-        }
-        .device-card:last-child {
-          border-bottom: 1px solid #e5e7eb; /* Trả lại border cho card cuối */
-        }
-
-        .device-icon-wrapper {
-          width: 42px;
-          height: 42px;
-          font-size: 1.2rem;
-        }
-
-        /* Nút bấm trên mobile to hơn */
-        .icon-btn {
-          width: 44px;
-          height: 44px;
-          font-size: 1.1rem;
-        }
-
-        .btn-danger-outline,
-        .btn-back {
-          padding: 14px; /* Nút to dễ bấm */
-        }
-      }
-    </style>
-  </head>
-  <body>
-    <div
-      class="card"
-      style="
+<body>
+  <div class="card" style="
         max-width: 700px;
         width: 100%;
         margin: 40px auto;
         padding: 30px;
         border-radius: 16px;
         box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
-      "
-    >
-      <h2 style="margin-bottom: 5px; color: #111827">Quản lý Thiết bị</h2>
-      <p
-        style="
+      ">
+    <h2 style="margin-bottom: 5px; color: #111827">Quản lý Thiết bị</h2>
+    <p style="
           font-size: 0.95rem;
           color: #6b7280;
           margin-bottom: 25px;
           line-height: 1.5;
-        "
-      >
-        Danh sách các thiết bị đã đăng nhập vào tài khoản. Bạn có thể đăng xuất
-        từ xa nếu thấy nghi ngờ.
-      </p>
+        ">
+      Danh sách các thiết bị đã đăng nhập vào tài khoản. Bạn có thể đăng xuất
+      từ xa nếu thấy nghi ngờ.
+    </p>
 
-      <div id="loadPage"></div>
+    <div id="loadPage"></div>
 
-      <div id="info" style="display: none">
-        <div class="section-title">
-          <i class="fa-solid fa-mobile-screen-button"></i> Thiết bị hiện tại
-        </div>
-        <div class="device-list-container" id="currentDeviceList"></div>
+    <div id="info" style="display: none">
+      <div class="section-title">
+        <i class="fa-solid fa-mobile-screen-button"></i> Thiết bị hiện tại
+      </div>
+      <div class="device-list-container" id="currentDeviceList"></div>
 
-        <div class="section-title">
-          <i class="fa-solid fa-laptop"></i> Các thiết bị khác
-        </div>
-        <div class="device-list-container" id="otherDeviceList"></div>
+      <div class="section-title">
+        <i class="fa-solid fa-laptop"></i> Các thiết bị khác
+      </div>
+      <div class="device-list-container" id="otherDeviceList"></div>
 
-        <div class="action-area">
-          <button id="revokeOthersBtn" class="btn-danger-outline">
-            <i class="fa-solid fa-shield-halved"></i> Đăng xuất tất cả thiết bị
-            khác
-          </button>
-          <button class="btn-back" onclick="window.history.back()">
-            <i class="fa-solid fa-arrow-left"></i> Quay lại
-          </button>
-        </div>
+      <div class="action-area">
+        <button id="revokeOthersBtn" class="btn-danger-outline">
+          <i class="fa-solid fa-shield-halved"></i> Đăng xuất tất cả thiết bị
+          khác
+        </button>
+        <button class="btn-back" onclick="window.history.back()">
+          <i class="fa-solid fa-arrow-left"></i> Quay lại
+        </button>
       </div>
     </div>
-    <script type="module" src="/session/index.js"></script>
-  </body>
+  </div>
+  <script type="module" src="/session/index.js"></script>
+</body>
+
 </html>

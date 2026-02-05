@@ -1,24 +1,30 @@
 /* === CẤU HÌNH MÀU SẮC (THEO STYLE TẠP HÓA XANH) === */
 :root {
-    --primary-color: #10B981;      /* Xanh ngọc chủ đạo (giống nút "Xem thêm") */
-    --primary-hover: #059669;      /* Xanh đậm hơn khi di chuột */
-    --bg-soft: #F0FDF4;            /* Nền xanh rất nhạt */
-    --text-dark: #1F2937;          /* Màu chữ đen xám */
-    --accent-red: #EF4444;         /* Màu đỏ (dùng cho giá hoặc nút xóa) */
-    --accent-yellow: #F59E0B;      /* Màu vàng (dùng cho nút sửa) */
+    --primary-color: #10B981;
+    /* Xanh ngọc chủ đạo (giống nút "Xem thêm") */
+    --primary-hover: #059669;
+    /* Xanh đậm hơn khi di chuột */
+    --bg-soft: #F0FDF4;
+    /* Nền xanh rất nhạt */
+    --text-dark: #1F2937;
+    /* Màu chữ đen xám */
+    --accent-red: #EF4444;
+    /* Màu đỏ (dùng cho giá hoặc nút xóa) */
+    --accent-yellow: #F59E0B;
+    /* Màu vàng (dùng cho nút sửa) */
 }
 
 /* --- Cấu hình chung --- */
 body {
-    background-color: #F3F4F6 !important; /* Nền xám nhạt hiện đại */
-    background: linear-gradient(135deg, #6EE7B7, #3B82F6) !important;
     font-family: 'Poppins', sans-serif;
 }
 
 /* --- Card chính --- */
 .card {
-    border-top: 5px solid var(--primary-color); /* Viền trên màu xanh */
-    box-shadow: 0 10px 25px rgba(16, 185, 129, 0.1); /* Đổ bóng xanh nhẹ */
+    border-top: 5px solid var(--primary-color);
+    /* Viền trên màu xanh */
+    box-shadow: 0 10px 25px rgba(16, 185, 129, 0.1);
+    /* Đổ bóng xanh nhẹ */
     border-radius: 16px;
 }
 
@@ -27,7 +33,8 @@ h2 {
     text-transform: uppercase;
     font-weight: 700;
     margin-bottom: 20px;
-    border-bottom: 2px dashed #A7F3D0; /* Gạch chân nét đứt xanh nhạt */
+    border-bottom: 2px dashed #A7F3D0;
+    /* Gạch chân nét đứt xanh nhạt */
     padding-bottom: 10px;
 }
 
@@ -43,7 +50,8 @@ h2 {
     background-color: white !important;
     color: #6B7280 !important;
     border: 1px solid #E5E7EB !important;
-    border-radius: 50px !important; /* Bo tròn hình viên thuốc */
+    border-radius: 50px !important;
+    /* Bo tròn hình viên thuốc */
     padding: 8px 24px;
     font-weight: 600;
     cursor: pointer;
@@ -70,15 +78,18 @@ h2 {
 /* --- Bảng dữ liệu (Table) --- */
 .table-wrapper {
     /* [QUAN TRỌNG] Giới hạn chiều cao */
-    max-height: 350px;  /* Bạn có thể chỉnh số này (vd: 300px, 400px) tùy ý */
-    overflow-y: auto;   /* Tự động hiện thanh cuộn dọc khi danh sách dài */
-    
+    max-height: 350px;
+    /* Bạn có thể chỉnh số này (vd: 300px, 400px) tùy ý */
+    overflow-y: auto;
+    /* Tự động hiện thanh cuộn dọc khi danh sách dài */
+
     /* Style trang trí giữ nguyên */
     border-radius: 12px;
     border: 1px solid #E5E7EB;
     background: white;
-    margin-bottom: 20px; /* Tạo khoảng cách với Form bên dưới */
-    
+    margin-bottom: 20px;
+    /* Tạo khoảng cách với Form bên dưới */
+
     /* Hiệu ứng cuộn mượt */
     scroll-behavior: smooth;
 }
@@ -87,14 +98,18 @@ h2 {
 .table-wrapper::-webkit-scrollbar {
     width: 8px;
 }
+
 .table-wrapper::-webkit-scrollbar-track {
     background: #f1f1f1;
     border-radius: 12px;
 }
+
 .table-wrapper::-webkit-scrollbar-thumb {
-    background: #c1c1c1; /* Màu thanh cuộn xám nhẹ */
+    background: #c1c1c1;
+    /* Màu thanh cuộn xám nhẹ */
     border-radius: 12px;
 }
+
 .table-wrapper::-webkit-scrollbar-thumb:hover {
     background: #a8a8a8;
 }
@@ -111,12 +126,15 @@ th {
     font-weight: 600;
     text-transform: uppercase;
     font-size: 0.85rem;
-    
+
     /* [QUAN TRỌNG] Sticky Header */
-    position: sticky; 
-    top: 0;           /* Dính chặt lên đỉnh */
-    z-index: 10;      /* Nổi lên trên nội dung khi cuộn */
-    box-shadow: 0 2px 2px -1px rgba(0, 0, 0, 0.1); /* Bóng đổ nhẹ ngăn cách */
+    position: sticky;
+    top: 0;
+    /* Dính chặt lên đỉnh */
+    z-index: 10;
+    /* Nổi lên trên nội dung khi cuộn */
+    box-shadow: 0 2px 2px -1px rgba(0, 0, 0, 0.1);
+    /* Bóng đổ nhẹ ngăn cách */
 }
 
 td {
@@ -127,7 +145,8 @@ td {
 }
 
 tr:hover td {
-    background-color: var(--bg-soft); /* Highlight xanh nhạt khi di chuột */
+    background-color: var(--bg-soft);
+    /* Highlight xanh nhạt khi di chuột */
 }
 
 /* --- Form nhập liệu --- */
@@ -137,7 +156,7 @@ tr:hover td {
     background-color: white;
     border-radius: 16px;
     border: 1px solid #E5E7EB;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02);
 }
 
 .form-container h3 {
@@ -173,7 +192,8 @@ tr:hover td {
 
 .input-group input:focus {
     border-color: var(--primary-color) !important;
-    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2) !important; /* Hào quang xanh */
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2) !important;
+    /* Hào quang xanh */
     outline: none;
 }
 
@@ -209,7 +229,8 @@ button {
     width: 32px !important;
     height: 32px;
     padding: 0 !important;
-    border-radius: 50% !important; /* Nút tròn */
+    border-radius: 50% !important;
+    /* Nút tròn */
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -221,7 +242,8 @@ button {
     width: 32px !important;
     height: 32px;
     padding: 0 !important;
-    border-radius: 50% !important; /* Nút tròn */
+    border-radius: 50% !important;
+    /* Nút tròn */
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -237,29 +259,38 @@ button {
         grid-template-columns: 1fr;
         gap: 5px;
     }
+
     .input-group label {
         text-align: left;
     }
+
     .tabs-container {
         flex-wrap: wrap;
     }
 }
+
 .back-btn {
     background-color: transparent !important;
-    color: var(--primary-color) !important; /* Chữ màu xanh */
-    border: 1px solid var(--primary-color) !important; /* Viền xanh */
+    color: var(--primary-color) !important;
+    /* Chữ màu xanh */
+    border: 1px solid var(--primary-color) !important;
+    /* Viền xanh */
     padding: 8px 16px;
     border-radius: 8px !important;
     font-weight: 600;
     cursor: pointer;
     display: inline-flex;
     align-items: center;
-    gap: 8px; /* Khoảng cách giữa icon và chữ */
+    gap: 8px;
+    /* Khoảng cách giữa icon và chữ */
     transition: all 0.2s ease;
-    width: auto !important; /* Không bị giãn full màn hình */
+    width: auto !important;
+    /* Không bị giãn full màn hình */
 }
 
 .back-btn:hover {
-    background-color: var(--bg-soft) !important; /* Nền xanh nhạt khi di chuột */
-    transform: translateX(-3px); /* Hiệu ứng lùi nhẹ sang trái */
+    background-color: var(--bg-soft) !important;
+    /* Nền xanh nhạt khi di chuột */
+    transform: translateX(-3px);
+    /* Hiệu ứng lùi nhẹ sang trái */
 }

@@ -7,16 +7,17 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
-    background-color: #f8fafc;
     transition: background-color 0.3s ease;
 }
 
 body.page-success {
-    background-color: #f0fdf4; /* Light Green Bg */
+    background-color: #f0fdf4;
+    /* Light Green Bg */
 }
 
 body.page-failure {
-    background-color: #fef2f2; /* Light Red Bg */
+    background-color: #fef2f2;
+    /* Light Red Bg */
 }
 
 /* Wrapper */
@@ -34,15 +35,22 @@ body.page-failure {
     max-width: 500px;
     padding: 40px 30px;
     border-radius: 20px;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
     text-align: center;
     animation: slideUp 0.5s ease-out;
-    border: 1px solid rgba(0,0,0,0.05);
+    border: 1px solid rgba(0, 0, 0, 0.05);
 }
 
 @keyframes slideUp {
-    from { opacity: 0; transform: translateY(20px); }
-    to { opacity: 1; transform: translateY(0); }
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 /* Loading */
@@ -56,7 +64,11 @@ body.page-failure {
     animation: spin 1s linear infinite;
 }
 
-@keyframes spin { 100% { transform: rotate(360deg); } }
+@keyframes spin {
+    100% {
+        transform: rotate(360deg);
+    }
+}
 
 /* Icons */
 .status-icon {
@@ -87,8 +99,13 @@ body.page-failure {
     margin: 0 0 12px;
 }
 
-.title-success { color: #166534; }
-.title-failure { color: #991b1b; }
+.title-success {
+    color: #166534;
+}
+
+.title-failure {
+    color: #991b1b;
+}
 
 /* Message */
 .status-message {
@@ -125,6 +142,7 @@ body.page-failure {
     color: white;
     box-shadow: 0 4px 12px rgba(22, 163, 74, 0.2);
 }
+
 .btn-success:hover {
     background-color: #15803d;
     transform: translateY(-2px);
@@ -136,6 +154,7 @@ body.page-failure {
     color: white;
     box-shadow: 0 4px 12px rgba(220, 38, 38, 0.2);
 }
+
 .btn-failure:hover {
     background-color: #b91c1c;
     transform: translateY(-2px);
@@ -147,6 +166,7 @@ body.page-failure {
     color: #64748b;
     border: 1px solid #e2e8f0;
 }
+
 .btn-outline:hover {
     background-color: #f8fafc;
     color: #334155;
