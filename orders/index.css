@@ -710,35 +710,86 @@ body {
 @media (max-width: 768px) {
     .order-container {
         padding: 0 10px;
-        margin: 20px auto;
+        margin: 40px auto 30px;
+        /* Clear navbar */
+        width: 100%;
+        max-width: 100vw;
+        overflow-x: hidden;
+    }
+
+    .order-header {
+        padding: 20px;
+        text-align: left;
+        /* Better for mobile */
+        border-radius: 12px;
     }
 
     .order-header h1 {
-        font-size: 24px;
+        font-size: 20px;
     }
 
     .status-tabs {
+        display: flex;
+        /* Ensure flex */
+        flex-wrap: nowrap;
         padding: 10px;
+        gap: 10px;
+        margin: 0 -10px 20px;
+        /* Bleed to edge */
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        border-radius: 0;
+        width: calc(100% + 20px);
+        /* Fill bleed */
     }
 
     .tab-btn {
-        padding: 10px 15px;
+        flex: 0 0 auto;
+        padding: 8px 16px;
         font-size: 13px;
     }
 
     .order-card-header {
         flex-direction: column;
         align-items: flex-start;
-        gap: 10px;
+        gap: 8px;
     }
 
+    .order-status {
+        font-size: 12px;
+        padding: 4px 10px;
+    }
+
+    /* FIX: Keep items in row, but compact */
     .order-item {
-        flex-direction: column;
+        flex-direction: row;
+        /* row instead of column */
+        align-items: flex-start;
     }
 
     .item-image {
-        width: 100%;
-        height: 200px;
+        width: 70px;
+        height: 70px;
+        flex-shrink: 0;
+        border-radius: 6px;
+    }
+
+    .item-info {
+        min-width: 0;
+        /* Fix flex text truncate */
+        flex: 1;
+    }
+
+    .item-name {
+        font-size: 14px;
+        line-height: 1.4;
+    }
+
+    .item-price-qty {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 4px;
+        margin-top: 5px;
     }
 
     .order-card-footer {
@@ -748,25 +799,44 @@ body {
     }
 
     .order-total {
-        align-items: flex-start;
+        align-items: flex-end;
+        border-bottom: 1px dashed #eee;
+        padding-bottom: 15px;
+        width: 100%;
     }
 
     .order-actions {
-        flex-direction: column;
+        flex-direction: row;
+        /* Side by side buttons */
+        flex-wrap: wrap;
+        gap: 10px;
     }
 
     .btn-action {
-        width: 100%;
+        flex: 1;
         justify-content: center;
     }
 
+    /* Search Bar Mobile */
+    .search-bar input {
+        padding: 12px 15px 12px 40px;
+    }
+
+    .search-bar i {
+        left: 15px;
+    }
+
     .modal-content {
-        width: 95%;
-        margin: 10px;
+        width: 100%;
+        height: 100%;
+        /* Full screen modal on mobile */
+        max-height: 100vh;
+        border-radius: 0;
+        margin: 0;
     }
 
     .modal-body {
-        padding: 20px;
+        padding: 15px;
     }
 
     .detail-info {

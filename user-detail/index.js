@@ -45,7 +45,7 @@ async function render(user) {
   document.getElementById("fullName").textContent = user.fullName || "---";
   document.getElementById("birthday").textContent = user.birthday || "---";
   document.getElementById("gender").textContent =
-    user.gender === "MALE" ? "Nam" : user.gender == "FEMALE" ? "Nữ" : "Khác";
+    user.gender === "MALE" ? "Nam" : user.gender === "FEMALE" ? "Nữ" : "Khác";
   document.getElementById("createdAt").textContent = convertToVNTime(
     user.createdAt
   );

@@ -1,7 +1,7 @@
 import { callAPI } from "/lib/api.js";
 import { showDialog } from "/dialog/index.js";
 import { connectSse, subscribeTopic } from "/lib/sse.js";
-import {noImage} from "/lib/public.js";
+import { noImage } from "/lib/public.js";
 
 let homeData = {
   imageUrl: noImage,
@@ -46,7 +46,7 @@ const navbarHTML = `
         .nb-user-menu { cursor: pointer; display: flex; align-items: center; gap: 10px; margin-left: 10px; }
         .nb-avatar { width: 42px; height: 42px; border-radius: 50%; object-fit: cover; border: 1px solid #ddd; }
         
-        .nb-dropdown { position: absolute; right: 0; top: 70px; background: white; width: 280px; border-radius: 12px; box-shadow: 0 5px 25px rgba(0,0,0,0.15); display: none; flex-direction: column; overflow: hidden; border: 1px solid #eee; z-index: 1100; padding: 5px 0; }
+        .nb-dropdown { position: absolute; right: 0; top: 70px; background: white; width: 280px; border-radius: 12px; box-shadow: 0 5px 25px rgba(0,0,0,0.15); display: none; flex-direction: column; overflow: hidden; border: 1px solid #eee; z-index: 1100; padding: 5px 0; overflow-y: auto; }
         .nb-noti-dropdown { width: 360px; right: -80px; padding: 0;}
         .nb-dropdown.show { display: flex; }
         .nb-dropdown a, .nb-dropdown button { padding: 12px 20px; text-decoration: none; color: #333; text-align: left; background: none; border: none; cursor: pointer; border-bottom: 1px solid #f9f9f9; display:flex; align-items:center; gap:12px; font-size:0.95rem; transition: 0.2s; }
@@ -80,6 +80,7 @@ const navbarHTML = `
             .nb-brand { order: 1; font-size: 1.5rem; flex: 1; }
             .nb-right-wrapper { order: 2; gap: 2px; }
             #nbCenterSlot { order: 3; width: 100%; margin: 0; padding: 0; max-width: none; }
+            .nb-dropdown { height: 400px }
             .nb-noti-dropdown { position: fixed; top: 60px; left: 50%; transform: translateX(-50%); width: 95vw; height: 70vh; max-width: 400px; right: auto; border-radius: 12px; box-shadow: 0 0 0 100vh rgba(0,0,0,0.5); }
         }
     </style>
@@ -124,6 +125,7 @@ const navbarHTML = `
                     <a href="/role-permission" class="nb-admin-only"><i class="fa-solid fa-user-lock" style="color: #EF4444; width:20px; text-align:center;"></i> Phân quyền</a>
                     <a href="/order-manager" class="nb-admin-only"><i class="fa-solid fa-file-invoice-dollar" style="color: #14B8A6; width:20px; text-align:center;"></i> Quản lí đơn hàng</a>
                     <a href="/notification" class="nb-admin-only"><i class="fa-solid fa-bullhorn" style="color: #F97316; width:20px; text-align:center;"></i> Gửi thông báo</a>
+                    <a href="/server-health" class="nb-admin-only"><i class="fa-solid fa-server" style="color: #10B981; width:20px; text-align:center;"></i> Sức khoẻ Server</a>
                     
                     <button id="nbLogout" style="color:#e11d48; border-top:1px solid #eee; margin-top:5px">
                         <i class="fa-solid fa-right-from-bracket" style="width:20px; text-align:center;"></i> Đăng xuất
@@ -259,7 +261,7 @@ function setupSSERealtime() {
         if (userRes.success && userRes.data) {
           senderName = userRes.data.fullName || userRes.data.username;
         }
-      } catch (e) {}
+      } catch (e) { }
     }
     if (!senderName) senderName = "Tin nhắn mới";
 
@@ -406,8 +408,7 @@ function createNotiItemHTML(item, isNew = false) {
   const isUnread = isNew || !item.isRead;
 
   return `
-    <div class="noti-item ${
-      isUnread ? "unread" : ""
+    <div class="noti-item ${isUnread ? "unread" : ""
     }" id="noti-${id}" onclick="readNoti('${id}', '${link}', this)">
         <div class="noti-content">
             <div class="noti-title" style="font-weight:600;font-size:0.95rem">${title}</div>
@@ -435,7 +436,7 @@ window.readNoti = async (id, link, el) => {
     updateBadgeCount(-1);
     try {
       await callAPI("/notifications", "PATCH", [id]);
-    } catch (e) {}
+    } catch (e) { }
   }
   if (link && link !== "#" && link !== "null") window.location.href = link;
 };

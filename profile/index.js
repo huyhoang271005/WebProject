@@ -1,6 +1,6 @@
 import { callAPI } from "../lib/api.js";
 import { showDialog } from "../dialog/index.js";
-import { convertToVNTime, getLoader } from "../lib/public.js";
+import {convertToVNTime, getLoader, noImage} from "../lib/public.js";
 import { initEmailList } from "./email-list.js";
 import { loadNavbar } from "../navbar/navbar.js";
 import { toggleLoading } from "../lib/loader.js"; // [MỚI] Dùng Loader xịn
@@ -28,7 +28,7 @@ async function loadProfile() {
 
   // Fill dữ liệu
   avatarPreview.src =
-    profile.imageUrl || "https://cdn-icons-png.flaticon.com/512/847/847969.png";
+    profile.imageUrl || noImage;
   usernameInput.value = profile.username || "";
   fullNameInput.value = profile.fullName || "";
   birthdayInput.value = profile.birthday || "";

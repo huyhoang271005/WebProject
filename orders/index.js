@@ -148,11 +148,9 @@ function setupInfiniteScroll() {
         const scrollHeight = document.documentElement.scrollHeight;
         const clientHeight = document.documentElement.clientHeight;
 
-        if (scrollTop + clientHeight >= scrollHeight - 200 && hasMore && !isLoading) {
-            isLoading = true;
+        if (scrollTop + clientHeight >= scrollHeight - 200 && hasMore) {
             currentPage++;
             await loadOrders(true);
-            isLoading = false;
         }
     });
 }

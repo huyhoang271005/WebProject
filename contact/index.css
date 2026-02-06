@@ -487,6 +487,9 @@ button.loading {
         padding: 12px;
     }
 
+    .container{
+        margin-top: 35px;
+    }
     .add-address-section form,
     .list-address-section>div:not(.section-header) {
         padding: 16px;

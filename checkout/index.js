@@ -15,8 +15,8 @@ let allAddresses = []; // Lưu danh sách addresses để lấy thông tin
 document.addEventListener("DOMContentLoaded", async () => {
     const buyNowData = sessionStorage.getItem(STORAGE_KEYS.BUY_NOW);
     const checkedIds = JSON.parse(
-        localStorage.getItem(STORAGE_KEYS.CHECKED_IDS) || 
-        localStorage.getItem("checkoutItems") || 
+        sessionStorage.getItem(STORAGE_KEYS.CHECKED_IDS) || 
+        sessionStorage.getItem("checkoutItems") || 
         "[]"
     );
 
@@ -269,8 +269,8 @@ async function handleOrder() {
 
             // Clear temp data
             sessionStorage.removeItem(STORAGE_KEYS.BUY_NOW);
-            localStorage.removeItem(STORAGE_KEYS.CHECKED_IDS);
-            localStorage.removeItem("checkoutItems");
+            sessionStorage.removeItem(STORAGE_KEYS.CHECKED_IDS);
+            sessionStorage.removeItem("checkoutItems");
 
             // Xử lý redirect theo payment method
             if (paymentMethod === 'VN_PAY') {

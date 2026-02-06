@@ -42,14 +42,18 @@ body {
     display: flex;
     gap: 10px;
     margin-bottom: 20px;
-    flex-wrap: wrap;
-    /* Tự xuống dòng trên mobile */
+    padding-top: 5px;
+    padding-bottom: 5px;
+    /* Remove flex-wrap to keep on single line */
+    flex-wrap: nowrap;
+    width: 100%;
+    overflow-x: auto;
+    /* Allow scroll on very small screens if needed */
 }
 
 .tab-btn {
-    padding: 8px 24px;
+    padding: 10px 15px;
     border-radius: 50px;
-    /* Bo tròn hình viên thuốc */
     border: 1px solid #E5E7EB;
     background-color: white;
     color: #6B7280;
@@ -57,6 +61,12 @@ body {
     cursor: pointer;
     transition: all 0.3s ease;
     font-size: 14px;
+    /* Occupy full width equally */
+    flex: 1;
+    text-align: center;
+    white-space: nowrap;
+    width: auto !important;
+    /* Ensure flex works */
 }
 
 .tab-btn:hover {
@@ -84,8 +94,6 @@ body {
 table {
     width: 100%;
     border-collapse: collapse;
-    min-width: 900px;
-    /* Đảm bảo bảng không bị bóp méo */
 }
 
 th {
@@ -254,6 +262,8 @@ tr:hover td {
     align-items: center;
     justify-content: flex-end;
     /* Căn các nút về bên phải */
+    flex-wrap: nowrap;
+    /* Prevent wrapping inside the cell if possible, or allow consistent wrap */
 }
 
 .btn-approve {
@@ -427,5 +437,217 @@ tr:hover td {
     to {
         opacity: 1;
         transform: scale(1);
+    }
+}
+
+/* === 10. RESPONSIVE === */
+@media screen and (max-width: 768px) {
+    .admin-order-container {
+        padding: 10px;
+        margin: 80px auto 20px;
+        /* Added top margin for fixed navbar */
+        width: 100%;
+        /* Force full width */
+        box-sizing: border-box;
+    }
+
+    .card {
+        padding: 15px;
+        border-radius: 8px;
+        /* Reduce radius */
+    }
+
+    /* --- TABLE TO CARD TRANSFORMATION (Table Only Fix) --- */
+    /* --- TABLE TO CARD TRANSFORMATION (Table Only Fix) --- */
+    .table-wrapper {
+        border: none;
+        overflow-x: visible;
+    }
+
+    /* Scope strictly to the main table inside table-wrapper */
+    .table-wrapper table,
+    .table-wrapper thead,
+    .table-wrapper tbody,
+    .table-wrapper th,
+    .table-wrapper td,
+    .table-wrapper tr {
+        display: block;
+    }
+
+    .table-wrapper thead tr {
+        position: absolute;
+        top: -9999px;
+        left: -9999px;
+    }
+
+    .table-wrapper tr {
+        margin-bottom: 20px;
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        background: #fff;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+        padding: 20px;
+    }
+
+    .table-wrapper td {
+        border: none;
+        border-bottom: 1px dashed #f0f0f0;
+        position: relative;
+        padding: 12px 0;
+        padding-left: 0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        text-align: right;
+    }
+
+    .table-wrapper td:last-child {
+        border-bottom: none;
+        padding-bottom: 0;
+        justify-content: center;
+        padding-top: 15px;
+        margin-top: 5px;
+        border-top: 1px solid #eee;
+    }
+
+    /* Data Labels Scoped */
+    .table-wrapper td:nth-of-type(1):before {
+        content: "Mã Đơn";
+        font-weight: 700;
+        color: #4b5563;
+    }
+
+    .table-wrapper td:nth-of-type(2):before {
+        content: "Khách hàng";
+        font-weight: 700;
+        color: #4b5563;
+    }
+
+    .table-wrapper td:nth-of-type(3):before {
+        content: "Sản phẩm";
+        font-weight: 700;
+        color: #4b5563;
+        display: block;
+        width: 100%;
+        margin-bottom: 8px;
+        text-align: left;
+    }
+
+    .table-wrapper td:nth-of-type(4):before {
+        content: "Tổng tiền: ";
+        font-weight: 700;
+        color: #4b5563;
+    }
+
+    .table-wrapper td:nth-of-type(5):before {
+        content: "Trạng thái";
+        font-weight: 700;
+        color: #4b5563;
+    }
+
+    .table-wrapper td:nth-of-type(6):before {
+        content: "Ngày tạo";
+        font-weight: 700;
+        color: #4b5563;
+    }
+
+    .table-wrapper td:nth-of-type(3) {
+        display: block;
+        text-align: left;
+    }
+
+    .table-wrapper td:nth-of-type(7) {
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    .tabs-container {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+    }
+
+    /* Stack Search Box */
+    .search-box-container {
+        flex-direction: column;
+        align-items: stretch !important;
+        gap: 10px !important;
+    }
+
+    .search-box-container>div {
+        width: 100% !important;
+    }
+
+    .search-box-container button {
+        margin-left: 0 !important;
+        width: 100% !important;
+    }
+
+    .btn-approve,
+    .btn-reject {
+        width: 100%;
+        justify-content: center;
+        padding: 10px 10px;
+    }
+
+    /* --- MODAL TABLE RESPONSIVE --- */
+    .modal-table,
+    .modal-table tbody,
+    .modal-table tr,
+    .modal-table td {
+        display: block;
+        width: 100%;
+    }
+
+    .modal-table thead {
+        display: none;
+        /* Hide header */
+    }
+
+    .modal-table tr {
+        margin-bottom: 15px;
+        border-bottom: 1px solid #eee;
+        padding-bottom: 15px;
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+    }
+
+    .modal-table td {
+        border: none;
+        padding: 2px 0;
+        display: flex;
+        justify-content: space-between;
+        text-align: right;
+    }
+
+    .modal-table td:first-child {
+        /* Product Info Cell */
+        text-align: left;
+        margin-bottom: 5px;
+    }
+
+    /* Labels for values */
+    .modal-table td:nth-child(2):before {
+        content: "Đơn giá:";
+        font-weight: 600;
+        color: #666;
+    }
+
+    .modal-table td:nth-child(3):before {
+        content: "Số lượng:";
+        font-weight: 600;
+        color: #666;
+    }
+
+    .modal-table td:nth-child(4):before {
+        content: "Thành tiền:";
+        font-weight: 600;
+        color: #666;
+    }
+
+    /* Fix image and text layout in first cell */
+    .modal-table td:first-child>div {
+        align-items: flex-start;
     }
 }

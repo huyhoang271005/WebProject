@@ -1,4 +1,5 @@
 import { callAPI } from '../lib/api.js';
+import {showDialog} from "/dialog/index.js";
 
 const money = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' });
 let allOrders = []; 
@@ -45,32 +46,25 @@ async function loadOrders(status) {
     if(spinner) spinner.style.display = "block";
     tbody.innerHTML = "";
 
-    try {
-        const endpoint = `/admin/orders?orderStatus=${status}&page=0&size=100`;
-        console.log("Calling API:", endpoint); 
-        const res = await callAPI(endpoint, 'GET'); 
-        
-        if (res.success) {
-            allOrders = res.data.listData || [];
-            allOrders.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-            
-            // Clone ra danh sách hiển thị
-            currentFilteredOrders = [...allOrders];
+    const endpoint = `/admin/orders?orderStatus=${status}&page=0&size=100`;
+    const res = await callAPI(endpoint, 'GET');
 
-            isAscending = false; 
-            updateSortIcon();    
-            renderOrders(currentFilteredOrders);
-        } else {
-            tbody.innerHTML = `<tr><td colspan="7" class="text-center p-5">${res.message || "Không có đơn hàng"}</td></tr>`;
-            allOrders = [];
-            currentFilteredOrders = [];
-        }
-    } catch (e) {
-        console.error(e);
-        tbody.innerHTML = `<tr><td colspan="7" class="text-center p-5" style="color:red">Lỗi kết nối server</td></tr>`;
-    } finally {
-        if(spinner) spinner.style.display = "none";
+    if (res.success) {
+        allOrders = res.data.listData || [];
+        allOrders.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+        // Clone ra danh sách hiển thị
+        currentFilteredOrders = [...allOrders];
+
+        isAscending = false;
+        updateSortIcon();
+        renderOrders(currentFilteredOrders);
+    } else {
+        tbody.innerHTML = `<tr><td colspan="7" class="text-center p-5">${res.message || "Không có đơn hàng"}</td></tr>`;
+        allOrders = [];
+        currentFilteredOrders = [];
     }
+    if(spinner) spinner.style.display = "none";
 }
 
 // ============================================================
@@ -100,13 +94,6 @@ function renderOrders(listData) {
                     <i class="fa-solid fa-xmark"></i>
                 </button>
             `;
-        } 
-        else if (st === 'DELIVERING') {
-            actionButtons = `
-                <button class="btn-approve" style="background-color:#3B82F6;" onclick="updateStatus('${order.orderId}', 'CONFIRMED', 'Xác nhận khách đã nhận hàng?')" title="Xác nhận đã giao">
-                    <i class="fa-solid fa-check-double"></i> Đã giao
-                </button>
-            `;
         }
         
         const tr = document.createElement("tr");
@@ -133,7 +120,7 @@ function renderMiniProducts(items) {
     if (!items) return "";
     let html = items.slice(0, 2).map(item => `
         <div class="mini-product">
-            <img src="${item.imageUrl || 'https://via.placeholder.com/40'}" alt="img">
+            <img src="${item.imageUrl}" alt="img">
             <div>
                 <div class="p-name">${item.productName}</div>
                 <div class="p-variant">${item.attributeValues ? item.attributeValues.join(' - ') : ''} (x${item.quantity})</div>
@@ -195,41 +182,35 @@ window.resetSearch = () => {
 window.updateStatus = async (orderId, statusToSend, message) => {
     if (!confirm(message || "Bạn có chắc chắn?")) return;
 
-    try {
-        const endpoint = `/admin/orders/${orderId}`;
-        const body = statusToSend; 
+    const endpoint = `/admin/orders/${orderId}`;
+    const body = statusToSend;
 
-        console.log(`Sending to ${endpoint}: ${body}`);
-        const res = await callAPI(endpoint, 'PATCH', body);
+    const res = await callAPI(endpoint, 'PATCH', body);
 
-        if (res.success) {
-            alert("Thành công!");
-            
-            // Reload lại đúng tab đang đứng
-            const activeBtn = document.querySelector('.tab-btn.active');
-            let currentFilter = 'PENDING';
-            if (activeBtn) {
-                const text = activeBtn.innerText.trim();
-                if(text === 'Chờ xác nhận') currentFilter = 'PENDING';
-                else if(text === 'Đang giao') currentFilter = 'DELIVERING';
-                else if(text === 'Hoàn thành') currentFilter = 'DELIVERED';
-                else if(text === 'Đã hủy') currentFilter = 'CANCELED';
-            }
-            loadOrders(currentFilter);
-            closeModal();
-        } else {
-            alert(res.message || "Lỗi cập nhật từ Server");
+    if (res.success) {
+        await showDialog("success", res.message);
+
+        // Reload lại đúng tab đang đứng
+        const activeBtn = document.querySelector('.tab-btn.active');
+        let currentFilter = 'PENDING';
+        if (activeBtn) {
+            const text = activeBtn.innerText.trim();
+            if(text === 'Chờ xác nhận') currentFilter = 'PENDING';
+            else if(text === 'Đang giao') currentFilter = 'DELIVERING';
+            else if(text === 'Hoàn thành') currentFilter = 'DELIVERED';
+            else if(text === 'Đã hủy') currentFilter = 'CANCELED';
         }
-    } catch (e) {
-        console.error(e);
-        alert("Lỗi hệ thống: " + e.message);
+        loadOrders(currentFilter);
+        closeModal();
+    } else {
+        await showDialog("error", res.message);
     }
 };
 
-window.filterStatus = (status) => {
+window.filterStatus = async (status) => {
     document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
     if(event && event.target) event.target.classList.add('active');
-    loadOrders(status);
+    await loadOrders(status);
 };
 
 function getStatusBadge(status) {
@@ -261,7 +242,7 @@ window.viewDetail = (orderId) => {
         <tr>
             <td>
                 <div style="display:flex; align-items:center; gap:10px;">
-                    <img src="${item.imageUrl || 'https://via.placeholder.com/40'}" style="width:40px; height:40px; object-fit:cover; border-radius:4px;">
+                    <img src="${item.imageUrl}" style="width:40px; height:40px; object-fit:cover; border-radius:4px;">
                     <div><div style="font-weight:600;">${item.productName}</div><div style="font-size:12px; color:#666;">${item.attributeValues ? item.attributeValues.join(' - ') : ''}</div></div>
                 </div>
             </td>

@@ -75,8 +75,6 @@ button {
   width: 100%;
   transition: all 0.2s ease;
   /* Mượt */
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
-  /* bóng nhẹ */
 }
 
 /* Hover: sáng hơn + nổi lên */

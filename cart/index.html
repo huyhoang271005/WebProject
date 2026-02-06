@@ -15,41 +15,49 @@
 
 <body>
 
+
     <div class="cart-container">
+        <!-- LEFT PART: CART ITEMS -->
         <div class="section-box cart-items-section">
-            <div class="cart-header" style="display: flex; justify-content: space-between; align-items: center;">
-                <div style="display: flex; align-items: center; gap: 10px;">
+            <!-- HEADER: SELECT ALL (DESKTOP) -->
+            <div class="cart-header-main">
+                <div class="checkbox-wrap">
                     <input type="checkbox" id="checkAll" class="item-checkbox" onchange="toggleAll(this)">
-                    <label for="checkAll" style="cursor: pointer; user-select: none;">Chọn tất cả (<span
+                    <label for="checkAll" style="cursor: pointer; user-select: none;">Sản phẩm trong giỏ (<span
                             id="count-display">0</span>)</label>
                 </div>
 
-                <div class="delete-selected" onclick="deleteSelected()"
-                    style="cursor: pointer; color: #ee4d2d; font-size: 0.9rem; display: none;">
-                    <i class="fa-solid fa-trash-can"></i> Xóa đã chọn
+                <div class="delete-selected" onclick="deleteSelected()" style="display: none;">
+                    <i class="fa-solid fa-trash-can"></i> Xóa
                 </div>
             </div>
 
+            <!-- PRODUCT LIST -->
             <div id="cartList">
-                <div style="text-align: center; padding: 20px; color: #666;">
+                <div style="text-align: center; padding: 40px; color: #888;">
                     <i class="fas fa-spinner fa-spin"></i> Đang tải giỏ hàng...
                 </div>
             </div>
         </div>
 
+        <!-- RIGHT PART: SUMMARY -->
         <div class="summary-box">
-            <div class="cart-header">
-                <i class="fa-solid fa-receipt" style="color: #10B981;"></i> Chi tiết đơn hàng
+            <!-- Mobile Select All Injection Point (via JS or CSS trick if needed, but lets keep it simple) -->
+            <div class="mobile-select-all" style="display: none;"> <!-- Shown by media query -->
+                <input type="checkbox" id="checkAllMobile" class="item-checkbox" onchange="toggleAll(this)">
+                <label for="checkAllMobile">Tất cả</label>
             </div>
 
+            <div class="summary-header">Thanh toán</div>
+
             <div class="summary-row">
-                <span>Tổng giá trị sản phẩm:</span>
-                <span class="total-price" style="font-weight: 500;">0₫</span>
+                <span>Tạm tính:</span>
+                <span class="total-price-display">0₫</span>
             </div>
 
             <div class="summary-total">
-                <span>Tổng thanh toán:</span>
-                <span class="total-price">0₫</span>
+                <span>Tổng tiền:</span>
+                <span class="total-price-display">0₫</span>
             </div>
 
             <button class="checkout-btn">Mua hàng (0)</button>
