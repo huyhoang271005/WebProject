@@ -1,7 +1,7 @@
 import { callAPI } from "/lib/api.js";
 import { noImage, convertToVNTime } from "/lib/public.js";
 import { connectStomp, subscribe, send } from "/lib/websocket.js";
-import {loadNavbar} from "../navbar/navbar.js";
+import { loadNavbar } from "../navbar/navbar.js";
 
 /* ================= STATE ================= */
 let currentUserId = null;
@@ -12,6 +12,9 @@ let hasMoreMessages = true;
 let page = 0;
 let size = 20;
 const messages = [];
+const CACHE_KEY_PREFIX = "chat_msg_";
+let isOffline = !navigator.onLine; // Trạng thái mạng
+const loadedMemberRooms = new Set(); // Cache các room đã load member
 
 /* ================= DOM ELEMENTS ================= */
 const chatContainerEl = document.getElementById("chatContainer");
@@ -41,6 +44,72 @@ function showChatRoom() {
     chatMessagesEl.classList.remove("hidden");
     chatInputEl.classList.remove("hidden");
     chatContainerEl.classList.add("mobile-active");
+}
+
+/* ================= CACHE & NETWORK ================= */
+function getCacheKey(roomId) {
+    return CACHE_KEY_PREFIX + roomId;
+}
+
+function saveCache(roomId, msgs) {
+    if (isOffline) return; // Không lưu cache khi offline theo yêu cầu
+    try {
+        // Chỉ lưu tối đa 50 tin nhắn mới nhất để tiết kiệm bộ nhớ
+        const toSave = msgs.slice(0, 50);
+        localStorage.setItem(getCacheKey(roomId), JSON.stringify(toSave));
+    } catch (e) {
+        console.warn("Quota exceeded or error saving cache", e);
+    }
+}
+
+function loadFromCache(roomId) {
+    try {
+        const data = localStorage.getItem(getCacheKey(roomId));
+        if (data) {
+            return JSON.parse(data);
+        }
+    } catch (e) {
+        console.error("Error loading cache", e);
+    }
+    return null;
+}
+
+function handleNetworkChange() {
+    isOffline = !navigator.onLine;
+    if (isOffline) {
+        showNotification("Mất kết nối mạng. Tin nhắn sẽ không được lưu.", "error");
+        document.body.classList.add("offline-mode");
+    } else {
+        showNotification("Đã kết nối lại.", "success");
+        document.body.classList.remove("offline-mode");
+        // Khi có mạng lại, thử load lại tin nhắn mới nhất nếu đang ở trong phòng
+        if (currentRoomId) {
+            loadMessages(currentRoomId);
+        }
+    }
+}
+
+function showNotification(msg, type = 'info') {
+    // Tận dụng notification có sẵn hoặc tạo mới đơn giản
+    const noti = document.createElement("div");
+    noti.className = `fixed-noti ${type}`;
+    noti.innerText = msg;
+    noti.style.position = "fixed";
+    noti.style.top = "10px";
+    noti.style.left = "50%";
+    noti.style.transform = "translateX(-50%)";
+    noti.style.padding = "10px 20px";
+    noti.style.borderRadius = "20px";
+    noti.style.background = type === 'error' ? '#EF4444' : '#10B981';
+    noti.style.color = '#fff';
+    noti.style.zIndex = "9999";
+    noti.style.boxShadow = "0 4px 6px rgba(0,0,0,0.1)";
+    noti.style.transition = "opacity 0.5s";
+    document.body.appendChild(noti);
+    setTimeout(() => {
+        noti.style.opacity = "0";
+        setTimeout(() => noti.remove(), 500);
+    }, 3000);
 }
 
 /* ================= LOGIC ================= */
@@ -85,12 +154,25 @@ async function openRoom(roomId) {
     chatMessagesEl.innerHTML = ``;
 
     await loadMembers(roomId); // Lấy currentUserId và danh sách người trong phòng
-    await loadMessages(roomId);
+
+    // 1. Load từ cache trước để hiển thị ngay
+    const cachedType = loadFromCache(roomId);
+    if (cachedType && cachedType.length > 0) {
+        messages.push(...cachedType);
+        cachedType.forEach(m => appendMessage(m, false)); // Render cache
+        chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight;
+    }
+
+    // 2. Gọi API lấy tin mới nhất (nếu có mạng)
+    if (!isOffline) {
+        await loadMessages(roomId);
+    }
 
     send("/app/chat.read", { roomId: currentRoomId });
 }
 
 async function loadMembers(roomId) {
+    if (loadedMemberRooms.has(String(roomId))) return; // Đã load rồi thì thôi
     try {
         const res = await callAPI(`/room-chat/${roomId}/members`);
         if (res.data) {
@@ -98,22 +180,36 @@ async function loadMembers(roomId) {
                 senderMap[u.userId] = u; // Cập nhật cache người dùng
                 if (u.isMe) currentUserId = u.userId;
             });
+            loadedMemberRooms.add(String(roomId)); // Đánh dấu đã load
         }
     } catch (e) { console.error(e); }
 }
 
 async function loadMessages(roomId, isLazy = false) {
     try {
-        if(hasMoreMessages === false) return;
+        if (hasMoreMessages === false) return;
         const prevScrollHeight = chatMessagesEl.scrollHeight;
         const res = await callAPI(`/room-chat/${roomId}/messages?page=${page}&&size=${size}`);
-        const msgList = res.data?.listData;
-        messages.unshift(...msgList);
-        msgList.forEach(m => appendMessage(m, true));
+        const msgList = res.data?.listData || [];
+
+        // Nếu load trang đầu tiên (mới nhất), cập nhật lại cache
+        if (page === 0) {
+            // Xóa tin nhắn cũ trên màn hình (do cache render rồi) để render tin chính thức từ server (tránh duplicate nếu cache lệch)
+            // Hoặc đơn giản là: xóa messages hiện tại, thay bằng msgList
+            messages.length = 0;
+            chatMessagesEl.innerHTML = "";
+            messages.push(...msgList.reverse()); // Đảo ngược để push vào mảng theo thứ tự thời gian tăng dần
+            messages.forEach(m => appendMessage(m, false));
+            if (!isOffline) saveCache(roomId, messages); // Lưu cache mới
+        } else {
+            messages.unshift(...msgList.reverse()); // Load trang cũ hơn
+            msgList.forEach(m => appendMessage(m, true)); // Prepend vào DOM
+        }
+
         chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight;
         hasMoreMessages = res.data.hasMore;
         page++;
-        if(isLazy) {
+        if (isLazy) {
             const newScrollHeight = chatMessagesEl.scrollHeight;
             chatMessagesEl.scrollTop = newScrollHeight - prevScrollHeight;
         }
@@ -175,7 +271,7 @@ async function init() {
                         // Lưu cả tên và nội dung vào room để render
                         r.lastMessage = senderName ? `${senderName}: ${msg.content}` : msg.content;
                         r.lastMessageTime = msg.time;
-                        r.messageSentCount+=1;
+                        r.messageSentCount += 1;
 
                         renderRooms(); // Vẽ lại danh sách
                     }
@@ -185,6 +281,10 @@ async function init() {
                         if (!senderMap[msg.senderId]) {
                             loadMembers(msg.roomId).then(() => appendMessage(msg));
                         } else { appendMessage(msg); }
+
+                        // Cập nhật messages array và lưu cache
+                        messages.push(msg);
+                        if (!isOffline) saveCache(currentRoomId, messages);
                     }
                 });
             });
@@ -197,10 +297,13 @@ async function init() {
         const urlRoomId = new URLSearchParams(window.location.search).get("roomId");
         if (urlRoomId) openRoom(urlRoomId); else showEmptyChat();
         chatMessagesEl.addEventListener("scroll", async () => {
-            if(chatMessagesEl.scrollTop === 0){
+            if (chatMessagesEl.scrollTop === 0 && hasMoreMessages && !isOffline) {
                 await loadMessages(currentRoomId, true);
             }
-        })
+        });
+
+        window.addEventListener('online', handleNetworkChange);
+        window.addEventListener('offline', handleNetworkChange);
     } catch (e) { console.error(e); }
 }
 

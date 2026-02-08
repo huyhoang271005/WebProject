@@ -1,6 +1,6 @@
 import { callAPI } from "../lib/api.js";
 import { loadNavbar } from "../navbar/navbar.js";
-import { toggleLoading } from "../lib/loader.js";
+import { loadPage } from "../lib/public.js";
 
 const PHONE_PATTERN = /^(0[3|5|7|8|9])+([0-9]{8})$/;
 const MIN_NAME_LENGTH = 2;
@@ -18,12 +18,7 @@ const addressCount = document.getElementById('addressCount');
 let currentAddresses = [];
 let isEditMode = false;
 
-window.addEventListener('DOMContentLoaded', async () => {
-    const loadPageEl = document.getElementById('loadPage');
-    const infoEl = document.getElementById('info');
-
-    toggleLoading(true);
-
+loadPage(async () => {
     try {
         await loadNavbar();
         await loadAddresses();
@@ -31,10 +26,6 @@ window.addEventListener('DOMContentLoaded', async () => {
     } catch (error) {
         console.error(error);
         showNotification("Có lỗi khi tải trang", 'error');
-    } finally {
-        toggleLoading(false);
-        if (loadPageEl) loadPageEl.style.display = 'none';
-        if (infoEl) infoEl.style.display = 'block';
     }
 });
 
@@ -89,7 +80,7 @@ function validateForm(data) {
         showFieldError('address', 'Vui lòng nhập địa chỉ chi tiết');
         isValid = false;
     }
-    
+
     return isValid;
 }
 
@@ -148,7 +139,7 @@ function attachAddressListeners() {
     currentAddresses.forEach(address => {
         const item = addressListEl.querySelector(`[data-id="${address.contactId}"]`);
         if (!item) return;
-        
+
         item.querySelector('.edit-btn').addEventListener('click', () => editAddress(address.contactId));
         item.querySelector('.delete-btn').addEventListener('click', () => deleteAddress(address.contactId));
     });

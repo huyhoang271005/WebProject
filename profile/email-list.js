@@ -5,7 +5,7 @@ import { callAPI } from "../lib/api.js";
 const emailStyles = `
 <style>
     .email-row {
-        display: flex; align-items: center; gap: 10px; margin-bottom: 12px;
+        display: flex; align-items: center; margin-bottom: 12px;
         background: #f9fafb; padding: 8px; border-radius: 10px; border: 1px solid #f0f0f0;
         transition: 0.2s;
     }
@@ -26,6 +26,7 @@ const emailStyles = `
         width: 35px; height: 35px; border-radius: 8px; cursor: pointer;
         display: flex; align-items: center; justify-content: center;
         transition: 0.2s;
+        margin-top: 0;
     }
     .removeEmailBtn:hover { background: #ef4444; color: white; border-color: #ef4444; }
 </style>
@@ -74,16 +75,14 @@ export function initEmailList(initialEmails = []) {
                     value="${email.email || ""}"
                     class="email-input"
                     data-index="${index}"
-                    ${
-                      email.validated === true || email.validated === false
-                        ? "readonly"
-                        : ""
-                    } 
+                    ${email.validated === true || email.validated === false
+          ? "readonly"
+          : ""
+        } 
                     placeholder="Nhập địa chỉ email..."/>
 
-                <div class="status-badge ${
-                  isClickable ? "verify-icon clickable" : ""
-                }" 
+                <div class="status-badge ${isClickable ? "verify-icon clickable" : ""
+        }" 
                      data-index="${index}" 
                      title="${tooltip}">
                     <i class="fa-solid ${iconClass}" style="color:${iconColor}"></i>

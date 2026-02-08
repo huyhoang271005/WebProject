@@ -5,7 +5,7 @@ import { callAPI } from "../lib/api.js";
 const emailStyles = `
 <style>
     .email-row {
-        display: flex; align-items: center; gap: 10px; margin-bottom: 10px;
+        display: flex; align-items: center; margin-bottom: 10px;
         padding: 8px 12px; border-radius: 8px; background: #f9fafb;
         border: 1px solid #f3f4f6; transition: 0.2s;
     }

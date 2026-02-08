@@ -33,7 +33,7 @@
       display: flex;
       gap: 20px;
       position: relative;
-      z-index: 1;
+      /* z-index: 1; Removed to allow fixed sidebar to pop out */
     }
 
     /* --- SIDEBAR --- */
@@ -374,7 +374,7 @@
       width: 100%;
       height: 100%;
       background: rgba(0, 0, 0, 0.5);
-      z-index: 99;
+      z-index: 1000;
       backdrop-filter: blur(2px);
     }
 
@@ -395,12 +395,12 @@
       .main-container {
         width: 100%;
         padding: 10px;
-        padding-top: 20px;
+        margin-top: 110px;
       }
 
       .product-grid {
         grid-template-columns: repeat(2, 1fr);
-        gap: 8px;
+        gap: 10px;
       }
 
       .sidebar {
@@ -408,13 +408,17 @@
         top: 0;
         left: 0;
         height: 100vh;
-        width: 80%;
-        max-width: 300px;
+        width: 85%;
+        /* Updated width */
+        max-width: 320px;
+        /* Increased max-width */
         transform: translateX(-100%);
         border-radius: 0;
         overflow-y: auto;
-        z-index: 1000;
+        z-index: 1200;
+        /* Increased z-index to be above overlay (99) and navbar (1000) */
         border: none;
+        box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
       }
 
       .sidebar.active {
@@ -430,12 +434,36 @@
       }
 
       .page-header {
-        padding: 10px;
-        gap: 10px;
+        padding: 15px;
+        gap: 15px;
+        flex-direction: column;
+        /* Stack items vertically */
+        align-items: flex-start;
+      }
+
+      .ph-actions {
+        width: 100%;
+        justify-content: space-between;
+      }
+
+      .ph-sort {
+        width: 100%;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding-top: 10px;
+        border-top: 1px solid #eee;
       }
 
       .ph-sort span {
-        display: none;
+        display: block;
+        /* Show sort label again if needed, or keep hidden but use space-between */
+        font-size: 0.9rem;
+        color: #555;
+      }
+
+      .ph-sort select {
+        width: 50%;
       }
 
       .sidebar-close-btn {
@@ -455,6 +483,17 @@
           <i class="fa-solid fa-xmark sidebar-close-btn" onclick="toggleSidebar()"></i>
         </div>
         <ul class="cat-list" id="catFilterList">
+          <li class="cat-item active">
+            <i class="fa-solid fa-circle-notch fa-spin"></i> Đang tải...
+          </li>
+        </ul>
+      </div>
+
+      <div class="filter-group" style="margin-top: 20px; border-top: 1px solid #eee; padding-top: 20px;">
+        <div class="filter-title">
+          <span><i class="fa-solid fa-copyright"></i> THƯƠNG HIỆU</span>
+        </div>
+        <ul class="cat-list" id="brandFilterList">
           <li class="cat-item active">
             <i class="fa-solid fa-circle-notch fa-spin"></i> Đang tải...
           </li>

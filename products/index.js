@@ -10,6 +10,7 @@ let state = {
   categoryId: null,
   sort: "productId,desc",
   isLoading: false,
+  brandId: null, // [NEW] Added brand filter state
 };
 
 document.addEventListener("DOMContentLoaded", async () => {
@@ -35,6 +36,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     // KHÔNG DÙNG Promise.all để tránh đua refresh token nếu navbar cache.
 
     await fetchCategories(); // Chạy trước
+    await fetchBrands();     // [NEW] Fetch brands
 
     await fetchProducts(); // Chạy sau khi cái trên đã xong (token an toàn)
 
@@ -71,6 +73,8 @@ async function fetchProducts() {
       url += `&productName=${encodeURIComponent(state.productName)}`;
     if (state.categoryId && state.categoryId !== "all")
       url += `&categoryId=${state.categoryId}`;
+    if (state.brandId && state.brandId !== "all") // [NEW] Add brandId param
+      url += `&brandId=${state.brandId}`;
     if (state.sort) url += `&sort=${state.sort}`;
 
     const res = await callAPI(url, "GET");
@@ -88,9 +92,8 @@ async function fetchProducts() {
       renderPagination(totalPages);
     } else {
       if (grid)
-        grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;color:red;">${
-          res.message || "Lỗi tải dữ liệu"
-        }</div>`;
+        grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;color:red;">${res.message || "Lỗi tải dữ liệu"
+          }</div>`;
     }
   } catch (e) {
     if (grid)
@@ -175,18 +178,44 @@ async function fetchCategories() {
 
     if (cats.length === 0) listEl.innerHTML = `<li class="cat-item">Trống</li>`;
     else {
-      let html = `<li class="cat-item ${
-        !state.categoryId ? "active" : ""
-      }" onclick="filterByCat(null, this)"><i class="fa-solid fa-circle-notch"></i> Tất cả</li>`;
+      let html = `<li class="cat-item ${!state.categoryId ? "active" : ""
+        }" onclick="filterByCat(null, this)"><i class="fa-solid fa-circle-notch"></i> Tất cả</li>`;
       html += cats
         .map(
           (c) =>
-            `<li class="cat-item ${
-              state.categoryId == (c.categoryId || c.id) ? "active" : ""
-            }" onclick="filterByCat('${
-              c.categoryId || c.id
-            }', this)"><i class="fa-solid fa-caret-right"></i> ${
-              c.categoryName || c.name
+            `<li class="cat-item ${state.categoryId == (c.categoryId || c.id) ? "active" : ""
+            }" onclick="filterByCat('${c.categoryId || c.id
+            }', this)"><i class="fa-solid fa-caret-right"></i> ${c.categoryName || c.name
+            }</li>`
+        )
+        .join("");
+      listEl.innerHTML = html;
+    }
+  } catch (e) {
+    listEl.innerHTML = "<li>Lỗi tải</li>";
+  }
+}
+
+// [NEW] Fetch Brands
+async function fetchBrands() {
+  const listEl = document.getElementById("brandFilterList");
+  if (!listEl) return;
+  try {
+    const res = await callAPI("/brands", "GET");
+    let brands = [];
+    if (res && res.success)
+      brands = Array.isArray(res.data) ? res.data : res.data.listData || [];
+
+    if (brands.length === 0) listEl.innerHTML = `<li class="cat-item">Trống</li>`;
+    else {
+      let html = `<li class="cat-item ${!state.brandId ? "active" : ""
+        }" onclick="filterByBrand(null, this)"><i class="fa-solid fa-circle-notch"></i> Tất cả</li>`;
+      html += brands
+        .map(
+          (b) =>
+            `<li class="cat-item ${state.brandId == (b.brandId || b.id) ? "active" : ""
+            }" onclick="filterByBrand('${b.brandId || b.id
+            }', this)"><i class="fa-solid fa-tag"></i> ${b.brandName || b.name
             }</li>`
         )
         .join("");
@@ -247,6 +276,19 @@ window.filterByCat = (catId, el) => {
   if (window.innerWidth < 992) toggleSidebar();
 };
 
+// [NEW] Filter by Brand
+window.filterByBrand = (brandId, el) => {
+  document
+    .querySelectorAll("#brandFilterList .cat-item")
+    .forEach((i) => i.classList.remove("active"));
+  el.classList.add("active");
+  state.brandId = brandId;
+  state.page = 0;
+  // Note: We don't clear productName or categoryId to allow combined filtering
+  fetchProducts();
+  if (window.innerWidth < 992) toggleSidebar();
+};
+
 window.changePage = (page) => {
   if (page < 0) return;
   state.page = page;
@@ -271,28 +313,23 @@ function renderPagination(totalPages) {
     return;
   }
   let html = "";
-  html += `<div class="page-btn ${
-    state.page === 0 ? "disabled" : ""
-  }" onclick="changePage(${
-    state.page - 1
-  })"><i class="fa-solid fa-chevron-left"></i></div>`;
+  html += `<div class="page-btn ${state.page === 0 ? "disabled" : ""
+    }" onclick="changePage(${state.page - 1
+    })"><i class="fa-solid fa-chevron-left"></i></div>`;
   for (let i = 0; i < totalPages; i++) {
     if (
       i === 0 ||
       i === totalPages - 1 ||
       (i >= state.page - 1 && i <= state.page + 1)
     ) {
-      html += `<div class="page-btn ${
-        i === state.page ? "active" : ""
-      }" onclick="changePage(${i})">${i + 1}</div>`;
+      html += `<div class="page-btn ${i === state.page ? "active" : ""
+        }" onclick="changePage(${i})">${i + 1}</div>`;
     } else if (i === state.page - 2 || i === state.page + 2) {
       html += `<div class="page-dots">...</div>`;
     }
   }
-  html += `<div class="page-btn ${
-    state.page === totalPages - 1 ? "disabled" : ""
-  }" onclick="changePage(${
-    state.page + 1
-  })"><i class="fa-solid fa-chevron-right"></i></div>`;
+  html += `<div class="page-btn ${state.page === totalPages - 1 ? "disabled" : ""
+    }" onclick="changePage(${state.page + 1
+    })"><i class="fa-solid fa-chevron-right"></i></div>`;
   container.innerHTML = html;
 }

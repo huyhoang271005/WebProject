@@ -393,24 +393,7 @@ button.loading {
     color: var(--text-primary);
 }
 
-/* Loading Overlay */
-#loadPage {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: linear-gradient(135deg, var(--bg-gradient-start), var(--bg-gradient-end));
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-    align-items: center;
-    justify-content: center;
-    z-index: 9999;
-    color: white;
-    font-size: 1.2rem;
-    font-weight: 500;
-}
+
 
 /* Spinner Animation */
 .fa-spinner {

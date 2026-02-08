@@ -231,62 +231,46 @@
     /* --- MOBILE RESPONSIVE (Tối ưu riêng cho điện thoại) --- */
     @media (max-width: 600px) {
       body {
-        background-color: #f9fafb;
-        /* Nền xám nhẹ để nổi bật card */
+        padding: 10px;
       }
 
       .card {
-        max-width: 100% !important;
-        margin: 0 !important;
-        padding: 15px !important;
-        box-shadow: none !important;
-        background: transparent !important;
-        border: none !important;
-      }
-
-      h2 {
-        font-size: 1.5rem;
-        margin-top: 10px;
-      }
-
-      /* Tách danh sách thành các Card rời nhau */
-      .device-list-container {
-        background: transparent;
-        border: none;
-        overflow: visible;
+        padding: 20px !important;
+        margin: 40px auto !important;
       }
 
       .device-card {
-        background: #fff;
-        margin-bottom: 12px;
-        border: 1px solid #e5e7eb;
-        border-radius: 12px;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-        padding: 15px;
-      }
-
-      .device-card:last-child {
-        border-bottom: 1px solid #e5e7eb;
-        /* Trả lại border cho card cuối */
+        flex-direction: column;
+        align-items: flex-start;
+        padding-top: 35px;
+        /* Dành chỗ cho label ngày tạo */
+        gap: 10px;
       }
 
       .device-icon-wrapper {
-        width: 42px;
-        height: 42px;
-        font-size: 1.2rem;
+        margin-right: 0;
+        margin-bottom: 10px;
       }
 
-      /* Nút bấm trên mobile to hơn */
-      .icon-btn {
-        width: 44px;
-        height: 44px;
-        font-size: 1.1rem;
+      .device-details {
+        width: 100%;
+        padding-right: 0;
       }
 
-      .btn-danger-outline,
-      .btn-back {
-        padding: 14px;
-        /* Nút to dễ bấm */
+      /* Đưa label ngày tạo về bên trái */
+      .created-at-label {
+        left: 12px;
+        right: auto;
+        top: 10px;
+      }
+
+      /* Action buttons xuống dòng */
+      .action-group {
+        width: 100%;
+        justify-content: flex-end;
+        margin-top: 10px;
+        border-top: 1px solid #f3f4f6;
+        padding-top: 10px;
       }
     }
   </style>
