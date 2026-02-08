@@ -45,6 +45,26 @@ body {
     justify-content: center;
     background: #fafafa;
     transition: transform 0.3s ease;
+    position: relative;
+    /* Ensure overlay is positioned relative to this box */
+}
+
+.sold-out-overlay {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(0, 0, 0, 0.6);
+    color: white;
+    padding: 10px 20px;
+    font-weight: bold;
+    border-radius: 5px;
+    display: none;
+    /* Hidden by default */
+    pointer-events: none;
+    z-index: 10;
+    font-size: 1.2rem;
+    white-space: nowrap;
 }
 
 .main-image-box:hover {

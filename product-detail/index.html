@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="vi">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -11,85 +12,89 @@
     <link rel="stylesheet" href="../lib/public.css">
     <link rel="stylesheet" href="/product-detail/index.css">
 </head>
+
 <body>
-<div id="notification" class="hidden"></div>
-<div id="loadPage"></div>
-<div id="info" class="container" style="display: none;">
-    <div class="product-card">
-        <div class="product-layout">
-            <div class="gallery-section">
-                <div class="main-image-box">
-                    <img id="mainImage" src="" alt="Ảnh sản phẩm">
-                </div>
-            </div>
-
-            <div class="details-section">
-                <h1 id="productName" class="product-name">...</h1>
-
-                <div class="meta-row">
-                    <div class="rating-box">
-                        <span id="ratingScore" class="rating-num">0.0</span>
-                        <div id="stars" class="stars-container"></div>
-                    </div>
-                    <div class="seperator">|</div>
-                    <div class="sales-box">Đã bán <span id="totalSales">0</span></div>
-                </div>
-
-                <div class="price-section">
-                    <span id="originalPrice" class="price-del"></span>
-                    <div class="price-main-wrapper">
-                        <span id="currentPrice" class="price-current">Loading...</span>
-                        <span id="discountTag" class="discount-tag"></span>
+    <div id="notification" class="hidden"></div>
+    <div id="loadPage"></div>
+    <div id="info" class="container" style="display: none;">
+        <div class="product-card">
+            <div class="product-layout">
+                <div class="gallery-section">
+                    <div class="main-image-box">
+                        <img id="mainImage" src="" alt="Ảnh sản phẩm">
+                        <div id="soldOutOverlay" class="sold-out-overlay">HẾT HÀNG</div>
                     </div>
                 </div>
 
-                <div id="attributesArea" class="attributes-wrapper">
-                </div>
+                <div class="details-section">
+                    <h1 id="productName" class="product-name">...</h1>
 
-                <div class="quantity-wrapper">
-                    <span class="qty-label">Số lượng</span>
-                    <div class="qty-control">
-                        <button id="btnDecrease"><i class="fa-solid fa-minus"></i></button>
-                        <input type="number" id="inputQuantity" value="1" min="1">
-                        <button id="btnIncrease"><i class="fa-solid fa-plus"></i></button>
+                    <div class="meta-row">
+                        <div class="rating-box">
+                            <span id="ratingScore" class="rating-num">0.0</span>
+                            <div id="stars" class="stars-container"></div>
+                        </div>
+                        <div class="seperator">|</div>
+                        <div class="sales-box">Đã bán <span id="totalSales">0</span></div>
                     </div>
-                    <span id="stockCount" class="stock-info"></span>
-                </div>
 
-                <div id="attributeError" class="error-text" style="display: none; color: #ee4d2d; margin-bottom: 15px; font-size: 0.9rem;">
-                    Vui lòng chọn Phân loại hàng
-                </div>
+                    <div class="price-section">
+                        <span id="originalPrice" class="price-del"></span>
+                        <div class="price-main-wrapper">
+                            <span id="currentPrice" class="price-current">Loading...</span>
+                            <span id="discountTag" class="discount-tag"></span>
+                        </div>
+                    </div>
 
-                <div class="action-group">
-                    <button id="btnAddToCart" class="btn btn-outlined">
-                        <i class="fa-solid fa-cart-plus"></i> Thêm vào giỏ
-                    </button>
-                    <button id="btnBuyNow" class="btn btn-filled">
-                        Mua ngay
-                    </button>
-                </div>
+                    <div id="attributesArea" class="attributes-wrapper">
+                    </div>
 
+                    <div class="quantity-wrapper">
+                        <span class="qty-label">Số lượng</span>
+                        <div class="qty-control">
+                            <button id="btnDecrease"><i class="fa-solid fa-minus"></i></button>
+                            <input type="number" id="inputQuantity" value="1" min="1">
+                            <button id="btnIncrease"><i class="fa-solid fa-plus"></i></button>
+                        </div>
+                        <span id="stockCount" class="stock-info"></span>
+                    </div>
+
+                    <div id="attributeError" class="error-text"
+                        style="display: none; color: #ee4d2d; margin-bottom: 15px; font-size: 0.9rem;">
+                        Vui lòng chọn Phân loại hàng
+                    </div>
+
+                    <div class="action-group">
+                        <button id="btnAddToCart" class="btn btn-outlined">
+                            <i class="fa-solid fa-cart-plus"></i> Thêm vào giỏ
+                        </button>
+                        <button id="btnBuyNow" class="btn btn-filled">
+                            Mua ngay
+                        </button>
+                    </div>
+
+                </div>
             </div>
-        </div>
 
-        <!-- Move Description and Feedback outside the 2-column layout -->
-        <div class="product-bottom-section">
-            <div class="description-section">
-                <div class="desc-header">MÔ TẢ SẢN PHẨM</div>
-                <p id="descriptionContent" class="desc-text"></p>
-            </div>
+            <!-- Move Description and Feedback outside the 2-column layout -->
+            <div class="product-bottom-section">
+                <div class="description-section">
+                    <div class="desc-header">MÔ TẢ SẢN PHẨM</div>
+                    <p id="descriptionContent" class="desc-text"></p>
+                </div>
 
-            <!-- Feedback Section -->
-            <div class="feedback-section description-section" style="margin-top: 20px;">
-                <div class="desc-header">ĐÁNH GIÁ TỪ KHÁCH HÀNG</div>
-                <div id="feedbackList">
-                    <p style="text-align: center; color: #888;">Đang tải đánh giá...</p>
+                <!-- Feedback Section -->
+                <div class="feedback-section description-section" style="margin-top: 20px;">
+                    <div class="desc-header">ĐÁNH GIÁ TỪ KHÁCH HÀNG</div>
+                    <div id="feedbackList">
+                        <p style="text-align: center; color: #888;">Đang tải đánh giá...</p>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-</div>
 
-<script type="module" src="/product-detail/index.js"></script>
+    <script type="module" src="/product-detail/index.js"></script>
 </body>
+
 </html>

@@ -1,7 +1,7 @@
-import {callAPI} from "../lib/api.js";
-import {loadPage, noImage} from '../lib/public.js';
-import {loadNavbar} from "../navbar/navbar.js";
-import {toggleLoading} from "../lib/loader.js";
+import { callAPI } from "../lib/api.js";
+import { loadPage, noImage } from '../lib/public.js';
+import { loadNavbar } from "../navbar/navbar.js";
+import { toggleLoading } from "../lib/loader.js";
 
 const NOTIFICATION_DURATION = 3500;
 const NOTIFICATION_HIDE_DELAY = 400;
@@ -18,7 +18,7 @@ let currentVariant = null;
 
 function showNotification(message, type = 'success') {
     const noti = document.getElementById('notification');
-    
+
     const icons = {
         success: '<i class="fa-solid fa-check-circle"></i>',
         error: '<i class="fa-solid fa-circle-exclamation"></i>',
@@ -85,47 +85,47 @@ async function getFeedbacks(productId) {
 
         const container = document.getElementById('feedbackList');
         if (res.success && res.data && res.data.listData) {
-             const list = res.data.listData;
-             if (list.length === 0) {
-                 container.innerHTML = `<p style="color: #888; text-align:center; padding: 20px;">Chưa có đánh giá nào.</p>`;
-                 return;
-             }
+            const list = res.data.listData;
+            if (list.length === 0) {
+                container.innerHTML = `<p style="color: #888; text-align:center; padding: 20px;">Chưa có đánh giá nào.</p>`;
+                return;
+            }
 
-             // Check Admin Role
-             let isAdmin = false;
-             try {
-                 const cached = sessionStorage.getItem("homeData");
-                 if (cached) {
-                     const userData = JSON.parse(cached);
-                     isAdmin = userData.roleName === 'ADMIN';
-                 }
-             } catch (e) {}
+            // Check Admin Role
+            let isAdmin = false;
+            try {
+                const cached = sessionStorage.getItem("homeData");
+                if (cached) {
+                    const userData = JSON.parse(cached);
+                    isAdmin = userData.roleName === 'ADMIN';
+                }
+            } catch (e) { }
 
-             container.innerHTML = list.map(item => renderFeedbackItem(item, isAdmin)).join('');
+            container.innerHTML = list.map(item => renderFeedbackItem(item, isAdmin)).join('');
 
-             // Attach events for reply buttons
-             if (isAdmin) {
-                 document.querySelectorAll('.btn-reply').forEach(btn => {
-                     btn.addEventListener('click', (e) => {
-                         const id = e.target.dataset.id;
-                         document.getElementById(`reply-box-${id}`).classList.toggle('show');
-                     });
-                 });
-             }
+            // Attach events for reply buttons
+            if (isAdmin) {
+                document.querySelectorAll('.btn-reply').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const id = e.target.dataset.id;
+                        document.getElementById(`reply-box-${id}`).classList.toggle('show');
+                    });
+                });
+            }
 
         } else {
-             container.innerHTML = `<p style="color: #888; text-align:center; padding: 20px;">Chưa có đánh giá nào.</p>`;
+            container.innerHTML = `<p style="color: #888; text-align:center; padding: 20px;">Chưa có đánh giá nào.</p>`;
         }
     } catch (error) {
         console.error("Error loading feedbacks:", error);
-         document.getElementById('feedbackList').innerHTML = `<p style="color: red; text-align:center;">Lỗi tải đánh giá.</p>`;
+        document.getElementById('feedbackList').innerHTML = `<p style="color: red; text-align:center;">Lỗi tải đánh giá.</p>`;
     }
 }
 
 function renderFeedbackItem(item, isAdmin) {
     const avatar = item.imageUrl || DEFAULT_AVATAR;
     const date = new Date(item.createdAt).toLocaleString('vi-VN');
-    
+
     const starsHtml = createStarRating(item.rating);
 
     let replyHtml = '';
@@ -176,7 +176,7 @@ function renderFeedbackItem(item, isAdmin) {
 }
 
 // Function to reply to feedback - Admin only
-window.submitReply = async function(feedbackId) {
+window.submitReply = async function (feedbackId) {
     const input = document.getElementById(`input-${feedbackId}`);
     const content = input.value.trim();
 
@@ -190,18 +190,18 @@ window.submitReply = async function(feedbackId) {
     btn.disabled = true;
 
     try {
-        const res = await callAPI(`/feedbacks/reply/${feedbackId}`, "POST", content); 
+        const res = await callAPI(`/feedbacks/reply/${feedbackId}`, "POST", content);
         console.log("Reply Response:", res);
-        
+
         if (res.success) {
             showNotification("Đã trả lời đánh giá!", "success");
             // Reload feedbacks
             const urlParams = new URLSearchParams(window.location.search);
             getFeedbacks(urlParams.get('id'));
         } else {
-             showNotification(res.message || "Lỗi khi trả lời", "error");
-             btn.disabled = false;
-             btn.innerText = "Gửi";
+            showNotification(res.message || "Lỗi khi trả lời", "error");
+            btn.disabled = false;
+            btn.innerText = "Gửi";
         }
     } catch (error) {
         console.error("Error replying to feedback:", error);
@@ -247,7 +247,7 @@ function renderBasicInfo() {
                     editBtn.style.marginLeft = '10px';
                     editBtn.style.textDecoration = 'none';
                     editBtn.title = 'Chỉnh sửa sản phẩm';
-                    
+
                     editBtn.onmouseover = () => editBtn.style.color = '#10B981';
                     editBtn.onmouseout = () => editBtn.style.color = '#6b7280';
 
@@ -351,22 +351,43 @@ function findMatchingVariant() {
     } else {
         currentVariant = null;
         updateStockDisplay(0);
+
+        // Reset overlay if no variant matches (optional, or keep generic state)
+        const overlay = document.getElementById('soldOutOverlay');
+        const mainImg = document.getElementById('mainImage');
+        if (overlay) overlay.style.display = 'none';
+        if (mainImg) mainImg.style.opacity = '1';
     }
 }
 
 function updateUIForVariant(variant) {
     updatePriceDisplay(variant.price, variant.originalPrice);
 
+    const imgEl = document.getElementById('mainImage');
     if (variant.imageUrl) {
-        const imgEl = document.getElementById('mainImage');
         imgEl.src = variant.imageUrl;
         imgEl.onerror = () => {
-            imgEl.src = productDetail.imageUrl || noImage;
+            imgEl.src = noImage;
         };
+    } else {
+        // Fallback to noImage as requested
+        imgEl.src = noImage;
     }
 
     updateStockDisplay(variant.stock);
     document.getElementById('inputQuantity').value = 1;
+
+    // Handle Out of Stock Overlay
+    const overlay = document.getElementById('soldOutOverlay');
+    const mainImg = document.getElementById('mainImage');
+
+    if (variant.stock <= 0) {
+        if (overlay) overlay.style.display = 'block';
+        if (mainImg) mainImg.style.opacity = '0.5';
+    } else {
+        if (overlay) overlay.style.display = 'none';
+        if (mainImg) mainImg.style.opacity = '1';
+    }
 }
 
 function updatePriceDisplay(current, original) {
@@ -513,7 +534,7 @@ function setupEventListeners() {
 
         const selectedAttrNames = [];
         const selectedAttrValues = [];
-        
+
         document.querySelectorAll('.attribute-row').forEach(row => {
             const activeBtn = row.querySelector('.attr-item.active');
             if (activeBtn) {
