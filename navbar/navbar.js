@@ -34,7 +34,6 @@ const navbarHTML = `
         .nb-right-wrapper { display: flex; align-items: center; gap: 15px; }
         
         .nb-icon-btn { position: relative; cursor: pointer; font-size: 1.3rem; color: #555; width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; border-radius: 50%; text-decoration: none; transition: 0.2s; }
-        .nb-icon-btn:hover { background: #f3f4f6; color: #10B981; }
         
         .nb-badge { 
             position: absolute; top: 2px; right: 2px; background: #ee4d2d; color: white; 
@@ -46,20 +45,50 @@ const navbarHTML = `
         .nb-user-menu { cursor: pointer; display: flex; align-items: center; gap: 10px; margin-left: 10px; }
         .nb-avatar { width: 42px; height: 42px; border-radius: 50%; object-fit: cover; border: 1px solid #ddd; }
         
-        .nb-dropdown { position: absolute; right: 0; top: 70px; background: white; width: 280px; border-radius: 12px; box-shadow: 0 5px 25px rgba(0,0,0,0.15); display: none; flex-direction: column; overflow: hidden; border: 1px solid #eee; z-index: 1100; padding: 5px 0; overflow-y: auto; }
+        .nb-dropdown { position: absolute; right: 0; top: 70px; background: white; width: 280px; border-radius: 12px; box-shadow: 0 5px 25px rgba(0,0,0,0.15); display: none; flex-direction: column; overflow-x: hidden; border: 1px solid #eee; z-index: 1100; padding: 5px 0; overflow-y: auto; height: 600px;}
         .nb-noti-dropdown { width: 360px; right: -80px; padding: 0;}
         .nb-dropdown.show { display: flex; }
         .nb-dropdown a, .nb-dropdown button { padding: 12px 20px; text-decoration: none; color: #333; text-align: left; background: none; border: none; cursor: pointer; border-bottom: 1px solid #f9f9f9; display:flex; align-items:center; gap:12px; font-size:0.95rem; transition: 0.2s; }
         .nb-dropdown a:hover, .nb-dropdown button:hover { background: #f9fafb; color: #10B981; padding-left: 25px; }
         .nb-admin-only { display: none !important; }
 
-        .noti-item { padding: 12px 15px; border-bottom: 1px solid #f0f0f0; display: flex; gap: 10px; position: relative; cursor: pointer; transition: background 0.2s; }
-        .noti-item:hover { background: #fafafa; }
-        .noti-item.unread { background: #f0fdf4; } 
-        .noti-item.unread .noti-title { color: #10B981; }
+        .noti-item { 
+            padding: 12px 15px; border-bottom: 1px solid #f0f0f0; display: flex; gap: 10px; position: relative; cursor: pointer; 
+            transition: all 0.2s ease-in-out; align-items: flex-start;
+        }
+        .noti-item:hover { 
+            background: #f8fafc; 
+            transform: translateX(4px);
+            border-left: 3px solid #10B981;
+        }
+        .noti-item.unread { 
+            background: #ecfdf5; 
+        } 
+        .noti-item.unread .noti-title { 
+            color: #059669; 
+            font-weight: 700 !important;
+        }
+        /* Indicator dot for unread */
+        .noti-indicator {
+            width: 8px; height: 8px; background: #10B981; border-radius: 50%; margin-top: 6px; flex-shrink: 0;
+            display: none;
+        }
+        .noti-item.unread .noti-indicator { display: block; }
+
         .noti-content { flex: 1; }
-        .btn-del-noti { cursor: pointer; color: #ccc; padding: 5px; }
-        .btn-del-noti:hover { color: #EF4444; }
+        
+        .noti-actions {
+            display: flex; flex-direction: column; gap: 4px; align-items: center; justify-content: center;
+        }
+        .btn-icon-noti { 
+            cursor: pointer; color: #9ca3af; padding: 4px; border-radius: 4px; transition: 0.2s; font-size: 0.9rem;
+            width: 24px; height: 24px; display: flex; align-items: center; justify-content: center;
+        }
+        .btn-icon-noti:hover { background: #e5e7eb; color: #4b5563; }
+        
+        .btn-mark-read:hover { color: #10B981; background: #d1fae5; }
+        .btn-del-noti:hover { color: #EF4444; background: #fee2e2; }
+
         .btn-clear-all { font-size: 0.8rem; color: #EF4444; cursor: pointer; text-decoration: underline; }
 
         /* TOAST: Góc dưới phải */
@@ -100,7 +129,7 @@ const navbarHTML = `
                     <div style="padding:15px; font-weight:bold; border-bottom:1px solid #eee; display:flex; justify-content:space-between; background:#fff; border-radius:12px 12px 0 0;">
                         <span>Thông báo</span><span class="btn-clear-all" id="btnClearAllNoti">Xóa tất cả</span>
                     </div>
-                    <div class="noti-list" id="nbNotiList" style="max-height: calc(70vh - 50px); overflow-y:auto; background:#fff; border-radius:0 0 12px 12px;"></div>
+                    <div class="noti-list" id="nbNotiList" style="max-height: calc(70vh - 50px); overflow-y:auto; overflow-x: hidden; background:#fff; border-radius:0 0 12px 12px;"></div>
                     <div style="text-align:center; padding:10px; display:none; color:#10B981; background:#fff;" id="notiLoading"><i class="fa-solid fa-circle-notch fa-spin"></i></div>
                 </div>
             </div>
@@ -167,22 +196,20 @@ export async function loadNavbar(options = {}) {
 }
 
 async function fetchHomeData() {
-  try {
-    const res = await callAPI("/home", "GET");
-    if (res && res.success && res.data) {
-      homeData = res.data;
-      sessionStorage.setItem("homeData", JSON.stringify(homeData));
-      updateNavbarUI(homeData);
-    }
-  } catch (e) {
-    console.error("Home API:", e);
+  const res = await callAPI("/home", "GET");
+  if (res && res.success && res.data) {
+    homeData = res.data;
+    sessionStorage.setItem("homeData", JSON.stringify(homeData));
+    updateNavbarUI(homeData);
+  }
+  else {
+    await showDialog("error", res.message);
   }
 }
 
 function updateBadgeCount(delta) {
   let current = parseInt(homeData.readNotifications) || 0;
-  let newCount = Math.max(0, current + delta);
-  homeData.readNotifications = newCount;
+  homeData.readNotifications = Math.max(0, current + delta);
   updateNavbarUI(homeData);
   sessionStorage.setItem("homeData", JSON.stringify(homeData));
 }
@@ -250,25 +277,8 @@ function setupSSERealtime() {
 
   // 2. Message (Tin nhắn) - CẮT BỎ LOẠI 1 (Chỉ hiện Toast, ko vào chuông)
   subscribeTopic("message", async (data) => {
-    const senderId = data.senderId;
-    let senderName = data.senderName;
-    const content = data.content || "Bạn có tin nhắn mới";
-
-    // Cố gắng lấy tên người gửi nếu thiếu
-    if (!senderName && senderId) {
-      try {
-        const userRes = await callAPI(`/users/${senderId}`);
-        if (userRes.success && userRes.data) {
-          senderName = userRes.data.fullName || userRes.data.username;
-        }
-      } catch (e) { }
-    }
-    if (!senderName) senderName = "Tin nhắn mới";
-
     // Chỉ hiện Box nổi (Toast)
-    showSmartToast(`Tin nhắn từ ${senderName}`, content, "fa-comment-dots");
-
-    // KHÔNG làm gì với Dropdown và Badge (Theo yêu cầu)
+    showSmartToast(`Tin nhắn`, "Bạn có tin nhắn mới", "fa-comment-dots");
   });
 
   // 3. Cart
@@ -276,8 +286,7 @@ function setupSSERealtime() {
     const change = parseInt(data);
     if (!isNaN(change)) {
       let current = parseInt(homeData.cartsCount) || 0;
-      let newCount = Math.max(0, current + change);
-      homeData.cartsCount = newCount;
+      homeData.cartsCount = Math.max(0, current + change);
       updateNavbarUI(homeData);
       sessionStorage.setItem("homeData", JSON.stringify(homeData));
     }
@@ -342,16 +351,25 @@ function setupEvents() {
   if (clearBtn) {
     clearBtn.onclick = async (e) => {
       e.stopPropagation();
-      if (!confirm("Xóa tất cả thông báo?")) return;
+      await showDialog("question", "Bạn có muốn xoá tất cả thông báo ?", async () => {
+        // Gọi API xóa tất cả
+        const res = await callAPI("/notifications", "DELETE");
+        if (res && res.success) {
+          // Xóa giao diện
+          document.getElementById("nbNotiList").innerHTML =
+            '<div class="empty-noti" style="padding:20px;text-align:center;color:#999">Không có thông báo nào</div>';
 
-      // Xóa giao diện
-      document.getElementById("nbNotiList").innerHTML =
-        '<div class="empty-noti" style="padding:20px;text-align:center;color:#999">Không có thông báo nào</div>';
+          // Reset số
+          homeData.readNotifications = 0;
+          updateNavbarUI(homeData);
+          sessionStorage.setItem("homeData", JSON.stringify(homeData));
+          await showDialog("success", "Đã xóa tất cả thông báo");
+        } else {
+          await showDialog("error", res.message);
+        }
+      });
 
-      // Reset số
-      homeData.readNotifications = 0;
-      updateNavbarUI(homeData);
-      sessionStorage.setItem("homeData", JSON.stringify(homeData));
+
     };
   }
 }
@@ -360,32 +378,30 @@ async function fetchNotifications() {
   if (notiState.isLoading || !notiState.hasMore) return;
   notiState.isLoading = true;
   document.getElementById("notiLoading").style.display = "block";
-  try {
-    const res = await callAPI(
-      `/notifications?page=${notiState.page}&size=${notiState.size}`,
-      "GET",
-    );
-    if (res && res.success && res.data?.listData) {
-      const list = res.data.listData;
-      if (list.length > 0) {
-        const html = list.map((item) => createNotiItemHTML(item)).join("");
-        const container = document.getElementById("nbNotiList");
-        if (notiState.page === 0) container.innerHTML = html;
-        else container.insertAdjacentHTML("beforeend", html);
-        notiState.page++;
-      } else {
-        if (notiState.page === 0)
-          document.getElementById("nbNotiList").innerHTML =
-            '<div class="empty-noti" style="padding:20px;text-align:center;color:#999">Không có thông báo nào</div>';
-        notiState.hasMore = false;
-      }
-      if (list.length < notiState.size) notiState.hasMore = false;
-    } else notiState.hasMore = false;
-  } catch (e) {
-    console.error(e);
-  } finally {
+  const res = await callAPI(
+    `/notifications?page=${notiState.page}&size=${notiState.size}`,
+    "GET",
+  );
+  if (res && res.success && res.data?.listData) {
+    const list = res.data.listData;
+    if (list.length > 0) {
+      const html = list.map((item) => createNotiItemHTML(item)).join("");
+      const container = document.getElementById("nbNotiList");
+      if (notiState.page === 0) container.innerHTML = html;
+      else container.insertAdjacentHTML("beforeend", html);
+      notiState.page++;
+    } else {
+      if (notiState.page === 0)
+        document.getElementById("nbNotiList").innerHTML =
+          '<div class="empty-noti" style="padding:20px;text-align:center;color:#999">Không có thông báo nào</div>';
+      notiState.hasMore = false;
+    }
+    if (list.length < notiState.size) notiState.hasMore = false;
     notiState.isLoading = false;
     document.getElementById("notiLoading").style.display = "none";
+  } else {
+    notiState.hasMore = false;
+    await showDialog("error", res.message);
   }
 }
 
@@ -409,34 +425,59 @@ function createNotiItemHTML(item, isNew = false) {
 
   return `
     <div class="noti-item ${isUnread ? "unread" : ""
-    }" id="noti-${id}" onclick="readNoti('${id}', '${link}', this)">
+    }" id="noti-${id}" onclick="readNoti('${id}', '${link}', this)" title="${isUnread ? "Nhấn để xem" : "Đã đọc"}">
+        <div class="noti-indicator"></div>
         <div class="noti-content">
-            <div class="noti-title" style="font-weight:600;font-size:0.95rem">${title}</div>
+            <div class="noti-title" style="font-weight:600;font-size:0.95rem;transition:color 0.2s">${title}</div>
             <div class="noti-msg" style="font-size:0.9rem;color:#555">${msg}</div>
             <div class="noti-time" style="font-size:0.75rem;color:#999;margin-top:4px">${time}</div>
         </div>
-        <i class="fa-solid fa-xmark btn-del-noti" onclick="deleteNoti('${id}', event)"></i>
+        <div class="noti-actions">
+           ${isUnread ? `<i class="fa-solid fa-check btn-icon-noti btn-mark-read" onclick="markAsRead('${id}', event, this)" title="Đánh dấu đã đọc"></i>` : ''}
+           <i class="fa-solid fa-xmark btn-icon-noti btn-del-noti" onclick="deleteNoti('${id}', event)" title="Xóa thông báo"></i>
+        </div>
     </div>
   `;
 }
 
 window.deleteNoti = async (id, e) => {
-  e.stopPropagation();
-  const item = document.getElementById(`noti-${id}`);
-  if (item) {
-    if (item.classList.contains("unread")) updateBadgeCount(-1);
-    item.remove();
-  }
-  await callAPI("/notifications/delete", "POST", [id]);
+  if (e) e.stopPropagation();
+  await showDialog("question", "Bạn có muốn xoá thông báo này ?", async () => {
+    // e.stopPropagation(); // Đã chuyển lên đầu
+    const item = document.getElementById(`noti-${id}`);
+    if (item) {
+      if (item.classList.contains("unread")) updateBadgeCount(-1);
+      item.remove();
+    }
+    const res = await callAPI("/notifications/delete", "POST", [id]);
+    await showDialog(res.success ? "success" : "error", res.message);
+  });
+
 };
 
+window.markAsRead = async (id, e, btnEl) => {
+  e.stopPropagation();
+  const item = document.getElementById(`noti-${id}`);
+  if (item && item.classList.contains("unread")) {
+    item.classList.remove("unread");
+    updateBadgeCount(-1);
+    if (btnEl) btnEl.remove(); // Xóa nút check sau khi đã đọc
+
+    await callAPI("/notifications", "PATCH", [id]);
+  }
+}
+
 window.readNoti = async (id, link, el) => {
+  // Nếu chưa đọc -> đánh dấu đọc
   if (el.classList.contains("unread")) {
     el.classList.remove("unread");
     updateBadgeCount(-1);
-    try {
-      await callAPI("/notifications", "PATCH", [id]);
-    } catch (e) { }
+
+    // Xóa nút check nếu có
+    const checkBtn = el.querySelector('.btn-mark-read');
+    if (checkBtn) checkBtn.remove();
+
+    await callAPI("/notifications", "PATCH", [id]);
   }
   if (link && link !== "#" && link !== "null") window.location.href = link;
 };

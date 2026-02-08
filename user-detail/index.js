@@ -148,7 +148,7 @@ function setupActionButtons(user) {
     const content = document.getElementById("notiContent").value.trim();
 
     if (!title || !content) {
-      alert("Vui lòng nhập đủ tiêu đề và nội dung!");
+      await showDialog("error", "Vui lòng nhập đủ tiêu đề và nội dung!");
       return;
     }
 

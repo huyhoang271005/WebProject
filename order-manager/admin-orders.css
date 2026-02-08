@@ -138,6 +138,57 @@ tr:hover td {
     font-size: 12px;
     color: #4B5563;
     font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+}
+
+.order-id:hover {
+    background: #E5E7EB;
+    color: #111827;
+}
+
+.order-id.copied {
+    background: #D1FAE5;
+    color: #059669;
+}
+
+.order-id.copied::after {
+    content: "Đã copy";
+    position: absolute;
+    top: -25px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #374151;
+    color: white;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 10px;
+    white-space: nowrap;
+    opacity: 0;
+    animation: fadeInOut 1s forwards;
+}
+
+@keyframes fadeInOut {
+    0% {
+        opacity: 0;
+        transform: translate(-50%, 5px);
+    }
+
+    10% {
+        opacity: 1;
+        transform: translate(-50%, 0);
+    }
+
+    90% {
+        opacity: 1;
+        transform: translate(-50%, 0);
+    }
+
+    100% {
+        opacity: 0;
+        transform: translate(-50%, -5px);
+    }
 }
 
 /* === 5. HIỂN THỊ SẢN PHẨM NHỎ (MINI PRODUCT) === */

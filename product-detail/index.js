@@ -9,7 +9,7 @@ const REDIRECT_DELAY = 2000;
 const INFO_NOTIFICATION_DELAY = 1000;
 const MAX_STARS = 5;
 const MIN_QUANTITY = 1;
-const DEFAULT_AVATAR = "https://cdn-icons-png.flaticon.com/512/847/847969.png";
+const DEFAULT_AVATAR = noImage;
 
 let productDetail = null;
 let variants = [];
@@ -240,7 +240,7 @@ function renderBasicInfo() {
                 if (!titleEl.querySelector('.edit-product-btn')) {
                     const editBtn = document.createElement('a');
                     editBtn.className = 'edit-product-btn';
-                    editBtn.href = `/products-manager/edit.html?id=${productDetail.productId}`;
+                    editBtn.href = `/products-manager/edit?id=${productDetail.productId}`;
                     editBtn.innerHTML = '<i class="fa-solid fa-pen-to-square"></i>';
                     editBtn.style.fontSize = '1rem';
                     editBtn.style.color = '#6b7280';

@@ -1,6 +1,7 @@
 import { loadNavbar } from "/navbar/navbar.js";
 import { callAPI } from "/lib/api.js";
 import { toggleLoading } from "/lib/loader.js";
+import {showDialog} from "/dialog/index.js";
 
 // Biến toàn cục lưu danh sách danh mục
 let apiCategories = [];
@@ -8,10 +9,9 @@ let apiCategories = [];
 // Hàm chạy khi trang load
 document.addEventListener("DOMContentLoaded", async () => {
   toggleLoading(true);
-  try {
-    // 1. Khởi tạo Navbar trước
-    await loadNavbar({
-      centerHTML: `
+  // 1. Khởi tạo Navbar trước
+  await loadNavbar({
+    centerHTML: `
         <div class="nav-cat-btn" id="catBtn">
             <i class="fa-solid fa-bars"></i> <span>Danh mục</span>
             <div class="cat-dropdown" id="catDropdown"></div>
@@ -21,38 +21,33 @@ document.addEventListener("DOMContentLoaded", async () => {
             <i class="fa-solid fa-magnifying-glass" id="homeSearchBtn" 
                style="position:absolute; right:15px; top:50%; transform:translateY(-50%); color:#10B981; cursor:pointer; padding:5px;"></i>
         </div>`,
-    });
+  });
 
-    // 2. Lấy dữ liệu theo thứ tự
+  // 2. Lấy dữ liệu theo thứ tự
 
-    await fetchCategories(); // Lấy danh mục trước
+  await fetchCategories(); // Lấy danh mục trước
 
-    await renderHomeSections(); // Sau đó mới lấy sản phẩm gợi ý
+  await renderHomeSections(); // Sau đó mới lấy sản phẩm gợi ý
 
-    // 3. Render dữ liệu lên màn hình và gán sự kiện
-    renderNavCategories();
-    setupNavbarEvents();
-  } catch (e) {
-    console.error("Lỗi tải trang chủ:", e);
-  } finally {
-    // Tắt loading sau khi mọi thứ hoàn tất
-    setTimeout(() => toggleLoading(false), 300);
-  }
+  // 3. Render dữ liệu lên màn hình và gán sự kiện
+  renderNavCategories();
+  setupNavbarEvents();
+  setTimeout(() => toggleLoading(false), 300);
+
 });
 
 /**
  * Gọi API lấy danh sách danh mục sản phẩm
  */
 async function fetchCategories() {
-  try {
-    const res = await callAPI("/categories", "GET");
-    if (res && res.success) {
-      if (Array.isArray(res.data)) apiCategories = res.data;
-      else if (res.data && Array.isArray(res.data.listData))
-        apiCategories = res.data.listData;
-    }
-  } catch (e) {
-    console.error("Lỗi lấy danh mục:", e);
+  const res = await callAPI("/categories", "GET");
+  if (res && res.success) {
+    if (Array.isArray(res.data)) apiCategories = res.data;
+    else if (res.data && Array.isArray(res.data.listData))
+      apiCategories = res.data.listData;
+  }
+  else {
+    await showDialog("error", res.message);
   }
 }
 
@@ -153,6 +148,9 @@ async function renderHomeSections() {
     } else {
       container.innerHTML = `<div style="text-align:center; padding: 40px; color: #666;">Chưa có sản phẩm nào</div>`;
     }
+  }
+  else {
+    await showDialog("error", res.message);
   }
 }
 

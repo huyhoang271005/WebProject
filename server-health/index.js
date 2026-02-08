@@ -21,7 +21,7 @@ function setupEvents() {
                     btnClear.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Đang xóa...';
                     btnClear.disabled = true;
 
-                    const res = await callAPI("/api/cache/clear", "POST");
+                    const res = await callAPI("/cache/clear", "POST");
                     await showDialog(res.success ? "success" : "error", res.message);
                     btnClear.innerHTML = '<i class="fa-solid fa-broom"></i> Xóa Cache Server';
                     btnClear.disabled = false;

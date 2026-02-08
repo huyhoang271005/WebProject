@@ -105,7 +105,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 async function loadOrders(append = false) {
     try {
         let apiUrl = `/orders?page=${currentPage}&size=${pageSize}`;
-        
+
         const response = await callAPI(apiUrl, 'GET');
 
         if (response.success && response.data) {
@@ -124,7 +124,7 @@ async function loadOrders(append = false) {
                     orderStatus: STATUS_MAP[o.orderStatus] || o.orderStatus
                 }));
             }
-            
+
             applyStatusFilter();
             renderOrders();
         } else {
@@ -162,11 +162,11 @@ function applyStatusFilter() {
     }
 
     if (currentStatus === 'WAITING') {
-        filteredOrders = allOrders.filter(order => 
+        filteredOrders = allOrders.filter(order =>
             order.orderStatus === 'WAITING' || order.orderStatus === 'PAYING'
         );
     } else {
-        filteredOrders = allOrders.filter(order => 
+        filteredOrders = allOrders.filter(order =>
             order.orderStatus === currentStatus
         );
     }
@@ -207,20 +207,20 @@ function applySearchFilter(searchTerm) {
     }
 
     const term = searchTerm.toLowerCase();
-    
+
     let statusFiltered = allOrders;
     if (currentStatus && currentStatus !== 'ALL') {
         if (currentStatus === 'WAITING') {
-            statusFiltered = allOrders.filter(order => 
+            statusFiltered = allOrders.filter(order =>
                 order.orderStatus === 'WAITING' || order.orderStatus === 'PAYING'
             );
         } else {
-            statusFiltered = allOrders.filter(order => 
+            statusFiltered = allOrders.filter(order =>
                 order.orderStatus === currentStatus
             );
         }
     }
-    
+
     filteredOrders = statusFiltered.filter(order => {
         if (order.orderId && order.orderId.toLowerCase().includes(term)) return true;
         if (order.contactName && order.contactName.toLowerCase().includes(term)) return true;
@@ -258,7 +258,7 @@ function renderOrders() {
         return `
             <div class="order-card" data-order-index="${index}">
                 <div class="order-card-header">
-                    <div class="order-id">
+                    <div class="order-id" onclick="copyToClipboard('${order.orderId}', this)" title="Click to copy" style="cursor: pointer;">
                         <i class="fas fa-hashtag"></i>
                         ${escapeHtml(displayOrderId)}
                         <span style="font-size: 12px; color: #6b7280; margin-left: 10px;">
@@ -415,7 +415,7 @@ window.payOrder = async (orderIndex) => {
     try {
         if (typeof toggleLoading === 'function') toggleLoading(true);
         const response = await callAPI(`/payment/vn-pay/${order.orderId}`, 'GET');
-        
+
         if (response.success && (response.data?.paymentUrl || response.data)) {
             window.location.href = response.data.paymentUrl || response.data;
         } else {
@@ -488,7 +488,9 @@ function showOrderDetailModal(order, orderIndex) {
             <div class="detail-info">
                 <div class="info-item">
                     <span class="info-label">Mã đơn hàng</span>
-                    <span class="info-value">${escapeHtml(displayOrderId)}</span>
+                    <span class="info-value order-id" onclick="copyToClipboard('${order.orderId}', this)" title="Click to copy" style="cursor: pointer;">
+                        ${escapeHtml(displayOrderId)} <i class="fas fa-copy" style="font-size: 12px; margin-left: 5px; color: var(--primary-green);"></i>
+                    </span>
                 </div>
                 <div class="info-item">
                     <span class="info-label">Trạng thái</span>
@@ -511,8 +513,8 @@ function showOrderDetailModal(order, orderIndex) {
                     <span class="info-label">Phương thức thanh toán</span>
                     <span class="info-value">
                         ${order.paymentMethod === 'VN_PAY'
-        ? '<i class="fas fa-credit-card"></i> VNPay'
-        : '<i class="fas fa-money-bill-wave"></i> Thanh toán khi nhận hàng (COD)'}
+            ? '<i class="fas fa-credit-card"></i> VNPay'
+            : '<i class="fas fa-money-bill-wave"></i> Thanh toán khi nhận hàng (COD)'}
                     </span>
                 </div>
             </div>
@@ -592,15 +594,15 @@ function showOrderDetailModal(order, orderIndex) {
                 </button>
             `;
         }
-        
-         if (canConfirm) {
+
+        if (canConfirm) {
             actionContainer.innerHTML += `
                 <button class="btn-action btn-confirm" onclick="confirmOrderReceived('${order.orderId}')" style="background-color: #10b981; color: white; border: none; padding: 12px 24px; border-radius: 4px; cursor: pointer; font-weight: 600; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
                     <i class="fas fa-check"></i> ĐÃ NHẬN HÀNG
                 </button>
             `;
         }
-        
+
         if (canFeedback) {
             actionContainer.innerHTML += `
                 <button class="btn-action btn-feedback" onclick="giveFeedback('${order.orderId}')" style="padding: 12px 24px; border-radius: 4px; cursor: pointer; font-weight: 600; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
@@ -608,7 +610,7 @@ function showOrderDetailModal(order, orderIndex) {
                 </button>
             `;
         }
-        
+
 
     }
 
@@ -738,11 +740,11 @@ function updatePagination() {
     // Update buttons
     prevBtn.disabled = currentPage <= 0;
     nextBtn.disabled = currentPage >= totalPages - 1;
-    
+
     // Visual styling for disabled buttons
     prevBtn.style.opacity = prevBtn.disabled ? '0.5' : '1';
     prevBtn.style.cursor = prevBtn.disabled ? 'not-allowed' : 'pointer';
-    
+
     nextBtn.style.opacity = nextBtn.disabled ? '0.5' : '1';
     nextBtn.style.cursor = nextBtn.disabled ? 'not-allowed' : 'pointer';
 }
@@ -752,19 +754,19 @@ function updatePagination() {
  */
 window.changePage = async (delta) => {
     const newPage = currentPage + delta;
-    
+
     if (newPage < 0 || (newPage >= totalPages && delta > 0)) return;
 
     currentPage = newPage;
-    
+
     // Show loading overlay
     if (typeof toggleLoading === 'function') toggleLoading(true);
-    
+
     await loadOrders(false); // Enable strict page loading
-    
+
     // Scroll to top
     window.scrollTo({ top: 0, behavior: 'smooth' });
-    
+
     if (typeof toggleLoading === 'function') toggleLoading(false);
 };
 

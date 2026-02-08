@@ -110,9 +110,9 @@ function setupEvents() {
 
     // Cancel
     btnCancel.onclick = () => {
-        if (confirm("Hủy bỏ và quay lại?")) {
+        showDialog("question", "Hủy bỏ và quay lại?", () => {
             window.location.href = "/products-manager/index.html";
-        }
+        });
     };
 
     // Main image upload
@@ -256,18 +256,18 @@ function loadVariants(productDTO) {
         `;
 
         tr.innerHTML = `
-            <td>${imageHTML}</td>
-            <td>${variantName}</td>
-            <td><input type="number" class="pm-input" value="${variant.originalPrice || 0}" data-field="originalPrice" style="width: 110px; padding: 6px;"></td>
-            <td><input type="number" class="pm-input" value="${variant.price || 0}" data-field="price" style="width: 110px; padding: 6px;"></td>
-            <td><input type="number" class="pm-input" value="${variant.stock || 0}" data-field="stock" style="width: 90px; padding: 6px;"></td>
-            <td>${variant.sold || 0}</td>
-            <td style="display: flex; gap: 4px;">
-                <button type="button" class="pm-btn pm-btn-primary" style="padding: 6px 10px; font-size: 13px;" onclick="saveVariant('${variant.variantId}')">
-                    <i class="fa-solid fa-save"></i> Lưu
+            <td data-label="Ảnh">${imageHTML}</td>
+            <td data-label="Tên biến thể">${variantName}</td>
+            <td data-label="Giá gốc"><input type="number" class="pm-input" value="${variant.originalPrice || 0}" data-field="originalPrice" style="padding: 6px;"></td>
+            <td data-label="Giá bán"><input type="number" class="pm-input" value="${variant.price || 0}" data-field="price" style="padding: 6px;"></td>
+            <td data-label="Kho"><input type="number" class="pm-input" value="${variant.stock || 0}" data-field="stock" style="padding: 6px;"></td>
+            <td data-label="Đã bán">${variant.sold || 0}</td>
+            <td data-label="Thao tác" style="display: flex; gap: 4px;">
+                <button type="button" class="pm-btn pm-btn-primary" style="padding: 8px; width: 36px; justification-content: center;" onclick="saveVariant('${variant.variantId}')" title="Lưu">
+                    <i class="fa-solid fa-save"></i>
                 </button>
-                <button type="button" class="pm-btn" style="padding: 6px 10px; font-size: 13px; background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: white;" onclick="deleteVariantHandler('${variant.variantId}')">
-                    <i class="fa-solid fa-trash"></i> Xóa
+                <button type="button" class="pm-btn" style="padding: 8px; width: 36px; justification-content: center; background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: white;" onclick="deleteVariantHandler('${variant.variantId}')" title="Xóa">
+                    <i class="fa-solid fa-trash"></i>
                 </button>
             </td>
         `;
@@ -388,57 +388,50 @@ window.saveVariant = async function (variantId) {
 
 // Delete variant (global function for onclick)
 window.deleteVariantHandler = async function (variantId) {
-    const confirmed = confirm(
-        "⚠️ XÓA BIẾN THỂ SẢN PHẨM\n\n" +
-        "Bạn có chắc chắn muốn xóa biến thể này?\n" +
-        "Hành động này không thể hoàn tác.\n\n" +
-        "LƯU Ý: Không thể xóa biến thể có trong đơn hàng."
-    );
+    showDialog("question", "⚠️ XÓA BIẾN THỂ SẢN PHẨM\n\nBạn có chắc chắn muốn xóa biến thể này?\nHành động này không thể hoàn tác.\n\nLƯU Ý: Không thể xóa biến thể có trong đơn hàng.", async () => {
+        try {
+            const res = await deleteVariant(variantId);
 
-    if (!confirmed) return;
+            if (res.success) {
+                showDialog("success", "Xóa biến thể thành công!");
 
-    try {
-        const res = await deleteVariant(variantId);
-
-        if (res.success) {
-            showDialog("success", "Xóa biến thể thành công!");
-
-            // Reload product data to refresh variants
-            if (currentProductId) {
-                const productRes = await getProduct(currentProductId);
-                if (productRes.success && productRes.data) {
-                    loadProductData(productRes.data);
-                    console.log("Product data reloaded after variant deletion");
+                // Reload product data to refresh variants
+                if (currentProductId) {
+                    const productRes = await getProduct(currentProductId);
+                    if (productRes.success && productRes.data) {
+                        loadProductData(productRes.data);
+                        console.log("Product data reloaded after variant deletion");
+                    }
                 }
-            }
-        } else {
-            // User-friendly error message
-            let errorMsg = "Không thể xóa biến thể này";
+            } else {
+                // User-friendly error message
+                let errorMsg = "Không thể xóa biến thể này";
 
-            // Check if it's a foreign key constraint error (variant in orders)
-            if (res.message && (
-                res.message.toLowerCase().includes("reference") ||
-                res.message.toLowerCase().includes("constraint") ||
-                res.message.toLowerCase().includes("foreign key") ||
-                res.message.toLowerCase().includes("order") ||
-                res.message.toLowerCase().includes("conflicted")
-            )) {
-                errorMsg = "❌ Không thể xóa biến thể\n\nBiến thể này đang có trong đơn hàng của khách, không thể xóa để đảm bảo tính toàn vẹn dữ liệu.";
-            } else if (res.message && res.message.toLowerCase().includes("xoá")) {
-                errorMsg = "❌ Không thể xóa biến thể\n\nBiến thể này đang có trong đơn hàng của khách.";
-            } else if (res.data && Array.isArray(res.data) && res.data[0]?.error) {
-                errorMsg += ": " + res.data[0].error;
-            } else if (res.message) {
-                errorMsg += ": " + res.message;
-            }
+                // Check if it's a foreign key constraint error (variant in orders)
+                if (res.message && (
+                    res.message.toLowerCase().includes("reference") ||
+                    res.message.toLowerCase().includes("constraint") ||
+                    res.message.toLowerCase().includes("foreign key") ||
+                    res.message.toLowerCase().includes("order") ||
+                    res.message.toLowerCase().includes("conflicted")
+                )) {
+                    errorMsg = "❌ Không thể xóa biến thể\n\nBiến thể này đang có trong đơn hàng của khách, không thể xóa để đảm bảo tính toàn vẹn dữ liệu.";
+                } else if (res.message && res.message.toLowerCase().includes("xoá")) {
+                    errorMsg = "❌ Không thể xóa biến thể\n\nBiến thể này đang có trong đơn hàng của khách.";
+                } else if (res.data && Array.isArray(res.data) && res.data[0]?.error) {
+                    errorMsg += ": " + res.data[0].error;
+                } else if (res.message) {
+                    errorMsg += ": " + res.message;
+                }
 
-            showDialog("error", errorMsg);
-            console.error("Delete variant failed:", res);
+                showDialog("error", errorMsg);
+                console.error("Delete variant failed:", res);
+            }
+        } catch (e) {
+            console.error("Delete variant error:", e);
+            showDialog("error", "Lỗi kết nối server. Vui lòng thử lại sau.");
         }
-    } catch (e) {
-        console.error("Delete variant error:", e);
-        showDialog("error", "Lỗi kết nối server. Vui lòng thử lại sau.");
-    }
+    });
 };
 
 // Add delete button
@@ -464,51 +457,43 @@ function addDeleteButton() {
             return;
         }
 
-        const confirmed = confirm(
-            "⚠️ XÓA TOÀN BỘ SẢN PHẨM\n\n" +
-            "Bạn có chắc chắn muốn xóa sản phẩm này?\n" +
-            "- Tất cả variants sẽ bị xóa\n" +
-            "- Hành động này không thể hoàn tác\n\n" +
-            "LƯU Ý: Không thể xóa sản phẩm đã có đơn hàng."
-        );
+        showDialog("question", "⚠️ XÓA TOÀN BỘ SẢN PHẨM\n\nBạn có chắc chắn muốn xóa sản phẩm này?\n- Tất cả variants sẽ bị xóa\n- Hành động này không thể hoàn tác\n\nLƯU Ý: Không thể xóa sản phẩm đã có đơn hàng.", async () => {
+            try {
+                const res = await deleteProduct(currentProductId);
 
-        if (!confirmed) return;
+                if (res.success) {
+                    showDialog("success", "Xóa sản phẩm thành công!");
+                    setTimeout(() => {
+                        window.location.href = "/products-manager/edit.html";
+                    }, 1500);
+                } else {
+                    // User-friendly error message
+                    let errorMsg = "Không thể xóa sản phẩm này";
 
-        try {
-            const res = await deleteProduct(currentProductId);
+                    // Check for foreign key constraint error (product has orders)
+                    if (res.message && (
+                        res.message.toLowerCase().includes("reference") ||
+                        res.message.toLowerCase().includes("constraint") ||
+                        res.message.toLowerCase().includes("foreign key") ||
+                        res.message.toLowerCase().includes("order") ||
+                        res.message.toLowerCase().includes("delete") ||
+                        res.message.toLowerCase().includes("conflicted")
+                    )) {
+                        errorMsg = "❌ Không thể xóa sản phẩm đã có đơn hàng\n\n" +
+                            "Sản phẩm này đã được bán, không thể xóa để đảm bảo tính toàn vẹn dữ liệu đơn hàng.\n\n" +
+                            "Gợi ý: Bạn có thể set stock = 0 để ẩn sản phẩm khỏi danh sách bán hàng.";
+                    } else if (res.message) {
+                        errorMsg += ": " + res.message;
+                    }
 
-            if (res.success) {
-                showDialog("success", "Xóa sản phẩm thành công!");
-                setTimeout(() => {
-                    window.location.href = "/products-manager/edit.html";
-                }, 1500);
-            } else {
-                // User-friendly error message
-                let errorMsg = "Không thể xóa sản phẩm này";
-
-                // Check for foreign key constraint error (product has orders)
-                if (res.message && (
-                    res.message.toLowerCase().includes("reference") ||
-                    res.message.toLowerCase().includes("constraint") ||
-                    res.message.toLowerCase().includes("foreign key") ||
-                    res.message.toLowerCase().includes("order") ||
-                    res.message.toLowerCase().includes("delete") ||
-                    res.message.toLowerCase().includes("conflicted")
-                )) {
-                    errorMsg = "❌ Không thể xóa sản phẩm đã có đơn hàng\n\n" +
-                        "Sản phẩm này đã được bán, không thể xóa để đảm bảo tính toàn vẹn dữ liệu đơn hàng.\n\n" +
-                        "Gợi ý: Bạn có thể set stock = 0 để ẩn sản phẩm khỏi danh sách bán hàng.";
-                } else if (res.message) {
-                    errorMsg += ": " + res.message;
+                    showDialog("error", errorMsg);
+                    console.error("Delete product failed:", res);
                 }
-
-                showDialog("error", errorMsg);
-                console.error("Delete product failed:", res);
+            } catch (e) {
+                console.error("Delete product error:", e);
+                showDialog("error", "Lỗi kết nối server. Vui lòng thử lại sau.");
             }
-        } catch (e) {
-            console.error("Delete product error:", e);
-            showDialog("error", "Lỗi kết nối server. Vui lòng thử lại sau.");
-        }
+        });
     };
 
     headerActions.insertBefore(deleteBtn, headerActions.firstChild);
@@ -550,9 +535,8 @@ async function updateProductHandler() {
 
         if (res.success) {
             showDialog("success", "Cập nhật sản phẩm thành công!");
-            setTimeout(() => window.location.reload(), 1500);
         } else {
-            showDialog("error", res.message || "Lỗi khi cập nhật sản phẩm");
+            showDialog("error", res.message);
         }
     } catch (e) {
         console.error("Update error:", e);
@@ -569,7 +553,7 @@ async function deleteProductHandler(productId) {
             showDialog("success", "Xóa sản phẩm thành công!");
             setTimeout(() => window.location.href = "/products-manager/index.html", 1500);
         } else {
-            showDialog("error", res.message || "Lỗi khi xóa sản phẩm");
+            showDialog("error", res.message);
         }
     } catch (e) {
         console.error("Delete error:", e);

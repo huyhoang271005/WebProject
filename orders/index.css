@@ -622,6 +622,7 @@ body {
     border-radius: 50%;
     cursor: pointer;
     transition: all 0.3s ease;
+    padding: 0;
 }
 
 .modal-close:hover {
@@ -674,7 +675,7 @@ body {
 /* ===== NOTIFICATION ===== */
 .notification {
     position: fixed;
-    top: 20px;
+    top: 65px;
     right: 20px;
     padding: 16px 24px;
     background: white;
@@ -841,5 +842,58 @@ body {
 
     .detail-info {
         grid-template-columns: 1fr;
+    }
+}
+
+/* Copied animation */
+.order-id {
+    cursor: pointer;
+    transition: color 0.3s;
+}
+
+.order-id:hover {
+    color: var(--primary-green);
+}
+
+.order-id.copied {
+    color: var(--primary-green) !important;
+    position: relative;
+}
+
+.order-id.copied::after {
+    content: "Đã copy";
+    position: absolute;
+    top: -25px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #333;
+    color: white;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    white-space: nowrap;
+    animation: fadeInOut 1s ease forwards;
+    pointer-events: none;
+}
+
+@keyframes fadeInOut {
+    0% {
+        opacity: 0;
+        transform: translate(-50%, 5px);
+    }
+
+    20% {
+        opacity: 1;
+        transform: translate(-50%, 0);
+    }
+
+    80% {
+        opacity: 1;
+        transform: translate(-50%, 0);
+    }
+
+    100% {
+        opacity: 0;
+        transform: translate(-50%, -5px);
     }
 }

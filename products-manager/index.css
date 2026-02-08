@@ -12,6 +12,10 @@ body {
     min-height: 100vh;
 }
 
+input {
+    min-width: auto;
+}
+
 
 /* Container */
 .pm-container {
@@ -134,7 +138,27 @@ body {
 
 .pm-sidebar {
     position: sticky;
-    top: 24px;
+    top: 100px;
+    height: fit-content;
+    max-height: calc(100vh - 120px);
+    overflow-y: auto;
+    scrollbar-width: thin;
+    padding-right: 4px;
+    /* Space for scrollbar */
+}
+
+/* Custom Scrollbar for Webkit */
+.pm-sidebar::-webkit-scrollbar {
+    width: 6px;
+}
+
+.pm-sidebar::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.pm-sidebar::-webkit-scrollbar-thumb {
+    background-color: #d1d5db;
+    border-radius: 20px;
 }
 
 /* Cards */
@@ -152,10 +176,7 @@ body {
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
 }
 
-.pm-card-sticky {
-    position: sticky;
-    top: 24px;
-}
+
 
 .pm-card-header {
     padding: 20px 24px;
@@ -457,10 +478,13 @@ body {
     border: 2px solid #e5e7eb;
     border-radius: 12px;
     overflow: hidden;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
 }
 
 .pm-table {
-    width: 100%;
+    min-width: 0;
+    /* Ensure table doesn't get squashed */
     border-collapse: collapse;
     font-size: 14px;
 }
@@ -481,9 +505,15 @@ body {
 }
 
 .pm-table td {
-    padding: 14px 16px;
+    padding: 8px 8px;
+    /* Compact padding */
     border-bottom: 1px solid #f3f4f6;
     vertical-align: middle;
+}
+
+.pm-table .pm-input {
+    max-width: 100px;
+    /* Force small inputs */
 }
 
 .pm-table tbody tr {
@@ -576,6 +606,7 @@ body {
     .pm-header {
         padding: 24px;
         margin-bottom: 24px;
+        margin-top: 30px;
     }
 
     .pm-header-content {
@@ -602,6 +633,111 @@ body {
 
     .pm-card-body {
         padding: 20px;
+    }
+
+    /* Stacked Table for Mobile */
+    .pm-table-container {
+        border: none;
+        overflow-x: visible;
+    }
+
+    .pm-table {
+        min-width: 0;
+    }
+
+    .pm-table thead {
+        display: none;
+    }
+
+    .pm-table tr {
+        display: flex;
+        flex-direction: column;
+        background: white;
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        padding: 16px;
+        margin-bottom: 16px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    }
+
+    .pm-table td {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 8px 0;
+        border-bottom: 1px solid #f3f4f6;
+        text-align: right;
+        min-height: 40px;
+        max-width: 100%;
+        white-space: normal;
+    }
+
+    .pm-table td:last-child {
+        border-bottom: none;
+    }
+
+    .pm-table td::before {
+        content: attr(data-label);
+        font-weight: 600;
+        color: #6b7280;
+        font-size: 13px;
+        text-align: left;
+        margin-right: 12px;
+        flex-shrink: 0;
+        min-width: 100px;
+    }
+
+    /* Specific Cell Handling */
+    .pm-table td[data-label="Ảnh"] {
+        justify-content: flex-start;
+        margin-bottom: 8px;
+        border-bottom: none;
+    }
+
+    .pm-table td[data-label="Ảnh"]::before {
+        display: none;
+    }
+
+    .pm-table td[data-label="Tên biến thể"] {
+        font-weight: 700;
+        color: #1f2937;
+        font-size: 16px;
+        justify-content: flex-start;
+        padding-top: 0;
+        border-bottom: 2px solid #e5e7eb;
+        margin-bottom: 12px;
+        padding-bottom: 12px;
+    }
+
+    .pm-table td[data-label="Tên biến thể"]::before {
+        display: none;
+    }
+
+    .pm-table td[data-label="Thao tác"] {
+        justify-content: center;
+        margin-top: 8px;
+        border-top: 1px solid #f3f4f6;
+        padding-top: 16px;
+    }
+
+    .pm-table td[data-label="Thao tác"]::before {
+        display: none;
+    }
+
+    .pm-variant-input {
+        width: 100%;
+        max-width: 140px;
+        text-align: right;
+    }
+
+    .pm-variant-img {
+        width: 60px;
+        height: 60px;
+    }
+
+    .pm-variant-img-placeholder {
+        width: 60px !important;
+        height: 60px !important;
     }
 }
 
