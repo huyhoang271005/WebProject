@@ -240,7 +240,7 @@ function renderBasicInfo() {
                 if (!titleEl.querySelector('.edit-product-btn')) {
                     const editBtn = document.createElement('a');
                     editBtn.className = 'edit-product-btn';
-                    editBtn.href = `/products-manager/edit?id=${productDetail.productId}`;
+                    editBtn.href = `/products-manager/edit.html?id=${productDetail.productId}`;
                     editBtn.innerHTML = '<i class="fa-solid fa-pen-to-square"></i>';
                     editBtn.style.fontSize = '1rem';
                     editBtn.style.color = '#6b7280';

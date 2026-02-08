@@ -6,6 +6,8 @@ dialog {
   text-align: center;
   box-shadow: 0 8px 25px rgba(0, 0, 0, 0.25);
   animation: pop 0.25s ease;
+  margin: auto;
+  /* Center the dialog */
 }
 
 dialog::backdrop {
