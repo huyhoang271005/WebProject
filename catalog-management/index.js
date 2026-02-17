@@ -1,7 +1,7 @@
 import { callAPI } from "/lib/api.js";
 import { showDialog } from "/dialog/index.js";
 import { getLoader, loadPage } from "../lib/public.js";
-import {loadNavbar} from "/navbar/navbar.js";
+import { loadNavbar } from "/navbar/navbar.js";
 
 // === 1. CẤU HÌNH TRUNG TÂM ===
 let currentType = 'category';

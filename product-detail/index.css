@@ -387,7 +387,7 @@ body {
 /* --- Notification System --- */
 #notification {
     position: fixed;
-    top: 65px;
+    top: 70px;
     right: 20px;
     padding: 16px 24px;
     border-radius: 8px;

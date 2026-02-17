@@ -9,6 +9,9 @@
     <link rel="stylesheet" href="/lib/public.css" />
     <script src="https://kit.fontawesome.com/e9c281dd3f.js" crossorigin="anonymous"></script>
     <style>
+        .card {
+            width: 600px;
+        }
         .avatar-wrapper {
             display: flex;
             flex-direction: column;
@@ -25,6 +28,11 @@
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
             margin-bottom: 20px;
         }
+        @media (max-width: 768px) {
+            .card{
+                width: 300px;
+            }
+        }
     </style>
 </head>
 
@@ -39,24 +47,26 @@
             <input type="file" id="avatar" accept="image/*" style="display: none;">
         </div>
 
-        <input type="text" id="username" placeholder="Biệt danh" />
-        <input type="text" id="fullName" placeholder="Họ và tên" />
-        <input type="date" id="birthday" placeholder="Ngày sinh" />
+        <form id = "registerForm">
+            <input type="text" id="username" placeholder="Biệt danh" />
+            <input type="text" id="fullName" placeholder="Họ và tên" />
+            <input type="date" id="birthday" placeholder="Ngày sinh" />
 
-        <select id="gender">
-            <option value="MALE">Nam</option>
-            <option value="FEMALE">Nữ</option>
-            <option value="OTHER">Khác</option>
-        </select>
+            <select id="gender">
+                <option value="MALE">Nam</option>
+                <option value="FEMALE">Nữ</option>
+                <option value="OTHER">Khác</option>
+            </select>
 
-        <input type="email" id="email" placeholder="Email" />
-        <div class="password-layout">
-            <input type="password" id="password" class="password" placeholder="Mật khẩu" />
-        </div>
+            <input type="email" id="email" placeholder="Email" />
+            <div class="password-layout">
+                <input type="password" id="password" class="password" placeholder="Mật khẩu" />
+            </div>
 
 
-        <button id="registerBtn">Đăng ký</button>
-        <div class="status" id="status"></div>
+            <button type = "submit" id="registerBtn">Đăng ký</button>
+            <div class="status" id="status"></div>
+        </form>
         <div style="margin-top: 15px; font-size: 0.9rem; text-align: center;">
             <a href="/auth/login" id="register" style="color: #10b981; text-decoration: none;">Đăng nhập</a>
         </div>

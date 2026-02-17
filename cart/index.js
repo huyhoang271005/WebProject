@@ -369,7 +369,6 @@ window.confirmVariationChange = async (cartItemId, pIdx) => {
 
                 closeAllPopups();
                 render(); // Full re-render to reflect removal
-                await showDialog("success", "Đã gộp thành công!");
             } else {
                 await showDialog("error", resUpd.message);
             }

@@ -1,6 +1,7 @@
 import { callAPI } from "../lib/api.js";
 import { loadNavbar } from "../navbar/navbar.js";
 import { loadPage } from "../lib/public.js";
+import {showDialog} from "/dialog/index.js";
 
 const PHONE_PATTERN = /^(0[3|5|7|8|9])+([0-9]{8})$/;
 const MIN_NAME_LENGTH = 2;
@@ -217,23 +218,23 @@ async function updateAddress(id, data) {
 }
 
 async function deleteAddress(id) {
-    if (!confirm("Bạn có chắc chắn muốn xóa địa chỉ này?")) return;
+    await showDialog("question", "Bạn có muốn xoá địa chỉ này?", async ()=> {
+        const result = await callAPI(`/contacts/${id}`, "DELETE");
 
-    const result = await callAPI(`/contacts/${id}`, "DELETE");
+        if (result.success) {
+            showNotification("Xóa địa chỉ thành công!");
 
-    if (result.success) {
-        showNotification("Xóa địa chỉ thành công!");
+            // If deleting the address being edited, reset form
+            if (contactIdInput.value === id) {
+                resetForm();
+            }
 
-        // If deleting the address being edited, reset form
-        if (contactIdInput.value === id) {
-            resetForm();
+            currentAddresses = currentAddresses.filter(addr => addr.contactId !== id);
+            renderAddressList();
+        } else {
+            showNotification(`Lỗi xóa: ${result.message || 'Không rõ'}`, 'error');
         }
-
-        currentAddresses = currentAddresses.filter(addr => addr.contactId !== id);
-        renderAddressList();
-    } else {
-        showNotification(`Lỗi xóa: ${result.message || 'Không rõ'}`, 'error');
-    }
+    });
 }
 
 function editAddress(id) {

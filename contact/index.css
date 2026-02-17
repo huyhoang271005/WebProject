@@ -421,7 +421,7 @@ button.loading {
 /* Notification Toast */
 #notification {
     position: fixed;
-    top: 24px;
+    top: 70px;
     right: 24px;
     padding: 16px 24px;
     border-radius: 12px;
