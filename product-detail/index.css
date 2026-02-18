@@ -622,6 +622,17 @@ body {
         gap: 25px;
     }
 
+    /* Fix Image Overflow */
+    .gallery-section {
+        width: 100%;
+        min-width: 0;
+    }
+
+    .main-image-box {
+        max-width: 100% !important;
+        margin: 0 auto;
+    }
+
     .product-card {
         padding: 20px;
         border-radius: 8px;
