@@ -170,7 +170,7 @@
 
       .hero {
         height: 280px;
-        margin: 180px 10px 20px 10px;
+        margin: 160px 10px 20px 10px;
       }
 
       .hero h1 {
@@ -392,6 +392,64 @@
         font-size: 1.5rem;
         bottom: 20px;
         right: 20px;
+      }
+    }
+
+    /* Navbar Responsive Fixes */
+    .home-search-box {
+      position: relative;
+      width: 100%;
+      max-width: 450px;
+      margin-left: 10px;
+    }
+
+    #brandBtn {
+      margin-left: 10px;
+    }
+
+    #homeSearchBtn {
+      position: absolute;
+      right: 15px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #10B981;
+      cursor: pointer;
+      padding: 5px;
+    }
+
+    @media (max-width: 992px) {
+
+      /* Force wrap for navbar center slot */
+      body #nbCenterSlot {
+        flex-wrap: nowrap !important;
+        justify-content: flex-start !important;
+        gap: 5px !important;
+      }
+
+      .nav-cat-btn {
+        flex: 0 0 auto;
+        justify-content: center;
+        white-space: nowrap;
+        padding: 8px 10px;
+        /* Compress padding */
+      }
+
+      .nav-cat-btn span {
+        display: none;
+        /* Hide text */
+      }
+
+      #brandBtn {
+        margin-left: 0;
+      }
+
+      .home-search-box {
+        margin-left: 0;
+        flex: 1;
+        /* Take remaining space */
+        max-width: none;
+        order: unset;
+        /* Remove order change */
       }
     }
   </style>

@@ -105,10 +105,10 @@ const navbarHTML = `
         @keyframes nbSlideIn { from { transform: translateY(100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 
         @media (max-width: 992px) {
-            .navbar-component { padding: 10px 15px; height: auto; flex-wrap: wrap; gap: 10px; background: rgba(255,255,255,0.98); backdrop-filter: blur(10px); }
-            .nb-brand { order: 1; font-size: 1.5rem; flex: 1; }
-            .nb-right-wrapper { order: 2; gap: 2px; }
-            #nbCenterSlot { order: 3; width: 100%; margin: 0; padding: 0; max-width: none; }
+            .navbar-component { padding: 10px 15px; height: auto; flex-wrap: wrap; gap: 10px; background: rgba(255,255,255,0.98); backdrop-filter: blur(10px); justify-content: space-between; }
+            .nb-brand { order: 1; font-size: 1.5rem; flex: 0 1 auto; }
+            .nb-right-wrapper { order: 3; gap: 5px; margin-left: auto; }
+            #nbCenterSlot { order: 2; width: 100%; margin: 0; padding: 0; max-width: none; }
             .nb-dropdown { height: 400px }
             .nb-noti-dropdown { position: fixed; top: 60px; left: 50%; transform: translateX(-50%); width: 95vw; height: 70vh; max-width: 400px; right: auto; border-radius: 12px; box-shadow: 0 0 0 100vh rgba(0,0,0,0.5); }
         }

@@ -3,7 +3,6 @@ import { callAPI } from "/lib/api.js";
 import { toggleLoading } from "/lib/loader.js";
 import { showDialog } from "/dialog/index.js";
 
-// Biến toàn cục lưu danh sách danh mục
 // Biến toàn cục lưu danh sách danh mục và thương hiệu
 let apiCategories = [];
 let apiBrands = [];
@@ -18,14 +17,13 @@ document.addEventListener("DOMContentLoaded", async () => {
             <i class="fa-solid fa-bars"></i> <span>Danh mục</span>
             <div class="cat-dropdown" id="catDropdown"></div>
         </div>
-        <div class="nav-cat-btn" id="brandBtn" style="margin-left: 10px;">
+        <div class="nav-cat-btn" id="brandBtn">
             <i class="fa-solid fa-tag"></i> <span>Thương hiệu</span>
             <div class="cat-dropdown" id="brandDropdown"></div>
         </div>
-        <div style="position:relative; width:100%; max-width:450px; margin-left:10px;">
+        <div class="home-search-box">
             <input type="text" class="nav-search-input" id="homeSearch" placeholder="Tìm sản phẩm ...">
-            <i class="fa-solid fa-magnifying-glass" id="homeSearchBtn" 
-               style="position:absolute; right:15px; top:50%; transform:translateY(-50%); color:#10B981; cursor:pointer; padding:5px;"></i>
+            <i class="fa-solid fa-magnifying-glass" id="homeSearchBtn"></i>
         </div>`,
   });
 
@@ -40,14 +38,10 @@ document.addEventListener("DOMContentLoaded", async () => {
   renderNavCategories();
   renderNavBrands();
   setupNavbarEvents();
-  setupNavbarEvents();
   setTimeout(() => toggleLoading(false), 300);
 
 });
 
-/**
- * Gọi API lấy danh sách danh mục sản phẩm
- */
 /**
  * Gọi API lấy danh sách thương hiệu
  */
