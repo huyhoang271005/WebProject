@@ -1,8 +1,8 @@
 // register.js
-import { showDialog } from "../../dialog/index.js";
-import { callAPI } from "../../lib/api.js";
-import { getEye, getLoader, noImage } from "../../lib/public.js";
-import { connectSse, subscribeTopic } from "../../lib/sse.js";
+import { showDialog } from "/dialog/index.js";
+import { callAPI } from "/lib/api.js";
+import { getEye, getLoader, noImage } from "/lib/public.js";
+import { connectSse, subscribeTopic } from "/lib/sse.js";
 const usernameInput = document.getElementById('username');
 const fullNameInput = document.getElementById('fullName');
 const birthdayInput = document.getElementById('birthday');
@@ -63,13 +63,13 @@ registerForm.addEventListener('submit', async (e) => {
     else {
         const sendEmail = await callAPI('/auth/send-verify-email', 'POST', { email });
         if (sendEmail.success) {
-            await connectSse("/sse?sessionId=" + sendEmail.data.sessionId);
+            await connectSse("/sse?sessionId=" + result.data.sessionId);
             subscribeTopic("verified", async (data) => {
                 if (data === true) {
-                    sessionStorage.setItem("infoLogin", {
+                    sessionStorage.setItem("infoLogin", JSON.stringify({
                         email: email,
                         password: password
-                    });
+                    }));
                     window.location.replace("/auth/login/?register=true");
                 }
             });

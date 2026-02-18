@@ -9,6 +9,8 @@
   <link rel="stylesheet" href="/lib/public.css" />
   <link rel="stylesheet" href="../dialog/index.css" />
   <script src="https://kit.fontawesome.com/e9c281dd3f.js" crossorigin="anonymous"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/glightbox/dist/css/glightbox.min.css" />
+  <script src="https://cdn.jsdelivr.net/npm/glightbox/dist/js/glightbox.min.js"></script>
   <style>
     /* Override public.css min-width conflict */
     input,
@@ -103,6 +105,11 @@
       border: 4px solid #fff;
       box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
       margin-bottom: 20px;
+      transition: 0.3s;
+    }
+
+    .avatar-img:hover {
+      transform: scale(1.02);
     }
 
     .action-buttons {
@@ -355,7 +362,9 @@
       <div class="card-body">
         <div class="detail-grid">
           <div class="left-col">
-            <img id="avatarPreview" src="" class="avatar-img" />
+            <a class="gallery" id="viewAvatar">
+              <img id="avatarPreview" src="" class="avatar-img" />
+            </a>
             <div class="action-buttons">
               <button id="btnSendMessage" class="btn-action btn-primary">
                 <i class="fa-solid fa-paper-plane"></i> Nhắn tin

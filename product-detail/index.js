@@ -15,6 +15,8 @@ let productDetail = null;
 let variants = [];
 let selectedAttributes = {};
 let currentVariant = null;
+let lightbox = null;
+let galleryImages = [];
 
 function showNotification(message, type = 'success') {
     const noti = document.getElementById('notification');
@@ -62,6 +64,18 @@ async function getProductDetail(id) {
 
             renderBasicInfo();
             renderAttributes(res.data.attributeDTOList);
+
+            // Extract all unique images
+            const allImages = [productDetail.imageUrl];
+            if (variants && variants.length > 0) {
+                variants.forEach(v => {
+                    if (v.imageUrl && !allImages.includes(v.imageUrl)) {
+                        allImages.push(v.imageUrl);
+                    }
+                });
+            }
+            renderGallery(allImages);
+
             setupEventListeners();
 
             if (variants.length > 0) {
@@ -178,7 +192,9 @@ function renderFeedbackItem(item, isAdmin) {
 // Function to reply to feedback - Admin only
 window.submitReply = async function (feedbackId) {
     const input = document.getElementById(`input-${feedbackId}`);
-    const content = input.value.trim();
+    const content = {
+        message: input.value.trim()
+    };
 
     if (!content) {
         showNotification("Vui lòng nhập nội dung!", "warning");
@@ -314,6 +330,67 @@ function renderAttributes(attributeList) {
     });
 }
 
+// --- Gallery Functions ---
+function renderGallery(images) {
+    galleryImages = images;
+    const container = document.getElementById('imageGallery');
+
+    // Initialize lightbox
+    if (lightbox) {
+        lightbox.destroy();
+    }
+
+    lightbox = GLightbox({
+        elements: images.map(img => ({
+            'href': img,
+            'type': 'image'
+        })),
+        selector: '.gallery',
+        touchNavigation: true,
+        draggable: true,
+        loop: false,
+        zoomable: true
+    });
+
+    // Attach click event to main image to open lightbox
+    const mainImgBox = document.querySelector('.main-image-box');
+    // Remove existing listener if any (to avoid duplicates on re-render)
+    const newMainImgBox = mainImgBox.cloneNode(true);
+    mainImgBox.parentNode.replaceChild(newMainImgBox, mainImgBox);
+
+    newMainImgBox.addEventListener('click', () => {
+        const currentSrc = document.getElementById('mainImage').getAttribute('src');
+        const index = galleryImages.indexOf(currentSrc);
+        if (index !== -1) {
+            lightbox.openAt(index);
+        } else {
+            lightbox.open();
+        }
+    });
+
+    if (!images || images.length === 0) {
+        container.style.display = 'none';
+        return;
+    }
+
+    container.innerHTML = images.map((img, index) => `
+        <div class="gallery-item ${index === 0 ? 'active' : ''}" onclick="selectGalleryImage(this, '${img}')">
+            <img src="${img}" onerror="this.src='${noImage}'">
+            <div class="gallery-overlay"></div>
+        </div>
+    `).join('');
+}
+
+window.selectGalleryImage = function (element, src) {
+    // Update main image
+    const mainImg = document.getElementById('mainImage');
+    mainImg.src = src;
+
+    // Update active class
+    document.querySelectorAll('.gallery-item').forEach(item => item.classList.remove('active'));
+    element.classList.add('active');
+}
+
 function handleAttributeSelect(attrId, valId, btnElement, attrName) {
     const siblings = btnElement.parentElement.children;
     for (let sib of siblings) {
@@ -369,6 +446,18 @@ function updateUIForVariant(variant) {
         imgEl.onerror = () => {
             imgEl.src = noImage;
         };
+
+        // Highlight corresponding thumbnail
+        const galleryItems = document.querySelectorAll('.gallery-item img');
+        galleryItems.forEach(img => {
+            if (img.getAttribute('src') === variant.imageUrl) {
+                // Remove active from all
+                document.querySelectorAll('.gallery-item').forEach(item => item.classList.remove('active'));
+                // Add active to parent div
+                img.parentElement.classList.add('active');
+            }
+        });
+
     } else {
         // Fallback to noImage as requested
         imgEl.src = noImage;

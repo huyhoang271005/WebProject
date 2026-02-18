@@ -10,8 +10,16 @@ import { initEmailList } from "./email-list.js";
 import { loadNavbar } from "../navbar/navbar.js";
 import { toggleLoading } from "../lib/loader.js";
 
+let lightbox;
 // Khởi chạy trang
 document.addEventListener("DOMContentLoaded", async () => {
+  lightbox = GLightbox({
+    selector: '.gallery',
+    touchNavigation: true,
+    draggable: true,
+    loop: false,
+    zoomable: true
+  });
   toggleLoading(true);
   try {
     await loadNavbar();
@@ -28,6 +36,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       return;
     }
     await render(user.data);
+    lightbox.reload();
   } catch (e) {
     console.error(e);
   } finally {
@@ -37,9 +46,8 @@ document.addEventListener("DOMContentLoaded", async () => {
 
 async function render(user) {
   // Fill Info
-  document.getElementById("avatarPreview").src = user.imageUrl
-    ? user.imageUrl
-    : noImage;
+  document.getElementById("avatarPreview").src = user.imageUrl || noImage;
+  document.getElementById("viewAvatar").href = user.imageUrl || noImage;
   document.getElementById("username").textContent =
     user.username || "Chưa đặt tên";
   document.getElementById("fullName").textContent = user.fullName || "---";

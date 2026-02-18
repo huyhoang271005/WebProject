@@ -20,6 +20,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   const params = new URLSearchParams(window.location.search);
   if (params.get("search")) state.productName = params.get("search");
   if (params.get("cat")) state.categoryId = params.get("cat");
+  if (params.get("brand")) state.brandId = params.get("brand");
 
   try {
     await loadNavbar({

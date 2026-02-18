@@ -1,10 +1,12 @@
 import { loadNavbar } from "/navbar/navbar.js";
 import { callAPI } from "/lib/api.js";
 import { toggleLoading } from "/lib/loader.js";
-import {showDialog} from "/dialog/index.js";
+import { showDialog } from "/dialog/index.js";
 
 // Biến toàn cục lưu danh sách danh mục
+// Biến toàn cục lưu danh sách danh mục và thương hiệu
 let apiCategories = [];
+let apiBrands = [];
 
 // Hàm chạy khi trang load
 document.addEventListener("DOMContentLoaded", async () => {
@@ -16,7 +18,11 @@ document.addEventListener("DOMContentLoaded", async () => {
             <i class="fa-solid fa-bars"></i> <span>Danh mục</span>
             <div class="cat-dropdown" id="catDropdown"></div>
         </div>
-        <div style="position:relative; width:100%; max-width:450px;">
+        <div class="nav-cat-btn" id="brandBtn" style="margin-left: 10px;">
+            <i class="fa-solid fa-tag"></i> <span>Thương hiệu</span>
+            <div class="cat-dropdown" id="brandDropdown"></div>
+        </div>
+        <div style="position:relative; width:100%; max-width:450px; margin-left:10px;">
             <input type="text" class="nav-search-input" id="homeSearch" placeholder="Tìm sản phẩm ...">
             <i class="fa-solid fa-magnifying-glass" id="homeSearchBtn" 
                style="position:absolute; right:15px; top:50%; transform:translateY(-50%); color:#10B981; cursor:pointer; padding:5px;"></i>
@@ -26,15 +32,35 @@ document.addEventListener("DOMContentLoaded", async () => {
   // 2. Lấy dữ liệu theo thứ tự
 
   await fetchCategories(); // Lấy danh mục trước
+  await fetchBrands(); // Lấy thương hiệu
 
   await renderHomeSections(); // Sau đó mới lấy sản phẩm gợi ý
 
   // 3. Render dữ liệu lên màn hình và gán sự kiện
   renderNavCategories();
+  renderNavBrands();
+  setupNavbarEvents();
   setupNavbarEvents();
   setTimeout(() => toggleLoading(false), 300);
 
 });
+
+/**
+ * Gọi API lấy danh sách danh mục sản phẩm
+ */
+/**
+ * Gọi API lấy danh sách thương hiệu
+ */
+async function fetchBrands() {
+  const res = await callAPI("/brands", "GET");
+  if (res && res.success) {
+    if (Array.isArray(res.data)) apiBrands = res.data;
+    else if (res.data && Array.isArray(res.data.listData))
+      apiBrands = res.data.listData;
+  } else {
+    console.error("Lỗi lấy thương hiệu:", res.message);
+  }
+}
 
 /**
  * Gọi API lấy danh sách danh mục sản phẩm
@@ -66,10 +92,29 @@ function renderNavCategories() {
   el.innerHTML = apiCategories
     .map(
       (c) =>
-        `<a href="/products/?cat=${
-          c.categoryId || c.id
-        }"><i class="fa-solid fa-caret-right"></i> ${
-          c.categoryName || c.name
+        `<a href="/products/?cat=${c.categoryId || c.id
+        }"><i class="fa-solid fa-caret-right"></i> ${c.categoryName || c.name
+        }</a>`,
+    )
+    .join("");
+}
+
+/**
+ * Hiển thị danh sách thương hiệu lên menu dropdown
+ */
+function renderNavBrands() {
+  const el = document.getElementById("brandDropdown");
+  if (!el) return;
+  if (apiBrands.length === 0) {
+    el.innerHTML = '<div style="padding:15px; text-align:center;">Trống</div>';
+    return;
+  }
+
+  el.innerHTML = apiBrands
+    .map(
+      (b) =>
+        `<a href="/products/?brand=${b.brandId || b.id
+        }"><i class="fa-solid fa-tag"></i> ${b.brandName || b.name
         }</a>`,
     )
     .join("");
@@ -87,11 +132,26 @@ function setupNavbarEvents() {
     catBtn.onclick = (e) => {
       e.stopPropagation();
       catDropdown.classList.toggle("show");
+      if (brandDropdown) brandDropdown.classList.remove("show"); // Close brand dropdown
     };
-    document.addEventListener("click", () => {
-      if (catDropdown) catDropdown.classList.remove("show");
-    });
   }
+
+  // Toggle menu thương hiệu
+  const brandBtn = document.getElementById("brandBtn");
+  const brandDropdown = document.getElementById("brandDropdown");
+
+  if (brandBtn) {
+    brandBtn.onclick = (e) => {
+      e.stopPropagation();
+      brandDropdown.classList.toggle("show");
+      if (catDropdown) catDropdown.classList.remove("show"); // Close cat dropdown
+    };
+  }
+
+  document.addEventListener("click", () => {
+    if (catDropdown) catDropdown.classList.remove("show");
+    if (brandDropdown) brandDropdown.classList.remove("show");
+  });
 
   // Xử lý tìm kiếm
   const searchInput = document.getElementById("homeSearch");

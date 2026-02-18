@@ -9,6 +9,9 @@
   <link rel="stylesheet" href="../dialog/index.css" />
   <link rel="stylesheet" href="/lib/public.css" />
   <script src="https://kit.fontawesome.com/e9c281dd3f.js" crossorigin="anonymous"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/glightbox/dist/css/glightbox.min.css" />
+  <script src="https://cdn.jsdelivr.net/npm/glightbox/dist/js/glightbox.min.js"></script>
+
   <style>
     /* --- CSS PROFILE --- */
     /* Override public.css min-width */
@@ -289,7 +292,9 @@
         <div class="profile-grid">
           <div class="avatar-section">
             <div class="avatar-wrapper">
-              <img id="avatarPreview" src="https://cdn-icons-png.flaticon.com/512/847/847969.png" class="avatar-img" />
+              <a class="gallery" id = "viewAvatar">
+                <img id="avatarPreview" class="avatar-img" />
+              </a>
             </div>
             <label for="avatar" class="btn-change-avatar">
               <i class="fa-solid fa-camera"></i> Đổi ảnh

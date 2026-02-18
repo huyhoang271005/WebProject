@@ -43,7 +43,7 @@ async function login() {
     else {
         if(result.data.verifiedEmail === false || result.data.verifiedDevice === false){
             status = 'question';
-            await showDialog(status, result.message, async () => await verify(result.data, username),
+            await showDialog(status, result.message, async () => await verify(result.data, username, password),
                 status === 'error' || status === 'success' ? 'Đồng ý': 'Gửi email xác thực');
             return;
         }
@@ -52,7 +52,7 @@ async function login() {
     }
 }
 
-async function verify(result, email) {
+async function verify(result, email, password) {
     if(!result || Array.isArray(result)) return;
     let resultSend;
     const data = {
@@ -65,9 +65,17 @@ async function verify(result, email) {
         resultSend = await callAPI(`/auth/send-verify-device`, 'POST', data);
     }
     if(resultSend.success){
+        sessionStorage.setItem('infoLogin', JSON.stringify({
+            email: email,
+            password: password
+        }));
         await connectSse("/sse?sessionId=" + resultSend.data.sessionId);
         subscribeTopic("verified", async (data) => {
             if(data === true){
+                const infoLogin = JSON.parse(sessionStorage.getItem('infoLogin'));
+                usernameInput.value = infoLogin.email;
+                passwordInput.value = infoLogin.password;
+                sessionStorage.clear();
                 await login();
             }
         });

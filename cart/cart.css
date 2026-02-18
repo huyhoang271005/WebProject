@@ -349,7 +349,6 @@ body {
     border-radius: 4px;
     /* Slightly rounded */
     height: 32px;
-    margin-right: 20px;
     overflow: hidden;
     /* Ensure children don't bleed */
 }
@@ -380,7 +379,8 @@ body {
 }
 
 .qty-input {
-    min-width: 40px !important;
+    width: 40px;
+    min-width: auto;
     /* Smaller fixed width */
     height: 32px;
     border: none;
