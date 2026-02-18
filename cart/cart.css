@@ -605,7 +605,7 @@ body {
 
     .classification-popup {
         width: 240px;
-        left: -120px;
+        left: -80px;
         /* Shift to stay on screen */
     }
 
