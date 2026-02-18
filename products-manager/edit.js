@@ -1,6 +1,7 @@
 import { showDialog } from "/dialog/index.js";
 import { loadNavbar } from "/navbar/navbar.js";
 import { fetchCategories, fetchBrands, getProduct, updateProduct, deleteProduct, updateVariant, deleteVariant } from "/products-manager/services.js";
+import {toggleLoading} from "../lib/loader.js";
 
 let currentProductId = null;
 let categories = [];
@@ -9,7 +10,7 @@ let brands = [];
 // Initialize
 async function init() {
     console.log("edit.js: init() called");
-
+    toggleLoading(true);
     // Load Navbar
     await loadNavbar({ centerHTML: "" });
 
@@ -27,6 +28,7 @@ async function init() {
         console.log("Auto-loading product from URL:", productId);
         await searchProduct(productId);
     }
+    setTimeout(()=> toggleLoading(false), 300);
 }
 
 // Load dropdown data

@@ -170,6 +170,7 @@ input {
     overflow: hidden;
     transition: box-shadow 0.3s ease;
     animation: fadeIn 0.5s ease;
+    width: 100%;
 }
 
 .pm-card:hover {
@@ -487,6 +488,7 @@ input {
     /* Ensure table doesn't get squashed */
     border-collapse: collapse;
     font-size: 14px;
+    width: 100%;
 }
 
 .pm-table thead {
@@ -589,7 +591,31 @@ input {
 /* Responsive */
 @media (max-width: 1024px) {
     .pm-form-layout {
-        grid-template-columns: 1fr;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .pm-main-col,
+    .pm-sidebar {
+        display: contents;
+        /* Unwrap containers to allow reordering children */
+    }
+
+    /* Mobile Layout Reordering */
+    #cardImage {
+        order: 1;
+    }
+
+    #cardOrganization {
+        order: 2;
+    }
+
+    #cardBasicInfo {
+        order: 3;
+    }
+
+    #variantsSection {
+        order: 4;
     }
 
     .pm-sidebar,
