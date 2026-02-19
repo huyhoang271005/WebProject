@@ -376,6 +376,7 @@ body {
 }
 
 .btn-action {
+    margin-top: 0;
     padding: 10px 18px;
     border: none;
     border-radius: 8px;
@@ -795,7 +796,6 @@ body {
 
     .order-card-footer {
         flex-direction: column;
-        gap: 15px;
         align-items: stretch;
     }
 

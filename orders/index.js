@@ -384,7 +384,11 @@ function renderOrderActions(orderIndex, statusConfig, orderFromList) {
     // 4. Confirm Received button - DELIVERED → COMPLETED
     if (actions.includes('confirm')) {
         html += `
-            <button class="btn-action btn-confirm" onclick="confirmOrderReceived('${order.orderId}')" style="background-color: #10b981; color: white; border: none;">
+            <button class="btn-action btn-confirm" onclick="confirmOrderReceived('${order.orderId}')" 
+            style="
+            background-color: #10b981; 
+            color: white; 
+            border: none;">
                 <i class="fas fa-check"></i> Đã nhận hàng
             </button>
         `;
@@ -597,7 +601,16 @@ function showOrderDetailModal(order, orderIndex) {
 
         if (canConfirm) {
             actionContainer.innerHTML += `
-                <button class="btn-action btn-confirm" onclick="confirmOrderReceived('${order.orderId}')" style="background-color: #10b981; color: white; border: none; padding: 12px 24px; border-radius: 4px; cursor: pointer; font-weight: 600; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                <button class="btn-action btn-confirm" onclick="confirmOrderReceived('${order.orderId}')" 
+                style="
+                background-color: #10b981; 
+                color: white; border: none; 
+                padding: 12px 24px; 
+                border-radius: 4px; 
+                cursor: pointer; 
+                font-weight: 600; 
+                box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                display: block;">
                     <i class="fas fa-check"></i> ĐÃ NHẬN HÀNG
                 </button>
             `;
