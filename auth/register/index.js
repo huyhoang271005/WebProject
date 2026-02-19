@@ -33,7 +33,12 @@ registerForm.addEventListener('submit', async (e) => {
 
     statusDiv.textContent = '';
     statusDiv.classList.remove('error');
-
+    if(!username || !fullName || !birthday || !gender || !email || !password) {
+        statusDiv.style.display = 'block';
+        statusDiv.classList.add("error");
+        statusDiv.textContent = "Vui lòng nhập đẩy đủ thông tin";
+        return;
+    }
     const data = new FormData();
     data.append('registerRequest', new Blob(
         [JSON.stringify({

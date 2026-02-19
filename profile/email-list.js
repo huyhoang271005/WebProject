@@ -135,6 +135,10 @@ export function initEmailList(initialEmails = []) {
       icon.onclick = async () => {
         const idx = icon.dataset.index;
         const email = emails[idx];
+        if(!email.email){
+          await showDialog("error", "Vui lòng nhập đầy đủ địa chỉ email");
+          return;
+        }
         await showDialog(
           "question",
           `Gửi email xác thực đến ${email.email}?`,
