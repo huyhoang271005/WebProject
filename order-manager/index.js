@@ -122,7 +122,7 @@ async function fetchOrders() {
     isLoading = true;
 
     try {
-        let endpoint = '';
+        let endpoint;
         if (isSearchMode) {
             // SEARCH MODE: Only orderId, dynamic page/size
             endpoint = `/admin/orders?orderId=${currentKeyword}&page=${currentPage}&size=${PAGE_SIZE}`;
@@ -130,7 +130,6 @@ async function fetchOrders() {
             // TAB MODE: orderStatus, dynamic page/size
             endpoint = `/admin/orders?orderStatus=${currentStatus}&page=${currentPage}&size=${PAGE_SIZE}`;
         }
-
         const res = await callAPI(endpoint, 'GET');
 
         if (res.success) {
@@ -212,6 +211,12 @@ function renderOrders(listData) {
                     <i class="fa-solid fa-xmark"></i>
                 </button>
             `;
+        } else if (st === 'DELIVERING') {
+            actionButtons = `
+                <button class="btn-approve" onclick="updateStatus('${order.orderId}', 'CONFIRMED', 'Xác nhận đơn hàng đã giao thành công?')" title="Xác nhận đã giao">
+                    <i class="fa-solid fa-check"></i> Đã giao
+                </button>
+            `;
         }
 
         const tr = document.createElement("tr");
@@ -219,7 +224,12 @@ function renderOrders(listData) {
             <td><span class="order-id" onclick="copyToClipboard('${order.orderId}', this)" title="Click to copy">#${order.orderId.substring(0, 8)}</span></td>
             <td><div class="customer-info"><strong>${order.contactName || 'Khách lẻ'}</strong></div></td>
             <td>${renderMiniProducts(order.orderItemDTOList)}</td>
-            <td class="total-price">${money.format(totalAmount)}</td>
+            <td>
+                <div class="total-price">${money.format(totalAmount)}</div>
+                <div style="font-size: 11px; color: #6B7280; margin-top: 4px; font-weight: 500;">
+                    <i class="fa-regular fa-credit-card"></i> ${order.paymentMethod || 'COD'}
+                </div>
+            </td>
             <td>${getStatusBadge(st)}</td>
             <td>${formatDate(order.createdAt)}</td>
             <td style="text-align: right;">
@@ -252,16 +262,6 @@ function renderMiniProducts(items) {
 // 3. UTILS & ACTIONS
 // ============================================================
 window.updateStatus = async (orderId, statusToSend, message) => {
-    // Note: statusToSend logic might need to be cleaner, but keeping existing
-    // Check if confirm needed
-    if (!await showDialog("question", message || "Bạn có chắc chắn?", null, "Đồng ý", true)) return;
-    // Wait, reusing showDialog as confirm isn't direct. 
-    // The original code used native confirm(). I replaced it with showDialog previously?
-    // Let's check logic. showDialog(status, message, callback)
-
-    // Correct usage based on user-detail/index.js pattern:
-    // await showDialog("question", msg, async () => { ... })
-
     await showDialog("question", message || "Bạn có chắc chắn?", async () => {
         const endpoint = `/admin/orders/${orderId}`;
         const body = statusToSend;
@@ -269,8 +269,32 @@ window.updateStatus = async (orderId, statusToSend, message) => {
 
         if (res.success) {
             await showDialog("success", res.message);
-            // Refresh w/o full reset if possible, or just reset tab
-            switchTab(currentStatus);
+
+            // Client-side update
+            const orderIndex = allOrders.findIndex(o => o.orderId === orderId);
+            if (orderIndex !== -1) {
+                allOrders[orderIndex].orderStatus = body;
+
+                if (isSearchMode) {
+                    currentFilteredOrders = [...allOrders];
+                } else {
+                    if (currentStatus !== 'ALL' && currentStatus !== body) {
+                        allOrders = allOrders.filter(o => o.orderId !== orderId);
+                    }
+                    currentFilteredOrders = allOrders.filter(o => {
+                        return currentStatus === 'ALL' || o.orderStatus === currentStatus;
+                    });
+                }
+
+                if (isAscending) {
+                    currentFilteredOrders.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+                } else {
+                    currentFilteredOrders.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+                }
+
+                renderOrders(currentFilteredOrders);
+            }
+
             closeModal();
         } else {
             await showDialog("error", res.message);
@@ -320,6 +344,8 @@ window.viewDetail = (orderId) => {
     document.getElementById("modalAddress").innerText = order.address || "---";
     document.getElementById("modalDate").innerText = formatDate(order.createdAt);
     document.getElementById("modalStatus").innerHTML = getStatusBadge(order.orderStatus);
+    document.getElementById("modalPaymentMethod").innerText = order.paymentMethod || "---";
+    document.getElementById("modalPaymentAt").innerText = order.paymentAt ? formatDate(order.paymentAt) : "Chưa thanh toán";
 
     const listHtml = order.orderItemDTOList.map(item => `
         <tr>
