@@ -9,6 +9,11 @@ let apiBrands = [];
 
 // Hàm chạy khi trang load
 document.addEventListener("DOMContentLoaded", async () => {
+  const params = new URLSearchParams(window.location.search);
+  const login = params.get("login");
+  if (login) {
+    localStorage.setItem("rememberMe", true);
+  }
   toggleLoading(true);
   // 1. Khởi tạo Navbar trước
   await loadNavbar({

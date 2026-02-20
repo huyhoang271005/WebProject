@@ -31,7 +31,8 @@
         <form id="login-form">
             <input type="email" id="username" placeholder="Email" autocomplete="email" />
             <div class="password-layout">
-                <input type="password" id="password" class='password' placeholder="Mật khẩu" autocomplete="current-password"/>
+                <input type="password" id="password" class='password' placeholder="Mật khẩu"
+                    autocomplete="current-password" />
             </div>
 
             <div class="checkbox-row">
@@ -39,9 +40,21 @@
                 <label for="rememberUser">Ghi nhớ tôi</label>
             </div>
 
-            <button type="submit" id="loginBtn">Đăng nhập</i></button>
+            <button type="submit" id="loginBtn">Đăng nhập</button>
             <div class="status error" id="status"></div>
         </form>
+
+        <div style="display: flex; align-items: center; margin: 15px 0;">
+            <hr style="flex: 1; border: none; border-top: 1px solid #d1d5db;" />
+            <span style="padding: 0 10px; color: #6b7280; font-size: 0.9rem;">Hoặc</span>
+            <hr style="flex: 1; border: none; border-top: 1px solid #d1d5db;" />
+        </div>
+        <button type="button" id="googleLoginBtn"
+            style="background-color: white; color: #374151; border: 1.5px solid #d1d5db; display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 0; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05); font-weight: 500;">
+            <img src="https://developers.google.com/identity/images/g-logo.png" alt="Google Logo" width="20" />
+            Đăng nhập với Google
+        </button>
+
         <div style="margin-top: 15px; font-size: 0.9rem; text-align: center;">
             <a href="#" id="forgotPassword" style="margin-right: 5px; color: #10b981; text-decoration: none;">Quên mật
                 khẩu?</a>
