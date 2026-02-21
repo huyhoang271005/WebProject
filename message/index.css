@@ -287,7 +287,7 @@ body {
         /* Avoid navbar overlap */
         left: 0;
         width: 100%;
-        height: calc(100% - 60px);
+        height: calc(100% - 110px);
         z-index: 10;
         display: none;
         /* Ẩn mặc định trên mobile */
