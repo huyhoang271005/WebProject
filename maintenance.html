@@ -5,12 +5,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Hệ thống đang bảo trì</title>
-    <!-- Font Poppins -->
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
-        rel="stylesheet">
-    <!-- Đồng bộ với public.css -->
+          rel="stylesheet">
     <link rel="stylesheet" href="./lib/public.css">
     <style>
+        /* Giữ nguyên CSS của bạn */
         .maintenance-icon {
             width: 80px;
             height: 80px;
@@ -20,19 +19,15 @@
         }
 
         @keyframes spin-slow {
-            0% {
-                transform: rotate(0deg);
-            }
-
-            100% {
-                transform: rotate(360deg);
-            }
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
 
         .maintenance-card {
             max-width: 500px;
             width: 90%;
-            margin: auto;
+            margin: 100px auto auto; /* Thêm chút margin top để cân đối */
+            text-align: center; /* Đảm bảo text luôn ở giữa */
         }
 
         .status-badge {
@@ -53,18 +48,30 @@
             font-size: 1.05rem;
         }
 
-        /* Cân chỉnh button có icon */
         .btn-reload {
             display: inline-flex;
             justify-content: center;
             align-items: center;
             gap: 8px;
+            cursor: pointer;
+            border: none;
+            padding: 10px 24px;
+            border-radius: 8px;
+            background-color: #10b981; /* Màu chủ đạo xanh */
+            color: white;
+            font-weight: 600;
+            transition: all 0.3s ease;
         }
 
         .btn-reload svg {
             width: 20px;
             height: 20px;
-            transition: transform 0.3s ease;
+            transition: transform 0.5s ease;
+        }
+
+        .btn-reload:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
         }
 
         .btn-reload:hover svg {
@@ -74,32 +81,45 @@
 </head>
 
 <body>
-    <!-- Sử dụng class card từ public.css -->
-    <div class="card maintenance-card">
-        <div class="status-badge">
-            Hệ thống đang được nâng cấp
-        </div>
-
-        <!-- Icon bánh răng -->
-        <svg class="maintenance-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-            <path stroke-linecap="round" stroke-linejoin="round"
-                d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-            <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-        </svg>
-
-        <h1>Bảo trì hệ thống!</h1>
-        <p>Chúng tôi hiện đang tiến hành nâng cấp để cải thiện trải nghiệm của bạn. Mong bạn thông cảm vì sự bất tiện
-            này. Quá trình này sẽ không kéo dài!</p>
-
-        <!-- Button sử dụng style mặc định từ public.css -->
-        <button class="btn-reload" onclick="window.history.back()">
-            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round"
-                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-            </svg>
-            Tải lại trang
-        </button>
+<div class="card maintenance-card">
+    <div class="status-badge">
+        Hệ thống đang được nâng cấp
     </div>
+
+    <svg class="maintenance-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+        <path stroke-linecap="round" stroke-linejoin="round"
+              d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+        <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+    </svg>
+
+    <h1>Bảo trì hệ thống!</h1>
+    <p>Chúng tôi hiện đang tiến hành nâng cấp để cải thiện trải nghiệm của bạn. Mong bạn thông cảm vì sự bất tiện này.</p>
+
+    <button class="btn-reload" onclick="handleReload()">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round"
+                  d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+        </svg>
+        Tải lại trang
+    </button>
+</div>
+
+<script>
+    function handleReload() {
+        // Lấy URL trang trước đó (nơi người dùng gặp lỗi 503)
+        const previousPage = document.referrer;
+
+        // Nếu có trang trước đó và không phải chính trang bảo trì này
+        if (previousPage && previousPage !== window.location.href) {
+            // Quay lại trang cũ. Thêm timestamp để ép trình duyệt load lại hoàn toàn (bypass cache)
+            const separator = previousPage.includes('?') ? '&' : '?';
+            window.location.replace(previousPage + separator + 'refresh=' + new Date().getTime());
+        } else {
+            // Nếu người dùng vào thẳng link bảo trì, chỉ cần load lại chính nó
+            window.location.reload();
+        }
+    }
+</script>
 </body>
 
 </html>
