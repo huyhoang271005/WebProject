@@ -27,6 +27,10 @@ async function init() {
     if (productId) {
         console.log("Auto-loading product from URL:", productId);
         await searchProduct(productId);
+    } else {
+        showDialog("error", "Không tìm thấy thông tin sản phẩm trên URL", () => {
+            window.location.href = "/products-manager/index.html";
+        });
     }
     setTimeout(()=> toggleLoading(false), 300);
 }
@@ -78,7 +82,6 @@ function getListData(res) {
 
 // Setup events
 function setupEvents() {
-    const searchInput = document.getElementById("searchProductId");
     const btnSave = document.getElementById("btnSave");
     const btnCancel = document.getElementById("btnCancel");
 
@@ -123,7 +126,6 @@ async function searchProduct(productId) {
 
         if (res.success && res.data) {
             currentProductId = productId;
-            showSearchResult(`Tìm thấy: ${res.data.productDetailDTO.productName}`, "success");
             loadProductData(res.data);
 
             // Show form and buttons
@@ -133,22 +135,16 @@ async function searchProduct(productId) {
             // Add delete button
             addDeleteButton();
         } else {
-            showSearchResult("Không tìm thấy sản phẩm", "error");
+            showDialog("error", "Không tìm thấy sản phẩm này", () => {
+                window.location.href = "/products-manager/index.html";
+            });
         }
     } catch (e) {
         console.error("Search error:", e);
-        showSearchResult("Lỗi khi tìm kiếm sản phẩm", "error");
+        showDialog("error", "Lỗi khi tải thông tin sản phẩm", () => {
+            window.location.href = "/products-manager/index.html";
+        });
     }
-}
-
-function showSearchResult(text, type) {
-    const resultDiv = document.getElementById("searchResult");
-    const resultText = document.getElementById("searchResultText");
-
-    resultText.textContent = text;
-    resultDiv.style.display = "block";
-    resultDiv.style.background = type === "success" ? "#d1fae5" : "#fee2e2";
-    resultDiv.style.color = type === "success" ? "#065f46" : "#991b1b";
 }
 
 // Load product data into form
