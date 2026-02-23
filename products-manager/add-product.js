@@ -120,7 +120,7 @@ function setupEvents() {
             await showDialog("error", "Sản phẩm chưa được lưu");
         }
         else {
-            window.location.replace(`/products-manager/edit?id=${productId}`);
+            window.location.replace(`/products-manager/edit.html?id=${productId}`);
         }
     }
     // Cancel
