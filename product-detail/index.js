@@ -8,7 +8,6 @@ const NOTIFICATION_HIDE_DELAY = 400;
 const REDIRECT_DELAY = 2000;
 const INFO_NOTIFICATION_DELAY = 1000;
 const MAX_STARS = 5;
-const MIN_QUANTITY = 1;
 const DEFAULT_AVATAR = noImage;
 
 let productDetail = null;
@@ -85,7 +84,6 @@ async function getProductDetail(id) {
             }
         } else {
             showNotification(res.message || "Lỗi tải dữ liệu sản phẩm", 'error');
-            setTimeout(() => window.history.back(), REDIRECT_DELAY);
         }
     } catch (error) {
         showNotification("Không thể kết nối đến server. Vui lòng thử lại!", 'error');

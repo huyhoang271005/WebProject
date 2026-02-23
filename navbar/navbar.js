@@ -329,13 +329,6 @@ function setupEvents() {
     });
   }
 
-  document.getElementById("nbDeleteAccount").onclick = async () => {
-    await showDialog("question", "Chúng tôi sẽ gửi email xác thực xoá tài khoản cho bạn?",
-        async ()=> {
-            await showDialog("error", "Tính năng đang trong quá trình phát triển");
-        });
-  };
-
   document.getElementById("nbLogout").onclick = async () => {
     await showDialog(
       "question",
