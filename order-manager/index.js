@@ -193,7 +193,7 @@ function renderOrders(listData) {
     tbody.innerHTML = "";
 
     if (!listData || listData.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="7" class="text-center p-5">Không có dữ liệu</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="7" class="text-center p-5"> Không có dữ liệu</td></tr>`;
         return;
     }
 

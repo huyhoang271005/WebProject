@@ -50,6 +50,7 @@ const navbarHTML = `
         .nb-dropdown.show { display: flex; }
         .nb-dropdown a, .nb-dropdown button { padding: 12px 20px; text-decoration: none; color: #333; text-align: left; background: none; border: none; cursor: pointer; border-bottom: 1px solid #f9f9f9; display:flex; align-items:center; gap:12px; font-size:0.95rem; transition: 0.2s; }
         .nb-dropdown a:hover, .nb-dropdown button:hover { background: #f9fafb; color: #10B981; padding-left: 25px; }
+        .nb-dropdown-header { font-size: 0.75rem; color: #9ca3af; font-weight: 700; text-transform: uppercase; padding: 12px 20px 4px; letter-spacing: 0.5px; }
         .nb-admin-only { display: none !important; }
 
         .noti-item { 
@@ -140,14 +141,18 @@ const navbarHTML = `
                     <div style="font-size:0.75rem; color:#888;" id="nbRole">GUEST</div>
                 </div>
                 <div class="nb-dropdown" id="nbUserDropdown">
+                    <div class="nb-dropdown-header">Mua sắm</div>
                     <a href="/home"><i class="fa-solid fa-house" style="color: #10B981 ; width:20px; text-align:center;"></i> Trang chủ</a>
                     <a href="/products"><i class="fa-solid fa-compass" style="color: #F59E0B ; width:20px; text-align:center;"></i> Khám phá sản phẩm</a>
-                    <a href="/profile"><i class="fa-regular fa-user" style="color: #3B82F6; width:20px; text-align:center;"></i> Hồ sơ</a>
-                    <a href="/session"><i class="fa-solid fa-shield-halved" style="color: #8B5CF6; width:20px; text-align:center;"></i> Phiên đăng nhập</a>
-                    <a href="/contact"><i class="fa-solid fa-map-location-dot" style="color: #F59E0B; width:20px; text-align:center;"></i> Sổ địa chỉ</a>
-                    <a href="/orders"><i class="fa-solid fa-clipboard-list" style="color: #10B981; width:20px; text-align:center;"></i> Đơn hàng của tôi</a>
                     
-                    <div class="nb-admin-only" style="border-top:1px solid #eee; margin:5px 0"></div>
+                    <div class="nb-dropdown-header" style="border-top:1px solid #eee; margin-top:4px; padding-top:12px">Tài khoản & Đơn hàng</div>
+                    <a href="/profile"><i class="fa-regular fa-user" style="color: #3B82F6; width:20px; text-align:center;"></i> Hồ sơ</a>
+                    <a href="/orders"><i class="fa-solid fa-clipboard-list" style="color: #10B981; width:20px; text-align:center;"></i> Đơn hàng của tôi</a>
+                    <a href="/contact"><i class="fa-solid fa-map-location-dot" style="color: #F59E0B; width:20px; text-align:center;"></i> Sổ địa chỉ</a>
+                    <a href="/session"><i class="fa-solid fa-shield-halved" style="color: #8B5CF6; width:20px; text-align:center;"></i> Phiên truy cập</a>
+                    <button id="nbDeleteAccount" style="color:#ef4444;"><i class="fa-solid fa-user-xmark" style="color: #ef4444; width:20px; text-align:center;"></i> Xóa tài khoản</button>
+                    
+                    <div class="nb-admin-only nb-dropdown-header" style="border-top:1px solid #eee; margin-top:4px; padding-top:12px">Quản trị hệ thống</div>
                     <a href="/products-manager" class="nb-admin-only"><i class="fa-solid fa-boxes-stacked" style="color: #EC4899; width:20px; text-align:center;"></i> QL Sản phẩm</a>
                     <a href="/catalog-management" class="nb-admin-only"><i class="fa-solid fa-layer-group" style="color: #6366F1; width:20px; text-align:center;"></i> QL Danh mục</a>
                     <a href="/users" class="nb-admin-only"><i class="fa-solid fa-users-gear" style="color: #0EA5E9; width:20px; text-align:center;"></i> QL Người dùng</a>
@@ -220,11 +225,9 @@ function updateNavbarUI(data) {
   if (data.username && data.username !== "Khách") {
     document.getElementById("nbUsername").textContent = data.username;
     document.getElementById("nbRole").textContent = data.roleName;
-    if (data.roleName === "ADMIN") {
-      document
+    document
         .querySelectorAll(".nb-admin-only")
         .forEach((el) => el.style.setProperty("display", "flex", "important"));
-    }
   }
   const cartBadge = document.getElementById("cartBadge");
   const cartCount = parseInt(data.cartsCount) || 0;
@@ -326,6 +329,13 @@ function setupEvents() {
     });
   }
 
+  document.getElementById("nbDeleteAccount").onclick = async () => {
+    await showDialog("question", "Chúng tôi sẽ gửi email xác thực xoá tài khoản cho bạn?",
+        async ()=> {
+            await showDialog("error", "Tính năng đang trong quá trình phát triển");
+        });
+  };
+
   document.getElementById("nbLogout").onclick = async () => {
     await showDialog(
       "question",
@@ -340,6 +350,30 @@ function setupEvents() {
       true,
     );
   };
+
+  const deleteBtn = document.getElementById("nbDeleteAccount");
+  if (deleteBtn) {
+    deleteBtn.onclick = async (e) => {
+      e.stopPropagation();
+      await showDialog(
+        "question",
+        "Bạn có chắc chắn muốn xóa tài khoản vĩnh viễn không? Hành động này không thể hoàn tác!",
+        async () => {
+          const res = await callAPI("/profile", "DELETE");
+          if (res && res.success) {
+            sessionStorage.clear();
+            localStorage.clear();
+            await showDialog("success", "Đã xóa tài khoản thành công!");
+            window.location.replace("/auth/login");
+          } else {
+            await showDialog("error", res?.message || "Xóa tài khoản thất bại!");
+          }
+        },
+        "Xóa tài khoản",
+        true
+      );
+    };
+  }
 
   document.addEventListener("click", () => {
     userDropdown.classList.remove("show");
