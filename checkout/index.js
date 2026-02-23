@@ -77,28 +77,32 @@ async function loadDataFromCart(checkedIds) {
     try {
         if (typeof toggleLoading === 'function') toggleLoading(true);
 
-        const [resAddr, resCart] = await Promise.all([
-            callAPI('/contacts', 'GET'),
-            callAPI('/carts?page=0&size=999', 'GET')
-        ]);
+        // Không dùng Promise.all để tránh lỗi gọi refresh token đồng thời (race condition)
+        // khi access token bị thiếu, dẫn đến một trong hai API bị lỗi.
+        const resAddr = await callAPI('/contacts', 'GET');
+        const resCart = await callAPI('/carts?page=0&size=999', 'GET');
 
-        if (resAddr.success && resAddr.data?.listData?.length > 0) {
+        // Process Address
+        if (resAddr && resAddr.success && resAddr.data?.listData?.length > 0) {
             renderAddresses(resAddr.data.listData);
         } else {
             handleNoAddress();
-            return;
         }
 
-        if (resCart.success && resCart.data?.listData) {
+        // Process Cart Items
+        if (resCart && resCart.success && resCart.data?.listData) {
             const allItems = [];
             resCart.data.listData.forEach(product => {
+                if (!product.cartItemDTOList) return;
+
                 product.cartItemDTOList.forEach(item => {
                     const variant = product.productVariantsDTOList?.find(v => v.variantId === item.variantId);
-                    // Chuyển cả hai sang String để so sánh chính xác (tránh lỗi type mismatch giữa Number và String)
+
+                    // Match checked IDs (robust comparison converting both to strings)
                     const isChecked = checkedIds.some(id => String(id) === String(item.cartItemId));
 
                     if (variant && isChecked) {
-                        // Lấy attributeValues từ variant
+                        // Extract attribute values
                         const attributeValues = [];
                         if (product.attributes && variant.attributeValueIdList) {
                             variant.attributeValueIdList.forEach(valueId => {
@@ -118,8 +122,8 @@ async function loadDataFromCart(checkedIds) {
                             attributeValues: attributeValues,
                             productName: product.productName,
                             variantName: getVariantName(product, variant),
-                            thumbnail: variant.imageUrl || 'https://via.placeholder.com/80',
-                            imageUrl: variant.imageUrl || null,
+                            thumbnail: variant.imageUrl || product.imageUrl || 'https://via.placeholder.com/80',
+                            imageUrl: variant.imageUrl || product.imageUrl || null,
                             originalPrice: variant.originalPrice || variant.price,
                             price: variant.price,
                             quantity: item.quantity
@@ -127,8 +131,15 @@ async function loadDataFromCart(checkedIds) {
                     }
                 });
             });
+
             currentCheckoutItems = allItems;
             renderProducts(allItems);
+
+            if (allItems.length === 0) {
+                console.warn("No matching cart items found for checkedIds:", checkedIds);
+            }
+        } else {
+            console.error("Failed to fetch cart data:", resCart);
         }
     } catch (err) {
         console.error("Lỗi load giỏ hàng:", err);
