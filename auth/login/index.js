@@ -94,6 +94,7 @@ window.addEventListener('DOMContentLoaded', async () => {
 
     if (googleLoginBtn) {
         googleLoginBtn.addEventListener('click', () => {
+            localStorage.setItem("rememberUser", rememberUser.checked);
             window.location.href = API_BASE + '/oauth2/authorization/google';
         });
     }
