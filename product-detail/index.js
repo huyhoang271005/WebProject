@@ -644,6 +644,9 @@ function setupEventListeners() {
             attributeValues: selectedAttrValues
         };
 
+        // Clear checkoutItems to avoid conflict on checkout page
+        sessionStorage.removeItem('checkoutItems');
+        sessionStorage.removeItem('checkedCartIds');
         sessionStorage.setItem('buyNowData', JSON.stringify(buyNowData));
 
         window.location.href = '../checkout/index.html';

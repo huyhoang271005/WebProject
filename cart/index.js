@@ -51,6 +51,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (checkoutBtn) {
         checkoutBtn.onclick = (e) => {
             if (!e.target.disabled) {
+                // Clear buyNowData to prevent checkout page from loading the wrong item
+                sessionStorage.removeItem("buyNowData");
                 sessionStorage.setItem("checkoutItems", JSON.stringify([...checked]));
                 window.location.href = '../checkout/index.html';
             }

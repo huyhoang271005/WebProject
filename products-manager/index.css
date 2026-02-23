@@ -65,6 +65,7 @@ input {
 
 /* Buttons */
 .pm-btn {
+    margin-top: 10px;
     display: inline-flex;
     align-items: center;
     gap: 8px;
@@ -649,6 +650,7 @@ input {
     }
 
     .pm-btn {
+        margin-top: 0;
         width: 100%;
         justify-content: center;
     }
