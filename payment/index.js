@@ -1,7 +1,10 @@
 // Xử lý logic hiển thị trạng thái thanh toán
 // Chạy ngay khi file được load (module type)
+import {loadNavbar} from "../navbar/navbar.js";
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+    sessionStorage.clear();
+    await loadNavbar();
     const urlParams = new URLSearchParams(window.location.search);
     // Lấy giá trị success
     const successParam = urlParams.get('success');

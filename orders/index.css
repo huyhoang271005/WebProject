@@ -387,6 +387,7 @@ body {
     display: inline-flex;
     align-items: center;
     gap: 6px;
+    width: auto;
 }
 
 .btn-detail {

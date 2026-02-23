@@ -1,6 +1,7 @@
 import { callAPI } from '../lib/api.js';
 import { toggleLoading } from '../lib/loader.js';
 import { loadNavbar } from '../navbar/navbar.js';
+import { showDialog } from "/dialog/index.js";
 
 const formatter = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' });
 const PAYMENT_METHOD = {
@@ -628,6 +629,7 @@ function showOrderDetailModal(order, orderIndex) {
     }
 
     modal.style.display = 'flex';
+    document.body.style.overflow = 'hidden'; // Ngăn cuộn nền để giảm giật lag
 }
 
 /**
@@ -672,6 +674,7 @@ function renderAllOrderItems(items) {
  */
 window.closeModal = () => {
     document.getElementById('orderDetailModal').style.display = 'none';
+    document.body.style.overflow = ''; // Phục hồi cuộn nền
 };
 
 // Close modal when clicking outside
@@ -692,34 +695,34 @@ window.cancelOrder = async (orderIndex) => {
         return;
     }
 
-    if (!confirm('Bạn có chắc chắn muốn hủy đơn hàng này?')) {
-        return;
-    }
+    await showDialog("question", "Bạn có chắc là muốn huỷ đơn hàng này?",
+        async () => {
+            try {
+                if (typeof toggleLoading === 'function') toggleLoading(true);
 
-    try {
-        if (typeof toggleLoading === 'function') toggleLoading(true);
+                // Sử dụng PATCH /orders/{orderId} theo yêu cầu mới
+                const response = await callAPI(`/orders/${order.orderId}`, 'PATCH', 'CANCELED');
 
-        // Sử dụng PATCH /orders/{orderId} theo yêu cầu mới
-        const response = await callAPI(`/orders/${order.orderId}`, 'PATCH', 'CANCELED');
+                if (response.success) {
+                    showNotification('Hủy đơn hàng thành công', 'success');
+                    // Đóng modal nếu đang mở
+                    closeModal();
+                    // Reload từ page 0 để đảm bảo data consistency
+                    currentPage = 0;
+                    allOrders = [];
+                    hasMore = true;
+                    await loadOrders(false);
+                } else {
+                    showNotification(response.message || 'Không thể hủy đơn hàng', 'error');
+                }
+            } catch (error) {
+                console.error('Lỗi hủy đơn:', error);
+                showNotification('Có lỗi xảy ra', 'error');
+            } finally {
+                if (typeof toggleLoading === 'function') toggleLoading(false);
+            }
+        });
 
-        if (response.success) {
-            showNotification('Hủy đơn hàng thành công', 'success');
-            // Đóng modal nếu đang mở
-            closeModal();
-            // Reload từ page 0 để đảm bảo data consistency
-            currentPage = 0;
-            allOrders = [];
-            hasMore = true;
-            await loadOrders(false);
-        } else {
-            showNotification(response.message || 'Không thể hủy đơn hàng', 'error');
-        }
-    } catch (error) {
-        console.error('Lỗi hủy đơn:', error);
-        showNotification('Có lỗi xảy ra', 'error');
-    } finally {
-        if (typeof toggleLoading === 'function') toggleLoading(false);
-    }
 };
 
 
@@ -846,30 +849,31 @@ function escapeHtml(text) {
 window.confirmOrderReceived = async (orderId) => {
     if (!orderId) return;
 
-    if (!confirm('Bạn xác nhận đã nhận được hàng và hài lòng với sản phẩm?')) return;
+    await showDialog("question", "Xác nhận đã nhận được hàng?",
+        async () => {
+            try {
+                if (typeof toggleLoading === 'function') toggleLoading(true);
+                const response = await callAPI(`/orders/${orderId}`, 'PATCH', 'COMPLETED');
 
-    try {
-        if (typeof toggleLoading === 'function') toggleLoading(true);
-        const response = await callAPI(`/orders/${orderId}`, 'PATCH', 'COMPLETED');
-
-        if (response.success) {
-            showNotification('Đã xác nhận nhận hàng thành công!', 'success');
-            // Đóng modal
-            closeModal();
-            // Reload từ page 0 để đảm bảo data consistency
-            currentPage = 0;
-            allOrders = [];
-            hasMore = true;
-            await loadOrders(false);
-        } else {
-            showNotification(response.message || 'Lỗi khi xác nhận', 'error');
-        }
-    } catch (e) {
-        console.error("Lỗi confirm:", e);
-        showNotification("Lỗi kết nối", 'error');
-    } finally {
-        if (typeof toggleLoading === 'function') toggleLoading(false);
-    }
+                if (response.success) {
+                    showNotification('Đã xác nhận nhận hàng thành công!', 'success');
+                    // Đóng modal
+                    closeModal();
+                    // Reload từ page 0 để đảm bảo data consistency
+                    currentPage = 0;
+                    allOrders = [];
+                    hasMore = true;
+                    await loadOrders(false);
+                } else {
+                    showNotification(response.message || 'Lỗi khi xác nhận', 'error');
+                }
+            } catch (e) {
+                console.error("Lỗi confirm:", e);
+                showNotification("Lỗi kết nối", 'error');
+            } finally {
+                if (typeof toggleLoading === 'function') toggleLoading(false);
+            }
+        });
 };
 
 /**
