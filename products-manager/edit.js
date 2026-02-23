@@ -78,28 +78,9 @@ function getListData(res) {
 
 // Setup events
 function setupEvents() {
-    const btnSearch = document.getElementById("btnSearch");
     const searchInput = document.getElementById("searchProductId");
     const btnSave = document.getElementById("btnSave");
     const btnCancel = document.getElementById("btnCancel");
-
-    // Search
-    btnSearch.onclick = async () => {
-        const productId = searchInput.value.trim();
-        if (!productId) {
-            showDialog("error", "Vui lòng nhập Product ID");
-            return;
-        }
-        await searchProduct(productId);
-    };
-
-    // Enter to search
-    searchInput.addEventListener("keydown", (e) => {
-        if (e.key === "Enter") {
-            e.preventDefault();
-            btnSearch.click();
-        }
-    });
 
     // Save (Update)
     btnSave.onclick = async () => {
@@ -265,10 +246,10 @@ function loadVariants(productDTO) {
             <td data-label="Kho"><input type="number" class="pm-input" value="${variant.stock || 0}" data-field="stock" style="padding: 6px;"></td>
             <td data-label="Đã bán">${variant.sold || 0}</td>
             <td data-label="Thao tác" style="display: flex; gap: 4px;">
-                <button type="button" class="pm-btn pm-btn-primary" style="padding: 8px; width: 36px; justification-content: center;" onclick="saveVariant('${variant.variantId}')" title="Lưu">
+                <button type="button" class="pm-btn pm-btn-primary" style="padding: 8px; width: 36px; display: block" onclick="saveVariant('${variant.variantId}')" title="Lưu">
                     <i class="fa-solid fa-save"></i>
                 </button>
-                <button type="button" class="pm-btn" style="padding: 8px; width: 36px; justification-content: center; background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: white;" onclick="deleteVariantHandler('${variant.variantId}')" title="Xóa">
+                <button type="button" class="pm-btn" style="padding: 8px; width: 36px; display: block; background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: white;" onclick="deleteVariantHandler('${variant.variantId}')" title="Xóa">
                     <i class="fa-solid fa-trash"></i>
                 </button>
             </td>
@@ -367,68 +348,21 @@ window.saveVariant = async function (variantId) {
                 const soldCell = tr.cells[5]; // Cell thứ 6 (index 5)
                 soldCell.textContent = res.data.sold;
             }
-
-            // Reload lại product để cập nhật ảnh mới
-            if (currentProductId) {
-                setTimeout(async () => {
-                    const productRes = await getProduct(currentProductId);
-                    if (productRes.success && productRes.data) {
-                        loadProductData(productRes.data);
-                    }
-                }, 500);
-            }
-
-            console.log("Variant updated successfully, UI refreshed");
         } else {
-            showDialog("error", res.message || "Lỗi khi cập nhật biến thể");
+            await showDialog("error", res.message || "Lỗi khi cập nhật biến thể");
         }
     } catch (e) {
         console.error("Update variant error:", e);
-        showDialog("error", "Lỗi kết nối server");
+        await showDialog("error", "Lỗi kết nối server");
     }
 };
 
 // Delete variant (global function for onclick)
 window.deleteVariantHandler = async function (variantId) {
-    showDialog("question", "⚠️ XÓA BIẾN THỂ SẢN PHẨM\n\nBạn có chắc chắn muốn xóa biến thể này?\nHành động này không thể hoàn tác.\n\nLƯU Ý: Không thể xóa biến thể có trong đơn hàng.", async () => {
+    await showDialog("question", "⚠️ XÓA BIẾN THỂ SẢN PHẨM\n\nBạn có chắc chắn muốn xóa biến thể này?\nHành động này không thể hoàn tác.\n\nLƯU Ý: Không thể xóa biến thể có trong đơn hàng.", async () => {
         try {
             const res = await deleteVariant(variantId);
-
-            if (res.success) {
-                showDialog("success", "Xóa biến thể thành công!");
-
-                // Reload product data to refresh variants
-                if (currentProductId) {
-                    const productRes = await getProduct(currentProductId);
-                    if (productRes.success && productRes.data) {
-                        loadProductData(productRes.data);
-                        console.log("Product data reloaded after variant deletion");
-                    }
-                }
-            } else {
-                // User-friendly error message
-                let errorMsg = "Không thể xóa biến thể này";
-
-                // Check if it's a foreign key constraint error (variant in orders)
-                if (res.message && (
-                    res.message.toLowerCase().includes("reference") ||
-                    res.message.toLowerCase().includes("constraint") ||
-                    res.message.toLowerCase().includes("foreign key") ||
-                    res.message.toLowerCase().includes("order") ||
-                    res.message.toLowerCase().includes("conflicted")
-                )) {
-                    errorMsg = "❌ Không thể xóa biến thể\n\nBiến thể này đang có trong đơn hàng của khách, không thể xóa để đảm bảo tính toàn vẹn dữ liệu.";
-                } else if (res.message && res.message.toLowerCase().includes("xoá")) {
-                    errorMsg = "❌ Không thể xóa biến thể\n\nBiến thể này đang có trong đơn hàng của khách.";
-                } else if (res.data && Array.isArray(res.data) && res.data[0]?.error) {
-                    errorMsg += ": " + res.data[0].error;
-                } else if (res.message) {
-                    errorMsg += ": " + res.message;
-                }
-
-                showDialog("error", errorMsg);
-                console.error("Delete variant failed:", res);
-            }
+            await showDialog(res.success ? "success" : "error", res.message);
         } catch (e) {
             console.error("Delete variant error:", e);
             showDialog("error", "Lỗi kết nối server. Vui lòng thử lại sau.");
