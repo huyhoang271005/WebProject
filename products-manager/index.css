@@ -94,17 +94,6 @@ input {
     transform: translateY(-2px);
 }
 
-.pm-btn-secondary {
-    background: white;
-    color: #6b7280;
-    border: 2px solid rgba(255, 255, 255, 0.3);
-}
-
-.pm-btn-secondary:hover {
-    background: rgba(255, 255, 255, 0.95);
-    border-color: rgba(255, 255, 255, 0.5);
-}
-
 .pm-btn-outline {
     background: transparent;
     color: #10b981;

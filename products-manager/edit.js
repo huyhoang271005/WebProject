@@ -1,7 +1,7 @@
 import { showDialog } from "/dialog/index.js";
 import { loadNavbar } from "/navbar/navbar.js";
 import { fetchCategories, fetchBrands, getProduct, updateProduct, deleteProduct, updateVariant, deleteVariant } from "/products-manager/services.js";
-import {toggleLoading} from "../lib/loader.js";
+import { toggleLoading } from "../lib/loader.js";
 
 let currentProductId = null;
 let categories = [];
@@ -32,7 +32,7 @@ async function init() {
             window.location.href = "/products-manager/index.html";
         });
     }
-    setTimeout(()=> toggleLoading(false), 300);
+    setTimeout(() => toggleLoading(false), 300);
 }
 
 // Load dropdown data
@@ -83,7 +83,6 @@ function getListData(res) {
 // Setup events
 function setupEvents() {
     const btnSave = document.getElementById("btnSave");
-    const btnCancel = document.getElementById("btnCancel");
 
     // Save (Update)
     btnSave.onclick = async () => {
@@ -94,12 +93,6 @@ function setupEvents() {
         await updateProductHandler();
     };
 
-    // Cancel
-    btnCancel.onclick = () => {
-        showDialog("question", "Hủy bỏ và quay lại?", () => {
-            window.location.href = "/products-manager/index.html";
-        });
-    };
 
     // Main image upload
     const mainImgArea = document.getElementById("mainImageArea");
@@ -107,7 +100,11 @@ function setupEvents() {
     const mainImgPrev = document.getElementById("mainImagePreview");
     const mainImgPlace = document.getElementById("mainImagePlaceholder");
 
-    mainImgArea.onclick = () => mainImgInput.click();
+    mainImgArea.onclick = (e) => {
+        if (e.target !== mainImgInput) {
+            mainImgInput.click();
+        }
+    };
 
     mainImgInput.onchange = (e) => {
         const file = e.target.files[0];

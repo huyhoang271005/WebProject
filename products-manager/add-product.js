@@ -101,7 +101,11 @@ function setupEvents() {
     const mainImgPrev = document.getElementById("mainImagePreview");
     const mainImgPlace = document.getElementById("mainImagePlaceholder");
 
-    mainImgArea.onclick = () => mainImgInput.click();
+    mainImgArea.onclick = (e) => {
+        if (e.target !== mainImgInput) {
+            mainImgInput.click();
+        }
+    };
 
     mainImgInput.onchange = (e) => {
         const file = e.target.files[0];
@@ -123,13 +127,6 @@ function setupEvents() {
             window.location.replace(`/products-manager/edit.html?id=${productId}`);
         }
     }
-    // Cancel
-    // Cancel
-    document.getElementById("btnCancel").onclick = () => {
-        showDialog("question", "Hủy bỏ và làm mới?", () => {
-            window.location.reload();
-        });
-    };
 }
 
 // --- ATTRIBUTE LOGIC ---

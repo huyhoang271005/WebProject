@@ -120,7 +120,7 @@ const navbarHTML = `
     </style>
 
     <nav class="navbar-component">
-        <a href="/home" class="nb-brand"><i class="fa-solid fa-leaf"></i> Tạp Hóa Xanh</a>
+        <a href="/home" class="nb-brand" id="app-name"><i class="fa-solid fa-leaf"></i></a>
         <div id="nbCenterSlot"></div>
         <div class="nb-right-wrapper">
             <a href="/cart" class="nb-icon-btn" title="Giỏ hàng">
@@ -225,6 +225,7 @@ function updateBadgeCount(delta) {
 
 function updateNavbarUI(data) {
   if (!data) return;
+  document.getElementById("app-name").insertAdjacentHTML("beforeend", data.appName);
   document.getElementById("nbAvatar").src = data.imageUrl || noImage;
   if (data.username && data.username !== "Khách") {
     document.getElementById("nbUsername").textContent = data.username;
