@@ -150,19 +150,19 @@ const navbarHTML = `
                     <a href="/products"><i class="fa-solid fa-compass" style="color: #F59E0B ; width:20px; text-align:center;"></i> Khám phá sản phẩm</a>
                     
                     <div class="nb-dropdown-header" style="border-top:1px solid #eee; margin-top:4px; padding-top:12px">Tài khoản & Đơn hàng</div>
-                    <a href="/profile"><i class="fa-regular fa-user" style="color: #3B82F6; width:20px; text-align:center;"></i> Hồ sơ</a>
+                    <a href="/profile"><i class="fa-regular fa-user" style="color: #3B82F6; width:20px; text-align:center;"></i> Hồ sơ của tôi</a>
                     <a href="/orders"><i class="fa-solid fa-clipboard-list" style="color: #10B981; width:20px; text-align:center;"></i> Đơn hàng của tôi</a>
-                    <a href="/contact"><i class="fa-solid fa-map-location-dot" style="color: #F59E0B; width:20px; text-align:center;"></i> Sổ địa chỉ</a>
+                    <a href="/contact"><i class="fa-solid fa-map-location-dot" style="color: #F59E0B; width:20px; text-align:center;"></i> Địa chỉ của tôi</a>
                     <a href="/session"><i class="fa-solid fa-shield-halved" style="color: #8B5CF6; width:20px; text-align:center;"></i> Phiên truy cập</a>
                     <button id="nbDeleteAccount" style="color:#ef4444;"><i class="fa-solid fa-user-xmark" style="color: #ef4444; width:20px; text-align:center;"></i> Xóa tài khoản</button>
                     
                     <div class="nb-admin-only nb-dropdown-header" style="border-top:1px solid #eee; margin-top:4px; padding-top:12px">Quản trị hệ thống</div>
-                    <a href="/products-manager" class="nb-admin-only"><i class="fa-solid fa-boxes-stacked" style="color: #EC4899; width:20px; text-align:center;"></i> QL Sản phẩm</a>
-                    <a href="/catalog-management" class="nb-admin-only"><i class="fa-solid fa-layer-group" style="color: #6366F1; width:20px; text-align:center;"></i> QL Danh mục</a>
-                    <a href="/users" class="nb-admin-only"><i class="fa-solid fa-users-gear" style="color: #0EA5E9; width:20px; text-align:center;"></i> QL Người dùng</a>
-                    <a href="/role-permission" class="nb-admin-only"><i class="fa-solid fa-user-lock" style="color: #EF4444; width:20px; text-align:center;"></i> Phân quyền</a>
-                    <a href="/order-manager" class="nb-admin-only"><i class="fa-solid fa-file-invoice-dollar" style="color: #14B8A6; width:20px; text-align:center;"></i> Quản lí đơn hàng</a>
-                    <a href="/notification" class="nb-admin-only"><i class="fa-solid fa-bullhorn" style="color: #F97316; width:20px; text-align:center;"></i> Gửi thông báo</a>
+                    <a href="/products-manager" class="nb-admin-only"><i class="fa-solid fa-boxes-stacked" style="color: #EC4899; width:20px; text-align:center;"></i> Quản lý sản phẩm</a>
+                    <a href="/catalog-management" class="nb-admin-only"><i class="fa-solid fa-layer-group" style="color: #6366F1; width:20px; text-align:center;"></i> Quản lý danh mục</a>
+                    <a href="/users" class="nb-admin-only"><i class="fa-solid fa-users-gear" style="color: #0EA5E9; width:20px; text-align:center;"></i> Danh sách người dùng</a>
+                    <a href="/role-permission" class="nb-admin-only"><i class="fa-solid fa-user-lock" style="color: #EF4444; width:20px; text-align:center;"></i> Quản lý vai trò và quyền hạn</a>
+                    <a href="/order-manager" class="nb-admin-only"><i class="fa-solid fa-file-invoice-dollar" style="color: #14B8A6; width:20px; text-align:center;"></i> Quản lý đơn hàng</a>
+                    <a href="/notification" class="nb-admin-only"><i class="fa-solid fa-bullhorn" style="color: #F97316; width:20px; text-align:center;"></i> Quản lý thông báo</a>
                     <a href="/server-health" class="nb-admin-only"><i class="fa-solid fa-server" style="color: #10B981; width:20px; text-align:center;"></i> Sức khoẻ Server</a>
                     
                     <button id="nbLogout" style="color:#e11d48; border-top:1px solid #eee; margin-top:5px">
