@@ -9,7 +9,6 @@ let brands = [];
 
 // Initialize
 async function init() {
-    console.log("edit.js: init() called");
     toggleLoading(true);
     // Load Navbar
     await loadNavbar({ centerHTML: "" });
@@ -25,7 +24,6 @@ async function init() {
     const urlParams = new URLSearchParams(window.location.search);
     const productId = urlParams.get('id');
     if (productId) {
-        console.log("Auto-loading product from URL:", productId);
         await searchProduct(productId);
     } else {
         showDialog("error", "Không tìm thấy thông tin sản phẩm trên URL", () => {
@@ -50,7 +48,6 @@ async function loadCategories() {
             sel.appendChild(opt);
         });
     } catch (e) {
-        console.error("Error loading categories", e);
     }
 }
 
@@ -68,7 +65,6 @@ async function loadBrands() {
             sel.appendChild(opt);
         });
     } catch (e) {
-        console.error("Error loading brands", e);
     }
 }
 
@@ -137,7 +133,6 @@ async function searchProduct(productId) {
             });
         }
     } catch (e) {
-        console.error("Search error:", e);
         showDialog("error", "Lỗi khi tải thông tin sản phẩm", () => {
             window.location.href = "/products-manager/index.html";
         });
@@ -171,7 +166,6 @@ function loadProductData(productDTO) {
         loadVariants(productDTO);
     }
 
-    console.log("Product loaded:", productDTO);
 }
 
 // Load variants into table (editable)
@@ -182,34 +176,25 @@ function loadVariants(productDTO) {
     variantsSection.style.display = "block";
     variantsTableBody.innerHTML = "";
 
-    productDTO.variants.forEach((variant, index) => {
-        // Build variant name from variantValues
-        let variantName = `Biến thể ${index + 1}`;
+    let attributeValues = productDTO.attributes
+        .flatMap(attribute => attribute.attributeValues);
 
-        // Try to build name from attributes
-        if (productDTO.variantValues && productDTO.attributes) {
-            const variantAttrs = productDTO.variantValues
-                .filter(vv => vv.variantId === variant.variantId);
+    productDTO.variants.forEach((variant) => {
+        // 1. Lấy danh sách ID thuộc về variant này
+        let attributeValueIdsV = productDTO.variantValues
+            .filter(vv => vv.variantId === variant.variantId)
+            .map(vv => vv.attributeValueId);
 
-            if (variantAttrs.length > 0) {
-                const names = variantAttrs.map(vv => {
-                    // Find attribute name
-                    const attr = productDTO.attributes.find(a => {
-                        return a.attributeValues && a.attributeValues.some(av => av.attributeValueId === vv.attributeValueId);
-                    });
-
-                    if (attr) {
-                        const attrVal = attr.attributeValues.find(av => av.attributeValueId === vv.attributeValueId);
-                        return `${attr.attributeName}: ${attrVal ? attrVal.attributeValueName : ''}`;
-                    }
-                    return '';
-                }).filter(Boolean);
-
-                if (names.length > 0) {
-                    variantName = names.join(" - ");
-                }
-            }
-        }
+        // 2. Tìm tên và nối chuỗi
+        let variantName = attributeValueIdsV
+            .map(id => {
+                // Tìm object trong "kho" attributeValues
+                const match = attributeValues.find(av => av.attributeValueId === id);
+                // Trả về name nếu thấy, nếu không thấy trả về chuỗi rỗng để tránh crash
+                return match ? match.attributeValueName : null;
+            })
+            .filter(name => name !== null) // Loại bỏ các ID không tìm thấy tên
+            .join(" - ");
 
         const tr = document.createElement("tr");
         tr.dataset.variantId = variant.variantId;
@@ -274,7 +259,6 @@ function loadVariants(productDTO) {
                     };
                     reader.readAsDataURL(file);
 
-                    console.log('Ảnh variant đã chọn:', file.name);
                 }
             });
         }
@@ -319,7 +303,6 @@ window.saveVariant = async function (variantId) {
         // Backend expects field name 'image'
         formData.append("image", imageFile);
 
-        console.log("✅ Uploading variant image:", imageFile.name);
     }
 
     // Append variantDTO sau khi đã thêm imageName (nếu có)
@@ -328,7 +311,6 @@ window.saveVariant = async function (variantId) {
         "variant.json"
     );
 
-    console.log("Updating Variant:", JSON.stringify(variantDTO, null, 2));
 
     try {
         const res = await updateVariant(formData);
@@ -345,7 +327,6 @@ window.saveVariant = async function (variantId) {
             await showDialog("error", res.message || "Lỗi khi cập nhật biến thể");
         }
     } catch (e) {
-        console.error("Update variant error:", e);
         await showDialog("error", "Lỗi kết nối server");
     }
 };
@@ -357,7 +338,6 @@ window.deleteVariantHandler = async function (variantId) {
             const res = await deleteVariant(variantId);
             await showDialog(res.success ? "success" : "error", res.message);
         } catch (e) {
-            console.error("Delete variant error:", e);
             showDialog("error", "Lỗi kết nối server. Vui lòng thử lại sau.");
         }
     });
@@ -416,10 +396,8 @@ function addDeleteButton() {
                     }
 
                     showDialog("error", errorMsg);
-                    console.error("Delete product failed:", res);
                 }
             } catch (e) {
-                console.error("Delete product error:", e);
                 showDialog("error", "Lỗi kết nối server. Vui lòng thử lại sau.");
             }
         });
@@ -445,7 +423,6 @@ async function updateProductHandler() {
             brandId: document.getElementById("brandId").value,
         };
 
-        console.log("Updating Product:", JSON.stringify(productDetailDTO, null, 2));
 
         formData.append("productDetailDTO",
             new Blob([JSON.stringify(productDetailDTO)], { type: "application/json" }),
@@ -457,7 +434,6 @@ async function updateProductHandler() {
         if (mainFile) {
             // Backend expects field name 'image'
             formData.append("image", mainFile);
-            console.log("✅ Uploading main image:", mainFile.name);
         }
 
         const res = await updateProduct(formData);
@@ -468,7 +444,6 @@ async function updateProductHandler() {
             showDialog("error", res.message);
         }
     } catch (e) {
-        console.error("Update error:", e);
         showDialog("error", "Lỗi kết nối server");
     }
 }
@@ -485,11 +460,9 @@ async function deleteProductHandler(productId) {
             showDialog("error", res.message);
         }
     } catch (e) {
-        console.error("Delete error:", e);
         showDialog("error", "Lỗi kết nối server");
     }
 }
 
 // Start
-console.log("edit.js: Loaded");
 init();
