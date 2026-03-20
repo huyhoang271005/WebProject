@@ -9,6 +9,7 @@ let homeData = {
   roleName: "GUEST",
   readNotifications: 0,
   cartsCount: 0,
+  readMessages: 0,
 };
 
 let notiState = {
@@ -120,7 +121,7 @@ const navbarHTML = `
     </style>
 
     <nav class="navbar-component">
-        <a href="/home" class="nb-brand" id="app-name"><i class="fa-solid fa-leaf"></i></a>
+        <a href="/home" class="nb-brand" id="app-name"></a>
         <div id="nbCenterSlot"></div>
         <div class="nb-right-wrapper">
             <a href="/cart" class="nb-icon-btn" title="Giỏ hàng">
@@ -225,18 +226,23 @@ function updateBadgeCount(delta) {
 
 function updateNavbarUI(data) {
   if (!data) return;
-  document.getElementById("app-name").insertAdjacentHTML("beforeend", data.appName);
+  document.getElementById("app-name").innerHTML = `<i class="fa-solid fa-leaf"></i> ${data.appName}`;
   document.getElementById("nbAvatar").src = data.imageUrl || noImage;
   if (data.username && data.username !== "Khách") {
     document.getElementById("nbUsername").textContent = data.username;
     document.getElementById("nbRole").textContent = data.roleName;
     document
-        .querySelectorAll(".nb-admin-only")
-        .forEach((el) => el.style.setProperty("display", "flex", "important"));
+      .querySelectorAll(".nb-admin-only")
+      .forEach((el) => el.style.setProperty("display", "flex", "important"));
+  }
+  const badge = document.getElementById("chatBadge");
+  if (badge) {
+    badge.innerText = data.readMessages > 99 ? '99+' : data.readMessages;
+    badge.style.display = data.readMessages > 0 ? 'block' : 'none';
   }
   const cartBadge = document.getElementById("cartBadge");
   const cartCount = parseInt(data.cartsCount) || 0;
-  cartBadge.innerText = cartCount > 99 ? "99+" : cartCount;
+  cartBadge.innerText = cartCount > 50 ? "50+" : cartCount;
   cartBadge.style.display = cartCount > 0 ? "flex" : "none";
 
   const notiBadge = document.getElementById("nbBadge");
@@ -286,7 +292,12 @@ function setupSSERealtime() {
   // 2. Message (Tin nhắn) - CẮT BỎ LOẠI 1 (Chỉ hiện Toast, ko vào chuông)
   subscribeTopic("message", async (data) => {
     // Chỉ hiện Box nổi (Toast)
-    showSmartToast(`Tin nhắn`, "Bạn có tin nhắn mới", "fa-comment-dots");
+    let current = parseInt(homeData.readMessages);
+    console.log(homeData);
+    homeData.readMessages = Math.max(0, current + 1);
+    updateNavbarUI(homeData);
+    sessionStorage.setItem("homeData", JSON.stringify(data));
+    showSmartToast(data.username, data.message, "fa-comment-dots");
   });
 
   // 3. Cart

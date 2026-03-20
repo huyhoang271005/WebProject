@@ -79,9 +79,80 @@ body {
 }
 
 .room-time {
-    font-size: 12px;
+    font-size: 11px;
     color: #8a8d91;
     white-space: nowrap;
+    margin-bottom: 4px;
+}
+
+.room-side {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    justify-content: center;
+    position: relative;
+    padding-left: 5px;
+}
+
+.room-options {
+    cursor: pointer;
+    color: #65676b;
+    padding: 2px 8px;
+    border-radius: 50%;
+    transition: background 0.2s;
+    display: none; /* Hide default, only show on active or hover */
+}
+
+.room-item:hover .room-options,
+.room-item.active .room-options {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.room-options:hover {
+    background: #e4e6eb;
+    color: #050505;
+}
+
+.room-options-menu {
+    position: absolute;
+    top: 25px;
+    right: 0;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+    border: 1px solid #e5e7eb;
+    width: 170px;
+    display: none;
+    flex-direction: column;
+    z-index: 100;
+    overflow: hidden;
+}
+
+.room-options-menu.show {
+    display: flex;
+}
+
+.rom-item {
+    padding: 10px 15px;
+    font-size: 13px;
+    color: #333;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.rom-item:hover {
+    background: #f3f4f6;
+    color: #10B981;
+}
+
+.rom-item.danger:hover {
+    background: #fee2e2;
+    color: #EF4444;
 }
 
 /* ================= RIGHT: CHAT CONTENT ================= */

@@ -14,6 +14,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   if (login) {
     localStorage.setItem("rememberMe", true);
   }
+  sessionStorage.clear();
   toggleLoading(true);
   // 1. Khởi tạo Navbar trước
   await loadNavbar({

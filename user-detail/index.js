@@ -69,6 +69,11 @@ async function render(user) {
     const rolesSelect = document.getElementById("roleSelect");
     const statusSelect = document.getElementById("statusSelect");
     const emailsSection = document.getElementById("emailsSection");
+    const btnSendMessage = document.getElementById("btnSendMessage");
+    const btnSendNotification = document.getElementById("btnSendNotification");
+
+    btnSendNotification.style.display = "block";
+    btnSendMessage.style.display = "block";
 
     // Load Email List Template
     const html = await fetch("/user-detail/email-list.html");

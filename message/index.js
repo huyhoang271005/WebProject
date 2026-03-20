@@ -2,6 +2,7 @@ import { callAPI } from "/lib/api.js";
 import { noImage, convertToVNTime } from "/lib/public.js";
 import { connectStomp, subscribe, send } from "/lib/websocket.js";
 import { loadNavbar } from "../navbar/navbar.js";
+import {showDialog} from "/dialog/index.js";
 
 /* ================= STATE ================= */
 let currentUserId = null;
@@ -125,12 +126,76 @@ function renderRooms() {
                 <div class="room-last-message" style = "${room.messageSentCount > 0 ? 'color: black; font-weight: bolder' : 'color: #65676b; font-weight: normal'}">
                     ${room.lastMessage || "Bắt đầu cuộc trò chuyện"}</div>
             </div>
-            <div class="room-time">${room.lastMessageTime ? convertToVNTime(room.lastMessageTime) : ""}</div>
+            <div class="room-side">
+                <div class="room-time">${room.lastMessageTime ? convertToVNTime(room.lastMessageTime) : ""}</div>
+                <div class="room-options" title="Tùy chọn" onclick="toggleRoomOptions('${room.roomChatId}', event)">
+                    <i class="fa-solid fa-ellipsis"></i>
+                    <div class="room-options-menu" id="roomOptions-${room.roomChatId}">
+                        <div class="rom-item" onclick="markRoomRead('${room.roomChatId}', event)">
+                            <i class="fa-solid fa-check-double"></i> Đánh dấu đã đọc
+                        </div>
+                        <div class="rom-item danger" onclick="deleteRoomChat('${room.roomChatId}', event)">
+                            <i class="fa-solid fa-trash-can"></i> Xóa đoạn chat
+                        </div>
+                    </div>
+                </div>
+            </div>
         `;
         div.onclick = () => openRoom(room.roomChatId);
         roomListEl.appendChild(div);
     });
 }
+
+window.toggleRoomOptions = (roomId, e) => {
+    e.stopPropagation();
+    // Đóng tất cả menu khác
+    document.querySelectorAll(".room-options-menu.show").forEach(menu => {
+        if (menu.id !== `roomOptions-${roomId}`) menu.classList.remove("show");
+    });
+    const menu = document.getElementById(`roomOptions-${roomId}`);
+    if (menu) menu.classList.toggle("show");
+};
+
+window.markRoomRead = (roomId, e) => {
+    e.stopPropagation();
+    const menu = document.getElementById(`roomOptions-${roomId}`);
+    if (menu) menu.classList.remove("show");
+
+    // Gửi tín hiệu đánh dấu đã đọc
+    send("/app/chat.read", { roomId: roomId });
+    const r = rooms.find(item => String(item.roomChatId) === String(roomId));
+    if (r) {
+        r.messageSentCount = 0;
+        renderRooms();
+    }
+    showNotification("Đã đánh dấu đọc", "success");
+};
+
+window.deleteRoomChat = async (roomId, e) => {
+    e.stopPropagation();
+    const menu = document.getElementById(`roomOptions-${roomId}`);
+    if (menu) menu.classList.remove("show");
+
+    await showDialog('question', "Bạn có chắc muốn xoá cuộc trò chuyện này?", async() => {
+        const res = await callAPI(`/room-chat/${roomId}`, "DELETE");
+        if (res && res.success) {
+            rooms = rooms.filter(r => String(r.roomChatId) !== String(roomId));
+            if (String(currentRoomId) === String(roomId)) {
+                showEmptyChat();
+                currentRoomId = null;
+                history.pushState(null, "", window.location.pathname);
+            }
+            renderRooms();
+            showNotification("Đã xóa đoạn chat", "success");
+        } else {
+            showNotification(res?.message || "Lỗi khi xóa đoạn chat", "error");
+        }
+    });
+};
+
+document.addEventListener("click", () => {
+    document.querySelectorAll(".room-options-menu.show").forEach(menu => menu.classList.remove("show"));
+});
 
 async function openRoom(roomId) {
     currentRoomId = roomId;
