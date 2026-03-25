@@ -78,11 +78,31 @@ body {
     text-overflow: ellipsis;
 }
 
+.room-time-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 4px;
+}
+
 .room-time {
     font-size: 11px;
     color: #8a8d91;
     white-space: nowrap;
-    margin-bottom: 4px;
+}
+
+.room-unread {
+    background-color: #f02849;
+    color: white;
+    font-size: 10px;
+    font-weight: 600;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .room-side {
@@ -182,10 +202,11 @@ body {
     /* Mặc định ẩn trên PC */
     background: none;
     border: none;
-    font-size: 24px;
-    color: #0084ff;
+    font-size: 20px;
+    color: #10B981;
     cursor: pointer;
     margin-right: 12px;
+    padding: 0 8px;
 }
 
 .chat-user {
@@ -231,10 +252,94 @@ body {
     word-wrap: break-word;
 }
 
+.message-wrapper {
+    display: flex;
+    align-items: center;
+    position: relative;
+    gap: 8px;
+}
+
+.chat-message.me .message-wrapper {
+    flex-direction: row-reverse;
+}
+
+.message-options {
+    cursor: pointer;
+    color: #65676b;
+    padding: 6px;
+    border-radius: 50%;
+    transition: background 0.2s;
+    visibility: hidden;
+    position: relative;
+}
+
+.message-wrapper:hover .message-options {
+    visibility: visible;
+}
+
+.message-options:hover {
+    background: #e4e6eb;
+    color: #050505;
+}
+
+.message-options-menu {
+    position: absolute;
+    top: 30px;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+    border: 1px solid #e5e7eb;
+    width: 170px;
+    display: none;
+    flex-direction: column;
+    z-index: 100;
+    overflow: hidden;
+}
+
+.chat-message.me .message-options-menu {
+    right: 0;
+}
+
+.chat-message.other .message-options-menu {
+    left: 0;
+}
+
+.message-options-menu.show {
+    display: flex;
+}
+
+.msg-opt-item {
+    padding: 10px 15px;
+    font-size: 13px;
+    color: #333;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    transition: background 0.2s;
+    white-space: nowrap;
+}
+
+.msg-opt-item:hover {
+    background: #f3f4f6;
+    color: #10B981;
+}
+
+.msg-opt-item.danger:hover {
+    background: #fee2e2;
+    color: #EF4444;
+}
+
 .message-time {
     font-size: 11px;
     color: #8a8d91;
     margin-top: 2px;
+    display: none;
+}
+
+.chat-message:last-child .message-time,
+.chat-message.show-time .message-time {
+    display: block;
 }
 
 /* TIN NHẮN CỦA TÔI */
@@ -272,6 +377,7 @@ body {
     margin-bottom: 4px;
     font-size: 12px;
     color: #65676b;
+    cursor: pointer;
 }
 
 .sender-info img {
@@ -387,6 +493,5 @@ body {
 
     .chat-message {
         max-width: 85%;
-        padding-top: 35px;
     }
 }

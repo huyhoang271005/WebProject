@@ -364,6 +364,12 @@ window.viewDetail = (orderId) => {
     document.getElementById("modalProductList").innerHTML = listHtml;
     const total = order.orderItemDTOList.reduce((sum, i) => sum + (i.price * i.quantity), 0);
     document.getElementById("modalTotalMoney").innerText = money.format(total);
+    
+    const modalMessageBtn = document.getElementById("modalMessageBtn");
+    if (modalMessageBtn) {
+        modalMessageBtn.onclick = () => messageUser(order.userId);
+    }
+    
     document.getElementById("detailModal").style.display = "flex";
 };
 
@@ -392,3 +398,17 @@ function updateSortIcon() {
         icon.style.color = "";
     }
 }
+
+window.messageUser = async (userId) => {
+    if (!userId || userId === 'null' || userId === 'undefined') {
+        await showDialog("warning", "Đơn hàng này không gắn với tài khoản nào (Khách lẻ). Không thể nhắn tin.");
+        return;
+    }
+    const data = { userIds: [userId] };
+    const result = await callAPI("/room-chat", "POST", data);
+    if (result.success) {
+      window.location.href = "/message/?roomId=" + result.data.roomChatId;
+    } else {
+      await showDialog("error", result.message || "Không thể tạo phòng chat.");
+    }
+};

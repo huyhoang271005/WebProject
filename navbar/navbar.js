@@ -228,8 +228,8 @@ function updateNavbarUI(data) {
   if (!data) return;
   document.getElementById("app-name").innerHTML = `<i class="fa-solid fa-leaf"></i> ${data.appName}`;
   document.getElementById("nbAvatar").src = data.imageUrl || noImage;
-  if (data.username && data.username !== "Khách") {
-    document.getElementById("nbUsername").textContent = data.username;
+  if (data.fullName && data.fullName !== "Khách") {
+    document.getElementById("nbUsername").textContent = data.fullName;
     document.getElementById("nbRole").textContent = data.roleName;
     document
       .querySelectorAll(".nb-admin-only")
@@ -290,15 +290,17 @@ function setupSSERealtime() {
   });
 
   // 2. Message (Tin nhắn) - CẮT BỎ LOẠI 1 (Chỉ hiện Toast, ko vào chuông)
-  subscribeTopic("message", async (data) => {
-    // Chỉ hiện Box nổi (Toast)
-    let current = parseInt(homeData.readMessages);
-    console.log(homeData);
-    homeData.readMessages = Math.max(0, current + 1);
-    updateNavbarUI(homeData);
-    sessionStorage.setItem("homeData", JSON.stringify(data));
-    showSmartToast(data.username, data.message, "fa-comment-dots");
-  });
+  const badge = document.getElementById("chatBadge");
+  if(badge) {
+    subscribeTopic("message", async (data) => {
+      // Chỉ hiện Box nổi (Toast)
+      let current = parseInt(homeData.readMessages) || 0;
+      homeData.readMessages = Math.max(0, current + 1);
+      updateNavbarUI(homeData);
+      sessionStorage.setItem("homeData", JSON.stringify(homeData));
+      showSmartToast(data.fullName, data.message, "fa-comment-dots");
+    });
+  }
 
   // 3. Cart
   subscribeTopic("cart", (data) => {
