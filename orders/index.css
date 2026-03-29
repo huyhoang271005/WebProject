@@ -978,8 +978,8 @@ body {
     font-size: 10px;
     font-weight: bold;
 }
-.btn-delete-review {
-    color: #EF4444;
+.btn-edit-review {
+    color: var(--primary-green, #10B981);
     background: none;
     border: none;
     cursor: pointer;
@@ -991,11 +991,11 @@ body {
     width: auto;
     padding: 0;
 }
-.btn-delete-review:hover {
+.btn-edit-review:hover {
     text-decoration: underline;
     background: none;
     box-shadow: none;
 }
-.btn-delete-review:active {
+.btn-edit-review:active {
     background: none;
 }

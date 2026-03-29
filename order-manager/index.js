@@ -1,5 +1,6 @@
 import { callAPI } from '../lib/api.js';
 import { showDialog } from "/dialog/index.js";
+import {convertToVNTime, noImage} from "../lib/public.js";
 
 const money = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' });
 
@@ -372,7 +373,33 @@ window.viewDetail = (orderId) => {
         modalMessageBtn.onclick = () => messageUser(order.userId);
     }
     
-    fetchOrderReviewsAdmin(orderId);
+    const orderReviewSection = document.getElementById("orderReviewSection");
+    const btnViewReview = document.getElementById("btnViewReview");
+    const modalReviewList = document.getElementById("modalReviewList");
+
+    const btnUserDetail = document.getElementById("btnUserDetail");
+
+    if(btnUserDetail) {
+        btnUserDetail.onclick = () => userDetail(order.userId);
+    }
+    if (orderReviewSection && btnViewReview && modalReviewList) {
+        modalReviewList.style.display = 'none';
+        modalReviewList.innerHTML = '<p style="color: #888; text-align:center; padding: 20px;">Đang tải đánh giá...</p>';
+        btnViewReview.style.display = 'block';
+
+        if (order.orderStatus === 'HAS_FEEDBACK') {
+            orderReviewSection.style.display = 'block';
+            btnViewReview.onclick = () => {
+                btnViewReview.style.display = 'none';
+                modalReviewList.style.display = 'block';
+                fetchOrderReviewsAdmin(orderId);
+            };
+        } else {
+            orderReviewSection.style.display = 'none';
+        }
+    } else {
+        fetchOrderReviewsAdmin(orderId);
+    }
     
     document.getElementById("detailModal").style.display = "flex";
 };
@@ -384,7 +411,7 @@ async function fetchOrderReviewsAdmin(orderId) {
     listContainer.innerHTML = '<p style="color: #888; text-align:center; padding: 20px;">Đang tải đánh giá...</p>';
     
     try {
-        const res = await callAPI(`/feedbacks/order/${orderId}`, "GET");
+        const res = await callAPI(`/feedbacks/orders/${orderId}`, "GET");
         if (res.success && res.data && res.data.length > 0) {
             renderOrderReviewsAdmin(res.data);
         } else {
@@ -400,8 +427,8 @@ function renderOrderReviewsAdmin(reviews) {
     let html = "";
     
     reviews.forEach(review => {
-        const avatar = review.imageUrl || '/lib/no-image.jpg';
-        const date = new Date(review.createdAt).toLocaleString('vi-VN');
+        const avatar = review.imageUrl || noImage;
+        const date = convertToVNTime(review.createdAt);
         
         let starsHtml = '';
         for (let i = 1; i <= 5; i++) {
@@ -416,8 +443,8 @@ function renderOrderReviewsAdmin(reviews) {
 
         let replyHtml = '';
         if (review.reply) {
-            const replyDate = new Date(review.reply.createdAt).toLocaleString('vi-VN');
-            const replyAvatar = review.reply.imageUrl || '/lib/no-image.jpg';
+            const replyDate = convertToVNTime(review.reply.createdAt);
+            const replyAvatar = review.reply.imageUrl || noImage;
             replyHtml = `
                 <div class="review-reply-box">
                     <div class="review-reply-header">
@@ -497,3 +524,7 @@ window.messageUser = async (userId) => {
       await showDialog("error", result.message || "Không thể tạo phòng chat.");
     }
 };
+
+window.userDetail = async (userId) => {
+    window.location.href = "/user-detail?uid=" + userId;
+}

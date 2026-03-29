@@ -288,7 +288,7 @@ function renderOrders() {
                         <i class="fas fa-hashtag"></i>
                         ${escapeHtml(displayOrderId)}
                         <span style="font-size: 12px; color: #6b7280; margin-left: 10px;">
-                            ${formatDate(order.createdAt)}
+                            ${convertToVNTime(order.createdAt)}
                         </span>
                     </div>
                     <div class="order-status status-${order.orderStatus}">
@@ -554,11 +554,11 @@ async function showOrderDetailModal(order, orderIndex) {
                 </div>
                 <div class="info-item">
                     <span class="info-label">Ngày đặt</span>
-                    <span class="info-value">${formatDate(order.createdAt)}</span>
+                    <span class="info-value">${convertToVNTime(order.createdAt)}</span>
                 </div>
                 <div class="info-item">
                     <span class="info-label">Ngày thanh toán</span>
-                    <span class="info-value">${formatDate(order.paymentAt)}</span>
+                    <span class="info-value">${convertToVNTime(order.paymentAt)}</span>
                 </div>
                 <div class="info-item">
                     <span class="info-label">Phương thức thanh toán</span>
@@ -700,6 +700,8 @@ window.toggleOrderReview = async (orderId) => {
     }
 };
 
+let currentOrderReviews = [];
+
 async function fetchOrderReviewsUser(orderId) {
     const listContainer = document.getElementById("modalUserReviewList");
     if (!listContainer) return;
@@ -709,11 +711,14 @@ async function fetchOrderReviewsUser(orderId) {
     try {
         const res = await callAPI(`/feedbacks/orders/${orderId}`, "GET");
         if (res.success && res.data && res.data.length > 0) {
+            currentOrderReviews = res.data;
             renderOrderReviewsUser(res.data, orderId);
         } else {
+            currentOrderReviews = [];
             listContainer.innerHTML = '<p style="color: #888; text-align:center; padding: 10px;">Chưa có đánh giá nào cho đơn hàng này.</p>';
         }
     } catch (e) {
+        currentOrderReviews = [];
         listContainer.innerHTML = '<p style="color: red; text-align:center; padding: 10px;">Lỗi tải đánh giá.</p>';
     }
 }
@@ -754,46 +759,121 @@ function renderOrderReviewsUser(reviews, orderId) {
         }
         
         html += `
-            <div class="review-item">
-                <div class="review-header">
-                    <div class="review-user-info">
-                        <img src="${avatar}" class="review-avatar">
-                        <div class="review-meta">
-                            <span class="review-username">${escapeHtml(review.username)}</span>
-                            <span class="review-date">${date}</span>
+            <div class="review-item" id="review-item-${review.feedbackId}">
+                <!-- display mode -->
+                <div class="review-display" id="review-display-${review.feedbackId}">
+                    <div class="review-header">
+                        <div class="review-user-info">
+                            <img src="${avatar}" class="review-avatar">
+                            <div class="review-meta">
+                                <span class="review-username">${escapeHtml(review.username)}</span>
+                                <span class="review-date">${date}</span>
+                            </div>
                         </div>
+                        <button class="btn-edit-review" onclick="editUserReview('${review.feedbackId}', '${orderId}')" title="Sửa đánh giá">
+                            <i class="fa-solid fa-pen"></i> Sửa
+                        </button>
                     </div>
-                    <button class="btn-delete-review" onclick="deleteUserReview('${review.feedbackId}', '${orderId}')" title="Xoá đánh giá">
-                        <i class="fa-solid fa-trash"></i> Xoá
-                    </button>
+                    <div class="review-stars">${starsHtml}</div>
+                    <div class="review-content">${escapeHtml(review.comment || '')}</div>
+                    ${replyHtml}
                 </div>
-                <div class="review-stars">${starsHtml}</div>
-                <div class="review-content">${escapeHtml(review.comment || '')}</div>
-                ${replyHtml}
+                
+                <!-- edit mode -->
+                <div class="review-edit" id="review-edit-${review.feedbackId}" style="display: none; padding-top: 10px;">
+                    <div style="margin-bottom: 10px; display: flex; gap: 5px; color: #f59e0b; cursor: pointer;" id="edit-stars-${review.feedbackId}">
+                    </div>
+                    <textarea id="edit-comment-${review.feedbackId}" rows="3" style="width: 100%; border: 1px solid #ddd; border-radius: 4px; padding: 8px; font-family: inherit; font-size: 14px; resize: vertical;" placeholder="Nhập nhận xét của bạn..."></textarea>
+                    <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                        <button type="button" onclick="cancelEditReview('${review.feedbackId}')" style="background: transparent; border: 1px solid #ccc; color: #666;">Hủy</button>
+                        <button type="button" onclick="saveEditReview('${review.feedbackId}', '${orderId}')">Lưu</button>
+                    </div>
+                </div>
             </div>
         `;
     });
     container.innerHTML = html;
 }
+window.editUserReview = (feedbackId, orderId) => {
+    const review = currentOrderReviews.find(r => r.feedbackId === feedbackId);
+    if (!review) return;
+    
+    document.getElementById(`review-display-${feedbackId}`).style.display = 'none';
+    const editForm = document.getElementById(`review-edit-${feedbackId}`);
+    editForm.style.display = 'block';
+    
+    document.getElementById(`edit-comment-${feedbackId}`).value = review.comment || '';
+    
+    renderEditStars(feedbackId, review.rating);
+    editForm.dataset.rating = review.rating;
+};
 
-window.deleteUserReview = async (feedbackId, orderId) => {
-    await showDialog("question", "Bạn có chắc chắn muốn xoá đánh giá này không?", async () => {
-        try {
-            if (typeof toggleLoading === 'function') toggleLoading(true);
-            const res = await callAPI("/feedbacks/" + feedbackId, "DELETE");
-            if (res.success) {
-                showNotification("Xoá đánh giá thành công", "success");
-                if (orderId) await fetchOrderReviewsUser(orderId);
-            } else {
-                showNotification(res.message || "Không thể xoá đánh giá", "error");
-            }
-        } catch (e) {
-            console.error(e);
-            showNotification("Có lỗi xảy ra", "error");
-        } finally {
-            if (typeof toggleLoading === 'function') toggleLoading(false);
+window.cancelEditReview = (feedbackId) => {
+    document.getElementById(`review-display-${feedbackId}`).style.display = 'block';
+    document.getElementById(`review-edit-${feedbackId}`).style.display = 'none';
+};
+
+window.renderEditStars = (feedbackId, rating) => {
+    const container = document.getElementById(`edit-stars-${feedbackId}`);
+    let html = '';
+    for (let i = 1; i <= 5; i++) {
+        const starClass = i <= rating ? 'fa-solid' : 'fa-regular';
+        html += `<i class="${starClass} fa-star" onclick="setEditStar('${feedbackId}', ${i})" style="font-size: 16px;"></i>`;
+    }
+    container.innerHTML = html;
+};
+
+window.setEditStar = (feedbackId, rating) => {
+    const editForm = document.getElementById(`review-edit-${feedbackId}`);
+    editForm.dataset.rating = rating;
+    renderEditStars(feedbackId, rating);
+};
+
+window.saveEditReview = async (feedbackId, orderId) => {
+    const editForm = document.getElementById(`review-edit-${feedbackId}`);
+    const rating = parseInt(editForm.dataset.rating) || 5;
+    const comment = document.getElementById(`edit-comment-${feedbackId}`).value.trim();
+    
+    try {
+        if (typeof toggleLoading === 'function') toggleLoading(true);
+        const res = await callAPI(`/feedbacks/${feedbackId}`, "PATCH", { rating, comment });
+        if (res.success) {
+            showNotification("Cập nhật đánh giá thành công", "success");
+            await fetchOrderReviewsUser(orderId);
+        } else {
+            showNotification(res.message || "Không thể cập nhật đánh giá", "error");
         }
-    });
+    } catch (e) {
+        console.error(e);
+        showNotification("Có lỗi xảy ra", "error");
+    } finally {
+        if (typeof toggleLoading === 'function') toggleLoading(false);
+    }
+};
+
+window.copyToClipboard = async (text, element) => {
+    try {
+        await navigator.clipboard.writeText(text);
+        
+        // Visual feedback
+        const icon = element.querySelector('i');
+        if (icon) {
+            const originalClass = icon.className;
+            const originalColor = icon.style.color;
+            
+            icon.className = 'fas fa-check';
+            icon.style.color = '#10b981'; // Success green
+            
+            setTimeout(() => {
+                icon.className = originalClass;
+                icon.style.color = originalColor;
+            }, 1500);
+        }
+        
+        showNotification('Đã copy mã đơn hàng', 'success');
+    } catch (err) {
+        showNotification('Lỗi khi copy mã đơn hàng', 'error');
+    }
 };
 
 /**
@@ -894,67 +974,6 @@ window.cancelOrder = async (orderIndex) => {
 
 };
 
-
-
-/**
- * Pagination - Deprecated (sử dụng infinite scroll)
- */
-window.changePage = async (delta) => {
-    // Không dùng nữa vì đã chuyển sang infinite scroll
-    return;
-};
-
-function updatePagination() {
-    const pagination = document.getElementById('pagination');
-    const pageInfo = document.getElementById('pageInfo');
-    const prevBtn = document.getElementById('prevBtn');
-    const nextBtn = document.getElementById('nextBtn');
-
-    if (!pagination || !pageInfo) return;
-
-    // Show pagination if we have data
-    if (allOrders.length > 0 || filteredOrders.length > 0) {
-        pagination.style.display = 'flex';
-    } else {
-        pagination.style.display = 'none';
-        return;
-    }
-
-    pageInfo.innerText = `Trang ${currentPage + 1} / ${Math.max(1, totalPages)}`;
-
-    // Update buttons
-    prevBtn.disabled = currentPage <= 0;
-    nextBtn.disabled = currentPage >= totalPages - 1;
-
-    // Visual styling for disabled buttons
-    prevBtn.style.opacity = prevBtn.disabled ? '0.5' : '1';
-    prevBtn.style.cursor = prevBtn.disabled ? 'not-allowed' : 'pointer';
-
-    nextBtn.style.opacity = nextBtn.disabled ? '0.5' : '1';
-    nextBtn.style.cursor = nextBtn.disabled ? 'not-allowed' : 'pointer';
-}
-
-/**
- * Handle page change
- */
-window.changePage = async (delta) => {
-    const newPage = currentPage + delta;
-
-    if (newPage < 0 || (newPage >= totalPages && delta > 0)) return;
-
-    currentPage = newPage;
-
-    // Show loading overlay
-    if (typeof toggleLoading === 'function') toggleLoading(true);
-
-    await loadOrders(false); // Enable strict page loading
-
-    // Scroll to top
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-
-    if (typeof toggleLoading === 'function') toggleLoading(false);
-};
-
 /**
  * Show empty state
  */
@@ -978,25 +997,6 @@ function showNotification(message, type = 'success') {
             noti.classList.add('hidden');
         }, 300);
     }, 3000);
-}
-
-/**
- * Format date
- */
-function formatDate(dateString) {
-    if (!dateString) return 'N/A';
-    try {
-        const date = new Date(dateString);
-        return date.toLocaleString('vi-VN', {
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-        });
-    } catch (e) {
-        return dateString;
-    }
 }
 
 /**

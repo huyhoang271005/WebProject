@@ -61,6 +61,7 @@ export function appendMessage(msg, isPrepend = false) {
             <div class="sender-info" onclick="window.location.href='/user-detail?uid=${msg.senderId}'">
                 <img src="${sender.imageUrl || noImage}">
                 <span>${sender.fullName || "Người dùng"}</span>
+                ${sender.roleName !== "USER" ? `<span style="font-size: 0.65rem; color: #6b7280; border: 1px solid #d1d5db; padding: 1px 5px; border-radius: 8px; margin-left: 4px;">${sender.roleName}</span>` : ""}
             </div>
         ` : ""}
         <div class="message-wrapper">
@@ -94,7 +95,7 @@ export function appendMessage(msg, isPrepend = false) {
 export function sendMessage() {
     const content = dom.messageInputEl.value.trim();
     if (!content || !state.currentRoomId) return;
-    
+
     const tempId = "temp-" + Date.now() + Math.floor(Math.random() * 1000);
     const msg = {
         messageId: tempId,
@@ -110,7 +111,7 @@ export function sendMessage() {
     state.messageQueue.push(msg);
 
     dom.messageInputEl.value = "";
-    
+
     processMessageQueue();
 }
 
@@ -120,7 +121,7 @@ export function processMessageQueue() {
     // Do đó tạm thời giả định isConnected đã có
     import("/lib/websocket.js").then(ws => {
         if (!ws.isConnected()) return;
-        
+
         const now = Date.now();
         state.messageQueue.forEach(msg => {
             if (msg.lastSent && (now - msg.lastSent < 2000)) return;

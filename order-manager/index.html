@@ -115,9 +115,14 @@
                     </div>
                 </div>
 
-                <div class="info-section">
-                    <h4><i class="fa-solid fa-star"></i> Đánh giá của khách hàng</h4>
-                    <div id="modalReviewList" style="max-height: 300px; overflow-y: auto;">
+                <div class="info-section" id="orderReviewSection">
+                    <div style="align-items: center; margin-bottom: 10px;">
+                        <h4 style="margin: 0;"><i class="fa-solid fa-star" style="color:#f59e0b"></i> Đánh giá của khách hàng</h4>
+                        <button id="btnViewReview">
+                            <i class="fa-solid fa-eye"></i> Xem đánh giá
+                        </button>
+                    </div>
+                    <div id="modalReviewList" style="max-height: 300px; overflow-y: auto; display: none;">
                         <p style="color: #888; text-align:center; padding: 20px;">Đang tải đánh giá...</p>
                     </div>
                 </div>
@@ -127,7 +132,7 @@
                 <button id="modalMessageBtn" style="padding: 8px 16px; background-color: #0084ff; color: white; border: none; border-radius: 6px; cursor: pointer; align-items: center; gap: 8px;">
                     <i class="fa-solid fa-message"></i> Nhắn tin
                 </button>
-                <button onclick="closeModal()">Đóng</button>
+                <button id="btnUserDetail">Thông tin người dùng</button>
             </div>
         </div>
     </div>

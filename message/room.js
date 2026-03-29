@@ -32,8 +32,11 @@ export function renderRooms() {
                 <div class="room-options" title="Tùy chọn" onclick="toggleRoomOptions('${room.roomChatId}', event)">
                     <i class="fa-solid fa-ellipsis"></i>
                     <div class="room-options-menu" id="roomOptions-${room.roomChatId}">
-                        <div class="rom-item" onclick="markRoomRead('${room.roomChatId}', event)">
-                            <i class="fa-solid fa-check-double"></i> Đánh dấu đã đọc
+                        <div class="rom-item" onclick="toggleRoomReadStatus('${room.roomChatId}', event)">
+                            ${room.messageSentCount > 0 
+                                ? '<i class="fa-solid fa-check-double"></i> Đánh dấu đã đọc' 
+                                : '<i class="fa-solid fa-envelope"></i> Đánh dấu chưa đọc'
+                            }
                         </div>
                         <div class="rom-item" onclick="toggleMuteRoom('${room.roomChatId}', event)">
                             ${room.roomChatStatus === "MUTE" ? '<i class="fa-solid fa-bell"></i> Bật thông báo' : '<i class="fa-solid fa-bell-slash"></i> Tắt thông báo'}
@@ -83,18 +86,34 @@ window.toggleMuteRoom = async (roomId, e) => {
     }
 };
 
-window.markRoomRead = (roomId, e) => {
+window.toggleRoomReadStatus = async (roomId, e) => {
     e.stopPropagation();
     const menu = document.getElementById(`roomOptions-${roomId}`);
     if (menu) menu.classList.remove("show");
 
-    send("/app/chat.read", { roomId: roomId });
     const r = state.rooms.find(item => String(item.roomChatId) === String(roomId));
-    if (r) {
-        r.messageSentCount = 0;
-        renderRooms();
+    if (!r) return;
+
+    try {
+        const res = await callAPI(`/room-chat/${roomId}/unread`, "PATCH");
+        if (res && res.success) {
+            if (r.messageSentCount > 0) {
+                // Was unread, now read
+                r.messageSentCount = 0;
+                send("/app/chat.read", { roomId: roomId });
+                showNotification("Đã đánh dấu đọc", "success");
+            } else {
+                // Was read, now unread
+                r.messageSentCount = 1;
+                showNotification("Đã đánh dấu chưa đọc", "success");
+            }
+            renderRooms();
+        } else {
+            showNotification(res?.message || "Có lỗi xảy ra", "error");
+        }
+    } catch (error) {
+        showNotification("Lỗi kết nối", "error");
     }
-    showNotification("Đã đánh dấu đọc", "success");
 };
 
 window.deleteRoomChat = async (roomId, e) => {
