@@ -2,6 +2,7 @@ import { callAPI } from '../lib/api.js';
 import { toggleLoading } from '../lib/loader.js';
 import { loadNavbar } from '../navbar/navbar.js';
 import { showDialog } from "/dialog/index.js";
+import {convertToVNTime, noImage} from "../lib/public.js";
 
 const formatter = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' });
 const PAYMENT_METHOD = {
@@ -18,13 +19,15 @@ const STATUS_MAP = {
     4: 'DELIVERING',
     5: 'DELIVERED',
     6: 'COMPLETED',
+    7: 'HAS_FEEDBACK',
     'WAITING': 'WAITING',
     'PAYING': 'PAYING',
     'PENDING': 'PENDING',
     'CANCELED': 'CANCELED',
     'DELIVERING': 'DELIVERING',
     'DELIVERED': 'DELIVERED',
-    'COMPLETED': 'COMPLETED'
+    'COMPLETED': 'COMPLETED',
+    'HAS_FEEDBACK': 'HAS_FEEDBACK'
 };
 
 const STATUS_CONFIG = {
@@ -64,6 +67,12 @@ const STATUS_CONFIG = {
         color: '#10b981',
         actions: ['detail', 'feedback', 'reorder']
     },
+    HAS_FEEDBACK: {
+        label: 'Đã hoàn thành',
+        icon: 'fa-check-circle',
+        color: '#10b981',
+        actions: ['detail', 'has_feedback', 'reorder']
+    },
     CANCELED: {
         label: 'Đã hủy',
         icon: 'fa-times-circle',
@@ -94,6 +103,22 @@ document.addEventListener("DOMContentLoaded", async () => {
 
         document.getElementById('loadPage').style.display = 'none';
         document.getElementById('info').style.display = 'block';
+
+        // Tự động mở chi tiết đơn hàng nếu có orderId trên URL
+        const orderIdUrl = new URLSearchParams(window.location.search).get("orderId");
+        if (orderIdUrl) {
+            try {
+                if (typeof toggleLoading === 'function') toggleLoading(true);
+                const response = await callAPI(`/orders/${orderIdUrl}`, 'GET');
+                if (response.success && response.data) {
+                    showOrderDetailModal(response.data, 0); 
+                }
+            } catch (err) {
+                console.error("Lỗi tự động tải đơn hàng:", err);
+            } finally {
+                if (typeof toggleLoading === 'function') toggleLoading(false);
+            }
+        }
 
     } catch (error) {
         console.error(error);
@@ -404,6 +429,15 @@ function renderOrderActions(orderIndex, statusConfig, orderFromList) {
         `;
     }
 
+    // 6. Evaluated button - HAS_FEEDBACK
+    if (actions.includes('has_feedback')) {
+        html += `
+            <button class="btn-action" onclick="viewOrderDetail(${orderIndex})" style="background:#8b5cf6; color:white; border:none;">
+                <i class="fas fa-eye"></i> Xem đánh giá
+            </button>
+        `;
+    }
+
     return html;
 }
 
@@ -453,7 +487,11 @@ window.viewOrderDetail = async (orderIndex) => {
         showNotification('Không tìm thấy đơn hàng', 'error');
         return;
     }
+    const newUrl = new URL(window.location);
+    newUrl.searchParams.set('orderId',order.orderId);
+    window.history.pushState({}, '', newUrl);
 
+    // Lấy thông tin chi tiết của đơn (như địa chỉ, admin ghi chú, ...)
     try {
         if (typeof toggleLoading === 'function') toggleLoading(true);
         const response = await callAPI(`/orders/${order.orderId}`, 'GET');
@@ -479,13 +517,21 @@ window.viewOrderDetail = async (orderIndex) => {
 /**
  * Show order detail modal
  */
-function showOrderDetailModal(order, orderIndex) {
+async function showOrderDetailModal(order, orderIndex) {
     const modal = document.getElementById('orderDetailModal');
     const modalBody = document.getElementById('modalBody');
 
     const statusConfig = STATUS_CONFIG[order.orderStatus] || STATUS_CONFIG.WAITING;
     const totalAmount = calculateOrderTotal(order);
     const displayOrderId = order.orderId || `#${String(orderIndex + 1).padStart(6, '0')}`;
+
+    // WAITING và PAYING đều có thể hủy và thanh toán (VNPay)
+    const canCancel = (order.orderStatus === 'WAITING' || order.orderStatus === 'PAYING');
+    const canPay = (order.orderStatus === 'WAITING' || order.orderStatus === 'PAYING') && order.paymentMethod === PAYMENT_METHOD.VNPAY;
+    const canConfirm = order.orderStatus === 'DELIVERED';
+    const canFeedback = order.orderStatus === 'COMPLETED';
+    const hasFeedback = order.orderStatus === 'HAS_FEEDBACK';
+    const canReorder = false;
 
     modalBody.innerHTML = `
         <div class="detail-section">
@@ -518,8 +564,8 @@ function showOrderDetailModal(order, orderIndex) {
                     <span class="info-label">Phương thức thanh toán</span>
                     <span class="info-value">
                         ${order.paymentMethod === 'VN_PAY'
-            ? '<i class="fas fa-credit-card"></i> VNPay'
-            : '<i class="fas fa-money-bill-wave"></i> Thanh toán khi nhận hàng (COD)'}
+        ? '<i class="fas fa-credit-card"></i> VNPay'
+        : '<i class="fas fa-money-bill-wave"></i> Thanh toán khi nhận hàng (COD)'}
                     </span>
                 </div>
             </div>
@@ -571,16 +617,20 @@ function showOrderDetailModal(order, orderIndex) {
                 </div>
             </div>
         </div>
+        
+        ${hasFeedback ? 
+        '<div class="detail-section" id="reviewSectionContainer" style="display: none;">\n' +
+        '            <h3><i class="fas fa-star"></i> Đánh giá của khách hàng</h3>\n' +
+        '            <div id="modalUserReviewList" class="order-items"\n' +
+        '                 style="padding: 15px; background: #fff; border-radius: 8px; border: 1px solid #eee;">\n' +
+        '                <p style="color: #666; text-align:center; padding: 10px;">Đang tải đánh giá...</p>\n' +
+        '            </div>\n' +
+        '        </div> '
+        : ""}
     `;
 
-    // WAITING và PAYING đều có thể hủy và thanh toán (VNPay)
-    const canCancel = (order.orderStatus === 'WAITING' || order.orderStatus === 'PAYING');
-    const canPay = (order.orderStatus === 'WAITING' || order.orderStatus === 'PAYING') && order.paymentMethod === PAYMENT_METHOD.VNPAY;
-    const canConfirm = order.orderStatus === 'DELIVERED';
-    const canFeedback = order.orderStatus === 'COMPLETED';
-    const canReorder = false;
 
-    if (canCancel || canPay || canConfirm || canFeedback || canReorder) {
+    if (canCancel || canPay || canConfirm || canFeedback || canReorder || hasFeedback) {
         modalBody.innerHTML += `<div class="modal-actions" style="margin-top: 20px; display: flex; gap: 10px; justify-content: flex-end; flex-wrap: wrap;"></div>`;
         const actionContainer = modalBody.querySelector('.modal-actions');
 
@@ -623,6 +673,12 @@ function showOrderDetailModal(order, orderIndex) {
                     <i class="fas fa-star"></i> ĐÁNH GIÁ
                 </button>
             `;
+        } else if (hasFeedback) {
+            actionContainer.innerHTML += `
+                <button class="btn-action" onclick="toggleOrderReview('${order.orderId}')" style="padding: 12px 24px; border-radius: 4px; cursor: pointer; font-weight: 600; background-color: #8b5cf6; color: white; border: none; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                    <i class="fas fa-eye"></i> XEM ĐÁNH GIÁ
+                </button>
+            `;
         }
 
 
@@ -631,6 +687,114 @@ function showOrderDetailModal(order, orderIndex) {
     modal.style.display = 'flex';
     document.body.style.overflow = 'hidden'; // Ngăn cuộn nền để giảm giật lag
 }
+
+window.toggleOrderReview = async (orderId) => {
+    const container = document.getElementById('reviewSectionContainer');
+    if (!container) return;
+    
+    if (container.style.display === 'none') {
+        container.style.display = 'block';
+        await fetchOrderReviewsUser(orderId);
+    } else {
+        container.style.display = 'none';
+    }
+};
+
+async function fetchOrderReviewsUser(orderId) {
+    const listContainer = document.getElementById("modalUserReviewList");
+    if (!listContainer) return;
+    
+    listContainer.innerHTML = '<p style="color: #666; text-align:center; padding: 10px;">Đang tải đánh giá...</p>';
+    
+    try {
+        const res = await callAPI(`/feedbacks/orders/${orderId}`, "GET");
+        if (res.success && res.data && res.data.length > 0) {
+            renderOrderReviewsUser(res.data, orderId);
+        } else {
+            listContainer.innerHTML = '<p style="color: #888; text-align:center; padding: 10px;">Chưa có đánh giá nào cho đơn hàng này.</p>';
+        }
+    } catch (e) {
+        listContainer.innerHTML = '<p style="color: red; text-align:center; padding: 10px;">Lỗi tải đánh giá.</p>';
+    }
+}
+
+function renderOrderReviewsUser(reviews, orderId) {
+    const container = document.getElementById("modalUserReviewList");
+    let html = "";
+    
+    reviews.forEach(review => {
+        const avatar = review.imageUrl || noImage;
+        const date = convertToVNTime(review.createdAt);
+        
+        let starsHtml = '';
+        for (let i = 1; i <= 5; i++) {
+            if (review.rating >= i) {
+                starsHtml += '<i class="fa-solid fa-star"></i>';
+            } else if (review.rating >= i - 0.5) {
+                starsHtml += '<i class="fa-solid fa-star-half-stroke"></i>';
+            } else {
+                starsHtml += '<i class="fa-regular fa-star"></i>';
+            }
+        }
+
+        let replyHtml = '';
+        if (review.reply) {
+            const replyDate = convertToVNTime(review.reply.createdAt);
+            const replyAvatar = review.reply.imageUrl || noImage;
+            replyHtml = `
+                <div class="review-reply-box">
+                    <div class="review-reply-header">
+                        <img src="${replyAvatar}" style="width:20px;height:20px;border-radius:50%">
+                        <span>${escapeHtml(review.reply.username)} <span class="admin-badge">${review.reply.roleName}</span></span>
+                        <span style="font-size:11px;color:#888;font-weight:normal">${replyDate}</span>
+                    </div>
+                    <div class="review-reply-content">${escapeHtml(review.reply.message)}</div>
+                </div>
+            `;
+        }
+        
+        html += `
+            <div class="review-item">
+                <div class="review-header">
+                    <div class="review-user-info">
+                        <img src="${avatar}" class="review-avatar">
+                        <div class="review-meta">
+                            <span class="review-username">${escapeHtml(review.username)}</span>
+                            <span class="review-date">${date}</span>
+                        </div>
+                    </div>
+                    <button class="btn-delete-review" onclick="deleteUserReview('${review.feedbackId}', '${orderId}')" title="Xoá đánh giá">
+                        <i class="fa-solid fa-trash"></i> Xoá
+                    </button>
+                </div>
+                <div class="review-stars">${starsHtml}</div>
+                <div class="review-content">${escapeHtml(review.comment || '')}</div>
+                ${replyHtml}
+            </div>
+        `;
+    });
+    container.innerHTML = html;
+}
+
+window.deleteUserReview = async (feedbackId, orderId) => {
+    await showDialog("question", "Bạn có chắc chắn muốn xoá đánh giá này không?", async () => {
+        try {
+            if (typeof toggleLoading === 'function') toggleLoading(true);
+            const res = await callAPI("/feedbacks/" + feedbackId, "DELETE");
+            if (res.success) {
+                showNotification("Xoá đánh giá thành công", "success");
+                if (orderId) await fetchOrderReviewsUser(orderId);
+            } else {
+                showNotification(res.message || "Không thể xoá đánh giá", "error");
+            }
+        } catch (e) {
+            console.error(e);
+            showNotification("Có lỗi xảy ra", "error");
+        } finally {
+            if (typeof toggleLoading === 'function') toggleLoading(false);
+        }
+    });
+};
 
 /**
  * Render all order items (for modal detail)
@@ -675,6 +839,11 @@ function renderAllOrderItems(items) {
 window.closeModal = () => {
     document.getElementById('orderDetailModal').style.display = 'none';
     document.body.style.overflow = ''; // Phục hồi cuộn nền
+    const url = new URL(window.location);
+
+    url.searchParams.delete('orderId');
+
+    window.history.replaceState({}, '', url);
 };
 
 // Close modal when clicking outside

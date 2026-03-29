@@ -702,3 +702,97 @@ tr:hover td {
         align-items: flex-start;
     }
 }
+
+/* =========================================================
+   REVIEW UI IN MODAL (CHUNG CHO ADMIN & USER)
+========================================================= */
+.review-item {
+    border-bottom: 1px solid #E5E7EB;
+    padding: 15px 0;
+}
+.review-item:last-child {
+    border-bottom: none;
+}
+.review-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
+    align-items: flex-start;
+}
+.review-user-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.review-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+.review-meta {
+    display: flex;
+    flex-direction: column;
+}
+.review-username {
+    font-weight: 600;
+    color: #1F2937;
+    font-size: 14px;
+}
+.review-date {
+    font-size: 12px;
+    color: #6B7280;
+}
+.review-stars {
+    color: #F59E0B;
+    font-size: 12px;
+    margin-bottom: 5px;
+}
+.review-content {
+    color: #374151;
+    font-size: 14px;
+    margin-bottom: 10px;
+    line-height: 1.5;
+}
+.review-reply-box {
+    margin-top: 10px;
+    padding: 12px;
+    background-color: #F9FAFB;
+    border-radius: 8px;
+    border-left: 3px solid #10B981;
+}
+.review-reply-header {
+    font-weight: 600;
+    font-size: 13px;
+    color: #1F2937;
+    margin-bottom: 5px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.review-reply-content {
+    font-size: 13.5px;
+    color: #4B5563;
+}
+.admin-badge {
+    background-color: #E2E8F0;
+    color: #475569;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: bold;
+}
+.btn-delete-review {
+    color: #EF4444;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 0;
+}
+.btn-delete-review:hover {
+    text-decoration: underline;
+}

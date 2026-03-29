@@ -76,7 +76,9 @@ async function init() {
                         r.messageSentCount += 1;
                     }
 
-                    r.roomChatStatus = "NORMAL";
+                    if (r.roomChatStatus !== "DELETED" && r.roomChatStatus !== "MUTE") {
+                        r.roomChatStatus = "NORMAL";
+                    }
 
                     renderRooms();
                 }

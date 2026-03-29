@@ -310,6 +310,8 @@ function getStatusBadge(status) {
         case 'PENDING': cls = 'badge-yellow'; lbl = 'Chờ xác nhận'; break;
         case 'DELIVERING': cls = 'badge-blue'; lbl = 'Đang giao'; break;
         case 'DELIVERED': cls = 'badge-green'; lbl = 'Hoàn thành'; break;
+        case 'COMPLETED': cls = 'badge-green'; lbl = 'Hoàn thành'; break;
+        case 'HAS_FEEDBACK': cls = 'badge-green'; lbl = 'Đã đánh giá'; break;
         case 'CANCELED': case 'REJECTED': cls = 'badge-red'; lbl = 'Đã hủy'; break;
         case 'CONFIRMED': cls = 'badge-blue'; lbl = 'Đã duyệt'; break;
     }
@@ -370,8 +372,91 @@ window.viewDetail = (orderId) => {
         modalMessageBtn.onclick = () => messageUser(order.userId);
     }
     
+    fetchOrderReviewsAdmin(orderId);
+    
     document.getElementById("detailModal").style.display = "flex";
 };
+
+async function fetchOrderReviewsAdmin(orderId) {
+    const listContainer = document.getElementById("modalReviewList");
+    if (!listContainer) return;
+    
+    listContainer.innerHTML = '<p style="color: #888; text-align:center; padding: 20px;">Đang tải đánh giá...</p>';
+    
+    try {
+        const res = await callAPI(`/feedbacks/order/${orderId}`, "GET");
+        if (res.success && res.data && res.data.length > 0) {
+            renderOrderReviewsAdmin(res.data);
+        } else {
+            listContainer.innerHTML = '<p style="color: #888; text-align:center; padding: 20px;">Chưa có đánh giá nào cho đơn hàng này.</p>';
+        }
+    } catch (e) {
+        listContainer.innerHTML = '<p style="color: red; text-align:center; padding: 20px;">Lỗi tải đánh giá.</p>';
+    }
+}
+
+function renderOrderReviewsAdmin(reviews) {
+    const container = document.getElementById("modalReviewList");
+    let html = "";
+    
+    reviews.forEach(review => {
+        const avatar = review.imageUrl || '/lib/no-image.jpg';
+        const date = new Date(review.createdAt).toLocaleString('vi-VN');
+        
+        let starsHtml = '';
+        for (let i = 1; i <= 5; i++) {
+            if (review.rating >= i) {
+                starsHtml += '<i class="fa-solid fa-star"></i>';
+            } else if (review.rating >= i - 0.5) {
+                starsHtml += '<i class="fa-solid fa-star-half-stroke"></i>';
+            } else {
+                starsHtml += '<i class="fa-regular fa-star"></i>';
+            }
+        }
+
+        let replyHtml = '';
+        if (review.reply) {
+            const replyDate = new Date(review.reply.createdAt).toLocaleString('vi-VN');
+            const replyAvatar = review.reply.imageUrl || '/lib/no-image.jpg';
+            replyHtml = `
+                <div class="review-reply-box">
+                    <div class="review-reply-header">
+                        <img src="${replyAvatar}" style="width:20px;height:20px;border-radius:50%">
+                        <span>${escapeHtml(review.reply.username)} <span class="admin-badge">QTV</span></span>
+                        <span style="font-size:11px;color:#888;font-weight:normal">${replyDate}</span>
+                    </div>
+                    <div class="review-reply-content">${escapeHtml(review.reply.message)}</div>
+                </div>
+            `;
+        }
+        
+        html += `
+            <div class="review-item">
+                <div class="review-header">
+                    <div class="review-user-info">
+                        <img src="${avatar}" class="review-avatar">
+                        <div class="review-meta">
+                            <span class="review-username">${escapeHtml(review.username)}</span>
+                            <span class="review-date">${date}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="review-stars">${starsHtml}</div>
+                <div class="review-content">${escapeHtml(review.comment || '')}</div>
+                ${replyHtml}
+            </div>
+        `;
+    });
+    container.innerHTML = html;
+}
+
+// Function to escape HTML to prevent XSS
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
 
 window.closeModal = () => document.getElementById("detailModal").style.display = "none";
 function formatDate(iso) { if (!iso) return ''; return new Date(iso).toLocaleString('vi-VN'); }

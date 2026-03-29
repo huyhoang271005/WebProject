@@ -160,7 +160,7 @@ const navbarHTML = `
                     <div class="nb-admin-only nb-dropdown-header" style="border-top:1px solid #eee; margin-top:4px; padding-top:12px">Quản trị hệ thống</div>
                     <a href="/products-manager" class="nb-admin-only"><i class="fa-solid fa-boxes-stacked" style="color: #EC4899; width:20px; text-align:center;"></i> Quản lý sản phẩm</a>
                     <a href="/catalog-management" class="nb-admin-only"><i class="fa-solid fa-layer-group" style="color: #6366F1; width:20px; text-align:center;"></i> Quản lý danh mục</a>
-                    <a href="/users" class="nb-admin-only"><i class="fa-solid fa-users-gear" style="color: #0EA5E9; width:20px; text-align:center;"></i> Danh sách người dùng</a>
+                    <a href="/users" class="nb-admin-only"><i class="fa-solid fa-users-gear" style="color: #0EA5E9; width:20px; text-align:center;"></i> Quản lý người dùng</a>
                     <a href="/role-permission" class="nb-admin-only"><i class="fa-solid fa-user-lock" style="color: #EF4444; width:20px; text-align:center;"></i> Quản lý vai trò và quyền hạn</a>
                     <a href="/order-manager" class="nb-admin-only"><i class="fa-solid fa-file-invoice-dollar" style="color: #14B8A6; width:20px; text-align:center;"></i> Quản lý đơn hàng</a>
                     <a href="/notification" class="nb-admin-only"><i class="fa-solid fa-bullhorn" style="color: #F97316; width:20px; text-align:center;"></i> Quản lý thông báo</a>
@@ -233,7 +233,7 @@ function updateNavbarUI(data) {
     document.getElementById("nbRole").textContent = data.roleName;
     document
       .querySelectorAll(".nb-admin-only")
-      .forEach((el) => el.style.setProperty("display", "flex", "important"));
+      .forEach((el) => el.style.setProperty("display", data.roleName === "USER" ? "none": "flex", "important"));
   }
   const badge = document.getElementById("chatBadge");
   if (badge) {

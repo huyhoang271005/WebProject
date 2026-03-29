@@ -77,11 +77,6 @@ async function getProductDetail(id) {
 
             setupEventListeners();
 
-            if (variants.length > 0) {
-                setTimeout(() => {
-                    showNotification("Vui lòng chọn phân loại sản phẩm trước khi mua", 'info');
-                }, INFO_NOTIFICATION_DELAY);
-            }
         } else {
             showNotification(res.message || "Lỗi tải dữ liệu sản phẩm", 'error');
         }
@@ -104,19 +99,19 @@ async function getFeedbacks(productId) {
             }
 
             // Check Admin Role
-            let isAdmin = false;
+            let isUser = false;
             try {
                 const cached = sessionStorage.getItem("homeData");
                 if (cached) {
                     const userData = JSON.parse(cached);
-                    isAdmin = userData.roleName === 'ADMIN';
+                    isUser = userData.roleName === 'USER';
                 }
             } catch (e) { }
 
-            container.innerHTML = list.map(item => renderFeedbackItem(item, isAdmin)).join('');
+            container.innerHTML = list.map(item => renderFeedbackItem(item, isUser)).join('');
 
             // Attach events for reply buttons
-            if (isAdmin) {
+            if (!isUser) {
                 document.querySelectorAll('.btn-reply').forEach(btn => {
                     btn.addEventListener('click', (e) => {
                         const id = e.target.dataset.id;
@@ -134,7 +129,7 @@ async function getFeedbacks(productId) {
     }
 }
 
-function renderFeedbackItem(item, isAdmin) {
+function renderFeedbackItem(item, isUser) {
     const avatar = item.imageUrl || DEFAULT_AVATAR;
     const date = new Date(item.createdAt).toLocaleString('vi-VN');
 
@@ -150,7 +145,7 @@ function renderFeedbackItem(item, isAdmin) {
                     <div class="fb-user-info">
                         <img src="${adminAvatar}" class="fb-avatar">
                         <div class="fb-meta">
-                            <span class="fb-username">${item.reply.username} <span class="admin-badge">QTV</span></span>
+                            <span class="fb-username">${item.reply.username} <span class="admin-badge">${item.reply.roleName}</span></span>
                             <span class="fb-date">${replyDate}</span>
                         </div>
                     </div>
@@ -158,7 +153,7 @@ function renderFeedbackItem(item, isAdmin) {
                 <div style="margin-left: 52px; color: #444; font-size: 0.95rem;">${item.reply.message}</div>
             </div>
         `;
-    } else if (isAdmin) {
+    } else if (!isUser) {
         replyHtml = `
             <button class="btn-reply" data-id="${item.feedbackId}">Trả lời</button>
             <div class="reply-input-area" id="reply-box-${item.feedbackId}">
@@ -248,7 +243,7 @@ function renderBasicInfo() {
         const cached = sessionStorage.getItem("homeData");
         if (cached) {
             const userData = JSON.parse(cached);
-            if (userData.roleName === 'ADMIN') {
+            if (userData.roleName !== 'USER') {
                 const titleEl = document.getElementById('productName');
                 // Avoid adding multiple buttons if re-render
                 if (!titleEl.querySelector('.edit-product-btn')) {

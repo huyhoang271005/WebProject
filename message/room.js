@@ -18,6 +18,7 @@ export function renderRooms() {
             <div class="room-info">
                 <div class="room-name">
                     ${room.roomChatName}
+                    ${room.roomChatStatus === "MUTE" ? `<i class="fa-solid fa-bell-slash" style="color: #9ca3af; font-size: 13px; margin-left: 5px;" title="Đã tắt thông báo"></i>` : ""}
                     ${room.roleName !== "USER" && room.roleName? `<span style="font-size: 0.65rem; color: #6b7280; border: 1px solid #d1d5db; padding: 1px 5px; border-radius: 8px; margin-left: 4px;">${room.roleName}</span>` : ""}
                 </div>
                 <div class="room-last-message" style="${room.messageSentCount > 0 ? 'color: black; font-weight: bolder' : 'color: #65676b; font-weight: normal'}">
@@ -33,6 +34,9 @@ export function renderRooms() {
                     <div class="room-options-menu" id="roomOptions-${room.roomChatId}">
                         <div class="rom-item" onclick="markRoomRead('${room.roomChatId}', event)">
                             <i class="fa-solid fa-check-double"></i> Đánh dấu đã đọc
+                        </div>
+                        <div class="rom-item" onclick="toggleMuteRoom('${room.roomChatId}', event)">
+                            ${room.roomChatStatus === "MUTE" ? '<i class="fa-solid fa-bell"></i> Bật thông báo' : '<i class="fa-solid fa-bell-slash"></i> Tắt thông báo'}
                         </div>
                         <div class="rom-item danger" onclick="deleteRoomChat('${room.roomChatId}', event)">
                             <i class="fa-solid fa-trash-can"></i> Xoá cuộc trò chuyện
@@ -53,6 +57,30 @@ window.toggleRoomOptions = (roomId, e) => {
     });
     const menu = document.getElementById(`roomOptions-${roomId}`);
     if (menu) menu.classList.toggle("show");
+};
+
+window.toggleMuteRoom = async (roomId, e) => {
+    e.stopPropagation();
+    const menu = document.getElementById(`roomOptions-${roomId}`);
+    if (menu) menu.classList.remove("show");
+
+    const room = state.rooms.find(item => String(item.roomChatId) === String(roomId));
+    if (!room) return;
+
+    const newStatus = room.roomChatStatus === "MUTE" ? "NORMAL" : "MUTE";
+
+    try {
+        const res = await callAPI(`/room-chat/${roomId}`, "PATCH", newStatus);
+        if (res && res.success) {
+            room.roomChatStatus = newStatus;
+            renderRooms();
+            showNotification(newStatus === "MUTE" ? "Đã tắt thông báo" : "Đã bật thông báo", "success");
+        } else {
+            showNotification(res?.message || "Có lỗi xảy ra", "error");
+        }
+    } catch (error) {
+        showNotification("Lỗi kết nối", "error");
+    }
 };
 
 window.markRoomRead = (roomId, e) => {
