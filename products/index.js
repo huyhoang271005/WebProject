@@ -50,7 +50,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     setupEvents();
-    updateChatBadge();
   } catch (e) {
     console.error("Lỗi tải trang sản phẩm:", e);
   } finally {
@@ -334,24 +333,5 @@ function renderPagination(totalPages) {
     }" onclick="changePage(${state.page + 1
     })"><i class="fa-solid fa-chevron-right"></i></div>`;
   container.innerHTML = html;
-}
-
-/**
- * Cập nhật số lượng tin nhắn chưa đọc
- */
-async function updateChatBadge() {
-  try {
-    const res = await callAPI("/room-chat", "GET");
-    if (res && res.success && res.data && res.data.listData) {
-      const totalUnread = res.data.listData.reduce((sum, room) => sum + (room.messageSentCount || 0), 0);
-      const badge = document.getElementById("chatBadge");
-      if (badge) {
-        badge.innerText = totalUnread > 99 ? '99+' : totalUnread;
-        badge.style.display = totalUnread > 0 ? 'block' : 'none';
-      }
-    }
-  } catch (error) {
-    console.error("Lỗi lấy số lượng tin nhắn:", error);
-  }
 }
 
