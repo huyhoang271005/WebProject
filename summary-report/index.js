@@ -46,7 +46,7 @@ document.addEventListener('DOMContentLoaded', () => {
     async function loadData() {
         btnFilter.classList.add('loading');
         
-        let endpoint = "/auth/summary-report?";
+        let endpoint = "/summary-report?";
         const params = new URLSearchParams();
 
         if (filterType.value === 'date') {
