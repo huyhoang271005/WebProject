@@ -60,9 +60,7 @@ registerForm.addEventListener('submit', async (e) => {
         if (Array.isArray(result.data) && result.data) {
             statusDiv.style.display = 'block';
             statusDiv.classList.add("error");
-            result.data.forEach(err => {
-                statusDiv.textContent += err.error + '\n';
-            });
+            statusDiv.textContent = result.data.map(error => error.error).join(", ");
         }
     }
     else {
