@@ -118,10 +118,48 @@ const navbarHTML = `
             .nb-dropdown { height: 400px }
             .nb-noti-dropdown { position: fixed; top: 60px; left: 50%; transform: translateX(-50%); width: 95vw; height: 70vh; max-width: 400px; right: auto; border-radius: 12px; box-shadow: 0 0 0 100vh rgba(0,0,0,0.5); }
         }
+
+        .nb-leftbar-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1150; display: none; }
+        .nb-leftbar-overlay.show { display: block; }
+        .nb-leftbar { position: fixed; top: 0; left: -300px; width: 280px; height: 100vh; background: white; z-index: 1200; box-shadow: 2px 0 10px rgba(0,0,0,0.1); transition: left 0.3s ease; display: flex; flex-direction: column; overflow-y: auto; }
+        .nb-leftbar.show { left: 0; }
+        .nb-leftbar-header { display: flex; justify-content: space-between; align-items: center; padding: 20px; border-bottom: 1px solid #eee; }
+        .nb-leftbar-header .nb-brand { font-size: 1.4rem; min-width: auto; }
+        .nb-leftbar-close { font-size: 1.5rem; color: #555; cursor: pointer; transition: 0.2s; }
+        .nb-leftbar-close:hover { color: #EF4444; }
+        .nb-leftbar a { padding: 15px 20px; text-decoration: none; color: #333; display: flex; align-items: center; gap: 12px; font-weight: 500; transition: 0.2s; border-bottom: 1px solid #f9f9f9; }
+        .nb-leftbar a:hover { background: #f9fafb; color: #10B981; padding-left: 25px; }
+        #nbMenuBtn { font-size: 1.5rem; cursor: pointer; color: #555; margin-right: 15px; display: flex; align-items: center; transition: 0.2s; }
+        #nbMenuBtn:hover { color: #10B981; }
     </style>
 
+    <!-- Sidebar Overlay & Sidebar -->
+    <div class="nb-leftbar-overlay" id="nbLeftbarOverlay"></div>
+    <div class="nb-leftbar" id="nbLeftbar">
+        <div class="nb-leftbar-header">
+            <span class="nb-brand" id="app-name-sidebar"><i class="fa-solid fa-leaf"></i> </span>
+            <i class="fa-solid fa-xmark nb-leftbar-close" id="nbLeftbarClose"></i>
+        </div>
+        <div class="nb-dropdown-header">Mua sắm</div>
+        <a href="/home"><i class="fa-solid fa-house" style="color: #10B981 ; width:20px; text-align:center;"></i> Trang chủ</a>
+        <a href="/products"><i class="fa-solid fa-compass" style="color: #F59E0B ; width:20px; text-align:center;"></i> Khám phá sản phẩm</a>
+
+        <div class="nb-admin-only nb-dropdown-header" style="border-top:1px solid #eee; margin-top:4px; padding-top:12px">Quản trị hệ thống</div>
+        <a href="/products-manager" class="nb-admin-only"><i class="fa-solid fa-boxes-stacked" style="color: #EC4899; width:20px; text-align:center;"></i> Quản lý sản phẩm</a>
+        <a href="/catalog-management" class="nb-admin-only"><i class="fa-solid fa-layer-group" style="color: #6366F1; width:20px; text-align:center;"></i> Quản lý danh mục</a>
+        <a href="/users" class="nb-admin-only"><i class="fa-solid fa-users-gear" style="color: #0EA5E9; width:20px; text-align:center;"></i> Quản lý người dùng</a>
+        <a href="/role-permission" class="nb-admin-only"><i class="fa-solid fa-user-lock" style="color: #EF4444; width:20px; text-align:center;"></i> Quản lý vai trò và quyền hạn</a>
+        <a href="/order-manager" class="nb-admin-only"><i class="fa-solid fa-file-invoice-dollar" style="color: #14B8A6; width:20px; text-align:center;"></i> Quản lý đơn hàng</a>
+        <a href="/notification" class="nb-admin-only"><i class="fa-solid fa-bullhorn" style="color: #F97316; width:20px; text-align:center;"></i> Quản lý thông báo</a>
+        <a href="/server-health" class="nb-admin-only"><i class="fa-solid fa-server" style="color: #10B981; width:20px; text-align:center;"></i> Sức khoẻ Server</a>
+        <a href="/summary-report" class="nb-admin-only"><i class="fa-solid fa-chart-line" style="color: #3B82F6; width:20px; text-align:center;"></i> Báo cáo thống kê</a>
+    </div>
+
     <nav class="navbar-component">
-        <a href="/home" class="nb-brand" id="app-name"></a>
+        <div style="display: flex; align-items: center;">
+            <i class="fa-solid fa-bars" id="nbMenuBtn"></i>
+            <a href="/home" class="nb-brand" id="app-name"></a>
+        </div>
         <div id="nbCenterSlot"></div>
         <div class="nb-right-wrapper">
             <a href="/cart" class="nb-icon-btn" title="Giỏ hàng">
@@ -145,26 +183,13 @@ const navbarHTML = `
                     <div style="font-weight:600; font-size:0.9rem;" id="nbUsername">Khách</div>
                     <div style="font-size:0.75rem; color:#888;" id="nbRole">GUEST</div>
                 </div>
-                <div class="nb-dropdown" id="nbUserDropdown">
-                    <div class="nb-dropdown-header">Mua sắm</div>
-                    <a href="/home"><i class="fa-solid fa-house" style="color: #10B981 ; width:20px; text-align:center;"></i> Trang chủ</a>
-                    <a href="/products"><i class="fa-solid fa-compass" style="color: #F59E0B ; width:20px; text-align:center;"></i> Khám phá sản phẩm</a>
-                    
-                    <div class="nb-dropdown-header" style="border-top:1px solid #eee; margin-top:4px; padding-top:12px">Tài khoản & Đơn hàng</div>
+                <div class="nb-dropdown" id="nbUserDropdown" style="height: auto;">
+                    <div class="nb-dropdown-header">Tài khoản & Đơn hàng</div>
                     <a href="/profile"><i class="fa-regular fa-user" style="color: #3B82F6; width:20px; text-align:center;"></i> Hồ sơ của tôi</a>
                     <a href="/orders"><i class="fa-solid fa-clipboard-list" style="color: #10B981; width:20px; text-align:center;"></i> Đơn hàng của tôi</a>
                     <a href="/contact"><i class="fa-solid fa-map-location-dot" style="color: #F59E0B; width:20px; text-align:center;"></i> Địa chỉ của tôi</a>
                     <a href="/session"><i class="fa-solid fa-shield-halved" style="color: #8B5CF6; width:20px; text-align:center;"></i> Phiên truy cập</a>
                     <button id="nbDeleteAccount" style="color:#ef4444;"><i class="fa-solid fa-user-xmark" style="color: #ef4444; width:20px; text-align:center;"></i> Xóa tài khoản</button>
-                    
-                    <div class="nb-admin-only nb-dropdown-header" style="border-top:1px solid #eee; margin-top:4px; padding-top:12px">Quản trị hệ thống</div>
-                    <a href="/products-manager" class="nb-admin-only"><i class="fa-solid fa-boxes-stacked" style="color: #EC4899; width:20px; text-align:center;"></i> Quản lý sản phẩm</a>
-                    <a href="/catalog-management" class="nb-admin-only"><i class="fa-solid fa-layer-group" style="color: #6366F1; width:20px; text-align:center;"></i> Quản lý danh mục</a>
-                    <a href="/users" class="nb-admin-only"><i class="fa-solid fa-users-gear" style="color: #0EA5E9; width:20px; text-align:center;"></i> Quản lý người dùng</a>
-                    <a href="/role-permission" class="nb-admin-only"><i class="fa-solid fa-user-lock" style="color: #EF4444; width:20px; text-align:center;"></i> Quản lý vai trò và quyền hạn</a>
-                    <a href="/order-manager" class="nb-admin-only"><i class="fa-solid fa-file-invoice-dollar" style="color: #14B8A6; width:20px; text-align:center;"></i> Quản lý đơn hàng</a>
-                    <a href="/notification" class="nb-admin-only"><i class="fa-solid fa-bullhorn" style="color: #F97316; width:20px; text-align:center;"></i> Quản lý thông báo</a>
-                    <a href="/server-health" class="nb-admin-only"><i class="fa-solid fa-server" style="color: #10B981; width:20px; text-align:center;"></i> Sức khoẻ Server</a>
                     
                     <button id="nbLogout" style="color:#e11d48; border-top:1px solid #eee; margin-top:5px">
                         <i class="fa-solid fa-right-from-bracket" style="width:20px; text-align:center;"></i> Đăng xuất
@@ -227,6 +252,7 @@ function updateBadgeCount(delta) {
 function updateNavbarUI(data) {
   if (!data) return;
   document.getElementById("app-name").innerHTML = `<i class="fa-solid fa-leaf"></i> ${data.appName}`;
+  document.getElementById("app-name-sidebar").innerHTML = `<i class="fa-solid fa-leaf"></i> ${data.appName}`;
   document.getElementById("nbAvatar").src = data.imageUrl || noImage;
   if (data.fullName && data.fullName !== "Khách") {
     document.getElementById("nbUsername").textContent = data.fullName;
@@ -318,6 +344,25 @@ function setupEvents() {
   const userDropdown = document.getElementById("nbUserDropdown");
   const notiDropdown = document.getElementById("nbNotiDropdown");
   const notiList = document.getElementById("nbNotiList");
+  
+  const leftbarOverlay = document.getElementById("nbLeftbarOverlay");
+  const leftbar = document.getElementById("nbLeftbar");
+
+  document.getElementById("nbMenuBtn").onclick = (e) => {
+    e.stopPropagation();
+    leftbar.classList.add("show");
+    leftbarOverlay.classList.add("show");
+  };
+
+  document.getElementById("nbLeftbarClose").onclick = () => {
+    leftbar.classList.remove("show");
+    leftbarOverlay.classList.remove("show");
+  };
+
+  leftbarOverlay.onclick = () => {
+    leftbar.classList.remove("show");
+    leftbarOverlay.classList.remove("show");
+  };
 
   document.getElementById("nbUserMenu").onclick = (e) => {
     e.stopPropagation();

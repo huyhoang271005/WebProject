@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Báo cáo Thống kê</title>
+  <link rel="stylesheet" href="/lib/public.css">
+  <link rel="stylesheet" href="/dialog/index.css">
+  <script src="https://kit.fontawesome.com/e9c281dd3f.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    
+    .dashboard-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+      animation: fadeIn 0.5s ease-out;
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 30px;
+    }
+
+    .header h1 {
+      margin: 0;
+      color: #0f172a;
+      font-weight: 800;
+      font-size: 2rem;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .header h1 i {
+      color: #10b981;
+    }
+
+    .btn-back {
+      background: white !important;
+      color: #475569 !important;
+      border: 1px solid #cbd5e1 !important;
+      font-weight: 600;
+      width: auto !important;
+      margin: 0 !important;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .btn-back:hover {
+      background: #f1f5f9 !important;
+      transform: none !important;
+      box-shadow: none !important;
+    }
+
+    /* Summary Cards */
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+      margin-bottom: 30px;
+    }
+
+    .dash-card {
+      background: white;
+      border-radius: 20px;
+      padding: 24px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+      position: relative;
+      overflow: hidden;
+      border: 1px solid #f1f5f9;
+      transition: all 0.3s ease;
+    }
+
+    .dash-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    }
+
+    .dash-card .icon-wrapper {
+      position: absolute;
+      top: -10px;
+      right: -10px;
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0.1;
+    }
+
+    .dash-card .icon-wrapper i {
+      font-size: 4rem;
+    }
+
+    .card-title {
+      font-size: 0.95rem;
+      color: #64748b;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 12px;
+    }
+
+    .card-value {
+      font-size: 2.2rem;
+      font-weight: 800;
+      z-index: 10;
+      position: relative;
+    }
+
+    .card-value.green { color: #10b981; }
+    .card-value.blue { color: #3b82f6; }
+    .card-value.purple { color: #8b5cf6; }
+
+    .chart-grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 24px;
+      margin-bottom: 24px;
+    }
+
+    .chart-wrapper {
+      background: white;
+      border-radius: 20px;
+      padding: 24px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+      border: 1px solid #f1f5f9;
+    }
+
+    .filter-section {
+      background: white;
+      border-radius: 16px;
+      padding: 16px 24px;
+      margin-bottom: 24px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.02);
+      border: 1px solid #f1f5f9;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .filter-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .filter-group label {
+      font-weight: 500;
+      color: #475569;
+      font-size: 0.95rem;
+      white-space: nowrap;
+    }
+
+    .filter-section input, .filter-section select {
+      min-width: 150px;
+      margin: 0;
+    }
+
+    .filter-section button {
+      margin: 0;
+      width: auto;
+      padding: 10px 20px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .chart-wrapper h3 {
+      margin-top: 0;
+      color: #334155;
+      font-size: 1.2rem;
+      font-weight: 700;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding-bottom: 15px;
+      border-bottom: 1px solid #e2e8f0;
+    }
+    
+    .chart-wrapper canvas {
+      max-width: 100%;
+    }
+
+    @media (max-width: 1024px) {
+      .chart-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .summary-grid {
+        grid-template-columns: 1fr;
+      }
+      .filter-section {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 15px;
+      }
+      .filter-group {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 5px;
+      }
+      .filter-group input, .filter-group select {
+        width: 100%;
+      }
+      #btnFilter {
+        width: 100%;
+        justify-content: center;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="dashboard-container">
+    <!-- Removed local header -->
+
+    <!-- Filter Section -->
+    <div class="filter-section">
+      <div class="filter-group">
+        <select id="filterType">
+          <option value="date">Theo ngày</option>
+          <option value="month">Theo tháng</option>
+        </select>
+      </div>
+      
+      <div class="filter-group" id="dateFilterGroup">
+        <label>Từ ngày:</label>
+        <input type="date" id="startDate">
+        <label>Đến ngày:</label>
+        <input type="date" id="endDate">
+      </div>
+      
+      <div class="filter-group" id="monthFilterGroup" style="display: none;">
+        <label>Từ tháng:</label>
+        <input type="month" id="startMonth">
+        <label>Đến tháng:</label>
+        <input type="month" id="endMonth">
+      </div>
+      
+      <button id="btnFilter"><i class="fa-solid fa-filter"></i> Lọc dữ liệu</button>
+    </div>
+
+    <div class="summary-grid">
+      <div class="dash-card">
+        <div class="icon-wrapper" style="background: #10b981;">
+          <i class="fa-solid fa-money-bill-trend-up"></i>
+        </div>
+        <div class="card-title">Tổng Doanh Thu</div>
+        <div class="card-value green" id="totalRevenue">0đ</div>
+      </div>
+      <div class="dash-card">
+        <div class="icon-wrapper" style="background: #3b82f6;">
+          <i class="fa-solid fa-cart-shopping"></i>
+        </div>
+        <div class="card-title">Tổng Đơn Hàng</div>
+        <div class="card-value blue" id="totalOrders">0</div>
+      </div>
+      <div class="dash-card">
+        <div class="icon-wrapper" style="background: #8b5cf6;">
+          <i class="fa-solid fa-box-open"></i>
+        </div>
+        <div class="card-title">Sản Phẩm Đã Bán</div>
+        <div class="card-value purple" id="totalProducts">0</div>
+      </div>
+    </div>
+
+    <div class="chart-grid">
+      <div class="chart-wrapper">
+        <h3><i class="fa-solid fa-arrow-trend-up" style="color:#10b981;"></i> Biểu đồ Doanh Thu</h3>
+        <canvas id="revenueChart"></canvas>
+      </div>
+      <div class="chart-wrapper">
+        <h3><i class="fa-solid fa-chart-pie" style="color:#f59e0b;"></i> Trạng thái Đơn hàng</h3>
+        <div style="position: relative; height: 300px; width: 100%; display: flex; justify-content: center;">
+            <canvas id="orderChart"></canvas>
+        </div>
+      </div>
+    </div>
+    
+    <div class="chart-wrapper">
+      <h3 id="dailyOrderChartTitle"><i class="fa-solid fa-chart-column" style="color:#3b82f6;"></i> Biểu đồ Đơn hàng theo ngày</h3>
+      <canvas id="dailyOrderChart" style="max-height: 400px;"></canvas>
+    </div>
+  </div>
+
+  <script type="module" src="/summary-report/index.js"></script>
+  <script type="module">
+      import { loadNavbar } from '../navbar/navbar.js';
+      loadNavbar({}); 
+  </script>
+</body>
+</html>
