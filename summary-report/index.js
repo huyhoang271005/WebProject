@@ -101,13 +101,15 @@ const animateValue = (id, end, duration) => {
 };
 
 function renderDashboard(rawData) {
+    const filterTypeValue = document.getElementById('filterType') ? document.getElementById('filterType').value : 'date';
+
     // Sort data chronologically mapping reportDate or reportMonth safely
     const reportData = rawData.sort((a, b) => {
-        const strA = a.reportMonth || a.reportDate || "";
-        const strB = b.reportMonth || b.reportDate || "";
-        // If length is 7 (YYYY-MM), append '-01' for safe parsing
-        let dateA = strA.length === 7 ? strA + '-01' : strA;
-        let dateB = strB.length === 7 ? strB + '-01' : strB;
+        const strA = filterTypeValue === 'month' ? (a.reportMonth || "") : (a.reportDate || "");
+        const strB = filterTypeValue === 'month' ? (b.reportMonth || "") : (b.reportDate || "");
+        // If it's a month (YYYY-MM), append '-01'
+        let dateA = filterTypeValue === 'month' && strA.length === 7 ? strA + '-01' : strA;
+        let dateB = filterTypeValue === 'month' && strB.length === 7 ? strB + '-01' : strB;
         return new Date(dateA) - new Date(dateB);
     });
 
@@ -138,9 +140,9 @@ function renderDashboard(rawData) {
         sumCompleted += item.orderCompletedCount;
         sumCancel += item.orderCancelCount;
 
-        const dateStr = item.reportMonth || item.reportDate || "";
+        const dateStr = filterTypeValue === 'month' ? (item.reportMonth || "") : (item.reportDate || "");
         
-        if (item.reportMonth || dateStr.length === 7) {
+        if (filterTypeValue === 'month') {
             // Direct split to avoid Date timezone shifting issues for just YYYY-MM
             const parts = dateStr.split('-');
             if (parts.length >= 2) {
@@ -163,8 +165,7 @@ function renderDashboard(rawData) {
     animateValue('totalOrders', sumOrders, 800);
     animateValue('totalProducts', sumProducts, 800);
 
-    const firstItem = reportData.length > 0 ? reportData[0] : null;
-    const isMonthly = firstItem && (firstItem.reportMonth || (firstItem.reportDate && firstItem.reportDate.length === 7));
+    const isMonthly = filterTypeValue === 'month';
     const titleEl = document.getElementById('dailyOrderChartTitle');
     if (titleEl) {
         titleEl.innerHTML = `<i class="fa-solid fa-chart-column" style="color:#3b82f6;"></i> Biểu đồ Đơn hàng theo ${isMonthly ? 'tháng' : 'ngày'}`;
