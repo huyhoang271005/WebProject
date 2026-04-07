@@ -24,14 +24,13 @@
     }
 
     .main-container {
-      padding-top: 20px;
-      padding-bottom: 50px;
       width: 95%;
       max-width: 1400px;
       margin: 0 auto;
       display: flex;
       gap: 20px;
       position: relative;
+      align-items: flex-start;
       /* z-index: 1; Removed to allow fixed sidebar to pop out */
     }
 
@@ -43,12 +42,23 @@
       border-radius: 8px;
       padding: 20px;
       position: sticky;
+      max-height: calc(95vh - 80px);
       top: 100px;
-      height: fit-content;
+      overflow-y: auto;
+      align-self: flex-start;
       box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
       border: 1px solid #f0f0f0;
       z-index: 100;
       transition: transform 0.3s ease;
+    }
+
+    /* Tùy chỉnh thanh cuộn cho sidebar mượt mà hơn */
+    .sidebar::-webkit-scrollbar {
+      width: 6px;
+    }
+    .sidebar::-webkit-scrollbar-thumb {
+      background-color: #ddd;
+      border-radius: 3px;
     }
 
     .filter-group {
@@ -392,6 +402,10 @@
       backdrop-filter: blur(2px);
     }
 
+    .mobile-floating-filter {
+      display: none;
+    }
+
     /* Responsive */
     @media (max-width: 1400px) {
       .product-grid {
@@ -425,6 +439,7 @@
         width: 85%;
         /* Updated width */
         max-width: 320px;
+        max-height: 100vh;
         /* Increased max-width */
         transform: translateX(-100%);
         border-radius: 0;
@@ -443,8 +458,33 @@
         display: block;
       }
 
-      .mobile-filter-btn {
+      .page-header {
+        display: none !important;
+      }
+
+      .mobile-floating-filter {
         display: flex;
+        position: fixed;
+        bottom: 30px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: #10b981;
+        color: white;
+        padding: 12px 30px;
+        border-radius: 30px;
+        font-weight: 600;
+        font-size: 1rem;
+        align-items: center;
+        gap: 8px;
+        box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
+        z-index: 999;
+        cursor: pointer;
+        border: 2px solid white;
+        transition: 0.2s;
+      }
+      
+      .mobile-floating-filter:active {
+        transform: translate(-50%, 2px);
       }
 
       .page-header {
@@ -469,17 +509,6 @@
         border-top: 1px solid #eee;
       }
 
-      .ph-sort span {
-        display: block;
-        /* Show sort label again if needed, or keep hidden but use space-between */
-        font-size: 0.9rem;
-        color: #555;
-      }
-
-      .ph-sort select {
-        width: 50%;
-      }
-
       .sidebar-close-btn {
         display: block;
       }
@@ -491,10 +520,25 @@
   <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
   <div class="main-container">
     <aside class="sidebar" id="mainSidebar">
+      <!-- SẮP XẾP -->
       <div class="filter-group">
         <div class="filter-title">
-          <span><i class="fa-solid fa-layer-group"></i> DANH MỤC SẢN PHẨM</span>
+          <span><i class="fa-solid fa-arrow-down-wide-short"></i> SẮP XẾP</span>
           <i class="fa-solid fa-xmark sidebar-close-btn" onclick="toggleSidebar()"></i>
+        </div>
+        <div style="width: 100%; border: none; padding-top: 5px;">
+          <select id="sortSelect" style="width: 100%; min-width: auto; padding: 10px; border-radius: 6px; border: 1px solid #e5e7eb; outline: none; font-size: 0.95rem; cursor: pointer;">
+            <option>Mới nhất</option>
+            <option>Giá tăng dần</option>
+            <option>Giá giảm dần</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- DANH MỤC -->
+      <div class="filter-group" style="margin-top: 20px; border-top: 1px solid #eee; padding-top: 20px;">
+        <div class="filter-title">
+          <span><i class="fa-solid fa-layer-group"></i> DANH MỤC SẢN PHẨM</span>
         </div>
         <ul class="cat-list" id="catFilterList">
           <li class="cat-item active">
@@ -503,7 +547,7 @@
         </ul>
       </div>
 
-      <div class="filter-group" style="margin-top: 20px; border-top: 1px solid #eee; padding-top: 20px;">
+      <div class="filter-group" style="margin-top: 10px; border-top: 1px solid #eee; padding-top: 10px;">
         <div class="filter-title">
           <span><i class="fa-solid fa-copyright"></i> THƯƠNG HIỆU</span>
         </div>
@@ -513,23 +557,24 @@
           </li>
         </ul>
       </div>
+
+      <div class="filter-group" style="margin-top: 10px; border-top: 1px solid #eee; padding-top: 10px;">
+        <div class="filter-title">
+          <span><i class="fa-solid fa-money-bill-wave"></i> KHOẢNG GIÁ</span>
+        </div>
+        <div style="display: flex; gap: 10px; align-items: center; margin-top: 10px;">
+          <input type="number" id="minPriceInput" placeholder="TỪ" style="width: 100%; min-width: 0; padding: 8px; border: 1px solid #e5e7eb; border-radius: 6px; outline: none; font-size: 0.9rem;" min="0">
+          <span style="color: #9ca3af;">-</span>
+          <input type="number" id="maxPriceInput" placeholder="ĐẾN" style="width: 100%; min-width: 0; padding: 8px; border: 1px solid #e5e7eb; border-radius: 6px; outline: none; font-size: 0.9rem;" min="0">
+        </div>
+        <button onclick="filterByPrice()" style="width: 100%; margin-top: 10px; background: #10b981; color: white; border: none; padding: 8px; border-radius: 6px; font-weight: 600; cursor: pointer; transition: 0.2s;">ÁP DỤNG</button>
+      </div>
     </aside>
 
     <div class="product-content">
       <div class="page-header">
         <div class="ph-actions">
           <div class="ph-title" id="pageTitle">Tất cả sản phẩm</div>
-          <div class="mobile-filter-btn" onclick="toggleSidebar()">
-            <i class="fa-solid fa-filter" style="color: #10b981"></i> Lọc
-          </div>
-        </div>
-        <div class="ph-sort">
-          <span>Sắp xếp:</span>
-          <select>
-            <option>Mới nhất</option>
-            <option>Giá tăng dần</option>
-            <option>Giá giảm dần</option>
-          </select>
         </div>
       </div>
       <div class="product-grid" id="productGrid"></div>
@@ -543,6 +588,11 @@
     <i class="fa-solid fa-comments"></i>
     <span id="chatBadge" class="chat-badge" style="display: none;">0</span>
   </div>
+
+  <div class="mobile-floating-filter" onclick="toggleSidebar()">
+    <i class="fa-solid fa-sliders"></i> Lọc
+  </div>
+
   <div id="loadPage"></div>
   <div id="toast-container"></div>
   <script type="module" src="/products/index.js"></script>

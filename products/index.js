@@ -11,6 +11,8 @@ let state = {
   sort: "productId,desc",
   isLoading: false,
   brandId: null, // [NEW] Added brand filter state
+  minPrice: null,
+  maxPrice: null
 };
 
 document.addEventListener("DOMContentLoaded", async () => {
@@ -21,6 +23,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   if (params.get("search")) state.productName = params.get("search");
   if (params.get("cat")) state.categoryId = params.get("cat");
   if (params.get("brand")) state.brandId = params.get("brand");
+  if (params.get("minPrice")) state.minPrice = params.get("minPrice");
+  if (params.get("maxPrice")) state.maxPrice = params.get("maxPrice");
 
   try {
     await loadNavbar({
@@ -48,6 +52,9 @@ document.addEventListener("DOMContentLoaded", async () => {
       const title = document.getElementById("pageTitle");
       if (title) title.innerHTML = `Kết quả tìm: "${state.productName}"`;
     }
+    
+    if (state.minPrice) document.getElementById("minPriceInput").value = state.minPrice;
+    if (state.maxPrice) document.getElementById("maxPriceInput").value = state.maxPrice;
 
     setupEvents();
   } catch (e) {
@@ -76,6 +83,8 @@ async function fetchProducts() {
       url += `&categoryId=${state.categoryId}`;
     if (state.brandId && state.brandId !== "all") // [NEW] Add brandId param
       url += `&brandId=${state.brandId}`;
+    if (state.minPrice) url += `&minPrice=${state.minPrice}`;
+    if (state.maxPrice) url += `&maxPrice=${state.maxPrice}`;
     if (state.sort) url += `&sort=${state.sort}`;
 
     const res = await callAPI(url, "GET");
@@ -249,7 +258,7 @@ function setupEvents() {
   if (navSearchBtn) {
     navSearchBtn.onclick = doSearch;
   }
-  const sortSelect = document.querySelector(".ph-sort select");
+  const sortSelect = document.getElementById("sortSelect");
   if (sortSelect) {
     sortSelect.addEventListener("change", (e) => {
       const val = e.target.value;
@@ -286,6 +295,27 @@ window.filterByBrand = (brandId, el) => {
   state.brandId = brandId;
   state.page = 0;
   // Note: We don't clear productName or categoryId to allow combined filtering
+  fetchProducts();
+  if (window.innerWidth < 992) toggleSidebar();
+};
+
+window.filterByPrice = () => {
+  const minEl = document.getElementById("minPriceInput");
+  const maxEl = document.getElementById("maxPriceInput");
+  let min = minEl.value ? Number(minEl.value) : null;
+  let max = maxEl.value ? Number(maxEl.value) : null;
+
+  if (min !== null && max !== null && min > max) {
+    let temp = min;
+    min = max;
+    max = temp;
+    minEl.value = min;
+    maxEl.value = max;
+  }
+
+  state.minPrice = min;
+  state.maxPrice = max;
+  state.page = 0;
   fetchProducts();
   if (window.innerWidth < 992) toggleSidebar();
 };
