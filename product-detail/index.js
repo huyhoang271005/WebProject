@@ -328,16 +328,21 @@ function renderGallery(images) {
     galleryImages = images;
     const container = document.getElementById('imageGallery');
 
+    let hiddenGallery = document.getElementById('hidden-lightbox-gallery');
+    if (!hiddenGallery) {
+        hiddenGallery = document.createElement('div');
+        hiddenGallery.id = 'hidden-lightbox-gallery';
+        hiddenGallery.style.display = 'none';
+        document.body.appendChild(hiddenGallery);
+    }
+    hiddenGallery.innerHTML = images.map(img => `<a href="${img}" class="gallery" data-type="image"></a>`).join('');
+
     // Initialize lightbox
     if (lightbox) {
         lightbox.destroy();
     }
 
     lightbox = GLightbox({
-        elements: images.map(img => ({
-            'href': img,
-            'type': 'image'
-        })),
         selector: '.gallery',
         touchNavigation: true,
         draggable: true,

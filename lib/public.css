@@ -185,3 +185,11 @@ button.loading::after {
     min-width: 200px;
   }
 }
+
+/* --- GLightbox Override --- */
+/* Ép tất cả các hình ảnh (kể cả JPG, PNG độ phân giải thấp) tự động phóng to full màn hình */
+.glightbox-container .gslide-media img {
+  min-width: 100vw !important;
+  min-height: 100vh !important;
+  object-fit: contain !important;
+}
