@@ -56,9 +56,14 @@
             </div>
 
             <!-- Search Bar -->
-            <div class="search-bar">
-                <i class="fas fa-search"></i>
-                <input type="text" id="searchInput" placeholder="Tìm kiếm đơn hàng theo mã đơn, tên sản phẩm...">
+            <div class="search-bar" style="display: flex; gap: 10px;">
+                <div style="flex: 1; position: relative;">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="searchInput" placeholder="Tìm kiếm đơn hàng theo mã đơn, tên sản phẩm">
+                </div>
+                <button id="searchBtn" style = "margin: 10px 0; width: auto">
+                    Tìm kiếm
+                </button>
             </div>
 
             <!-- Order List -->

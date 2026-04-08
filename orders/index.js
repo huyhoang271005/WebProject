@@ -88,6 +88,7 @@ let currentPage = 0;
 const pageSize = PAGE_SIZE;
 let totalPages = 0;
 let hasMore = true;
+let searchTerm = '';
 
 document.addEventListener("DOMContentLoaded", async () => {
     try {
@@ -131,8 +132,11 @@ document.addEventListener("DOMContentLoaded", async () => {
 async function loadOrders(append = false) {
     try {
         let apiUrl = `/orders?page=${currentPage}&size=${pageSize}`;
+        if (searchTerm) {
+            apiUrl += `&searchInput=${encodeURIComponent(searchTerm)}`;
+        }
 
-        const response = await callAPI(apiUrl, 'GET');
+        const response = await callAPI(apiUrl);
 
         if (response.success && response.data) {
             const newOrders = response.data.listData || [];
@@ -215,52 +219,20 @@ window.filterByStatus = async (status) => {
 
 function setupSearch() {
     const searchInput = document.getElementById('searchInput');
-    let searchTimeout;
+    const searchBtn = document.getElementById('searchBtn');
 
-    searchInput.addEventListener('input', (e) => {
-        clearTimeout(searchTimeout);
-        searchTimeout = setTimeout(() => {
-            applySearchFilter(e.target.value.trim());
-        }, 300);
-    });
-}
-
-function applySearchFilter(searchTerm) {
-    if (!searchTerm) {
-        applyStatusFilter();
-        renderOrders();
-        return;
+    if (searchBtn && searchInput) {
+        searchBtn.addEventListener('click', async () => {
+            const val = searchInput.value.trim();
+            if (searchTerm !== val) {
+                searchTerm = val;
+                currentPage = 0;
+                allOrders = [];
+                hasMore = true;
+                await loadOrders(false);
+            }
+        });
     }
-
-    const term = searchTerm.toLowerCase();
-
-    let statusFiltered = allOrders;
-    if (currentStatus && currentStatus !== 'ALL') {
-        if (currentStatus === 'WAITING') {
-            statusFiltered = allOrders.filter(order =>
-                order.orderStatus === 'WAITING' || order.orderStatus === 'PAYING'
-            );
-        } else {
-            statusFiltered = allOrders.filter(order =>
-                order.orderStatus === currentStatus
-            );
-        }
-    }
-
-    filteredOrders = statusFiltered.filter(order => {
-        if (order.orderId && order.orderId.toLowerCase().includes(term)) return true;
-        if (order.contactName && order.contactName.toLowerCase().includes(term)) return true;
-
-        if (order.orderItemDTOList) {
-            return order.orderItemDTOList.some(item =>
-                item.productName?.toLowerCase().includes(term)
-            );
-        }
-
-        return false;
-    });
-
-    renderOrders();
 }
 
 function renderOrders() {
