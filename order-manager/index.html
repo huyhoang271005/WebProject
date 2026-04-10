@@ -20,10 +20,10 @@
             <h2>Quản lý duyệt đơn hàng</h2>
 
             <div class="tabs-container">
-                <button class="tab-btn active" onclick="filterStatus('PENDING')">Chờ xác nhận</button>
-                <button class="tab-btn" onclick="filterStatus('DELIVERING')">Đang giao</button>
-                <button class="tab-btn" onclick="filterStatus('DELIVERED')">Hoàn thành</button>
-                <button class="tab-btn" onclick="filterStatus('CANCELED')">Đã hủy</button>
+                <button class="tab-btn active" data-status="PENDING">Chờ xác nhận</button>
+                <button class="tab-btn" data-status="DELIVERING">Đang giao</button>
+                <button class="tab-btn" data-status="DELIVERED">Hoàn thành</button>
+                <button class="tab-btn" data-status="CANCELED">Đã hủy</button>
             </div>
 
             <div class="search-box-container"
@@ -129,10 +129,12 @@
             </div>
 
             <div class="modal-footer" style="padding: 15px; display: flex; justify-content: flex-end; gap: 10px; border-top: 1px solid #eee;">
-                <button id="modalMessageBtn" style="padding: 8px 16px; background-color: #0084ff; color: white; border: none; border-radius: 6px; cursor: pointer; align-items: center; gap: 8px;">
+                <button id="modalMessageBtn" style="background-color: #0084ff; margin-top: 0;">
                     <i class="fa-solid fa-message"></i> Nhắn tin
                 </button>
-                <button id="btnUserDetail">Thông tin người dùng</button>
+                <button id="btnUserDetail" style="background-color: #8b5cf6; margin-top: 0;">
+                    <i class="fa-solid fa-user"></i> Thông tin người dùng
+                </button>
             </div>
         </div>
     </div>

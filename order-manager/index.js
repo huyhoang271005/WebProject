@@ -20,24 +20,24 @@ let isAscending = false;
 document.addEventListener("DOMContentLoaded", async () => {
     // 1. Initial Load
     await switchTab('PENDING');
+    await loadAdminOrderCounts();
 
     // 2. Tab Handling
     const tabs = document.querySelectorAll('.tab-btn');
     tabs.forEach(t => {
         t.onclick = (e) => {
+            let targetBtn = e.target;
+            if (!targetBtn.classList.contains('tab-btn')) {
+                targetBtn = targetBtn.closest('.tab-btn');
+            }
+            if (!targetBtn) return;
+
             // UI Update
             tabs.forEach(btn => btn.classList.remove('active'));
-            e.target.classList.add('active');
+            targetBtn.classList.add('active');
 
             // Logic Update
-            const text = e.target.innerText.trim();
-            let status = 'PENDING';
-            if (text === 'Chờ xác nhận') status = 'PENDING';
-            else if (text === 'Đang giao') status = 'DELIVERING';
-            else if (text === 'Hoàn thành') status = 'DELIVERED';
-            else if (text === 'Đã hủy') status = 'CANCELED';
-            else if (text === 'Đã duyệt') status = 'CONFIRMED';
-
+            const status = targetBtn.getAttribute('data-status') || 'PENDING';
             switchTab(status);
         };
     });
@@ -71,6 +71,29 @@ document.addEventListener("DOMContentLoaded", async () => {
 // ============================================================
 // 1. CORE DATA FETCHING
 // ============================================================
+
+async function loadAdminOrderCounts() {
+    try {
+        const response = await callAPI('/admin/orders/count', 'GET');
+        if (response.success && response.data) {
+            // Xoá badge cũ nếu có
+            document.querySelectorAll('.tab-btn .count-badge').forEach(el => el.remove());
+
+            response.data.forEach(item => {
+                const statusStr = item.orderStatus;
+                
+                if (item.orderCount > 0) {
+                    const btn = document.querySelector(`.tab-btn[data-status="${statusStr}"]`);
+                    if (btn) {
+                        btn.innerHTML += ` <span class="count-badge">${item.orderCount}</span>`;
+                    }
+                }
+            });
+        }
+    } catch (error) {
+        console.error('Lỗi lấy số lượng đơn hàng:', error);
+    }
+}
 
 // Switch Tab (Reset & Load)
 async function switchTab(status) {

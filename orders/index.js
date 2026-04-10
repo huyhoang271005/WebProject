@@ -40,8 +40,8 @@ const STATUS_CONFIG = {
     PAYING: {
         label: 'Đang thanh toán',
         icon: 'fa-spinner fa-spin',
-        color: '#f59e0b',
-        actions: ['detail', 'cancel'] // PAYING cũng có thể hủy (VN_PAY chưa thanh toán)
+        color: '#ea580c',
+        actions: ['detail'] // PAYING chỉ hiển thị detail và thông báo chờ
     },
     PENDING: {
         label: 'Đang xử lý',
@@ -64,19 +64,19 @@ const STATUS_CONFIG = {
     COMPLETED: {
         label: 'Đã hoàn thành',
         icon: 'fa-check-circle',
-        color: '#10b981',
+        color: '#15803d',
         actions: ['detail', 'feedback', 'reorder']
     },
     HAS_FEEDBACK: {
         label: 'Đã hoàn thành',
         icon: 'fa-check-circle',
-        color: '#10b981',
-        actions: ['detail', 'has_feedback', 'reorder']
+        color: '#7e22ce',
+        actions: ['has_feedback', 'reorder']
     },
     CANCELED: {
         label: 'Đã hủy',
         icon: 'fa-times-circle',
-        color: '#6b7280',
+        color: '#dc2626',
         actions: ['detail', 'reorder']
     }
 };
@@ -99,6 +99,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
 
         await loadOrders();
+        await loadOrderCounts();
         setupSearch();
         setupInfiniteScroll();
 
@@ -169,6 +170,39 @@ async function loadOrders(append = false) {
             showNotification('Có lỗi xảy ra khi tải đơn hàng', 'error');
             showEmptyState();
         }
+    }
+}
+
+async function loadOrderCounts() {
+    try {
+        const response = await callAPI('/orders/count', 'GET');
+        if (response.success && response.data) {
+            // Xoá badge cũ nếu có
+            document.querySelectorAll('.tab-btn .count-badge').forEach(el => el.remove());
+
+            let totalOrders = 0;
+            response.data.forEach(item => {
+                const statusStr = STATUS_MAP[item.orderStatus] || item.orderStatus;
+                totalOrders += item.orderCount;
+                
+                if (item.orderCount > 0) {
+                    const btn = document.querySelector(`.tab-btn[data-status="${statusStr}"]`);
+                    if (btn) {
+                        btn.innerHTML += ` <span class="count-badge">${item.orderCount}</span>`;
+                    }
+                }
+            });
+
+            // Gắn badge cho tab 'ALL'
+            if (totalOrders > 0) {
+                const allBtn = document.querySelector(`.tab-btn[data-status="ALL"]`);
+                if (allBtn) {
+                    allBtn.innerHTML += ` <span class="count-badge">${totalOrders}</span>`;
+                }
+            }
+        }
+    } catch (error) {
+        console.error('Lỗi lấy số lượng đơn hàng:', error);
     }
 }
 
@@ -362,7 +396,7 @@ function renderOrderActions(orderIndex, statusConfig, orderFromList) {
 
     // 2. Pay button - chỉ hiển thị cho VNPay ở WAITING/PAYING
     const isVNPay = order.paymentMethod === PAYMENT_METHOD.VNPAY;
-    if ((order.orderStatus === 'WAITING' || order.orderStatus === 'PAYING') && isVNPay) {
+    if (order.orderStatus === 'WAITING' && isVNPay) {
         html += `
             <button class="btn-action btn-pay" onclick="payOrder('${order.orderId}')" style="background-color: #ee4d2d; color: white; border: none;">
                 <i class="fas fa-credit-card"></i> Thanh toán
@@ -405,9 +439,17 @@ function renderOrderActions(orderIndex, statusConfig, orderFromList) {
     if (actions.includes('has_feedback')) {
         html += `
             <button class="btn-action" onclick="viewOrderDetail(${orderIndex})" style="background:#8b5cf6; color:white; border:none;">
-                <i class="fas fa-eye"></i> Xem đánh giá
+                <i class="fas fa-eye"></i> Chi tiết & Đánh giá
             </button>
         `;
+    }
+
+    if (order.orderStatus === 'PAYING') {
+        html += `<div style="flex-grow: 1; display: flex; align-items: center;">
+            <span style="font-size: 13px; color: #f59e0b;">
+                <i class="fas fa-info-circle"></i> Vui lòng thử lại sau ít phút
+            </span>
+        </div>`;
     }
 
     return html;
@@ -496,9 +538,9 @@ async function showOrderDetailModal(order, orderIndex) {
     const totalAmount = calculateOrderTotal(order);
     const displayOrderId = order.orderId || `#${String(orderIndex + 1).padStart(6, '0')}`;
 
-    // WAITING và PAYING đều có thể hủy và thanh toán (VNPay)
+    // WAITING có thể hủy và thanh toán (VNPay)
     const canCancel = (order.orderStatus === 'WAITING');
-    const canPay = (order.orderStatus === 'WAITING' || order.orderStatus === 'PAYING') && order.paymentMethod === PAYMENT_METHOD.VNPAY;
+    const canPay = (order.orderStatus === 'WAITING') && order.paymentMethod === PAYMENT_METHOD.VNPAY;
     const canConfirm = order.orderStatus === 'DELIVERED';
     const canFeedback = order.orderStatus === 'COMPLETED';
     const hasFeedback = order.orderStatus === 'HAS_FEEDBACK';
@@ -601,7 +643,13 @@ async function showOrderDetailModal(order, orderIndex) {
     `;
 
 
-    if (canCancel || canPay || canConfirm || canFeedback || canReorder || hasFeedback) {
+    if (order.orderStatus === 'PAYING') {
+        modalBody.innerHTML += `<div class="modal-actions" style="margin-top: 20px; display: flex; gap: 10px; justify-content: flex-end; flex-wrap: wrap;">
+            <span style="color: #f59e0b; font-size: 14px; font-weight: 500; display: flex; align-items: center; gap: 6px;">
+                <i class="fas fa-info-circle"></i> Đang xử lý thanh toán, vui lòng thử lại sau ít phút.
+            </span>
+        </div>`;
+    } else if (canCancel || canPay || canConfirm || canFeedback || canReorder || hasFeedback) {
         modalBody.innerHTML += `<div class="modal-actions" style="margin-top: 20px; display: flex; gap: 10px; justify-content: flex-end; flex-wrap: wrap;"></div>`;
         const actionContainer = modalBody.querySelector('.modal-actions');
 
