@@ -142,7 +142,7 @@ body {
 
 .tab-btn:hover {
     border-color: var(--primary-green);
-    color: var(--primary-green);
+    color: white;
     transform: translateY(-2px);
 }
 
