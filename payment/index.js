@@ -8,6 +8,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const urlParams = new URLSearchParams(window.location.search);
     // Lấy giá trị success
     const successParam = urlParams.get('success');
+    const orderId = urlParams.get('orderId');
     
     console.log("Payment URL param 'success':", successParam); // Log để check
 
@@ -18,14 +19,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     card.innerHTML = '';
 
     if (successParam === 'false') {
-        renderFailure(card);
+        renderFailure(card, orderId);
     } else {
         // Mặc định là success
-        renderSuccess(card);
+        renderSuccess(card, orderId);
     }
 });
 
-function renderSuccess(container) {
+function renderSuccess(container, orderId) {
     // Thêm class cho body để có thể style background nếu cần
     document.body.classList.add('page-success');
     container.classList.add('card-success');
@@ -40,7 +41,7 @@ function renderSuccess(container) {
             Cảm ơn bạn đã mua sắm tại cửa hàng!
         </p>
         <div class="action-buttons">
-            <a href="../orders/index.html" class="btn btn-success">
+            <a href="/orders/?orderId=${orderId}" class="btn btn-success" id="btn-order">
                 <i class="fa-solid fa-box-open"></i> Xem đơn hàng
             </a>
             <a href="/" class="btn btn-outline">
@@ -50,7 +51,7 @@ function renderSuccess(container) {
     `;
 }
 
-function renderFailure(container) {
+function renderFailure(container, orderId) {
     document.body.classList.add('page-failure');
     container.classList.add('card-failure');
 
@@ -64,7 +65,7 @@ function renderFailure(container) {
             Vui lòng thử lại hoặc chọn phương thức thanh toán khác.
         </p>
         <div class="action-buttons">
-            <a href="/orders/index.html" class="btn btn-failure">
+            <a href="/orders/?orderId=${orderId}" class="btn btn-failure">
                 <i class="fa-solid fa-rotate-right"></i> Thử lại
             </a>
             <a href="/contact/index.html" class="btn btn-outline">
