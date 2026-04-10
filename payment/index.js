@@ -68,8 +68,8 @@ function renderFailure(container, orderId) {
             <a href="/orders/?orderId=${orderId}" class="btn btn-failure">
                 <i class="fa-solid fa-rotate-right"></i> Thử lại
             </a>
-            <a href="/contact/index.html" class="btn btn-outline">
-               <i class="fa-solid fa-headset"></i> Liên hệ hỗ trợ
+            <a href="/" class="btn btn-outline">
+               <i class="fa-solid fa-home"></i> Về trang chủ
             </a>
         </div>
     `;
