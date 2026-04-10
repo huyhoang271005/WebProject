@@ -529,7 +529,7 @@ async function showOrderDetailModal(order, orderIndex) {
                 </div>
                 <div class="info-item">
                     <span class="info-label">Ngày thanh toán</span>
-                    <span class="info-value">${convertToVNTime(order.paymentAt)}</span>
+                    <span class="info-value">${order.paymentAt ? convertToVNTime(order.paymentAt) : "___"}</span>
                 </div>
                 <div class="info-item">
                     <span class="info-label">Phương thức thanh toán</span>
