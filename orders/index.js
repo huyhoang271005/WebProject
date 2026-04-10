@@ -364,7 +364,7 @@ function renderOrderActions(orderIndex, statusConfig, orderFromList) {
     const isVNPay = order.paymentMethod === PAYMENT_METHOD.VNPAY;
     if ((order.orderStatus === 'WAITING' || order.orderStatus === 'PAYING') && isVNPay) {
         html += `
-            <button class="btn-action btn-pay" onclick="payOrder(${orderIndex})" style="background-color: #ee4d2d; color: white; border: none;">
+            <button class="btn-action btn-pay" onclick="payOrder('${order.orderId}')" style="background-color: #ee4d2d; color: white; border: none;">
                 <i class="fas fa-credit-card"></i> Thanh toán
             </button>
         `;
@@ -373,7 +373,7 @@ function renderOrderActions(orderIndex, statusConfig, orderFromList) {
     // 3. Cancel button - chỉ WAITING và PAYING mới được hủy
     if (actions.includes('cancel')) {
         html += `
-            <button class="btn-action btn-cancel" onclick="cancelOrder(${orderIndex})">
+            <button class="btn-action btn-cancel" onclick="cancelOrder('${order.orderId}')">
                 <i class="fas fa-times"></i> Hủy đơn
             </button>
         `;
@@ -416,16 +416,15 @@ function renderOrderActions(orderIndex, statusConfig, orderFromList) {
 /**
  * Handle VNPay payment redirect
  */
-window.payOrder = async (orderIndex) => {
-    const order = filteredOrders[orderIndex];
-    if (!order || !order.orderId) {
+window.payOrder = async (orderId) => {
+    if (!orderId) {
         showNotification('Không tìm thấy mã đơn hàng', 'error');
         return;
     }
 
     try {
         if (typeof toggleLoading === 'function') toggleLoading(true);
-        const response = await callAPI(`/payment/vn-pay/${order.orderId}`, 'GET');
+        const response = await callAPI(`/payment/vn-pay/${orderId}`, 'GET');
 
         if (response.success && (response.data?.paymentUrl || response.data)) {
             window.location.href = response.data.paymentUrl || response.data;
@@ -498,7 +497,7 @@ async function showOrderDetailModal(order, orderIndex) {
     const displayOrderId = order.orderId || `#${String(orderIndex + 1).padStart(6, '0')}`;
 
     // WAITING và PAYING đều có thể hủy và thanh toán (VNPay)
-    const canCancel = (order.orderStatus === 'WAITING' || order.orderStatus === 'PAYING');
+    const canCancel = (order.orderStatus === 'WAITING');
     const canPay = (order.orderStatus === 'WAITING' || order.orderStatus === 'PAYING') && order.paymentMethod === PAYMENT_METHOD.VNPAY;
     const canConfirm = order.orderStatus === 'DELIVERED';
     const canFeedback = order.orderStatus === 'COMPLETED';
@@ -608,7 +607,7 @@ async function showOrderDetailModal(order, orderIndex) {
 
         if (canCancel) {
             actionContainer.innerHTML += `
-                <button class="btn-action btn-cancel" onclick="cancelOrder(${orderIndex})" style="padding: 12px 24px; border-radius: 4px; cursor: pointer; font-weight: 600;">
+                <button class="btn-action btn-cancel" onclick="cancelOrder('${order.orderId}')" style="padding: 12px 24px; border-radius: 4px; cursor: pointer; font-weight: 600;">
                     <i class="fas fa-times"></i> HỦY ĐƠN HÀNG
                 </button>
             `;
@@ -616,7 +615,7 @@ async function showOrderDetailModal(order, orderIndex) {
 
         if (canPay) {
             actionContainer.innerHTML += `
-                <button class="btn-action btn-pay" onclick="payOrder(${orderIndex})" style="background-color: #ee4d2d; color: white; border: none; padding: 12px 24px; border-radius: 4px; cursor: pointer; font-weight: 600; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                <button class="btn-action btn-pay" onclick="payOrder('${order.orderId}')" style="background-color: #ee4d2d; color: white; border: none; padding: 12px 24px; border-radius: 4px; cursor: pointer; font-weight: 600; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
                     <i class="fas fa-credit-card"></i> THANH TOÁN QUA VNPAY
                 </button>
             `;
@@ -909,9 +908,8 @@ window.addEventListener('click', (e) => {
 /**
  * Cancel order
  */
-window.cancelOrder = async (orderIndex) => {
-    const order = filteredOrders[orderIndex];
-    if (!order || !order.orderId) {
+window.cancelOrder = async (orderId) => {
+    if (!orderId) {
         showNotification('Không tìm thấy đơn hàng', 'error');
         return;
     }
@@ -922,7 +920,7 @@ window.cancelOrder = async (orderIndex) => {
                 if (typeof toggleLoading === 'function') toggleLoading(true);
 
                 // Sử dụng PATCH /orders/{orderId} theo yêu cầu mới
-                const response = await callAPI(`/orders/${order.orderId}`, 'PATCH', 'CANCELED');
+                const response = await callAPI(`/orders/${orderId}`, 'PATCH', 'CANCELED');
 
                 if (response.success) {
                     showNotification('Hủy đơn hàng thành công', 'success');
