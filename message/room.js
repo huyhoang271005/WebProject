@@ -139,7 +139,10 @@ window.deleteRoomChat = async (roomId, e) => {
     });
 };
 
+let currentRoomSession = 0;
+
 export async function openRoom(roomId) {
+    const session = ++currentRoomSession;
     state.currentRoomId = roomId;
     const newUrl = new URL(window.location);
     newUrl.searchParams.set('roomId', roomId);
@@ -163,6 +166,8 @@ export async function openRoom(roomId) {
 
     await loadMembers(roomId);
 
+    if (session !== currentRoomSession) return;
+
     const cachedType = loadFromCache(roomId);
     if (cachedType && cachedType.length > 0) {
         state.messages.push(...cachedType);
@@ -174,7 +179,9 @@ export async function openRoom(roomId) {
         await loadMessages(roomId);
     }
 
-    send("/app/chat.read", { roomId: state.currentRoomId });
+    if (session === currentRoomSession) {
+        send("/app/chat.read", { roomId: state.currentRoomId });
+    }
 }
 
 export async function loadMembers(roomId) {

@@ -8,11 +8,19 @@ import { showNotification } from "./ui.js";
 
 // Global message functions
 
+let isLoadingMap = {};
+
 export async function loadMessages(roomId, isLazy = false) {
+    if (isLoadingMap[roomId]) return;
+
     try {
+        isLoadingMap[roomId] = true;
         if (state.hasMoreMessages === false) return;
         const prevScrollHeight = dom.chatMessagesEl.scrollHeight;
         const res = await callAPI(`/room-chat/${roomId}/messages?page=${state.page}&size=${state.size}`);
+        
+        if (String(state.currentRoomId) !== String(roomId)) return;
+
         const msgList = res.data?.listData || [];
 
         if (state.page === 0) {
@@ -36,7 +44,11 @@ export async function loadMessages(roomId, isLazy = false) {
         else {
             dom.chatMessagesEl.scrollTop = dom.chatMessagesEl.scrollHeight;
         }
-    } catch (e) { console.error(e); }
+    } catch (e) { 
+        console.error(e); 
+    } finally {
+        isLoadingMap[roomId] = false;
+    }
 }
 
 export function appendMessage(msg, isPrepend = false) {
