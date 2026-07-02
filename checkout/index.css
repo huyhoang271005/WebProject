@@ -21,6 +21,7 @@
 }
 
 body {
+    background-color: var(--bg-main);
     color: var(--text-main);
     font-family: var(--font-body);
     line-height: 1.5;
@@ -268,12 +269,12 @@ body {
     font-size: 0.85rem;
 }
 
-.payment-method-card input:checked+.payment-card-content {
+.payment-method-card input:checked + .payment-card-content {
     border-color: var(--primary);
     background-color: var(--primary-light);
 }
 
-.payment-method-card input:checked+.payment-card-content i {
+.payment-method-card input:checked + .payment-card-content i {
     color: var(--primary);
 }
 
@@ -432,7 +433,6 @@ body {
     .checkout-grid {
         grid-template-columns: 1fr;
     }
-
     .checkout-sidebar {
         position: static;
     }
@@ -442,7 +442,6 @@ body {
     .checkout-header h1 {
         font-size: 1.75rem;
     }
-
     .card-section {
         padding: 24px 20px;
     }

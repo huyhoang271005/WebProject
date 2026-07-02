@@ -1,14 +1,10 @@
 // Xử lý logic hiển thị trạng thái thanh toán
 // Chạy ngay khi file được load (module type)
-import {loadNavbar} from "../navbar/navbar.js";
 
-document.addEventListener('DOMContentLoaded', async () => {
-    sessionStorage.clear();
-    await loadNavbar();
+document.addEventListener('DOMContentLoaded', () => {
     const urlParams = new URLSearchParams(window.location.search);
     // Lấy giá trị success
     const successParam = urlParams.get('success');
-    const orderId = urlParams.get('orderId');
     
     console.log("Payment URL param 'success':", successParam); // Log để check
 
@@ -19,14 +15,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     card.innerHTML = '';
 
     if (successParam === 'false') {
-        renderFailure(card, orderId);
+        renderFailure(card);
     } else {
         // Mặc định là success
-        renderSuccess(card, orderId);
+        renderSuccess(card);
     }
 });
 
-function renderSuccess(container, orderId) {
+function renderSuccess(container) {
     // Thêm class cho body để có thể style background nếu cần
     document.body.classList.add('page-success');
     container.classList.add('card-success');
@@ -41,7 +37,7 @@ function renderSuccess(container, orderId) {
             Cảm ơn bạn đã mua sắm tại cửa hàng!
         </p>
         <div class="action-buttons">
-            <a href="/orders/?orderId=${orderId}" class="btn btn-success" id="btn-order">
+            <a href="../orders/index.html" class="btn btn-success">
                 <i class="fa-solid fa-box-open"></i> Xem đơn hàng
             </a>
             <a href="/" class="btn btn-outline">
@@ -51,7 +47,7 @@ function renderSuccess(container, orderId) {
     `;
 }
 
-function renderFailure(container, orderId) {
+function renderFailure(container) {
     document.body.classList.add('page-failure');
     container.classList.add('card-failure');
 
@@ -65,11 +61,11 @@ function renderFailure(container, orderId) {
             Vui lòng thử lại hoặc chọn phương thức thanh toán khác.
         </p>
         <div class="action-buttons">
-            <a href="/orders/?orderId=${orderId}" class="btn btn-failure">
+            <a href="../orders/index.html" class="btn btn-failure">
                 <i class="fa-solid fa-rotate-right"></i> Thử lại
             </a>
-            <a href="/" class="btn btn-outline">
-               <i class="fa-solid fa-home"></i> Về trang chủ
+            <a href="../contact/index.html" class="btn btn-outline">
+               <i class="fa-solid fa-headset"></i> Liên hệ hỗ trợ
             </a>
         </div>
     `;
