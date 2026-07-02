@@ -5,7 +5,7 @@ import { callAPI } from "../lib/api.js";
 const emailStyles = `
 <style>
     .email-row {
-        display: flex; align-items: center; gap: 10px; margin-bottom: 12px;
+        display: flex; align-items: center; margin-bottom: 12px;
         background: #f9fafb; padding: 8px; border-radius: 10px; border: 1px solid #f0f0f0;
         transition: 0.2s;
     }
@@ -26,6 +26,7 @@ const emailStyles = `
         width: 35px; height: 35px; border-radius: 8px; cursor: pointer;
         display: flex; align-items: center; justify-content: center;
         transition: 0.2s;
+        margin-top: 0;
     }
     .removeEmailBtn:hover { background: #ef4444; color: white; border-color: #ef4444; }
 </style>
@@ -74,16 +75,14 @@ export function initEmailList(initialEmails = []) {
                     value="${email.email || ""}"
                     class="email-input"
                     data-index="${index}"
-                    ${
-                      email.validated === true || email.validated === false
-                        ? "readonly"
-                        : ""
-                    } 
+                    ${email.validated === true || email.validated === false
+          ? "readonly"
+          : ""
+        } 
                     placeholder="Nhập địa chỉ email..."/>
 
-                <div class="status-badge ${
-                  isClickable ? "verify-icon clickable" : ""
-                }" 
+                <div class="status-badge ${isClickable ? "verify-icon clickable" : ""
+        }" 
                      data-index="${index}" 
                      title="${tooltip}">
                     <i class="fa-solid ${iconClass}" style="color:${iconColor}"></i>
@@ -102,7 +101,7 @@ export function initEmailList(initialEmails = []) {
     // Xoá email
     document.querySelectorAll(".removeEmailBtn").forEach((btn) => {
       btn.onclick = async () => {
-        if (emails.length < 1) return; // Logic gốc là < 2 nhưng UI cho phép xóa hết thì tốt hơn, tùy bro giữ < 2
+        if (emails.length < 2) return; // Logic gốc là < 2 nhưng UI cho phép xóa hết thì tốt hơn, tùy bro giữ < 2
         const idx = btn.dataset.index;
         const email = emails[idx];
         if (email.validated === true || email.validated === false) {
@@ -136,6 +135,10 @@ export function initEmailList(initialEmails = []) {
       icon.onclick = async () => {
         const idx = icon.dataset.index;
         const email = emails[idx];
+        if(!email.email){
+          await showDialog("error", "Vui lòng nhập đầy đủ địa chỉ email");
+          return;
+        }
         await showDialog(
           "question",
           `Gửi email xác thực đến ${email.email}?`,

@@ -9,7 +9,7 @@ let currentMode = "all"; // 'all' hoặc 'role'
 // 1. Khởi tạo trang
 await loadPage(async () => {
   await loadNavbar();
-  await fetchRoles(); // Tải danh sách role để dùng cho tab Role
+  await fetchRoles(); // [LỖI 1]: Dòng này gây ra vụ "Đá về Home"
 });
 
 // 2. Chuyển Tab
@@ -18,8 +18,8 @@ window.switchTab = (mode) => {
 
   // Update UI Tab
   document
-    .querySelectorAll(".tab-item")
-    .forEach((el) => el.classList.remove("active"));
+      .querySelectorAll(".tab-item")
+      .forEach((el) => el.classList.remove("active"));
 
   if (mode === "all") document.getElementById("tabAll").classList.add("active");
   else document.getElementById("tabRole").classList.add("active");
@@ -39,8 +39,8 @@ async function fetchRoles() {
   if (res.success) {
     const select = document.getElementById("roleSelect");
     select.innerHTML = res.data
-      .map((r) => `<option value="${r.roleId}">${r.roleName}</option>`)
-      .join("");
+        .map((r) => `<option value="${r.roleId}">${r.roleName}</option>`)
+        .join("");
   }
 }
 
@@ -73,6 +73,7 @@ window.sendNotification = async () => {
     endpoint = "/notifications";
     confirmMsg = "Gửi thông báo cho TOÀN BỘ hệ thống?";
   } else {
+    // [LỖI 2]: Không kiểm tra xem đã chọn Role chưa
     // Gửi theo Role: POST /notifications/roles/{roleId}
     endpoint = `/notifications/roles/${roleId}`;
     const roleSelect = document.getElementById("roleSelect");
@@ -91,6 +92,7 @@ window.sendNotification = async () => {
         document.getElementById("message").value = "";
         document.getElementById("linkUrl").value = "";
       } else {
+
         await showDialog("error", res.message || "Gửi thất bại");
       }
     });

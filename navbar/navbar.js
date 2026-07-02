@@ -1,8 +1,7 @@
-import { callAPI } from "../lib/api.js";
-import { showDialog } from "../dialog/index.js";
-import { connectSse, subscribeTopic } from "../lib/sse.js";
-
-const noImage = "https://cdn-icons-png.flaticon.com/512/847/847969.png";
+import { callAPI } from "/lib/api.js";
+import { showDialog } from "/dialog/index.js";
+import { connectSse, subscribeTopic } from "/lib/sse.js";
+import { noImage } from "/lib/public.js";
 
 let homeData = {
   imageUrl: noImage,
@@ -10,6 +9,7 @@ let homeData = {
   roleName: "GUEST",
   readNotifications: 0,
   cartsCount: 0,
+  readMessages: 0,
 };
 
 let notiState = {
@@ -21,10 +21,15 @@ let notiState = {
 };
 
 const navbarHTML = `
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="manifest" href="/site.webmanifest">
+    <link rel="stylesheet" href="/dialog/index.css">
     <style>
         body { padding-top: 80px; }
         .navbar-component {
-            background: #fff; height: 80px; width: 100%; position: fixed; top: 0; left: 0; z-index: 1000;
+            background: #fff; height: 80px; width: 100%; position: fixed; top: 0; left: 0; z-index: 999;
             display: flex; align-items: center; justify-content: space-between; padding: 0 40px; 
             box-shadow: 0 2px 10px rgba(0,0,0,0.05); box-sizing: border-box; font-family: 'Segoe UI', sans-serif;
             transition: all 0.3s;
@@ -34,7 +39,6 @@ const navbarHTML = `
         .nb-right-wrapper { display: flex; align-items: center; gap: 15px; }
         
         .nb-icon-btn { position: relative; cursor: pointer; font-size: 1.3rem; color: #555; width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; border-radius: 50%; text-decoration: none; transition: 0.2s; }
-        .nb-icon-btn:hover { background: #f3f4f6; color: #10B981; }
         
         .nb-badge { 
             position: absolute; top: 2px; right: 2px; background: #ee4d2d; color: white; 
@@ -46,75 +50,119 @@ const navbarHTML = `
         .nb-user-menu { cursor: pointer; display: flex; align-items: center; gap: 10px; margin-left: 10px; }
         .nb-avatar { width: 42px; height: 42px; border-radius: 50%; object-fit: cover; border: 1px solid #ddd; }
         
-        .nb-dropdown { position: absolute; right: 0; top: 70px; background: white; width: 280px; border-radius: 12px; box-shadow: 0 5px 25px rgba(0,0,0,0.15); display: none; flex-direction: column; overflow: hidden; border: 1px solid #eee; z-index: 1100; padding: 5px 0; }
+        .nb-dropdown { position: absolute; right: 0; top: 70px; background: white; width: 280px; border-radius: 12px; box-shadow: 0 5px 25px rgba(0,0,0,0.15); display: none; flex-direction: column; overflow-x: hidden; border: 1px solid #eee; z-index: 1100; padding: 5px 0; overflow-y: auto; height: 600px;}
         .nb-noti-dropdown { width: 360px; right: -80px; padding: 0;}
         .nb-dropdown.show { display: flex; }
         .nb-dropdown a, .nb-dropdown button { padding: 12px 20px; text-decoration: none; color: #333; text-align: left; background: none; border: none; cursor: pointer; border-bottom: 1px solid #f9f9f9; display:flex; align-items:center; gap:12px; font-size:0.95rem; transition: 0.2s; }
         .nb-dropdown a:hover, .nb-dropdown button:hover { background: #f9fafb; color: #10B981; padding-left: 25px; }
+        .nb-dropdown-header { font-size: 0.75rem; color: #9ca3af; font-weight: 700; text-transform: uppercase; padding: 12px 20px 4px; letter-spacing: 0.5px; }
         .nb-admin-only { display: none !important; }
 
-        .noti-item { padding: 12px 15px; border-bottom: 1px solid #f0f0f0; display: flex; gap: 10px; position: relative; cursor: pointer; transition: background 0.2s; }
-        .noti-item:hover { background: #fafafa; }
-        .noti-item.unread { background: #f0fdf4; } 
-        .noti-item.unread .noti-title { color: #10B981; }
+        .noti-item { 
+            padding: 12px 15px; border-bottom: 1px solid #f0f0f0; display: flex; gap: 10px; position: relative; cursor: pointer; 
+            transition: all 0.2s ease-in-out; align-items: flex-start;
+        }
+        .noti-item:hover { 
+            background: #f8fafc; 
+            transform: translateX(4px);
+            border-left: 3px solid #10B981;
+        }
+        .noti-item.unread { 
+            background: #ecfdf5; 
+        } 
+        .noti-item.unread .noti-title { 
+            color: #059669; 
+            font-weight: 700 !important;
+        }
+        /* Indicator dot for unread */
+        .noti-indicator {
+            width: 8px; height: 8px; background: #10B981; border-radius: 50%; margin-top: 6px; flex-shrink: 0;
+            display: none;
+        }
+        .noti-item.unread .noti-indicator { display: block; }
+
         .noti-content { flex: 1; }
-        .btn-del-noti { cursor: pointer; color: #ccc; padding: 5px; }
-        .btn-del-noti:hover { color: #EF4444; }
+        
+        .noti-actions {
+            display: flex; flex-direction: column; gap: 4px; align-items: center; justify-content: center;
+        }
+        .btn-icon-noti { 
+            cursor: pointer; color: #9ca3af; padding: 4px; border-radius: 4px; transition: 0.2s; font-size: 0.9rem;
+            width: 24px; height: 24px; display: flex; align-items: center; justify-content: center;
+        }
+        .btn-icon-noti:hover { background: #e5e7eb; color: #4b5563; }
+        
+        .btn-mark-read:hover { color: #10B981; background: #d1fae5; }
+        .btn-del-noti:hover { color: #EF4444; background: #fee2e2; }
+
         .btn-clear-all { font-size: 0.8rem; color: #EF4444; cursor: pointer; text-decoration: underline; }
 
-        /* --- MOBILE & TABLET CSS --- */
-        @media (max-width: 992px) {
-            body { padding-top: 130px; } /* Đẩy body xuống vì navbar cao hơn */
-            
-            .navbar-component { 
-                padding: 10px 15px; 
-                height: auto; 
-                flex-wrap: wrap; 
-                gap: 10px;
-                background: rgba(255,255,255,0.98);
-                backdrop-filter: blur(10px);
-            }
-            
-            .nb-brand { order: 1; font-size: 1.5rem; flex: 1; }
-            
-            /* Nhóm icon bên phải */
-            .nb-right-wrapper { order: 2; gap: 2px; }
-            .nb-icon-btn { width: 40px; height: 40px; font-size: 1.2rem; }
-            .nb-user-menu { margin-left: 5px; }
-            .nb-avatar { width: 38px; height: 38px; }
-            .nb-username, #nbRole { display: none; } 
-            
-            /* Thanh tìm kiếm nhảy xuống dòng */
-            #nbCenterSlot { 
-                order: 3; 
-                width: 100%; 
-                margin: 0; 
-                padding: 0; 
-                max-width: none; 
-            }
-            
-            /* Popup thông báo full màn hình mobile */
-            .nb-noti-dropdown { 
-                position: fixed; 
-                top: 60px; 
-                left: 50%; 
-                transform: translateX(-50%); 
-                width: 95vw; 
-                height: 70vh; 
-                max-width: 400px; 
-                right: auto; 
-                border-radius: 12px;
-                box-shadow: 0 0 0 100vh rgba(0,0,0,0.5); /* Tạo overlay tối */
-            }
-            .nav-spacer { height: 130px !important; }
+        /* TOAST: Góc dưới phải */
+        #nbToastContainer { 
+            position: fixed; bottom: 20px; right: 20px; z-index: 99999; 
+            display: flex; flex-direction: column; gap: 10px; 
         }
+        .nb-toast { 
+            background: white; padding: 15px 20px; border-left: 5px solid #10B981; 
+            box-shadow: 0 5px 25px rgba(0,0,0,0.15); border-radius: 8px; 
+            display: flex; align-items: center; gap: 12px; min-width: 300px; max-width: 380px;
+            animation: nbSlideIn 0.3s ease-out; cursor: pointer;
+        }
+        @keyframes nbSlideIn { from { transform: translateY(100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+        @media (max-width: 992px) {
+            .navbar-component { padding: 10px 15px; height: auto; flex-wrap: wrap; gap: 10px; background: rgba(255,255,255,0.98); backdrop-filter: blur(10px); justify-content: space-between; }
+            .nb-brand { order: 1; font-size: 1.5rem; flex: 0 1 auto; }
+            .nb-right-wrapper { order: 3; gap: 5px; margin-left: auto; }
+            #nbCenterSlot { order: 2; width: 100%; margin: 0; padding: 0; max-width: none; }
+            .nb-dropdown { height: 400px }
+            .nb-noti-dropdown { position: fixed; top: 60px; left: 50%; transform: translateX(-50%); width: 95vw; height: 70vh; max-width: 400px; right: auto; border-radius: 12px; box-shadow: 0 0 0 100vh rgba(0,0,0,0.5); }
+        }
+
+        .nb-leftbar-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1150; display: none; }
+        .nb-leftbar-overlay.show { display: block; }
+        .nb-leftbar { position: fixed; top: 0; left: -300px; width: 280px; height: 100vh; background: white; z-index: 1200; box-shadow: 2px 0 10px rgba(0,0,0,0.1); transition: left 0.3s ease; display: flex; flex-direction: column; overflow-y: auto; }
+        .nb-leftbar.show { left: 0; }
+        .nb-leftbar-header { display: flex; justify-content: space-between; align-items: center; padding: 20px; border-bottom: 1px solid #eee; }
+        .nb-leftbar-header .nb-brand { font-size: 1.4rem; min-width: auto; }
+        .nb-leftbar-close { font-size: 1.5rem; color: #555; cursor: pointer; transition: 0.2s; }
+        .nb-leftbar-close:hover { color: #EF4444; }
+        .nb-leftbar a { padding: 15px 20px; text-decoration: none; color: #333; display: flex; align-items: center; gap: 12px; font-weight: 500; transition: 0.2s; border-bottom: 1px solid #f9f9f9; }
+        .nb-leftbar a:hover { background: #f9fafb; color: #10B981; padding-left: 25px; }
+        #nbMenuBtn { font-size: 1.5rem; cursor: pointer; color: #555; margin-right: 15px; display: flex; align-items: center; transition: 0.2s; }
+        #nbMenuBtn:hover { color: #10B981; }
     </style>
 
+    <!-- Sidebar Overlay & Sidebar -->
+    <div class="nb-leftbar-overlay" id="nbLeftbarOverlay"></div>
+    <div class="nb-leftbar" id="nbLeftbar">
+        <div class="nb-leftbar-header">
+            <span class="nb-brand" id="app-name-sidebar"><i class="fa-solid fa-leaf"></i> </span>
+            <i class="fa-solid fa-xmark nb-leftbar-close" id="nbLeftbarClose"></i>
+        </div>
+        <div class="nb-dropdown-header">Mua sắm</div>
+        <a href="/home"><i class="fa-solid fa-house" style="color: #10B981 ; width:20px; text-align:center;"></i> Trang chủ</a>
+        <a href="/products"><i class="fa-solid fa-compass" style="color: #F59E0B ; width:20px; text-align:center;"></i> Khám phá sản phẩm</a>
+
+        <div class="nb-admin-only nb-dropdown-header" style="border-top:1px solid #eee; margin-top:4px; padding-top:12px">Quản trị hệ thống</div>
+        <a href="/products-manager" class="nb-admin-only"><i class="fa-solid fa-boxes-stacked" style="color: #EC4899; width:20px; text-align:center;"></i> Quản lý sản phẩm</a>
+        <a href="/catalog-management" class="nb-admin-only"><i class="fa-solid fa-layer-group" style="color: #6366F1; width:20px; text-align:center;"></i> Quản lý danh mục</a>
+        <a href="/users" class="nb-admin-only"><i class="fa-solid fa-users-gear" style="color: #0EA5E9; width:20px; text-align:center;"></i> Quản lý người dùng</a>
+        <a href="/role-permission" class="nb-admin-only"><i class="fa-solid fa-user-lock" style="color: #EF4444; width:20px; text-align:center;"></i> Quản lý vai trò và quyền hạn</a>
+        <a href="/order-manager" class="nb-admin-only"><i class="fa-solid fa-file-invoice-dollar" style="color: #14B8A6; width:20px; text-align:center;"></i> Quản lý đơn hàng</a>
+        <a href="/notification" class="nb-admin-only"><i class="fa-solid fa-bullhorn" style="color: #F97316; width:20px; text-align:center;"></i> Quản lý thông báo</a>
+        <a href="/server-health" class="nb-admin-only"><i class="fa-solid fa-server" style="color: #10B981; width:20px; text-align:center;"></i> Sức khoẻ Server</a>
+        <a href="/summary-report" class="nb-admin-only"><i class="fa-solid fa-chart-line" style="color: #3B82F6; width:20px; text-align:center;"></i> Báo cáo thống kê</a>
+    </div>
+
     <nav class="navbar-component">
-        <a href="../home/index.html" class="nb-brand"><i class="fa-solid fa-leaf"></i> Tạp Hóa Xanh</a>
+        <div style="display: flex; align-items: center;">
+            <i class="fa-solid fa-bars" id="nbMenuBtn"></i>
+            <a href="/home" class="nb-brand" id="app-name"></a>
+        </div>
         <div id="nbCenterSlot"></div>
         <div class="nb-right-wrapper">
-            <a href="../cart/index.html" class="nb-icon-btn" title="Giỏ hàng">
+            <a href="/cart" class="nb-icon-btn" title="Giỏ hàng">
                 <i class="fa-solid fa-cart-shopping"></i>
                 <span class="nb-badge" id="cartBadge">0</span>
             </a>
@@ -125,7 +173,7 @@ const navbarHTML = `
                     <div style="padding:15px; font-weight:bold; border-bottom:1px solid #eee; display:flex; justify-content:space-between; background:#fff; border-radius:12px 12px 0 0;">
                         <span>Thông báo</span><span class="btn-clear-all" id="btnClearAllNoti">Xóa tất cả</span>
                     </div>
-                    <div class="noti-list" id="nbNotiList" style="max-height: calc(70vh - 50px); overflow-y:auto; background:#fff; border-radius:0 0 12px 12px;"></div>
+                    <div class="noti-list" id="nbNotiList" style="max-height: calc(70vh - 50px); overflow-y:auto; overflow-x: hidden; background:#fff; border-radius:0 0 12px 12px;"></div>
                     <div style="text-align:center; padding:10px; display:none; color:#10B981; background:#fff;" id="notiLoading"><i class="fa-solid fa-circle-notch fa-spin"></i></div>
                 </div>
             </div>
@@ -135,21 +183,13 @@ const navbarHTML = `
                     <div style="font-weight:600; font-size:0.9rem;" id="nbUsername">Khách</div>
                     <div style="font-size:0.75rem; color:#888;" id="nbRole">GUEST</div>
                 </div>
-                <div class="nb-dropdown" id="nbUserDropdown">
-                    <a href="../home"><i class="fa-solid fa-house" style="color: #10B981 ; width:20px; text-align:center;"></i> Trang chủ</a>
-                    <a href="../products"><i class="fa-solid fa-compass" style="color: #F59E0B ; width:20px; text-align:center;"></i> Khám phá sản phẩm</a>
-                    <a href="../profile"><i class="fa-regular fa-user" style="color: #3B82F6; width:20px; text-align:center;"></i> Hồ sơ</a>
-                    <a href="../session"><i class="fa-solid fa-shield-halved" style="color: #8B5CF6; width:20px; text-align:center;"></i> Phiên đăng nhập</a>
-                    <a href="../contact"><i class="fa-solid fa-map-location-dot" style="color: #F59E0B; width:20px; text-align:center;"></i> Sổ địa chỉ</a>
-                    <a href="../orders"><i class="fa-solid fa-clipboard-list" style="color: #10B981; width:20px; text-align:center;"></i> Đơn hàng của tôi</a>
-                    
-                    <div class="nb-admin-only" style="border-top:1px solid #eee; margin:5px 0"></div>
-                    <a href="../products-manager" class="nb-admin-only"><i class="fa-solid fa-boxes-stacked" style="color: #EC4899; width:20px; text-align:center;"></i> QL Sản phẩm</a>
-                    <a href="../catalog-management" class="nb-admin-only"><i class="fa-solid fa-layer-group" style="color: #6366F1; width:20px; text-align:center;"></i> QL Danh mục</a>
-                    <a href="../users" class="nb-admin-only"><i class="fa-solid fa-users-gear" style="color: #0EA5E9; width:20px; text-align:center;"></i> QL Người dùng</a>
-                    <a href="../role-permission" class="nb-admin-only"><i class="fa-solid fa-user-lock" style="color: #EF4444; width:20px; text-align:center;"></i> Phân quyền</a>
-                    <a href="../order-manager" class="nb-admin-only"><i class="fa-solid fa-file-invoice-dollar" style="color: #14B8A6; width:20px; text-align:center;"></i> Quản lí đơn hàng</a>
-                    <a href="../notification" class="nb-admin-only"><i class="fa-solid fa-bullhorn" style="color: #F97316; width:20px; text-align:center;"></i> Gửi thông báo</a>
+                <div class="nb-dropdown" id="nbUserDropdown" style="height: auto;">
+                    <div class="nb-dropdown-header">Tài khoản & Đơn hàng</div>
+                    <a href="/profile"><i class="fa-regular fa-user" style="color: #3B82F6; width:20px; text-align:center;"></i> Hồ sơ của tôi</a>
+                    <a href="/orders"><i class="fa-solid fa-clipboard-list" style="color: #10B981; width:20px; text-align:center;"></i> Đơn hàng của tôi</a>
+                    <a href="/contact"><i class="fa-solid fa-map-location-dot" style="color: #F59E0B; width:20px; text-align:center;"></i> Địa chỉ của tôi</a>
+                    <a href="/session"><i class="fa-solid fa-shield-halved" style="color: #8B5CF6; width:20px; text-align:center;"></i> Phiên truy cập</a>
+                    <button id="nbDeleteAccount" style="color:#ef4444;"><i class="fa-solid fa-user-xmark" style="color: #ef4444; width:20px; text-align:center;"></i> Xóa tài khoản</button>
                     
                     <button id="nbLogout" style="color:#e11d48; border-top:1px solid #eee; margin-top:5px">
                         <i class="fa-solid fa-right-from-bracket" style="width:20px; text-align:center;"></i> Đăng xuất
@@ -158,7 +198,7 @@ const navbarHTML = `
             </div>
         </div>
     </nav>
-    <div style="height: 80px; width: 100%; clear: both;" class="nav-spacer"></div>
+    <div id="nbToastContainer"></div>
 `;
 
 export async function loadNavbar(options = {}) {
@@ -168,52 +208,67 @@ export async function loadNavbar(options = {}) {
   if (options.centerHTML)
     document.getElementById("nbCenterSlot").innerHTML = options.centerHTML;
 
-  // HIỂN THỊ CACHE TRƯỚC
+  // [LOGIC AN TOÀN TRÁNH 2 LẦN REFRESH]
   const cached = sessionStorage.getItem("homeData");
   if (cached) {
+    // 1. Có cache -> Dùng luôn, KHÔNG gọi API /home
     homeData = JSON.parse(cached);
     updateNavbarUI(homeData);
   } else {
-    const res = await callAPI("/home", "GET");
-    if (res && res.success && res.data) {
-      homeData = res.data;
-      sessionStorage.setItem("homeData", JSON.stringify(homeData));
-      updateNavbarUI(homeData);
-    }
+    // 2. Không cache -> Gọi API và ĐỢI (await) nó xong
+    await fetchHomeData();
   }
 
+  // 3. Sau đó mới kết nối SSE (Tránh xung đột token)
   await connectSse("/sse");
   setupSSERealtime();
   setupEvents();
 
   document.addEventListener("update-noti-badge", (e) => {
     const delta = parseInt(e.detail);
-    if (!isNaN(delta)) {
-      let current = parseInt(homeData.readNotifications) || 0;
-      let newCount = current + delta;
-      if (newCount < 0) newCount = 0;
-      homeData.readNotifications = newCount;
-      updateNavbarUI(homeData);
-      sessionStorage.setItem("homeData", JSON.stringify(homeData));
-    }
+    if (!isNaN(delta)) updateBadgeCount(delta);
   });
+}
+
+async function fetchHomeData() {
+  const res = await callAPI("/home", "GET");
+  if (res && res.success && res.data) {
+    homeData = res.data;
+    sessionStorage.setItem("homeData", JSON.stringify(homeData));
+    updateNavbarUI(homeData);
+  }
+  else {
+    await showDialog("error", res.message);
+  }
+}
+
+function updateBadgeCount(delta) {
+  let current = parseInt(homeData.readNotifications) || 0;
+  homeData.readNotifications = Math.max(0, current + delta);
+  updateNavbarUI(homeData);
+  sessionStorage.setItem("homeData", JSON.stringify(homeData));
 }
 
 function updateNavbarUI(data) {
   if (!data) return;
+  document.getElementById("app-name").innerHTML = `<i class="fa-solid fa-leaf"></i> ${data.appName}`;
+  document.getElementById("app-name-sidebar").innerHTML = `<i class="fa-solid fa-leaf"></i> ${data.appName}`;
   document.getElementById("nbAvatar").src = data.imageUrl || noImage;
-  if (data.username && data.username !== "Khách") {
-    document.getElementById("nbUsername").textContent = data.username;
+  if (data.fullName && data.fullName !== "Khách") {
+    document.getElementById("nbUsername").textContent = data.fullName;
     document.getElementById("nbRole").textContent = data.roleName;
-    if (data.roleName === "ADMIN") {
-      document
-        .querySelectorAll(".nb-admin-only")
-        .forEach((el) => el.style.setProperty("display", "flex", "important"));
-    }
+    document
+      .querySelectorAll(".nb-admin-only")
+      .forEach((el) => el.style.setProperty("display", data.roleName === "USER" ? "none": "flex", "important"));
+  }
+  const badge = document.getElementById("chatBadge");
+  if (badge) {
+    badge.innerText = data.readMessages > 99 ? '99+' : data.readMessages;
+    badge.style.display = data.readMessages > 0 ? 'block' : 'none';
   }
   const cartBadge = document.getElementById("cartBadge");
   const cartCount = parseInt(data.cartsCount) || 0;
-  cartBadge.innerText = cartCount > 99 ? "99+" : cartCount;
+  cartBadge.innerText = cartCount > 50 ? "50+" : cartCount;
   cartBadge.style.display = cartCount > 0 ? "flex" : "none";
 
   const notiBadge = document.getElementById("nbBadge");
@@ -222,23 +277,63 @@ function updateNavbarUI(data) {
   notiBadge.style.display = notiCount > 0 ? "flex" : "none";
 }
 
+// Hàm hiển thị Toast (Plan B: Tự xóa cũ, thêm mới)
+function showSmartToast(title, message, iconClass) {
+  const container = document.getElementById("nbToastContainer");
+  container.innerHTML = ""; // Xóa cái cũ ngay lập tức
+
+  const toast = document.createElement("div");
+  toast.className = "nb-toast";
+  const displayMsg =
+    message.length > 80 ? message.substring(0, 80) + "..." : message;
+
+  toast.innerHTML = `
+        <i class="fa-solid ${iconClass}" style="color:#10B981; font-size:1.4rem;"></i>
+        <div style="flex:1">
+            <div style="font-weight:bold; font-size:0.95rem; margin-bottom:2px;">${title}</div>
+            <div style="font-size:0.85rem; color:#555; line-height:1.3;">${displayMsg}</div>
+        </div>
+        <i class="fa-solid fa-xmark" style="color:#999; cursor:pointer;" onclick="this.parentElement.remove()"></i>
+    `;
+
+  container.appendChild(toast);
+  setTimeout(() => {
+    if (toast.isConnected) toast.remove();
+  }, 5000);
+}
+
+// [XỬ LÝ REALTIME - PLAN B]
 function setupSSERealtime() {
+  // 1. Notification (Hệ thống) - VẪN GIỮ (Hiện chuông, cộng số)
   subscribeTopic("notification", (data) => {
-    let current = parseInt(homeData.readNotifications) || 0;
-    homeData.readNotifications = current + 1;
-    updateNavbarUI(homeData);
-    sessionStorage.setItem("homeData", JSON.stringify(homeData));
-    const notiList = document.getElementById("nbNotiList");
-    if (document.getElementById("nbNotiDropdown").classList.contains("show"))
-      prependNotification(data);
+    updateBadgeCount(1);
+    showSmartToast(
+      "Thông báo hệ thống",
+      data.message || data.content,
+      "fa-bell",
+    );
+    prependNotification(data);
   });
+
+  // 2. Message (Tin nhắn) - CẮT BỎ LOẠI 1 (Chỉ hiện Toast, ko vào chuông)
+  const badge = document.getElementById("chatBadge");
+  if(badge) {
+    subscribeTopic("message", async (data) => {
+      // Chỉ hiện Box nổi (Toast)
+      let current = parseInt(homeData.readMessages) || 0;
+      homeData.readMessages = Math.max(0, current + 1);
+      updateNavbarUI(homeData);
+      sessionStorage.setItem("homeData", JSON.stringify(homeData));
+      showSmartToast(data.fullName, data.message, "fa-comment-dots");
+    });
+  }
+
+  // 3. Cart
   subscribeTopic("cart", (data) => {
     const change = parseInt(data);
     if (!isNaN(change)) {
       let current = parseInt(homeData.cartsCount) || 0;
-      let newCount = current + change;
-      if (newCount < 0) newCount = 0;
-      homeData.cartsCount = newCount;
+      homeData.cartsCount = Math.max(0, current + change);
       updateNavbarUI(homeData);
       sessionStorage.setItem("homeData", JSON.stringify(homeData));
     }
@@ -249,6 +344,25 @@ function setupEvents() {
   const userDropdown = document.getElementById("nbUserDropdown");
   const notiDropdown = document.getElementById("nbNotiDropdown");
   const notiList = document.getElementById("nbNotiList");
+  
+  const leftbarOverlay = document.getElementById("nbLeftbarOverlay");
+  const leftbar = document.getElementById("nbLeftbar");
+
+  document.getElementById("nbMenuBtn").onclick = (e) => {
+    e.stopPropagation();
+    leftbar.classList.add("show");
+    leftbarOverlay.classList.add("show");
+  };
+
+  document.getElementById("nbLeftbarClose").onclick = () => {
+    leftbar.classList.remove("show");
+    leftbarOverlay.classList.remove("show");
+  };
+
+  leftbarOverlay.onclick = () => {
+    leftbar.classList.remove("show");
+    leftbarOverlay.classList.remove("show");
+  };
 
   document.getElementById("nbUserMenu").onclick = (e) => {
     e.stopPropagation();
@@ -278,19 +392,40 @@ function setupEvents() {
     });
   }
 
-  const logoutBtn = document.getElementById("nbLogout");
-  if (logoutBtn) {
-    logoutBtn.onclick = async () => {
+  document.getElementById("nbLogout").onclick = async () => {
+    await showDialog(
+      "question",
+      "Đăng xuất?",
+      async () => {
+        sessionStorage.clear();
+        localStorage.clear();
+        await callAPI("/logout");
+        window.location.replace("/auth/login");
+      },
+      "Đăng xuất",
+      true,
+    );
+  };
+
+  const deleteBtn = document.getElementById("nbDeleteAccount");
+  if (deleteBtn) {
+    deleteBtn.onclick = async (e) => {
+      e.stopPropagation();
       await showDialog(
         "question",
-        "Bạn có chắc chắn muốn đăng xuất không?",
+        "Bạn có chắc chắn muốn xóa tài khoản vĩnh viễn không? Hành động này không thể hoàn tác!",
         async () => {
-          sessionStorage.clear();
-          localStorage.clear();
-          await callAPI("/logout");
-          window.location.replace("../auth/login");
+          const res = await callAPI("/profile", "DELETE");
+          if (res && res.success) {
+            sessionStorage.clear();
+            localStorage.clear();
+            await showDialog("success", "Đã xóa tài khoản thành công!");
+            window.location.replace("/auth/login");
+          } else {
+            await showDialog("error", res?.message || "Xóa tài khoản thất bại!");
+          }
         },
-        "Đăng xuất",
+        "Xóa tài khoản",
         true
       );
     };
@@ -301,17 +436,30 @@ function setupEvents() {
     notiDropdown.classList.remove("show");
   });
 
-  const clearAllBtn = document.getElementById("btnClearAllNoti");
-  if (clearAllBtn) {
-    clearAllBtn.onclick = async (e) => {
+  // [FIX] Xóa tất cả - Xóa sạch UI
+  const clearBtn = document.getElementById("btnClearAllNoti");
+  if (clearBtn) {
+    clearBtn.onclick = async (e) => {
       e.stopPropagation();
-      if (!confirm("Xóa tất cả thông báo?")) return;
-      document.getElementById("nbNotiList").innerHTML =
-        '<div class="empty-noti" style="padding:20px;text-align:center;color:#999">Không có thông báo nào</div>';
-      let current = parseInt(homeData.readNotifications) || 0;
-      document.dispatchEvent(
-        new CustomEvent("update-noti-badge", { detail: -current })
-      );
+      await showDialog("question", "Bạn có muốn xoá tất cả thông báo ?", async () => {
+        // Gọi API xóa tất cả
+        const res = await callAPI("/notifications", "DELETE");
+        if (res && res.success) {
+          // Xóa giao diện
+          document.getElementById("nbNotiList").innerHTML =
+            '<div class="empty-noti" style="padding:20px;text-align:center;color:#999">Không có thông báo nào</div>';
+
+          // Reset số
+          homeData.readNotifications = 0;
+          updateNavbarUI(homeData);
+          sessionStorage.setItem("homeData", JSON.stringify(homeData));
+          await showDialog("success", "Đã xóa tất cả thông báo");
+        } else {
+          await showDialog("error", res.message);
+        }
+      });
+
+
     };
   }
 }
@@ -320,34 +468,30 @@ async function fetchNotifications() {
   if (notiState.isLoading || !notiState.hasMore) return;
   notiState.isLoading = true;
   document.getElementById("notiLoading").style.display = "block";
-  try {
-    const res = await callAPI(
-      `/notifications?page=${notiState.page}&size=${notiState.size}`,
-      "GET"
-    );
-    if (res && res.success && res.data && Array.isArray(res.data.listData)) {
-      const list = res.data.listData;
-      if (list.length > 0) {
-        const html = list.map((item) => createNotiItemHTML(item)).join("");
-        const container = document.getElementById("nbNotiList");
-        if (notiState.page === 0) container.innerHTML = html;
-        else container.insertAdjacentHTML("beforeend", html);
-        notiState.page++;
-      } else {
-        if (notiState.page === 0)
-          document.getElementById("nbNotiList").innerHTML =
-            '<div class="empty-noti" style="padding:20px;text-align:center;color:#999">Không có thông báo nào</div>';
-        notiState.hasMore = false;
-      }
-      if (list.length < notiState.size) notiState.hasMore = false;
+  const res = await callAPI(
+    `/notifications?page=${notiState.page}&size=${notiState.size}`,
+    "GET",
+  );
+  if (res && res.success && res.data?.listData) {
+    const list = res.data.listData;
+    if (list.length > 0) {
+      const html = list.map((item) => createNotiItemHTML(item)).join("");
+      const container = document.getElementById("nbNotiList");
+      if (notiState.page === 0) container.innerHTML = html;
+      else container.insertAdjacentHTML("beforeend", html);
+      notiState.page++;
     } else {
+      if (notiState.page === 0)
+        document.getElementById("nbNotiList").innerHTML =
+          '<div class="empty-noti" style="padding:20px;text-align:center;color:#999">Không có thông báo nào</div>';
       notiState.hasMore = false;
     }
-  } catch (e) {
-    console.error(e);
-  } finally {
+    if (list.length < notiState.size) notiState.hasMore = false;
     notiState.isLoading = false;
     document.getElementById("notiLoading").style.display = "none";
+  } else {
+    notiState.hasMore = false;
+    await showDialog("error", res.message);
   }
 }
 
@@ -370,46 +514,60 @@ function createNotiItemHTML(item, isNew = false) {
   const isUnread = isNew || !item.isRead;
 
   return `
-        <div class="noti-item ${
-          isUnread ? "unread" : ""
-        }" id="noti-${id}" onclick="readNoti('${id}', '${link}', this)">
-            <div class="noti-content">
-                <div class="noti-title" style="font-weight:600;font-size:0.95rem">${title}</div>
-                <div class="noti-msg" style="font-size:0.9rem;color:#555">${msg}</div>
-                <div class="noti-time" style="font-size:0.75rem;color:#999;margin-top:4px">${time}</div>
-            </div>
-            <i class="fa-solid fa-xmark btn-del-noti" onclick="deleteNoti('${id}', event)"></i>
+    <div class="noti-item ${isUnread ? "unread" : ""
+    }" id="noti-${id}" onclick="readNoti('${id}', '${link}', this)" title="${isUnread ? "Nhấn để xem" : "Đã đọc"}">
+        <div class="noti-indicator"></div>
+        <div class="noti-content">
+            <div class="noti-title" style="font-weight:600;font-size:0.95rem;transition:color 0.2s">${title}</div>
+            <div class="noti-msg" style="font-size:0.9rem;color:#555">${msg}</div>
+            <div class="noti-time" style="font-size:0.75rem;color:#999;margin-top:4px">${time}</div>
         </div>
-    `;
+        <div class="noti-actions">
+           ${isUnread ? `<i class="fa-solid fa-check btn-icon-noti btn-mark-read" onclick="markAsRead('${id}', event, this)" title="Đánh dấu đã đọc"></i>` : ''}
+           <i class="fa-solid fa-xmark btn-icon-noti btn-del-noti" onclick="deleteNoti('${id}', event)" title="Xóa thông báo"></i>
+        </div>
+    </div>
+  `;
 }
 
 window.deleteNoti = async (id, e) => {
-  e.stopPropagation();
-  if (!id || id === "undefined") return;
-  const item = document.getElementById(`noti-${id}`);
-  const isUnread = item.classList.contains("unread");
-  if (item) item.remove();
-  if (isUnread)
-    document.dispatchEvent(
-      new CustomEvent("update-noti-badge", { detail: -1 })
-    );
-  await callAPI("/notifications/delete", "POST", [id]);
+  if (e) e.stopPropagation();
+  await showDialog("question", "Bạn có muốn xoá thông báo này ?", async () => {
+    // e.stopPropagation(); // Đã chuyển lên đầu
+    const item = document.getElementById(`noti-${id}`);
+    if (item) {
+      if (item.classList.contains("unread")) updateBadgeCount(-1);
+      item.remove();
+    }
+    const res = await callAPI("/notifications/delete", "POST", [id]);
+    await showDialog(res.success ? "success" : "error", res.message);
+  });
+
 };
 
+window.markAsRead = async (id, e, btnEl) => {
+  e.stopPropagation();
+  const item = document.getElementById(`noti-${id}`);
+  if (item && item.classList.contains("unread")) {
+    item.classList.remove("unread");
+    updateBadgeCount(-1);
+    if (btnEl) btnEl.remove(); // Xóa nút check sau khi đã đọc
+
+    await callAPI("/notifications", "PATCH", [id]);
+  }
+}
+
 window.readNoti = async (id, link, el) => {
+  // Nếu chưa đọc -> đánh dấu đọc
   if (el.classList.contains("unread")) {
     el.classList.remove("unread");
-    document.dispatchEvent(
-      new CustomEvent("update-noti-badge", { detail: -1 })
-    );
+    updateBadgeCount(-1);
 
-    try {
-      // Body là một Mảng chứa ID: ["id"]
-      const res = await callAPI("/notifications", "PATCH", [id]);
-      console.log("Đã đọc:", res);
-    } catch (e) {
-      console.error("Lỗi đọc noti:", e);
-    }
+    // Xóa nút check nếu có
+    const checkBtn = el.querySelector('.btn-mark-read');
+    if (checkBtn) checkBtn.remove();
+
+    await callAPI("/notifications", "PATCH", [id]);
   }
   if (link && link !== "#" && link !== "null") window.location.href = link;
 };

@@ -1,15 +1,17 @@
-import {callAPI} from "../../lib/api.js";
-import {showDialog} from "../../dialog/index.js";
-import {  getLoader, getEye} from "../../lib/public.js";
+import { callAPI, API_BASE } from "/lib/api.js";
+import { showDialog } from "/dialog/index.js";
+import { getLoader, getEye } from "/lib/public.js";
+import { connectSse, subscribeTopic } from "/lib/sse.js";
 
 const usernameInput = document.getElementById('username');
 const passwordInput = document.getElementById('password');
-const loginBtn = document.getElementById('loginBtn');
+const loginForm = document.getElementById('login-form');
 const statusDiv = document.getElementById('status');
 const forgotPassword = document.getElementById('forgotPassword');
 const rememberUser = document.getElementById('rememberUser');
-await getEye();
-loginBtn.addEventListener('click', async () => {
+const googleLoginBtn = document.getElementById('googleLoginBtn');
+
+async function login() {
     const username = usernameInput.value.trim();
     const password = passwordInput.value.trim();
 
@@ -31,54 +33,89 @@ loginBtn.addEventListener('click', async () => {
         result = await callAPI(`/auth/login`, 'POST', data);
     });
     let status = result.success ? 'success' : 'error';
-    if(!result.success){
-        if(Array.isArray(result.data)){
+    if (!result.success) {
+        if (Array.isArray(result.data)) {
             statusDiv.style.display = 'block';
             result.data.forEach(err => {
                 statusDiv.textContent += err.error + '\n';
             });
         }
-        
+
     }
     else {
-        if(result.data.verifiedEmail === false || result.data.verifiedDevice === false){
+        if (result.data.verifiedEmail === false || result.data.verifiedDevice === false) {
             status = 'question';
-            await showDialog(status, result.message, async () => await verify(result.data, username), 
-            status == 'error' || status == 'success' ? 'Đồng ý': 'Gửi email xác thực');
+            await showDialog(status, result.message, async () => await verify(result.data, username, password),
+                status === 'error' || status === 'success' ? 'Đồng ý' : 'Gửi email xác thực');
             return;
         }
-        if(rememberUser.checked){
-            localStorage.setItem('rememberUser', 'true');
-        }
-        else {
-            localStorage.setItem('rememberUser', 'false');
-        }
-        window.location.replace('../../home');
+        localStorage.setItem('rememberUser', rememberUser.checked);
+        window.location.replace('/home');
     }
-});
+}
 
-forgotPassword.addEventListener('click', async () => {
-    await showDialog('question', `Gửi email xác thực đến ${usernameInput.value.trim()}?`, async () => {
-        const username = usernameInput.value.trim();
-        const data = {
-            email: username
-        }
-        const result = await callAPI(`/auth/send-verify-change-password`, 'POST', data);
-        await showDialog(result.success ? 'success' : 'error', result.message);
-    });
-});
-
-async function verify(result, email) {
-    if(!result || Array.isArray(result)) return;
+async function verify(result, email, password) {
+    if (!result || Array.isArray(result)) return;
     let resultSend;
     const data = {
         email: email
     }
-    if(result.verifiedEmail === false){
+    if (result.verifiedEmail === false) {
         resultSend = await callAPI(`/auth/send-verify-email`, 'POST', data);
-    } 
-    else if(result.verifiedDevice === false){
+    }
+    else if (result.verifiedDevice === false) {
         resultSend = await callAPI(`/auth/send-verify-device`, 'POST', data);
+    }
+    if (resultSend.success) {
+        sessionStorage.setItem('infoLogin', JSON.stringify({
+            email: email,
+            password: password
+        }));
+        await connectSse("/sse?sessionId=" + resultSend.data.sessionId);
+        subscribeTopic("verified", async (data) => {
+            if (data === true) {
+                const infoLogin = JSON.parse(sessionStorage.getItem('infoLogin'));
+                usernameInput.value = infoLogin.email;
+                passwordInput.value = infoLogin.password;
+                sessionStorage.clear();
+                await login();
+            }
+        });
     }
     await showDialog(resultSend.success ? 'success' : 'error', resultSend.message);
 }
+
+window.addEventListener('DOMContentLoaded', async () => {
+    await getEye();
+    loginForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        await login();
+    });
+
+    if (googleLoginBtn) {
+        googleLoginBtn.addEventListener('click', () => {
+            localStorage.setItem("rememberUser", rememberUser.checked);
+            window.location.href = API_BASE + '/oauth2/authorization/google';
+        });
+    }
+
+    forgotPassword.addEventListener('click', async () => {
+        await showDialog('question', `Gửi email xác thực đến ${usernameInput.value.trim()}?`, async () => {
+            const username = usernameInput.value.trim();
+            const data = {
+                email: username
+            }
+            const result = await callAPI(`/auth/send-verify-change-password`, 'POST', data);
+            await showDialog(result.success ? 'success' : 'error', result.message);
+        });
+    });
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("register")) {
+        let infoLogin = sessionStorage.getItem("infoLogin");
+        infoLogin = JSON.parse(infoLogin);
+        usernameInput.value = infoLogin.email;
+        passwordInput.value = infoLogin.password;
+        sessionStorage.clear();
+        await login();
+    }
+});

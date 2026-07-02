@@ -1,7 +1,7 @@
-import { callAPI } from "../lib/api.js";
-import { showDialog } from "../dialog/index.js";
-import { loadPage, convertToVNTime } from "../lib/public.js";
-import { loadNavbar } from "../navbar/navbar.js"; // 1. Import Navbar
+import { callAPI } from "/lib/api.js";
+import { showDialog } from "/dialog/index.js";
+import { loadPage, convertToVNTime, timeAgo } from "/lib/public.js";
+import { loadNavbar } from "/navbar/navbar.js"; // 1. Import Navbar
 
 // --- CẤU HÌNH API ---
 const API_GET_SESSION = "/sessions?page=0&size=20";
@@ -19,29 +19,7 @@ await loadPage(async () => {
   await loadSessions();
 });
 
-// 1. Hàm tính thời gian tương đối (Relative Time)
-function timeAgo(dateString) {
-  const date = new Date(dateString);
-  const now = new Date();
-  const seconds = Math.floor((now - date) / 1000);
 
-  let interval = seconds / 31536000;
-  if (interval > 1) return Math.floor(interval) + " năm trước";
-
-  interval = seconds / 2592000;
-  if (interval > 1) return Math.floor(interval) + " tháng trước";
-
-  interval = seconds / 86400;
-  if (interval > 1) return Math.floor(interval) + " ngày trước";
-
-  interval = seconds / 3600;
-  if (interval > 1) return Math.floor(interval) + " giờ trước";
-
-  interval = seconds / 60;
-  if (interval > 1) return Math.floor(interval) + " phút trước";
-
-  return "Vừa xong";
-}
 
 function getDeviceIcon(userAgent) {
   if (!userAgent) return "fa-desktop";
@@ -58,7 +36,7 @@ function formatLocation(addr) {
   if (!addr) return "Không xác định";
   return `${addr.city || addr.region || ""}, ${addr.country || ""}`.replace(
     /^, /,
-    ""
+    "",
   );
 }
 
@@ -93,7 +71,7 @@ function renderSessions(sessions) {
     otherSessions.forEach((session) => {
       otherListEl.insertAdjacentHTML(
         "beforeend",
-        createDeviceHTML(session, false)
+        createDeviceHTML(session, false),
       );
     });
   }
@@ -149,8 +127,8 @@ function createDeviceHTML(session, isCurrent) {
 
         <div class="device-icon-wrapper">
             <i class="fa-brands ${icon} ${
-    icon === "fa-desktop" ? "fa-solid" : ""
-  }"></i>
+              icon === "fa-desktop" ? "fa-solid" : ""
+            }"></i>
         </div>
         <div class="device-details">
             <div class="device-name" title="${fullUserAgent}">
@@ -160,8 +138,8 @@ function createDeviceHTML(session, isCurrent) {
             <div class="device-meta">
                 ${location} • 
                 <span class="time-ago" title="Múi giờ: ${timezone} | Cập nhật lúc: ${convertToVNTime(
-    session.lastLogin
-  )}">
+                  session.lastLogin,
+                )}">
                     ${relativeTime}
                 </span>
             </div>
@@ -213,7 +191,7 @@ async function handleRevokeOne(sessionId) {
       } else {
         await showDialog("error", result.message);
       }
-    }
+    },
   );
 }
 
@@ -231,6 +209,6 @@ document
         } else {
           await showDialog("error", result.message);
         }
-      }
+      },
     );
   });

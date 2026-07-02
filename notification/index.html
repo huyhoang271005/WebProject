@@ -1,280 +1,280 @@
 <!DOCTYPE html>
 <html lang="vi">
-  <head>
-    <meta charset="UTF-8" />
-    <meta
-      name="viewport"
-      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
-    />
-    <title>Gửi Thông Báo Hệ Thống</title>
-    <link rel="stylesheet" href="../lib/public.css" />
-    <link rel="stylesheet" href="../dialog/index.css" />
-    <script
-      src="https://kit.fontawesome.com/e9c281dd3f.js"
-      crossorigin="anonymous"
-    ></script>
-    <style>
-      /* --- DESKTOP STYLES --- */
-      .container {
-        max-width: 800px; /* Mở rộng chiều ngang cho thoáng trên Laptop */
-        margin: 40px auto;
-        padding: 0 20px;
-      }
-      .noti-card {
-        background: white;
-        padding: 40px; /* Tăng padding nội dung */
-        border-radius: 12px;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
-        border: 1px solid #f3f4f6;
-      }
 
-      /* Header đơn giản */
-      h2 {
-        color: #111827;
-        margin: 0 0 30px 0;
-        font-size: 1.8rem;
-        text-align: center;
-        font-weight: 700;
-      }
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Gửi Thông Báo Hệ Thống</title>
+  <link rel="stylesheet" href="/lib/public.css" />
+  <link rel="stylesheet" href="/dialog/index.css" />
+  <script src="https://kit.fontawesome.com/e9c281dd3f.js" crossorigin="anonymous"></script>
+  <style>
+    body {
+      min-height: 100vh;
+    }
 
-      /* TABS - 3 Lựa chọn ngang hàng */
-      .tabs {
-        display: flex;
+    /* --- DESKTOP STYLES --- */
+    .container {
+      max-width: 800px;
+      /* Mở rộng chiều ngang cho thoáng trên Laptop */
+      margin: 40px auto;
+      padding: 0 20px;
+    }
+
+    .noti-card {
+      background: white;
+      padding: 40px;
+      /* Tăng padding nội dung */
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+      border: 1px solid #f3f4f6;
+    }
+
+    /* Header đơn giản */
+    h2 {
+      color: #111827;
+      margin: 0 0 30px 0;
+      font-size: 1.8rem;
+      text-align: center;
+      font-weight: 700;
+    }
+
+    /* TABS - 3 Lựa chọn ngang hàng */
+    .tabs {
+      display: flex;
+      background: #f9fafb;
+      padding: 6px;
+      border-radius: 12px;
+      margin-bottom: 30px;
+      border: 1px solid #e5e7eb;
+      gap: 5px;
+    }
+
+    .tab-item {
+      flex: 1;
+      padding: 12px;
+      cursor: pointer;
+      font-weight: 600;
+      color: #6b7280;
+      text-align: center;
+      border-radius: 8px;
+      transition: all 0.2s;
+      font-size: 0.95rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .tab-item:hover {
+      background: #e5e7eb;
+      color: #374151;
+    }
+
+    .tab-item.active {
+      background: white;
+      color: #10b981;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+      font-weight: 700;
+    }
+
+    /* Style riêng cho nút link sang trang khác */
+    .tab-link {
+      color: #3b82f6;
+    }
+
+    .tab-link:hover {
+      background: #eff6ff;
+      color: #2563eb;
+    }
+
+    /* FORM */
+    .form-group {
+      margin-bottom: 25px;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 10px;
+      font-weight: 600;
+      color: #374151;
+      font-size: 0.95rem;
+    }
+
+    /* Input thoáng hơn */
+    input,
+    textarea,
+    select {
+      width: 100%;
+      padding: 14px 16px;
+      border: 1.5px solid #e5e7eb;
+      border-radius: 8px;
+      font-family: inherit;
+      font-size: 1rem;
+      transition: 0.2s;
+      background: #fff;
+      box-sizing: border-box;
+    }
+
+    input:focus,
+    textarea:focus,
+    select:focus {
+      outline: none;
+      border-color: #10b981;
+      box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.1);
+    }
+
+    textarea {
+      min-height: 120px;
+    }
+
+    /* Nút gửi */
+    #btnSend {
+      background: #10b981;
+      color: white;
+      border: none;
+      padding: 16px;
+      width: 100%;
+      border-radius: 8px;
+      font-weight: 700;
+      font-size: 1rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      transition: 0.2s;
+      margin-top: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    #btnSend:hover {
+      background: #059669;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
+    }
+
+    /* Link Quay về */
+    .back-link {
+      text-align: center;
+      margin-top: 20px;
+    }
+
+    .back-link a {
+      color: #9ca3af;
+      text-decoration: none;
+      font-size: 0.9rem;
+      transition: 0.2s;
+    }
+
+    .back-link a:hover {
+      color: #10b981;
+    }
+
+    /* --- MOBILE RESPONSIVE --- */
+    @media (max-width: 768px) {
+      body {
         background: #f9fafb;
-        padding: 6px;
-        border-radius: 12px;
-        margin-bottom: 30px;
+      }
+
+      .container {
+        margin: 20px auto;
+        padding: 0 15px;
+      }
+
+      .noti-card {
+        padding: 25px 20px;
+        box-shadow: none;
         border: 1px solid #e5e7eb;
+      }
+
+      h2 {
+        font-size: 1.5rem;
+        margin-bottom: 20px;
+      }
+
+      /* Tabs xếp dọc hoặc thu nhỏ trên mobile */
+      .tabs {
+        flex-direction: column;
         gap: 5px;
+        padding: 5px;
       }
+
       .tab-item {
-        flex: 1;
         padding: 12px;
-        cursor: pointer;
-        font-weight: 600;
-        color: #6b7280;
-        text-align: center;
-        border-radius: 8px;
-        transition: all 0.2s;
-        font-size: 0.95rem;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 8px;
-      }
-      .tab-item:hover {
-        background: #e5e7eb;
-        color: #374151;
-      }
-      .tab-item.active {
-        background: white;
-        color: #10b981;
-        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
-        font-weight: 700;
-      }
-      /* Style riêng cho nút link sang trang khác */
-      .tab-link {
-        color: #3b82f6;
-      }
-      .tab-link:hover {
-        background: #eff6ff;
-        color: #2563eb;
+        font-size: 0.9rem;
+        justify-content: flex-start;
       }
 
-      /* FORM */
-      .form-group {
-        margin-bottom: 25px;
-      }
-      .form-group label {
-        display: block;
-        margin-bottom: 10px;
-        font-weight: 600;
-        color: #374151;
-        font-size: 0.95rem;
-      }
-
-      /* Input thoáng hơn */
       input,
       textarea,
       select {
-        width: 100%;
-        padding: 14px 16px;
-        border: 1.5px solid #e5e7eb;
-        border-radius: 8px;
-        font-family: inherit;
-        font-size: 1rem;
-        transition: 0.2s;
-        background: #fff;
-        box-sizing: border-box;
-      }
-      input:focus,
-      textarea:focus,
-      select:focus {
-        outline: none;
-        border-color: #10b981;
-        box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.1);
-      }
-      textarea {
-        min-height: 120px;
+        font-size: 16px;
+        padding: 12px;
       }
 
-      /* Nút gửi */
       #btnSend {
-        background: #10b981;
-        color: white;
-        border: none;
-        padding: 16px;
-        width: 100%;
-        border-radius: 8px;
-        font-weight: 700;
+        padding: 14px;
         font-size: 1rem;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 10px;
-        transition: 0.2s;
-        margin-top: 10px;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
       }
-      #btnSend:hover {
-        background: #059669;
-        transform: translateY(-1px);
-        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
-      }
+    }
+  </style>
+</head>
 
-      /* Link Quay về */
-      .back-link {
-        text-align: center;
-        margin-top: 20px;
-      }
-      .back-link a {
-        color: #9ca3af;
-        text-decoration: none;
-        font-size: 0.9rem;
-        transition: 0.2s;
-      }
-      .back-link a:hover {
-        color: #10b981;
-      }
+<body>
+  <div class="container">
+    <div class="noti-card">
+      <h2>Gửi Thông Báo</h2>
 
-      /* --- MOBILE RESPONSIVE --- */
-      @media (max-width: 768px) {
-        body {
-          background: #f9fafb;
-        }
-        .container {
-          margin: 20px auto;
-          padding: 0 15px;
-        }
-        .noti-card {
-          padding: 25px 20px;
-          box-shadow: none;
-          border: 1px solid #e5e7eb;
-        }
-        h2 {
-          font-size: 1.5rem;
-          margin-bottom: 20px;
-        }
-
-        /* Tabs xếp dọc hoặc thu nhỏ trên mobile */
-        .tabs {
-          flex-direction: column;
-          gap: 5px;
-          padding: 5px;
-        }
-        .tab-item {
-          padding: 12px;
-          font-size: 0.9rem;
-          justify-content: flex-start;
-        }
-
-        input,
-        textarea,
-        select {
-          font-size: 16px;
-          padding: 12px;
-        }
-        #btnSend {
-          padding: 14px;
-          font-size: 1rem;
-        }
-      }
-    </style>
-  </head>
-  <body>
-    <div class="container">
-      <div class="noti-card">
-        <h2>Gửi Thông Báo</h2>
-
-        <div class="tabs">
-          <div class="tab-item active" id="tabAll" onclick="switchTab('all')">
-            <i class="fa-solid fa-earth-asia"></i> Toàn hệ thống
-          </div>
-
-          <div class="tab-item" id="tabRole" onclick="switchTab('role')">
-            <i class="fa-solid fa-users-gear"></i> Theo nhóm (Role)
-          </div>
-
-          <div
-            class="tab-item tab-link"
-            onclick="window.location.href='../users/index.html'"
-          >
-            <i class="fa-solid fa-user-pen"></i> Gửi cho cá nhân
-          </div>
+      <div class="tabs">
+        <div class="tab-item active" id="tabAll" onclick="switchTab('all')">
+          <i class="fa-solid fa-earth-asia"></i> Toàn hệ thống
         </div>
 
-        <div id="notiForm">
-          <div class="form-group" id="roleSelectGroup" style="display: none">
-            <label>Chọn nhóm người nhận</label>
-            <select id="roleSelect">
-              <option value="">-- Đang tải roles... --</option>
-            </select>
-          </div>
+        <div class="tab-item" id="tabRole" onclick="switchTab('role')">
+          <i class="fa-solid fa-users-gear"></i> Theo nhóm (Role)
+        </div>
 
-          <div class="form-group">
-            <label>Tiêu đề <span style="color: red">*</span></label>
-            <input
-              type="text"
-              id="title"
-              placeholder="Nhập tiêu đề thông báo..."
-            />
-          </div>
-
-          <div class="form-group">
-            <label>Nội dung <span style="color: red">*</span></label>
-            <textarea
-              id="message"
-              rows="5"
-              placeholder="Nhập nội dung chi tiết..."
-            ></textarea>
-          </div>
-
-          <div class="form-group">
-            <label>Đường dẫn đính kèm (Tùy chọn)</label>
-            <input
-              type="text"
-              id="linkUrl"
-              placeholder="Ví dụ: /products?cat=sale"
-            />
-          </div>
-
-          <button id="btnSend" onclick="sendNotification()">
-            <i class="fa-solid fa-paper-plane"></i> Gửi Ngay
-          </button>
-
-          <div class="back-link">
-            <a href="../home"
-              ><i class="fa-solid fa-arrow-left"></i> Quay về trang chủ</a
-            >
-          </div>
+        <div class="tab-item tab-link" onclick="window.location.href='/users/index.html'">
+          <i class="fa-solid fa-user-pen"></i> Gửi cho cá nhân
         </div>
       </div>
-    </div>
 
-    <div id="loadPage"></div>
-    <div id="toast-container"></div>
-    <script type="module" src="./index.js"></script>
-  </body>
+      <div id="notiForm">
+        <div class="form-group" id="roleSelectGroup" style="display: none">
+          <label>Chọn nhóm người nhận</label>
+          <select id="roleSelect">
+            <option value="">-- Đang tải roles... --</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Tiêu đề <span style="color: red">*</span></label>
+          <input type="text" id="title" placeholder="Nhập tiêu đề thông báo..." />
+        </div>
+
+        <div class="form-group">
+          <label>Nội dung <span style="color: red">*</span></label>
+          <textarea id="message" rows="5" placeholder="Nhập nội dung chi tiết..."></textarea>
+        </div>
+
+        <div class="form-group">
+          <label>Đường dẫn đính kèm (Tùy chọn)</label>
+          <input type="text" id="linkUrl" placeholder="Ví dụ: /products?cat=sale" />
+        </div>
+
+        <button id="btnSend" onclick="sendNotification()">
+          <i class="fa-solid fa-paper-plane"></i> Gửi Ngay
+        </button>
+      </div>
+    </div>
+  </div>
+  </div>
+
+  <div id="loadPage"></div>
+  <div id="toast-container"></div>
+  <script type="module" src="/notification/index.js"></script>
+</body>
+
 </html>

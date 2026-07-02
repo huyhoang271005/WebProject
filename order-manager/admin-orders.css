@@ -1,14 +1,22 @@
 /* === 1. CẤU HÌNH CHUNG === */
 body {
-    background: linear-gradient(135deg, #6EE7B7, #3B82F6) !important;
     font-family: 'Poppins', sans-serif;
     min-height: 100vh;
 }
 
 .admin-order-container {
-    max-width: 1200px; /* Mở rộng chiều ngang cho bảng */
+    max-width: 1200px;
+    /* Mở rộng chiều ngang cho bảng */
     margin: 30px auto;
     padding: 0 15px;
+}
+
+/* FIX: Override public.css global button styles that break layout */
+.admin-order-container button,
+.tab-btn,
+.search-box-container button {
+    width: auto !important;
+    margin-top: 0 !important;
 }
 
 /* === 2. KHUNG CARD CHÍNH (NỀN TRẮNG) === */
@@ -20,7 +28,8 @@ body {
 }
 
 .card h2 {
-    color: #059669; /* Xanh lá đậm */
+    color: #059669;
+    /* Xanh lá đậm */
     text-transform: uppercase;
     font-weight: 700;
     margin-bottom: 25px;
@@ -33,12 +42,18 @@ body {
     display: flex;
     gap: 10px;
     margin-bottom: 20px;
-    flex-wrap: wrap; /* Tự xuống dòng trên mobile */
+    padding-top: 5px;
+    padding-bottom: 5px;
+    /* Remove flex-wrap to keep on single line */
+    flex-wrap: nowrap;
+    width: 100%;
+    overflow-x: auto;
+    /* Allow scroll on very small screens if needed */
 }
 
 .tab-btn {
-    padding: 8px 24px;
-    border-radius: 50px; /* Bo tròn hình viên thuốc */
+    padding: 10px 15px;
+    border-radius: 50px;
     border: 1px solid #E5E7EB;
     background-color: white;
     color: #6B7280;
@@ -46,6 +61,12 @@ body {
     cursor: pointer;
     transition: all 0.3s ease;
     font-size: 14px;
+    /* Occupy full width equally */
+    flex: 1;
+    text-align: center;
+    white-space: nowrap;
+    width: auto !important;
+    /* Ensure flex works */
 }
 
 .tab-btn:hover {
@@ -62,9 +83,20 @@ body {
     box-shadow: 0 4px 10px rgba(16, 185, 129, 0.3);
 }
 
+.count-badge {
+    background-color: #ef4444;
+    color: white;
+    border-radius: 10px;
+    padding: 2px 6px;
+    font-size: 11px;
+    margin-left: 5px;
+    font-weight: 700;
+}
+
 /* === 4. BẢNG DỮ LIỆU (TABLE) === */
 .table-wrapper {
-    overflow-x: auto; /* Cho phép cuộn ngang nếu bảng quá rộng */
+    overflow-x: auto;
+    /* Cho phép cuộn ngang nếu bảng quá rộng */
     border-radius: 12px;
     border: 1px solid #E5E7EB;
 }
@@ -72,11 +104,11 @@ body {
 table {
     width: 100%;
     border-collapse: collapse;
-    min-width: 900px; /* Đảm bảo bảng không bị bóp méo */
 }
 
 th {
-    background-color: #10B981; /* Màu xanh chủ đạo */
+    background-color: #10B981;
+    /* Màu xanh chủ đạo */
     color: white;
     padding: 15px;
     text-align: left;
@@ -90,17 +122,20 @@ td {
     padding: 12px 15px;
     border-bottom: 1px solid #F3F4F6;
     color: #374151;
-    vertical-align: middle; /* Căn giữa theo chiều dọc */
+    vertical-align: middle;
+    /* Căn giữa theo chiều dọc */
 }
 
 tr:hover td {
-    background-color: #F9FAFB; /* Highlight dòng khi di chuột */
+    background-color: #F9FAFB;
+    /* Highlight dòng khi di chuột */
 }
 
 /* Cột tổng tiền */
 .total-price {
     font-weight: 700;
-    color: #EF4444; /* Màu đỏ */
+    color: #EF4444;
+    /* Màu đỏ */
     font-size: 15px;
 }
 
@@ -113,6 +148,57 @@ tr:hover td {
     font-size: 12px;
     color: #4B5563;
     font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+}
+
+.order-id:hover {
+    background: #E5E7EB;
+    color: #111827;
+}
+
+.order-id.copied {
+    background: #D1FAE5;
+    color: #059669;
+}
+
+.order-id.copied::after {
+    content: "Đã copy";
+    position: absolute;
+    top: -25px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #374151;
+    color: white;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 10px;
+    white-space: nowrap;
+    opacity: 0;
+    animation: fadeInOut 1s forwards;
+}
+
+@keyframes fadeInOut {
+    0% {
+        opacity: 0;
+        transform: translate(-50%, 5px);
+    }
+
+    10% {
+        opacity: 1;
+        transform: translate(-50%, 0);
+    }
+
+    90% {
+        opacity: 1;
+        transform: translate(-50%, 0);
+    }
+
+    100% {
+        opacity: 0;
+        transform: translate(-50%, -5px);
+    }
 }
 
 /* === 5. HIỂN THỊ SẢN PHẨM NHỎ (MINI PRODUCT) === */
@@ -155,7 +241,8 @@ tr:hover td {
 .p-qty {
     font-size: 12px;
     font-weight: 700;
-    color: #059669; /* Số lượng màu xanh */
+    color: #059669;
+    /* Số lượng màu xanh */
     margin-top: 2px;
 }
 
@@ -177,11 +264,36 @@ tr:hover td {
     display: inline-block;
 }
 
-.badge-yellow { background-color: #FEF3C7; color: #D97706; } /* Waiting */
-.badge-orange { background-color: #FFEDD5; color: #C2410C; } /* Pending */
-.badge-blue   { background-color: #DBEAFE; color: #2563EB; } /* Shipping */
-.badge-green  { background-color: #D1FAE5; color: #059669; } /* Success */
-.badge-red    { background-color: #FEE2E2; color: #DC2626; } /* Cancelled */
+.badge-yellow {
+    background-color: #FEF3C7;
+    color: #D97706;
+}
+
+/* Waiting */
+.badge-orange {
+    background-color: #FFEDD5;
+    color: #C2410C;
+}
+
+/* Pending */
+.badge-blue {
+    background-color: #DBEAFE;
+    color: #2563EB;
+}
+
+/* Shipping */
+.badge-green {
+    background-color: #D1FAE5;
+    color: #059669;
+}
+
+/* Success */
+.badge-red {
+    background-color: #FEE2E2;
+    color: #DC2626;
+}
+
+/* Cancelled */
 
 /* === 7. NÚT THAO TÁC === */
 .view-btn {
@@ -203,16 +315,21 @@ tr:hover td {
     color: white;
     transform: scale(1.1);
 }
+
 /* --- 8. GROUP NÚT THAO TÁC (DUYỆT/HỦY) TRÊN BẢNG --- */
 .action-group {
     display: flex;
     gap: 6px;
     align-items: center;
-    justify-content: flex-end; /* Căn các nút về bên phải */
+    justify-content: flex-end;
+    /* Căn các nút về bên phải */
+    flex-wrap: nowrap;
+    /* Prevent wrapping inside the cell if possible, or allow consistent wrap */
 }
 
 .btn-approve {
-    background-color: #10B981; /* Màu xanh lá (Duyệt) */
+    background-color: #10B981;
+    /* Màu xanh lá (Duyệt) */
     color: white;
     border: none;
     padding: 6px 12px;
@@ -231,7 +348,8 @@ tr:hover td {
 }
 
 .btn-reject {
-    background-color: #EF4444; /* Màu đỏ (Hủy) */
+    background-color: #EF4444;
+    /* Màu đỏ (Hủy) */
     color: white;
     border: none;
     padding: 6px 10px;
@@ -247,19 +365,22 @@ tr:hover td {
 
 /* --- 9. MODAL CHI TIẾT (QUAN TRỌNG: ĐỂ NỔI LÊN GIỮA MÀN HÌNH) --- */
 .modal-overlay {
-    position: fixed;       /* Bắt buộc: Để nổi lên trên cùng */
-    top: 0; 
+    position: fixed;
+    /* Bắt buộc: Để nổi lên trên cùng */
+    top: 0;
     left: 0;
-    width: 100%; 
+    width: 100%;
     height: 100%;
-    background: rgba(0, 0, 0, 0.5); /* Nền đen mờ */
-    z-index: 9999;         /* Đè lên mọi thứ */
-    
+    background: rgba(0, 0, 0, 0.5);
+    /* Nền đen mờ */
+    z-index: 9999;
+    /* Đè lên mọi thứ */
+
     /* Căn giữa hộp nội dung */
     display: flex;
     justify-content: center;
     align-items: center;
-    
+
     /* Hiệu ứng hiện ra */
     animation: fadeIn 0.25s ease-out;
 }
@@ -267,13 +388,15 @@ tr:hover td {
 .modal-content {
     background: white;
     width: 90%;
-    max-width: 800px;      /* Độ rộng tối đa */
+    max-width: 800px;
+    /* Độ rộng tối đa */
     border-radius: 12px;
     box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
     overflow: hidden;
     display: flex;
     flex-direction: column;
-    max-height: 90vh;      /* Không cao quá màn hình */
+    max-height: 90vh;
+    /* Không cao quá màn hình */
 }
 
 /* Header Modal */
@@ -300,7 +423,10 @@ tr:hover td {
     cursor: pointer;
     line-height: 1;
 }
-.close-btn:hover { color: #EF4444; }
+
+.close-btn:hover {
+    color: #EF4444;
+}
 
 /* Body Modal (Cho phép cuộn) */
 .modal-body {
@@ -324,7 +450,8 @@ tr:hover td {
 
 .info-grid {
     display: grid;
-    grid-template-columns: 1fr 1fr; /* Chia 2 cột */
+    grid-template-columns: 1fr 1fr;
+    /* Chia 2 cột */
     gap: 15px;
     font-size: 14px;
     color: #374151;
@@ -363,6 +490,319 @@ tr:hover td {
 
 /* Hiệu ứng Fade In */
 @keyframes fadeIn {
-    from { opacity: 0; transform: scale(0.95); }
-    to { opacity: 1; transform: scale(1); }
+    from {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+/* === 10. RESPONSIVE === */
+@media screen and (max-width: 768px) {
+    .admin-order-container {
+        padding: 10px;
+        margin: 80px auto 20px;
+        /* Added top margin for fixed navbar */
+        width: 100%;
+        /* Force full width */
+        box-sizing: border-box;
+    }
+
+    .card {
+        padding: 15px;
+        border-radius: 8px;
+        /* Reduce radius */
+    }
+
+    /* --- TABLE TO CARD TRANSFORMATION (Table Only Fix) --- */
+    /* --- TABLE TO CARD TRANSFORMATION (Table Only Fix) --- */
+    .table-wrapper {
+        border: none;
+        overflow-x: visible;
+    }
+
+    /* Scope strictly to the main table inside table-wrapper */
+    .table-wrapper table,
+    .table-wrapper thead,
+    .table-wrapper tbody,
+    .table-wrapper th,
+    .table-wrapper td,
+    .table-wrapper tr {
+        display: block;
+    }
+
+    .table-wrapper thead tr {
+        position: absolute;
+        top: -9999px;
+        left: -9999px;
+    }
+
+    .table-wrapper tr {
+        margin-bottom: 20px;
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        background: #fff;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+        padding: 20px;
+    }
+
+    .table-wrapper td {
+        border: none;
+        border-bottom: 1px dashed #f0f0f0;
+        position: relative;
+        padding: 12px 0;
+        padding-left: 0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        text-align: right;
+    }
+
+    .table-wrapper td:last-child {
+        border-bottom: none;
+        padding-bottom: 0;
+        justify-content: center;
+        padding-top: 15px;
+        margin-top: 5px;
+        border-top: 1px solid #eee;
+    }
+
+    /* Data Labels Scoped */
+    .table-wrapper td:nth-of-type(1):before {
+        content: "Mã Đơn";
+        font-weight: 700;
+        color: #4b5563;
+    }
+
+    .table-wrapper td:nth-of-type(2):before {
+        content: "Khách hàng";
+        font-weight: 700;
+        color: #4b5563;
+    }
+
+    .table-wrapper td:nth-of-type(3):before {
+        content: "Sản phẩm";
+        font-weight: 700;
+        color: #4b5563;
+        display: block;
+        width: 100%;
+        margin-bottom: 8px;
+        text-align: left;
+    }
+
+    .table-wrapper td:nth-of-type(4):before {
+        content: "Tổng tiền: ";
+        font-weight: 700;
+        color: #4b5563;
+    }
+
+    .table-wrapper td:nth-of-type(5):before {
+        content: "Trạng thái";
+        font-weight: 700;
+        color: #4b5563;
+    }
+
+    .table-wrapper td:nth-of-type(6):before {
+        content: "Ngày tạo";
+        font-weight: 700;
+        color: #4b5563;
+    }
+
+    .table-wrapper td:nth-of-type(3) {
+        display: block;
+        text-align: left;
+    }
+
+    .table-wrapper td:nth-of-type(7) {
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    .tabs-container {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+    }
+
+    /* Stack Search Box */
+    .search-box-container {
+        flex-direction: column;
+        align-items: stretch !important;
+        gap: 10px !important;
+    }
+
+    .search-box-container>div {
+        width: 100% !important;
+    }
+
+    .search-box-container button {
+        margin-left: 0 !important;
+        width: 100% !important;
+    }
+
+    .btn-approve,
+    .btn-reject {
+        width: 100%;
+        justify-content: center;
+        padding: 10px 10px;
+    }
+
+    /* --- MODAL TABLE RESPONSIVE --- */
+    .modal-table,
+    .modal-table tbody,
+    .modal-table tr,
+    .modal-table td {
+        display: block;
+        width: 100%;
+    }
+
+    .modal-table thead {
+        display: none;
+        /* Hide header */
+    }
+
+    .modal-table tr {
+        margin-bottom: 15px;
+        border-bottom: 1px solid #eee;
+        padding-bottom: 15px;
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+    }
+
+    .modal-table td {
+        border: none;
+        padding: 2px 0;
+        display: flex;
+        justify-content: space-between;
+        text-align: right;
+    }
+
+    .modal-table td:first-child {
+        /* Product Info Cell */
+        text-align: left;
+        margin-bottom: 5px;
+    }
+
+    /* Labels for values */
+    .modal-table td:nth-child(2):before {
+        content: "Đơn giá:";
+        font-weight: 600;
+        color: #666;
+    }
+
+    .modal-table td:nth-child(3):before {
+        content: "Số lượng:";
+        font-weight: 600;
+        color: #666;
+    }
+
+    .modal-table td:nth-child(4):before {
+        content: "Thành tiền:";
+        font-weight: 600;
+        color: #666;
+    }
+
+    /* Fix image and text layout in first cell */
+    .modal-table td:first-child>div {
+        align-items: flex-start;
+    }
+}
+
+/* =========================================================
+   REVIEW UI IN MODAL (CHUNG CHO ADMIN & USER)
+========================================================= */
+.review-item {
+    border-bottom: 1px solid #E5E7EB;
+    padding: 15px 0;
+}
+.review-item:last-child {
+    border-bottom: none;
+}
+.review-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
+    align-items: flex-start;
+}
+.review-user-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.review-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+.review-meta {
+    display: flex;
+    flex-direction: column;
+}
+.review-username {
+    font-weight: 600;
+    color: #1F2937;
+    font-size: 14px;
+}
+.review-date {
+    font-size: 12px;
+    color: #6B7280;
+}
+.review-stars {
+    color: #F59E0B;
+    font-size: 12px;
+    margin-bottom: 5px;
+}
+.review-content {
+    color: #374151;
+    font-size: 14px;
+    margin-bottom: 10px;
+    line-height: 1.5;
+}
+.review-reply-box {
+    margin-top: 10px;
+    padding: 12px;
+    background-color: #F9FAFB;
+    border-radius: 8px;
+    border-left: 3px solid #10B981;
+}
+.review-reply-header {
+    font-weight: 600;
+    font-size: 13px;
+    color: #1F2937;
+    margin-bottom: 5px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.review-reply-content {
+    font-size: 13.5px;
+    color: #4B5563;
+}
+.admin-badge {
+    background-color: #E2E8F0;
+    color: #475569;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: bold;
+}
+.btn-delete-review {
+    color: #EF4444;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 0;
+}
+.btn-delete-review:hover {
+    text-decoration: underline;
 }

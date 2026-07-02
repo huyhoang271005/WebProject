@@ -1,478 +1,601 @@
 <!DOCTYPE html>
 <html lang="vi">
-  <head>
-    <meta charset="UTF-8" />
-    <meta
-      name="viewport"
-      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
-    />
-    <title>Danh Sách Sản Phẩm - Tạp Hóa Xanh</title>
-    <link
-      rel="icon"
-      href="https://cdn-icons-png.flaticon.com/512/847/847969.png"
-    />
-    <link rel="stylesheet" href="../dialog/index.css" />
-    <link rel="stylesheet" href="../lib/public.css" />
-    <script
-      src="https://kit.fontawesome.com/e9c281dd3f.js"
-      crossorigin="anonymous"
-    ></script>
 
-    <style>
-      * {
-        box-sizing: border-box;
-      }
-      html,
-      body {
-        width: 100%;
-        min-height: 100vh;
-        margin: 0;
-        padding: 0;
-        font-family: "Segoe UI", sans-serif;
-        background: url("https://img.freepik.com/free-vector/blue-sky-with-clouds-background_1017-26302.jpg")
-          no-repeat center center fixed;
-        background-size: cover;
-      }
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Danh Sách Sản Phẩm</title>
+  <link rel="stylesheet" href="../dialog/index.css" />
+  <link rel="stylesheet" href="../lib/public.css" />
+  <script src="https://kit.fontawesome.com/e9c281dd3f.js" crossorigin="anonymous"></script>
 
-      .main-container {
-        padding-top: 20px;
-        padding-bottom: 50px;
-        width: 95%;
-        max-width: 1400px;
-        margin: 0 auto;
-        display: flex;
-        gap: 20px;
-        position: relative;
-        z-index: 1;
-      }
+  <style>
+    * {
+      box-sizing: border-box;
+    }
 
-      /* --- SIDEBAR --- */
-      .sidebar {
-        width: 260px;
-        flex-shrink: 0;
-        background: white;
-        border-radius: 8px;
-        padding: 20px;
-        position: sticky;
-        top: 100px;
-        height: fit-content;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
-        border: 1px solid #f0f0f0;
-        z-index: 100;
-        transition: transform 0.3s ease;
-      }
-      .filter-group {
-        margin-bottom: 0;
-      }
+    html,
+    body {
+      width: 100%;
+      min-height: 100vh;
+      margin: 0;
+      padding: 0;
+      font-family: "Segoe UI", sans-serif;
+    }
 
-      .filter-title {
-        font-weight: 700;
-        font-size: 0.95rem;
-        margin-bottom: 12px;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 8px;
-        color: #1f2937;
-        text-transform: uppercase;
-      }
+    .main-container {
+      width: 95%;
+      max-width: 1400px;
+      margin: 0 auto;
+      display: flex;
+      gap: 20px;
+      position: relative;
+      align-items: flex-start;
+      /* z-index: 1; Removed to allow fixed sidebar to pop out */
+    }
 
-      .sidebar-close-btn {
-        display: none;
-        cursor: pointer;
-        font-size: 1.2rem;
-        color: #666;
-        padding: 5px;
-      }
+    /* --- SIDEBAR --- */
+    .sidebar {
+      width: 260px;
+      flex-shrink: 0;
+      background: white;
+      border-radius: 8px;
+      padding: 20px;
+      position: sticky;
+      max-height: calc(95vh - 80px);
+      top: 100px;
+      overflow-y: auto;
+      align-self: flex-start;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+      border: 1px solid #f0f0f0;
+      z-index: 100;
+      transition: transform 0.3s ease;
+    }
 
-      .cat-list {
-        list-style: none;
-        padding: 0;
-        margin: 0;
-      }
-      .cat-item {
-        padding: 12px 15px;
-        cursor: pointer;
-        border-radius: 6px;
-        transition: 0.2s;
-        margin-bottom: 4px;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        color: #555;
-        font-weight: 500;
-        font-size: 0.9rem;
-      }
-      .cat-item:hover {
-        background: #f3f4f6;
-        color: #10b981;
-      }
-      .cat-item.active {
-        background: #ecfdf5;
-        color: #10b981;
-        font-weight: 700;
-      }
+    /* Tùy chỉnh thanh cuộn cho sidebar mượt mà hơn */
+    .sidebar::-webkit-scrollbar {
+      width: 6px;
+    }
+    .sidebar::-webkit-scrollbar-thumb {
+      background-color: #ddd;
+      border-radius: 3px;
+    }
 
-      /* --- CONTENT --- */
-      .product-content {
-        flex: 1;
-        min-width: 0;
-      }
-      .page-header {
-        background: white;
-        padding: 15px 20px;
-        border-radius: 8px;
-        margin-bottom: 20px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
-        border: 1px solid #f0f0f0;
-      }
-      .ph-actions {
-        display: flex;
-        align-items: center;
-        gap: 15px;
-        width: 100%;
-        justify-content: space-between;
-      }
-      .ph-title {
-        font-size: 1.2rem;
-        font-weight: 700;
-        color: #111827;
-      }
-      .mobile-filter-btn {
-        display: none;
-        padding: 8px 15px;
-        background: white;
-        border: 1px solid #eee;
-        border-radius: 4px;
-        font-size: 0.9rem;
-        color: #555;
-        align-items: center;
-        gap: 5px;
-        cursor: pointer;
-      }
-      .ph-sort select {
-        padding: 8px 12px;
-        border-radius: 6px;
-        border: 1px solid #e5e7eb;
-        outline: none;
-        cursor: pointer;
-        font-size: 0.9rem;
-      }
+    .filter-group {
+      margin-bottom: 0;
+    }
 
-      /* --- PRODUCT GRID --- */
+    .filter-title {
+      font-weight: 700;
+      font-size: 0.95rem;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      color: #1f2937;
+      text-transform: uppercase;
+    }
+
+    .sidebar-close-btn {
+      display: none;
+      cursor: pointer;
+      font-size: 1.2rem;
+      color: #666;
+      padding: 5px;
+    }
+
+    .cat-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .cat-item {
+      padding: 12px 15px;
+      cursor: pointer;
+      border-radius: 6px;
+      transition: 0.2s;
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: #555;
+      font-weight: 500;
+      font-size: 0.9rem;
+    }
+
+    .cat-item:hover {
+      background: #f3f4f6;
+      color: #10b981;
+    }
+
+    .cat-item.active {
+      background: #ecfdf5;
+      color: #10b981;
+      font-weight: 700;
+    }
+
+    /* --- CONTENT --- */
+    .product-content {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .page-header {
+      background: white;
+      padding: 15px 20px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+      border: 1px solid #f0f0f0;
+    }
+
+    .ph-actions {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      width: 100%;
+      justify-content: space-between;
+    }
+
+    .ph-title {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: #111827;
+    }
+
+    .mobile-filter-btn {
+      display: none;
+      padding: 8px 15px;
+      background: white;
+      border: 1px solid #eee;
+      border-radius: 4px;
+      font-size: 0.9rem;
+      color: #555;
+      align-items: center;
+      gap: 5px;
+      cursor: pointer;
+    }
+
+    .ph-sort select {
+      padding: 8px 12px;
+      border-radius: 6px;
+      border: 1px solid #e5e7eb;
+      outline: none;
+      cursor: pointer;
+      font-size: 0.9rem;
+    }
+
+    /* --- PRODUCT GRID --- */
+    .product-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 15px;
+    }
+
+    .product-card {
+      background: white;
+      border-radius: 8px;
+      overflow: hidden;
+      border: 1px solid transparent;
+      transition: 0.2s;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    }
+
+    .product-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+      border-color: #10b981;
+      z-index: 2;
+    }
+
+    .p-img {
+      width: 100%;
+      padding-top: 100%;
+      position: relative;
+      background: #fff;
+    }
+
+    .p-img img {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      padding: 10px;
+      transition: transform 0.3s;
+    }
+
+    .product-card:hover .p-img img {
+      transform: scale(1.05);
+    }
+
+    .p-info {
+      padding: 12px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .p-name {
+      font-size: 0.9rem;
+      color: #333;
+      line-height: 1.4;
+      margin-bottom: 5px;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      min-height: 2.5rem;
+    }
+
+    .p-meta-price {
+      margin-top: auto;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    .p-price {
+      color: #d0011b;
+      font-weight: 700;
+      font-size: 1.1rem;
+    }
+
+    .p-origin-price {
+      font-size: 0.75rem;
+      text-decoration: line-through;
+      color: #9ca3af;
+      margin-top: 2px;
+    }
+
+    .p-meta-bottom {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 8px;
+      font-size: 0.75rem;
+      color: #777;
+    }
+
+    .p-rating {
+      color: #ffce3d;
+    }
+
+    .discount-badge {
+      position: absolute;
+      top: 0;
+      right: 0;
+      background: rgba(255, 212, 36, 0.95);
+      width: 34px;
+      height: 30px;
+      text-align: center;
+      padding-top: 2px;
+      font-weight: 700;
+      font-size: 0.65rem;
+      z-index: 2;
+      color: #ee4d2d;
+    }
+
+    .discount-badge::after {
+      content: "";
+      position: absolute;
+      bottom: -4px;
+      left: 0;
+      border-width: 0 17px 4px;
+      border-style: solid;
+      border-color: transparent rgba(255, 212, 36, 0.95);
+      width: 0;
+    }
+
+    .discount-text {
+      color: white;
+      text-transform: uppercase;
+      font-size: 0.55rem;
+      display: block;
+    }
+
+    .pagination-wrapper {
+      margin-top: 40px;
+      display: flex;
+      justify-content: center;
+    }
+
+    .pagination-container {
+      display: flex;
+      gap: 5px;
+      background: white;
+      padding: 5px 10px;
+      border-radius: 20px;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+    }
+
+    .page-btn {
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 0.9rem;
+      transition: 0.2s;
+      color: #333;
+    }
+
+    .page-btn:hover:not(.disabled) {
+      color: #10b981;
+      background: #ecfdf5;
+    }
+
+    .page-btn.active {
+      background: #10b981;
+      color: white;
+    }
+
+    .page-btn.disabled {
+      opacity: 0.3;
+      cursor: default;
+    }
+
+    .page-dots {
+      padding: 0 5px;
+      color: #9ca3af;
+      line-height: 32px;
+    }
+
+    .chat-btn {
+      position: fixed;
+      bottom: 30px;
+      right: 30px;
+      width: 55px;
+      height: 55px;
+      background: #3b82f6;
+      color: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.6rem;
+      cursor: pointer;
+      z-index: 999;
+      box-shadow: 0 5px 20px rgba(59, 130, 246, 0.4);
+      border: 2px solid white;
+      transition: 0.2s;
+    }
+    
+    .chat-badge {
+      position: absolute;
+      top: -5px;
+      right: -5px;
+      background: #ef4444;
+      color: white;
+      font-size: 0.8rem;
+      font-weight: bold;
+      padding: 2px 6px;
+      border-radius: 50%;
+      min-width: 24px;
+      text-align: center;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
+
+    .sidebar-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 1000;
+      backdrop-filter: blur(2px);
+    }
+
+    .mobile-floating-filter {
+      display: none;
+    }
+
+    /* Responsive */
+    @media (max-width: 1400px) {
       .product-grid {
-        display: grid;
-        grid-template-columns: repeat(5, 1fr);
-        gap: 15px;
+        grid-template-columns: repeat(4, 1fr);
       }
+    }
 
-      .product-card {
-        background: white;
-        border-radius: 8px;
-        overflow: hidden;
-        border: 1px solid transparent;
-        transition: 0.2s;
-        cursor: pointer;
-        display: flex;
-        flex-direction: column;
-        position: relative;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    @media (max-width: 1100px) {
+      .product-grid {
+        grid-template-columns: repeat(3, 1fr);
       }
-      .product-card:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
-        border-color: #10b981;
-        z-index: 2;
-      }
+    }
 
-      .p-img {
+    @media (max-width: 992px) {
+      .main-container {
         width: 100%;
-        padding-top: 100%;
-        position: relative;
-        background: #fff;
-      }
-      .p-img img {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        object-fit: contain;
         padding: 10px;
-        transition: transform 0.3s;
-      }
-      .product-card:hover .p-img img {
-        transform: scale(1.05);
+        margin-top: 110px;
       }
 
-      .p-info {
-        padding: 12px;
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
-      }
-      .p-name {
-        font-size: 0.9rem;
-        color: #333;
-        line-height: 1.4;
-        margin-bottom: 5px;
-        display: -webkit-box;
-        -webkit-line-clamp: 2;
-        -webkit-box-orient: vertical;
-        overflow: hidden;
-        min-height: 2.5rem;
+      .product-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
       }
 
-      .p-meta-price {
-        margin-top: auto;
-        display: flex;
-        flex-direction: column;
-        align-items: flex-start;
-      }
-      .p-price {
-        color: #d0011b;
-        font-weight: 700;
-        font-size: 1.1rem;
-      }
-      .p-origin-price {
-        font-size: 0.75rem;
-        text-decoration: line-through;
-        color: #9ca3af;
-        margin-top: 2px;
-      }
-      .p-meta-bottom {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-top: 8px;
-        font-size: 0.75rem;
-        color: #777;
-      }
-      .p-rating {
-        color: #ffce3d;
-      }
-
-      .discount-badge {
-        position: absolute;
+      .sidebar {
+        position: fixed;
         top: 0;
-        right: 0;
-        background: rgba(255, 212, 36, 0.95);
-        width: 34px;
-        height: 30px;
-        text-align: center;
-        padding-top: 2px;
-        font-weight: 700;
-        font-size: 0.65rem;
-        z-index: 2;
-        color: #ee4d2d;
-      }
-      .discount-badge::after {
-        content: "";
-        position: absolute;
-        bottom: -4px;
         left: 0;
-        border-width: 0 17px 4px;
-        border-style: solid;
-        border-color: transparent rgba(255, 212, 36, 0.95);
-        width: 0;
+        height: 100vh;
+        width: 85%;
+        /* Updated width */
+        max-width: 320px;
+        max-height: 100vh;
+        /* Increased max-width */
+        transform: translateX(-100%);
+        border-radius: 0;
+        overflow-y: auto;
+        z-index: 1200;
+        /* Increased z-index to be above overlay (99) and navbar (1000) */
+        border: none;
+        box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
       }
-      .discount-text {
-        color: white;
-        text-transform: uppercase;
-        font-size: 0.55rem;
+
+      .sidebar.active {
+        transform: translateX(0);
+      }
+
+      .sidebar-overlay.active {
         display: block;
       }
 
-      .pagination-wrapper {
-        margin-top: 40px;
-        display: flex;
-        justify-content: center;
-      }
-      .pagination-container {
-        display: flex;
-        gap: 5px;
-        background: white;
-        padding: 5px 10px;
-        border-radius: 20px;
-        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
-      }
-      .page-btn {
-        width: 32px;
-        height: 32px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border-radius: 50%;
-        cursor: pointer;
-        font-weight: 600;
-        font-size: 0.9rem;
-        transition: 0.2s;
-        color: #333;
-      }
-      .page-btn:hover:not(.disabled) {
-        color: #10b981;
-        background: #ecfdf5;
-      }
-      .page-btn.active {
-        background: #10b981;
-        color: white;
-      }
-      .page-btn.disabled {
-        opacity: 0.3;
-        cursor: default;
-      }
-      .page-dots {
-        padding: 0 5px;
-        color: #9ca3af;
-        line-height: 32px;
+      .page-header {
+        display: none !important;
       }
 
-      .chat-btn {
+      .mobile-floating-filter {
+        display: flex;
         position: fixed;
         bottom: 30px;
-        right: 30px;
-        width: 55px;
-        height: 55px;
-        background: #3b82f6;
+        left: 50%;
+        transform: translateX(-50%);
+        background: #10b981;
         color: white;
-        border-radius: 50%;
-        display: flex;
+        padding: 12px 30px;
+        border-radius: 30px;
+        font-weight: 600;
+        font-size: 1rem;
         align-items: center;
-        justify-content: center;
-        font-size: 1.6rem;
-        cursor: pointer;
+        gap: 8px;
+        box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
         z-index: 999;
-        box-shadow: 0 5px 20px rgba(59, 130, 246, 0.4);
+        cursor: pointer;
         border: 2px solid white;
         transition: 0.2s;
       }
-      .sidebar-overlay {
-        display: none;
-        position: fixed;
-        top: 0;
-        left: 0;
+      
+      .mobile-floating-filter:active {
+        transform: translate(-50%, 2px);
+      }
+
+      .page-header {
+        padding: 15px;
+        gap: 15px;
+        flex-direction: column;
+        /* Stack items vertically */
+        align-items: flex-start;
+      }
+
+      .ph-actions {
         width: 100%;
-        height: 100%;
-        background: rgba(0, 0, 0, 0.5);
-        z-index: 99;
-        backdrop-filter: blur(2px);
+        justify-content: space-between;
       }
 
-      /* Responsive */
-      @media (max-width: 1400px) {
-        .product-grid {
-          grid-template-columns: repeat(4, 1fr);
-        }
+      .ph-sort {
+        width: 100%;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding-top: 10px;
+        border-top: 1px solid #eee;
       }
-      @media (max-width: 1100px) {
-        .product-grid {
-          grid-template-columns: repeat(3, 1fr);
-        }
-      }
-      @media (max-width: 992px) {
-        .main-container {
-          width: 100%;
-          padding: 10px;
-          padding-top: 20px;
-        }
-        .product-grid {
-          grid-template-columns: repeat(2, 1fr);
-          gap: 8px;
-        }
-        .sidebar {
-          position: fixed;
-          top: 0;
-          left: 0;
-          height: 100vh;
-          width: 80%;
-          max-width: 300px;
-          transform: translateX(-100%);
-          border-radius: 0;
-          overflow-y: auto;
-          z-index: 1000;
-          border: none;
-        }
-        .sidebar.active {
-          transform: translateX(0);
-        }
-        .sidebar-overlay.active {
-          display: block;
-        }
-        .mobile-filter-btn {
-          display: flex;
-        }
-        .page-header {
-          padding: 10px;
-          gap: 10px;
-        }
-        .ph-sort span {
-          display: none;
-        }
-        .sidebar-close-btn {
-          display: block;
-        }
-      }
-    </style>
-  </head>
-  <body>
-    <div
-      class="sidebar-overlay"
-      id="sidebarOverlay"
-      onclick="toggleSidebar()"
-    ></div>
-    <div class="main-container">
-      <aside class="sidebar" id="mainSidebar">
-        <div class="filter-group">
-          <div class="filter-title">
-            <span
-              ><i class="fa-solid fa-layer-group"></i> DANH MỤC SẢN PHẨM</span
-            >
-            <i
-              class="fa-solid fa-xmark sidebar-close-btn"
-              onclick="toggleSidebar()"
-            ></i>
-          </div>
-          <ul class="cat-list" id="catFilterList">
-            <li class="cat-item active">
-              <i class="fa-solid fa-circle-notch fa-spin"></i> Đang tải...
-            </li>
-          </ul>
-        </div>
-      </aside>
 
-      <div class="product-content">
-        <div class="page-header">
-          <div class="ph-actions">
-            <div class="ph-title" id="pageTitle">Tất cả sản phẩm</div>
-            <div class="mobile-filter-btn" onclick="toggleSidebar()">
-              <i class="fa-solid fa-filter" style="color: #10b981"></i> Danh mục
-            </div>
-          </div>
-          <div class="ph-sort">
-            <span>Sắp xếp:</span>
-            <select>
-              <option>Mới nhất</option>
-              <option>Giá tăng dần</option>
-              <option>Giá giảm dần</option>
-            </select>
-          </div>
+      .sidebar-close-btn {
+        display: block;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+  <div class="main-container">
+    <aside class="sidebar" id="mainSidebar">
+      <!-- SẮP XẾP -->
+      <div class="filter-group">
+        <div class="filter-title">
+          <span><i class="fa-solid fa-arrow-down-wide-short"></i> SẮP XẾP</span>
+          <i class="fa-solid fa-xmark sidebar-close-btn" onclick="toggleSidebar()"></i>
         </div>
-        <div class="product-grid" id="productGrid"></div>
-        <div class="pagination-wrapper">
-          <div id="pagination" class="pagination-container"></div>
+        <div style="width: 100%; border: none; padding-top: 5px;">
+          <select id="sortSelect" style="width: 100%; min-width: auto; padding: 10px; border-radius: 6px; border: 1px solid #e5e7eb; outline: none; font-size: 0.95rem; cursor: pointer;">
+            <option>Mới nhất</option>
+            <option>Giá tăng dần</option>
+            <option>Giá giảm dần</option>
+          </select>
         </div>
       </div>
-    </div>
 
-    <div class="chat-btn" onclick="window.location.href='../message/'">
-      <i class="fa-solid fa-comments"></i>
+      <!-- DANH MỤC -->
+      <div class="filter-group" style="margin-top: 20px; border-top: 1px solid #eee; padding-top: 20px;">
+        <div class="filter-title">
+          <span><i class="fa-solid fa-layer-group"></i> DANH MỤC SẢN PHẨM</span>
+        </div>
+        <ul class="cat-list" id="catFilterList">
+          <li class="cat-item active">
+            <i class="fa-solid fa-circle-notch fa-spin"></i> Đang tải...
+          </li>
+        </ul>
+      </div>
+
+      <div class="filter-group" style="margin-top: 10px; border-top: 1px solid #eee; padding-top: 10px;">
+        <div class="filter-title">
+          <span><i class="fa-solid fa-copyright"></i> THƯƠNG HIỆU</span>
+        </div>
+        <ul class="cat-list" id="brandFilterList">
+          <li class="cat-item active">
+            <i class="fa-solid fa-circle-notch fa-spin"></i> Đang tải...
+          </li>
+        </ul>
+      </div>
+
+      <div class="filter-group" style="margin-top: 10px; border-top: 1px solid #eee; padding-top: 10px;">
+        <div class="filter-title">
+          <span><i class="fa-solid fa-money-bill-wave"></i> KHOẢNG GIÁ</span>
+        </div>
+        <div style="display: flex; gap: 10px; align-items: center; margin-top: 10px;">
+          <input type="number" id="minPriceInput" placeholder="TỪ" style="width: 100%; min-width: 0; padding: 8px; border: 1px solid #e5e7eb; border-radius: 6px; outline: none; font-size: 0.9rem;" min="0">
+          <span style="color: #9ca3af;">-</span>
+          <input type="number" id="maxPriceInput" placeholder="ĐẾN" style="width: 100%; min-width: 0; padding: 8px; border: 1px solid #e5e7eb; border-radius: 6px; outline: none; font-size: 0.9rem;" min="0">
+        </div>
+        <button onclick="filterByPrice()" style="width: 100%; margin-top: 10px; background: #10b981; color: white; border: none; padding: 8px; border-radius: 6px; font-weight: 600; cursor: pointer; transition: 0.2s;">ÁP DỤNG</button>
+      </div>
+    </aside>
+
+    <div class="product-content">
+      <div class="page-header">
+        <div class="ph-actions">
+          <div class="ph-title" id="pageTitle">Tất cả sản phẩm</div>
+        </div>
+      </div>
+      <div class="product-grid" id="productGrid"></div>
+      <div class="pagination-wrapper">
+        <div id="pagination" class="pagination-container"></div>
+      </div>
     </div>
-    <div id="loadPage"></div>
-    <div id="toast-container"></div>
-    <script type="module" src="/products/index.js"></script>
-  </body>
+  </div>
+
+  <div class="chat-btn" onclick="window.location.href='../message/'">
+    <i class="fa-solid fa-comments"></i>
+    <span id="chatBadge" class="chat-badge" style="display: none;">0</span>
+  </div>
+
+  <div class="mobile-floating-filter" onclick="toggleSidebar()">
+    <i class="fa-solid fa-sliders"></i> Lọc
+  </div>
+
+  <div id="loadPage"></div>
+  <div id="toast-container"></div>
+  <script type="module" src="/products/index.js"></script>
+</body>
+
 </html>

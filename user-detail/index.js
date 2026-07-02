@@ -10,8 +10,16 @@ import { initEmailList } from "./email-list.js";
 import { loadNavbar } from "../navbar/navbar.js";
 import { toggleLoading } from "../lib/loader.js";
 
+let lightbox;
 // Khởi chạy trang
 document.addEventListener("DOMContentLoaded", async () => {
+  lightbox = GLightbox({
+    selector: '.gallery',
+    touchNavigation: true,
+    draggable: true,
+    loop: false,
+    zoomable: true
+  });
   toggleLoading(true);
   try {
     await loadNavbar();
@@ -28,6 +36,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       return;
     }
     await render(user.data);
+    lightbox.reload();
   } catch (e) {
     console.error(e);
   } finally {
@@ -37,15 +46,14 @@ document.addEventListener("DOMContentLoaded", async () => {
 
 async function render(user) {
   // Fill Info
-  document.getElementById("avatarPreview").src = user.imageUrl
-    ? user.imageUrl
-    : noImage;
+  document.getElementById("avatarPreview").src = user.imageUrl || noImage;
+  document.getElementById("viewAvatar").href = user.imageUrl || noImage;
   document.getElementById("username").textContent =
     user.username || "Chưa đặt tên";
   document.getElementById("fullName").textContent = user.fullName || "---";
   document.getElementById("birthday").textContent = user.birthday || "---";
   document.getElementById("gender").textContent =
-    user.gender === "MALE" ? "Nam" : user.gender == "FEMALE" ? "Nữ" : "Khác";
+    user.gender === "MALE" ? "Nam" : user.gender === "FEMALE" ? "Nữ" : "Khác";
   document.getElementById("createdAt").textContent = convertToVNTime(
     user.createdAt
   );
@@ -61,6 +69,11 @@ async function render(user) {
     const rolesSelect = document.getElementById("roleSelect");
     const statusSelect = document.getElementById("statusSelect");
     const emailsSection = document.getElementById("emailsSection");
+    const btnSendMessage = document.getElementById("btnSendMessage");
+    const btnSendNotification = document.getElementById("btnSendNotification");
+
+    btnSendNotification.style.display = "block";
+    btnSendMessage.style.display = "block";
 
     // Load Email List Template
     const html = await fetch("/user-detail/email-list.html");
@@ -148,7 +161,7 @@ function setupActionButtons(user) {
     const content = document.getElementById("notiContent").value.trim();
 
     if (!title || !content) {
-      alert("Vui lòng nhập đủ tiêu đề và nội dung!");
+      await showDialog("error", "Vui lòng nhập đủ tiêu đề và nội dung!");
       return;
     }
 

@@ -1,6 +1,6 @@
 import { callAPI } from "../lib/api.js";
 import { showDialog } from "../dialog/index.js";
-import { convertToVNTime, getLoader } from "../lib/public.js";
+import {convertToVNTime, getLoader, noImage} from "../lib/public.js";
 import { initEmailList } from "./email-list.js";
 import { loadNavbar } from "../navbar/navbar.js";
 import { toggleLoading } from "../lib/loader.js"; // [MỚI] Dùng Loader xịn
@@ -16,6 +16,7 @@ const createdAt = document.getElementById("createdAt");
 const updatedAt = document.getElementById("updatedAt");
 const avatarInput = document.getElementById("avatar");
 const avatarPreview = document.getElementById("avatarPreview");
+const viewAvatar = document.getElementById("viewAvatar");
 
 // Hàm load thông tin Profile
 async function loadProfile() {
@@ -28,7 +29,8 @@ async function loadProfile() {
 
   // Fill dữ liệu
   avatarPreview.src =
-    profile.imageUrl || "https://cdn-icons-png.flaticon.com/512/847/847969.png";
+    profile.imageUrl || noImage;
+  viewAvatar.href = profile.imageUrl || noImage;
   usernameInput.value = profile.username || "";
   fullNameInput.value = profile.fullName || "";
   birthdayInput.value = profile.birthday || "";
@@ -44,13 +46,21 @@ async function loadProfile() {
   emailsSection.innerHTML = text; // Dùng innerHTML cho sạch
   initEmailList(profile.emails);
 }
-
+let lightbox;
 // [MỚI] Sử dụng toggleLoading cho toàn bộ quá trình khởi tạo trang
 document.addEventListener("DOMContentLoaded", async () => {
   toggleLoading(true);
+  lightbox = GLightbox({
+    selector: '.gallery',
+    touchNavigation: true,
+    draggable: true,
+    loop: false,
+    zoomable: true
+  });
   try {
     await loadNavbar();
     await loadProfile();
+    lightbox.reload();
   } catch (error) {
     console.error("Lỗi khởi tạo trang Profile:", error);
   } finally {
@@ -63,7 +73,11 @@ document.addEventListener("DOMContentLoaded", async () => {
 avatarInput.addEventListener("change", (e) => {
   const file = e.target.files[0];
   if (file) {
-    avatarPreview.src = URL.createObjectURL(file);
+    const url = URL.createObjectURL(file);
+    avatarPreview.src = url;
+    viewAvatar.href = url;
+
+    lightbox.reload();
   }
 });
 
@@ -94,6 +108,7 @@ saveBtn.addEventListener("click", async () => {
   // Dùng getLoader cục bộ cho nút Save (hiệu ứng xoay trên nút)
   await getLoader("saveBtn", async () => {
     result = await callAPI("/profile", "PUT", data, true);
+    if(result.success) {sessionStorage.clear();}
   });
 
   await showDialog(result.success ? "success" : "error", result.message);

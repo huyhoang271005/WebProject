@@ -4,9 +4,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quản lý đơn hàng - Tạp Hóa Xanh</title>
+    <title>Quản lý đơn hàng</title>
 
+    <link rel="stylesheet" href="/lib/public.css">
+    <link rel="stylesheet" href="/lib/public.css">
     <link rel="stylesheet" href="/order-manager/admin-orders.css">
+    <link rel="stylesheet" href="/dialog/index.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 
@@ -17,25 +20,27 @@
             <h2>Quản lý duyệt đơn hàng</h2>
 
             <div class="tabs-container">
-                <button class="tab-btn active" onclick="filterStatus('PENDING')">Chờ xác nhận</button>
-                <button class="tab-btn" onclick="filterStatus('DELIVERING')">Đang giao</button>
-                <button class="tab-btn" onclick="filterStatus('DELIVERED')">Hoàn thành</button>
-                <button class="tab-btn" onclick="filterStatus('CANCELED')">Đã hủy</button>
+                <button class="tab-btn active" data-status="PENDING">Chờ xác nhận</button>
+                <button class="tab-btn" data-status="DELIVERING">Đang giao</button>
+                <button class="tab-btn" data-status="DELIVERED">Hoàn thành</button>
+                <button class="tab-btn" data-status="CANCELED">Đã hủy</button>
             </div>
 
-            <div class="search-box-container" style="margin: 5px 0 15px 0; display: flex; gap: 50px; align-items: center;">
+            <div class="search-box-container"
+                style="margin: 5px 0 15px 0; display: flex; gap: 50px; align-items: center;">
                 <div style="position: relative; width: 300px;">
-                    <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: #888;"></i>
-                    <input type="text" id="searchInput" placeholder="Nhập mã đơn" 
+                    <i class="fa-solid fa-magnifying-glass"
+                        style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: #888;"></i>
+                    <input type="text" id="searchInput" placeholder="Nhập mã đơn"
                         style="width: 100%; padding: 10px 10px 10px 35px; border: 1px solid #ddd; border-radius: 6px; outline: none;">
                 </div>
-                
-                <button onclick="searchOrder()" 
+
+                <button onclick="searchOrder()"
                     style="padding: 10px 20px; background-color: #00bfa5; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">
                     Tìm kiếm
                 </button>
-                
-                <button onclick="resetSearch()" 
+
+                <button onclick="resetSearch()"
                     style="margin-left: -45px; padding: 10px 20px; background-color: #f3f4f6; color: #333; border: 1px solid #ddd; border-radius: 6px; cursor: pointer;">
                     <i class="fa-solid fa-rotate-right"></i>
                 </button>
@@ -50,7 +55,7 @@
                             <th>Tổng tiền</th>
                             <th>Trạng thái</th>
                             <th style="cursor: pointer; user-select: none;" onclick="toggleSortDate()">
-                                Ngày tạo <i id="sortIcon" class="fa-solid fa-arrow-down-long"></i>
+                                Ngày đặt <i id="sortIcon" class="fa-solid fa-arrow-down-long"></i>
                             </th>
                             <th style="text-align: right;">Thao tác</th>
                         </tr>
@@ -83,6 +88,8 @@
                         </div>
                         <div><strong>Ngày đặt:</strong> <span id="modalDate">...</span></div>
                         <div><strong>Trạng thái:</strong> <span id="modalStatus">...</span></div>
+                        <div><strong>Thanh toán:</strong> <span id="modalPaymentMethod">...</span></div>
+                        <div><strong>Ngày thanh toán:</strong> <span id="modalPaymentAt">...</span></div>
                     </div>
                 </div>
 
@@ -107,11 +114,27 @@
                         Tổng thanh toán: <span id="modalTotalMoney">0 đ</span>
                     </div>
                 </div>
+
+                <div class="info-section" id="orderReviewSection">
+                    <div style="align-items: center; margin-bottom: 10px;">
+                        <h4 style="margin: 0;"><i class="fa-solid fa-star" style="color:#f59e0b"></i> Đánh giá của khách hàng</h4>
+                        <button id="btnViewReview">
+                            <i class="fa-solid fa-eye"></i> Xem đánh giá
+                        </button>
+                    </div>
+                    <div id="modalReviewList" style="max-height: 300px; overflow-y: auto; display: none;">
+                        <p style="color: #888; text-align:center; padding: 20px;">Đang tải đánh giá...</p>
+                    </div>
+                </div>
             </div>
 
-            <div class="modal-footer" style="padding: 15px; text-align: right; border-top: 1px solid #eee;">
-                <button onclick="closeModal()"
-                    style="padding: 8px 20px; border: 1px solid #ddd; background: white; border-radius: 4px; cursor: pointer;">Đóng</button>
+            <div class="modal-footer" style="padding: 15px; display: flex; justify-content: flex-end; gap: 10px; border-top: 1px solid #eee;">
+                <button id="modalMessageBtn" style="background-color: #0084ff; margin-top: 0;">
+                    <i class="fa-solid fa-message"></i> Nhắn tin
+                </button>
+                <button id="btnUserDetail" style="background-color: #8b5cf6; margin-top: 0;">
+                    <i class="fa-solid fa-user"></i> Thông tin người dùng
+                </button>
             </div>
         </div>
     </div>

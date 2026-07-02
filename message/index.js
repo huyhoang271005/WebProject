@@ -1,169 +1,248 @@
 import { callAPI } from "/lib/api.js";
-import { noImage, convertToVNTime } from "/lib/public.js";
-import { connectStomp, subscribe, send } from "/lib/websocket.js";
+import {connectStomp, send, subscribe} from "/lib/websocket.js";
+import { loadNavbar } from "../navbar/navbar.js";
+import {state, dom, statusMessage} from "./state.js";
+import { saveCache } from "./cache.js";
+import { showNotification, showEmptyChat } from "./ui.js";
+import {renderRooms, openRoom, loadMembers} from "./room.js";
+import { loadMessages, appendMessage, sendMessage, processMessageQueue } from "./message.js";
 
-/* ================= STATE ================= */
-let currentUserId = null;
-let rooms = [];
-let senderMap = {}; // Cache toàn cục cho thông tin người dùng
-let currentRoomId = null;
-
-/* ================= DOM ELEMENTS ================= */
-const chatContainerEl = document.getElementById("chatContainer");
-const roomListEl = document.getElementById("roomList");
-const chatAvatarEl = document.getElementById("chatAvatar");
-const chatUsernameEl = document.getElementById("chatUsername");
-const chatMessagesEl = document.getElementById("chatMessages");
-const chatEmptyEl = document.getElementById("chatEmpty");
-const chatHeaderEl = document.getElementById("chatHeader");
-const chatInputEl = document.getElementById("chatInput");
-const messageInputEl = document.getElementById("messageInput");
-const sendBtnEl = document.getElementById("sendBtn");
-const backBtnEl = document.getElementById("backBtn");
-
-/* ================= UI CONTROLS ================= */
-function showEmptyChat() {
-    chatEmptyEl.classList.remove("hidden");
-    chatHeaderEl.classList.add("hidden");
-    chatMessagesEl.classList.add("hidden");
-    chatInputEl.classList.add("hidden");
-    chatContainerEl.classList.remove("mobile-active");
-}
-
-function showChatRoom() {
-    chatEmptyEl.classList.add("hidden");
-    chatHeaderEl.classList.remove("hidden");
-    chatMessagesEl.classList.remove("hidden");
-    chatInputEl.classList.remove("hidden");
-    chatContainerEl.classList.add("mobile-active");
-}
-
-/* ================= LOGIC ================= */
-function renderRooms() {
-    roomListEl.innerHTML = "";
-    rooms.forEach(room => {
-        const div = document.createElement("div");
-        div.className = `room-item ${String(room.roomChatId) === String(currentRoomId) ? 'active' : ''}`;
-        div.innerHTML = `
-            <div class="room-avatar"><img src="${room.imageUrl || noImage}"></div>
-            <div class="room-info">
-                <div class="room-name">${room.roomChatName}</div>
-                <div class="room-last-message">${room.lastMessage || "Bắt đầu cuộc trò chuyện"}</div>
-            </div>
-            <div class="room-time">${room.lastMessageTime ? convertToVNTime(room.lastMessageTime) : ""}</div>
-        `;
-        div.onclick = () => openRoom(room.roomChatId);
-        roomListEl.appendChild(div);
-    });
-}
-
-async function openRoom(roomId) {
-    currentRoomId = roomId;
-    const newUrl = new URL(window.location);
-    newUrl.searchParams.set('roomId', roomId);
-    history.pushState(null, "", newUrl);
-
-    const room = rooms.find(r => String(r.roomChatId) === String(roomId));
-    if (!room) return;
-
-    showChatRoom();
-    renderRooms();
-    chatAvatarEl.src = room.imageUrl || noImage;
-    chatUsernameEl.textContent = room.roomChatName;
-    chatMessagesEl.innerHTML = `<div style="text-align:center; padding:20px; color:#666;">Đang tải...</div>`;
-
-    await loadMembers(roomId); // Lấy currentUserId và danh sách người trong phòng
-    await loadMessages(roomId);
-}
-
-async function loadMembers(roomId) {
-    try {
-        const res = await callAPI(`/room-chat/${roomId}/members`);
-        if (res.data) {
-            res.data.forEach(u => {
-                senderMap[u.userId] = u; // Cập nhật cache người dùng
-                if (u.isMe) currentUserId = u.userId;
-            });
+function handleNetworkChange() {
+    state.isOffline = !navigator.onLine;
+    if (state.isOffline) {
+        showNotification("Mất kết nối mạng.", "error");
+        document.body.classList.add("offline-mode");
+    } else {
+        showNotification("Đã kết nối lại.", "success");
+        document.body.classList.remove("offline-mode");
+        if (state.currentRoomId) {
+            loadMessages(state.currentRoomId);
         }
-    } catch (e) { console.error(e); }
+    }
 }
 
-async function loadMessages(roomId) {
-    try {
-        const res = await callAPI(`/room-chat/${roomId}/messages`);
-        const msgList = res.data?.listData;
-        chatMessagesEl.innerHTML = msgList.length === 0 ? `<div style="text-align:center;color:#999;margin-top:20px;">Chưa có tin nhắn</div>` : "";
-        msgList.forEach(m => appendMessage(m));
-        chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight;
-    } catch (e) { console.error(e); }
-}
+document.addEventListener("click", () => {
+    document.querySelectorAll(".room-options-menu.show").forEach(menu => menu.classList.remove("show"));
+    document.querySelectorAll(".message-options-menu.show").forEach(menu => menu.classList.remove("show"));
+});
 
-function appendMessage(msg) {
-    const isMe = String(msg.senderId) === String(currentUserId);
-    const sender = senderMap[msg.senderId] || {};
-
-    const div = document.createElement("div");
-    div.className = `chat-message ${isMe ? "me" : "other"}`;
-    div.innerHTML = `
-        ${!isMe ? `
-            <div class="sender-info">
-                <img src="${sender.imageUrl || noImage}">
-                <span>${sender.username || "Người dùng"}</span>
-            </div>
-        ` : ""}
-        <div class="message-content">${msg.content}</div>
-        <div class="message-time">${convertToVNTime(msg.time)}</div>
-    `;
-    chatMessagesEl.appendChild(div);
-    chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight;
-}
-
-function sendMessage() {
-    const content = messageInputEl.value.trim();
-    if (!content || !currentRoomId) return;
-    send("/app/chat.send", { roomId: currentRoomId, content });
-    messageInputEl.value = "";
-}
-
-/* ================= INIT ================= */
-(async function init() {
+async function init() {
     try {
         const res = await callAPI("/room-chat");
-        rooms = res.data.listData || [];
+        state.rooms = res.data.listData || [];
         renderRooms();
 
-        connectStomp("/ws", () => {
-            rooms.forEach(room => {
-                subscribe(`/topic/room/${room.roomChatId}`, msg => {
-                    // Cập nhật room list
-                    const r = rooms.find(item => String(item.roomChatId) === String(msg.roomId));
-                    if (r) {
-                        // Tìm tên người gửi từ cache senderMap
-                        const sender = senderMap[msg.senderId];
-                        const senderName = sender ? (sender.isMe ? "Bạn" : sender.username) : "";
+        state.rooms.forEach(room => {
+            subscribe(`/topic/room/${room.roomChatId}`, msg => {
+                const msgId = msg.messageId || msg.id;
+                
+                // Xử lý các status revoke/delete từ websocket
+                if (msg.status === "REVOKE") {
+                    const msgEl = document.getElementById(`msg-el-${msgId}`);
+                    if (msgEl) {
+                        msgEl.innerHTML = `<div class="message-content" style="font-style: italic; color: #888;">Tin nhắn đã bị thu hồi</div>`;
+                    }
+                    return;
+                }
 
-                        // Lưu cả tên và nội dung vào room để render
-                        r.lastMessage = senderName ? `${senderName}: ${msg.content}` : msg.content;
+                if (msg.status === "READ") {
+                    if (msg.senderId !== state.currentUserId && msg.senderId) {
+                        const allMessageElements = document.querySelectorAll(`.chat-message`);
+                        allMessageElements.forEach(message => {
+                            const senderInfo = message.querySelector(`.sender-info`);
+                            if(!senderInfo) {
+                                const status = message.querySelector(`.message-time .message-status`);
+                                if (status) status.textContent = statusMessage[msg.status];
+                            }
+                        });
+                    }
+                    return;
+                }
+
+                // Xử lý luồng tin nhắn bình thường
+                const r = state.rooms.find(item => String(item.roomChatId) === String(msg.roomId));
+                if (r) {
+                    const sender = state.senderMap[msg.senderId];
+                    const senderName = sender ? (sender.isMe ? "Bạn" : sender.fullName) : "";
+                    const isMe = sender ? sender.isMe : (String(msg.senderId) === String(state.currentUserId));
+
+                    if (msg.content) {
+                        r.lastMessage = msg.content;
+                    }
+                    if (msg.time) {
                         r.lastMessageTime = msg.time;
-
-                        renderRooms(); // Vẽ lại danh sách
+                    }
+                    
+                    if (String(msg.roomId) === String(state.currentRoomId)) {
+                        r.messageSentCount = 0;
+                        // Chỉ gửi thông báo READ nếu đó là tin nhắn của người khác gửi đến
+                        if (!isMe && msg.content) {
+                            send("/app/chat.read", { roomId: msg.roomId });
+                        }
+                    } else if (!isMe) {
+                        r.messageSentCount += 1;
                     }
 
-                    // Hiển thị tin nhắn nếu đang mở phòng đó
-                    if (String(msg.roomId) === String(currentRoomId)) {
-                        if (!senderMap[msg.senderId]) {
-                            loadMembers(msg.roomId).then(() => appendMessage(msg));
-                        } else { appendMessage(msg); }
+                    if (r.roomChatStatus !== "DELETED" && r.roomChatStatus !== "MUTE") {
+                        r.roomChatStatus = "NORMAL";
                     }
-                });
+
+                    // Đẩy room chat lên đầu danh sách
+                    const roomIndex = state.rooms.indexOf(r);
+                    if (roomIndex > 0) {
+                        state.rooms.splice(roomIndex, 1);
+                        state.rooms.unshift(r);
+                    }
+
+                    renderRooms();
+                }
+
+                const queueIdx = state.messageQueue.findIndex(q => String(q.roomId) === String(msg.roomId) && q.content === msg.content && String(q.senderId) === String(msg.senderId));
+                let tempMsg = null;
+                if (queueIdx !== -1) {
+                    tempMsg = state.messageQueue[queueIdx];
+                    state.messageQueue.splice(queueIdx, 1);
+                }
+
+                if (String(msg.roomId) === String(state.currentRoomId)) {
+                    if (tempMsg) {
+                        const tempDiv = document.getElementById(`msg-el-${tempMsg.messageId}`);
+                        if (tempDiv) {
+                            tempDiv.id = `msg-el-${msg.messageId}`;
+                            tempDiv.innerHTML = tempDiv.innerHTML.replaceAll(tempMsg.messageId, msg.messageId);
+                            
+                            const statusSpan = tempDiv.querySelector('.message-status');
+                            if (statusSpan) statusSpan.textContent = statusMessage[msg.status] || statusMessage["SENT"];
+
+                            state.messages.push(msg);
+                            if (!state.isOffline) saveCache(state.currentRoomId, state.messages);
+                            return; 
+                        }
+                    }
+
+                    if (!state.senderMap[msg.senderId]) {
+                        loadMembers(msg.roomId).then(() => appendMessage(msg));
+                    } else { 
+                        appendMessage(msg); 
+                    }
+
+                    state.messages.push(msg);
+                    if (!state.isOffline) saveCache(state.currentRoomId, state.messages);
+                }
             });
         });
 
-        sendBtnEl.onclick = sendMessage;
-        messageInputEl.onkeydown = e => { if (e.key === "Enter") sendMessage(); };
-        backBtnEl.onclick = () => { showEmptyChat(); currentRoomId = null; history.pushState(null, "", window.location.pathname); };
+        connectStomp("/ws", () => {
+            processMessageQueue();
+        });
 
         const urlRoomId = new URLSearchParams(window.location.search).get("roomId");
-        if (urlRoomId) openRoom(urlRoomId); else showEmptyChat();
-    } catch (e) { console.error(e); }
-})();
+
+        dom.sendBtnEl.onclick = () => {
+            sendMessage();
+        }
+        dom.messageInputEl.onkeydown = e => {
+            if (e.key === "Enter") {
+                sendMessage();
+            }
+        };
+        dom.backBtnEl.onclick = () => { showEmptyChat(); state.currentRoomId = null; history.pushState(null, "", window.location.pathname); };
+
+        if (urlRoomId) await openRoom(urlRoomId); else showEmptyChat();
+        
+        dom.chatMessagesEl.addEventListener("scroll", async () => {
+            if (dom.chatMessagesEl.scrollTop === 0 && state.hasMoreMessages && !state.isOffline) {
+                await loadMessages(state.currentRoomId, true);
+            }
+        });
+
+        window.addEventListener('online', handleNetworkChange);
+        window.addEventListener('offline', handleNetworkChange);
+    } catch (e) { 
+        console.error(e); 
+    }
+}
+
+document.addEventListener("DOMContentLoaded", async () => {
+    await loadNavbar();
+    await init();
+
+    let searchType = null;
+
+    document.getElementById("btnOrderLink").onclick = () => {
+        searchType = 'order';
+        document.getElementById('linkSearchTitle').innerHTML = '<i class="fa-solid fa-box"></i> Tìm Đơn hàng';
+        document.getElementById('linkSearchInput').placeholder = 'Nhập mã đơn hàng...';
+        document.getElementById('linkSearchInput').value = '';
+        document.getElementById('linkSearchResult').innerHTML = '';
+        document.getElementById('linkSearchModal').style.display = 'flex';
+    };
+
+    document.getElementById("btnProductLink").onclick = () => {
+        searchType = 'product';
+        document.getElementById('linkSearchTitle').innerHTML = '<i class="fa-solid fa-tag"></i> Tìm Sản phẩm';
+        document.getElementById('linkSearchInput').placeholder = 'Nhập tên sản phẩm...';
+        document.getElementById('linkSearchInput').value = '';
+        document.getElementById('linkSearchResult').innerHTML = '';
+        document.getElementById('linkSearchModal').style.display = 'flex';
+    };
+
+    document.getElementById("linkSearchBtn").onclick = async () => {
+        const val = document.getElementById('linkSearchInput').value.trim();
+        if (!val) return;
+        const resContainer = document.getElementById('linkSearchResult');
+        resContainer.innerHTML = '<p>Đang tìm kiếm...</p>';
+        
+        try {
+            if (searchType === 'order') {
+                const res = await callAPI(`/admin/orders?orderId=${encodeURIComponent(val)}`);
+                const list = res.data?.listData || [];
+                if (list.length === 0) {
+                    resContainer.innerHTML = `<p>${res.message}</p>`;
+                    return;
+                }
+                resContainer.innerHTML = list.map(o => {
+                    const firstImage = o.orderItemDTOList?.[0]?.imageUrl || '';
+                    const idStr = o.orderId;
+                    return `
+                        <div style="display:flex; border: 1px solid #ddd; padding: 10px; border-radius: 8px; cursor:pointer;" onclick="selectLinkItem('order', '${idStr}', '${firstImage}')">
+                            <img src="${firstImage}" style="width: 50px; height: 50px; object-fit: cover; margin-right: 10px; border-radius: 4px;">
+                            <div>
+                                <div style="font-weight: bold;">Đơn hàng #${idStr.substring(0,8)}</div>
+                                <div style="font-size: 12px; color: #888;">Người nhận: ${o.contactName || ''}</div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            } else {
+                const res = await callAPI(`/products?productName=${encodeURIComponent(val)}`);
+                const list = res.data?.listData || [];
+                if (list.length === 0) {
+                    resContainer.innerHTML = '<p>Không tìm thấy kết quả.</p>';
+                    return;
+                }
+                resContainer.innerHTML = list.map(p => {
+                    const firstImage = p.imageUrl || '';
+                    const idStr = p.productId || '';
+                    return `
+                        <div style="display:flex; border: 1px solid #ddd; padding: 10px; border-radius: 8px; cursor:pointer;" onclick="selectLinkItem('product', '${idStr}', '${firstImage}', decodeURIComponent('${encodeURIComponent(p.productName)}'))">
+                            <img src="${firstImage}" style="width: 50px; height: 50px; object-fit: cover; margin-right: 10px; border-radius: 4px;">
+                            <div>
+                                <div style="font-weight: bold;">${p.productName}</div>
+                                <div style="font-size: 12px; color: #888;">(Bấm để gửi)</div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+        } catch (e) {
+            resContainer.innerHTML = '<p>Lỗi khi tìm kiếm.</p>';
+        }
+    };
+
+    window.selectLinkItem = (type, id, imgUrl, name = '') => {
+        const content = `${id} ${imgUrl} ${name}`.trim();
+        sendMessage(content, type.toUpperCase());
+        document.getElementById('linkSearchModal').style.display = 'none';
+    }
+});

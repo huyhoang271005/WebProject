@@ -1,58 +1,79 @@
-import { loadNavbar } from "../navbar/navbar.js";
-import { callAPI } from "../lib/api.js";
-import { toggleLoading } from "../lib/loader.js";
+import { loadNavbar } from "/navbar/navbar.js";
+import { callAPI } from "/lib/api.js";
+import { toggleLoading } from "/lib/loader.js";
+import { showDialog } from "/dialog/index.js";
 
-// Biến toàn cục lưu danh sách danh mục
+// Biến toàn cục lưu danh sách danh mục và thương hiệu
 let apiCategories = [];
+let apiBrands = [];
 
 // Hàm chạy khi trang load
 document.addEventListener("DOMContentLoaded", async () => {
+  const params = new URLSearchParams(window.location.search);
+  const login = params.get("login");
+  if (login) {
+    localStorage.setItem("rememberMe", true);
+  }
+  sessionStorage.clear();
   toggleLoading(true);
-  try {
-    // 1. Khởi tạo Navbar trước
-    await loadNavbar({
-      centerHTML: `
+  // 1. Khởi tạo Navbar trước
+  await loadNavbar({
+    centerHTML: `
         <div class="nav-cat-btn" id="catBtn">
             <i class="fa-solid fa-bars"></i> <span>Danh mục</span>
             <div class="cat-dropdown" id="catDropdown"></div>
         </div>
-        <div style="position:relative; width:100%; max-width:450px;">
+        <div class="nav-cat-btn" id="brandBtn">
+            <i class="fa-solid fa-tag"></i> <span>Thương hiệu</span>
+            <div class="cat-dropdown" id="brandDropdown"></div>
+        </div>
+        <div class="home-search-box">
             <input type="text" class="nav-search-input" id="homeSearch" placeholder="Tìm sản phẩm ...">
-            <i class="fa-solid fa-magnifying-glass" id="homeSearchBtn" 
-               style="position:absolute; right:15px; top:50%; transform:translateY(-50%); color:#10B981; cursor:pointer; padding:5px;"></i>
+            <i class="fa-solid fa-magnifying-glass" id="homeSearchBtn"></i>
         </div>`,
-    });
+  });
 
-    // 2. Lấy dữ liệu theo thứ tự
+  // 2. Lấy dữ liệu theo thứ tự
 
-    await fetchCategories(); // Lấy danh mục trước
+  await fetchCategories(); // Lấy danh mục trước
+  await fetchBrands(); // Lấy thương hiệu
 
-    await renderHomeSections(); // Sau đó mới lấy sản phẩm gợi ý
+  await renderHomeSections(); // Sau đó mới lấy sản phẩm gợi ý
 
-    // 3. Render dữ liệu lên màn hình và gán sự kiện
-    renderNavCategories();
-    setupNavbarEvents();
-  } catch (e) {
-    console.error("Lỗi tải trang chủ:", e);
-  } finally {
-    // Tắt loading sau khi mọi thứ hoàn tất
-    setTimeout(() => toggleLoading(false), 300);
-  }
+  // 3. Render dữ liệu lên màn hình và gán sự kiện
+  renderNavCategories();
+  renderNavBrands();
+  setupNavbarEvents();
+  setTimeout(() => toggleLoading(false), 300);
+
 });
+
+/**
+ * Gọi API lấy danh sách thương hiệu
+ */
+async function fetchBrands() {
+  const res = await callAPI("/brands", "GET");
+  if (res && res.success) {
+    if (Array.isArray(res.data)) apiBrands = res.data;
+    else if (res.data && Array.isArray(res.data.listData))
+      apiBrands = res.data.listData;
+  } else {
+    console.error("Lỗi lấy thương hiệu:", res.message);
+  }
+}
 
 /**
  * Gọi API lấy danh sách danh mục sản phẩm
  */
 async function fetchCategories() {
-  try {
-    const res = await callAPI("/categories", "GET");
-    if (res && res.success) {
-      if (Array.isArray(res.data)) apiCategories = res.data;
-      else if (res.data && Array.isArray(res.data.listData))
-        apiCategories = res.data.listData;
-    }
-  } catch (e) {
-    console.error("Lỗi lấy danh mục:", e);
+  const res = await callAPI("/categories", "GET");
+  if (res && res.success) {
+    if (Array.isArray(res.data)) apiCategories = res.data;
+    else if (res.data && Array.isArray(res.data.listData))
+      apiCategories = res.data.listData;
+  }
+  else {
+    await showDialog("error", res.message);
   }
 }
 
@@ -71,11 +92,30 @@ function renderNavCategories() {
   el.innerHTML = apiCategories
     .map(
       (c) =>
-        `<a href="../products/?cat=${
-          c.categoryId || c.id
-        }"><i class="fa-solid fa-caret-right"></i> ${
-          c.categoryName || c.name
-        }</a>`
+        `<a href="/products/?cat=${c.categoryId || c.id
+        }"><i class="fa-solid fa-caret-right"></i> ${c.categoryName || c.name
+        }</a>`,
+    )
+    .join("");
+}
+
+/**
+ * Hiển thị danh sách thương hiệu lên menu dropdown
+ */
+function renderNavBrands() {
+  const el = document.getElementById("brandDropdown");
+  if (!el) return;
+  if (apiBrands.length === 0) {
+    el.innerHTML = '<div style="padding:15px; text-align:center;">Trống</div>';
+    return;
+  }
+
+  el.innerHTML = apiBrands
+    .map(
+      (b) =>
+        `<a href="/products/?brand=${b.brandId || b.id
+        }"><i class="fa-solid fa-tag"></i> ${b.brandName || b.name
+        }</a>`,
     )
     .join("");
 }
@@ -92,11 +132,26 @@ function setupNavbarEvents() {
     catBtn.onclick = (e) => {
       e.stopPropagation();
       catDropdown.classList.toggle("show");
+      if (brandDropdown) brandDropdown.classList.remove("show"); // Close brand dropdown
     };
-    document.addEventListener("click", () => {
-      if (catDropdown) catDropdown.classList.remove("show");
-    });
   }
+
+  // Toggle menu thương hiệu
+  const brandBtn = document.getElementById("brandBtn");
+  const brandDropdown = document.getElementById("brandDropdown");
+
+  if (brandBtn) {
+    brandBtn.onclick = (e) => {
+      e.stopPropagation();
+      brandDropdown.classList.toggle("show");
+      if (catDropdown) catDropdown.classList.remove("show"); // Close cat dropdown
+    };
+  }
+
+  document.addEventListener("click", () => {
+    if (catDropdown) catDropdown.classList.remove("show");
+    if (brandDropdown) brandDropdown.classList.remove("show");
+  });
 
   // Xử lý tìm kiếm
   const searchInput = document.getElementById("homeSearch");
@@ -104,8 +159,8 @@ function setupNavbarEvents() {
   const doSearch = () => {
     const productName = searchInput.value.trim();
     if (productName) {
-      window.location.href = `../products/?search=${encodeURIComponent(
-        productName
+      window.location.href = `/products/?search=${encodeURIComponent(
+        productName,
       )}`;
     } else {
       searchInput.focus();
@@ -142,17 +197,20 @@ async function renderHomeSections() {
                 <div class="section-title">
                     <i class="fa-solid fa-fire" style="color:#ee4d2d; margin-right:5px;"></i> GỢI Ý HÔM NAY
                 </div>
-                <a href="../products/" class="btn-see-more">Xem tất cả </a>
+                <a href="/products/" class="btn-see-more">Xem tất cả </a>
             </div>
             <div class="product-grid-5">
                 ${listData.map((p) => createProductHTML(p)).join("")}
             </div>
         </div>
-      `
+      `,
       );
     } else {
       container.innerHTML = `<div style="text-align:center; padding: 40px; color: #666;">Chưa có sản phẩm nào</div>`;
     }
+  }
+  else {
+    await showDialog("error", res.message);
   }
 }
 
@@ -173,7 +231,7 @@ function createProductHTML(p) {
   // Tính toán giảm giá
   if (p.originalPrice && p.originalPrice > p.price) {
     const percent = Math.round(
-      ((p.originalPrice - p.price) / p.originalPrice) * 100
+      ((p.originalPrice - p.price) / p.originalPrice) * 100,
     );
     discountBadge = `
         <div style="position:absolute; top:0; right:0; background-color: rgba(255,212,36,.95); width:36px; height:32px; text-align:center; padding-top:4px; font-weight:700; font-size:0.7rem; z-index:2;">
@@ -192,7 +250,7 @@ function createProductHTML(p) {
   const salesText = p.totalSales > 0 ? `Đã bán ${p.totalSales}` : "";
 
   return `
-    <div class="product-card" onclick="window.location.href='../product-detail/?id=${p.productId}'">
+    <div class="product-card" onclick="window.location.href='/product-detail/?id=${p.productId}'">
         ${discountBadge}
         <div class="p-img">
             <img src="${imgUrl}" alt="${p.productName}" loading="lazy">

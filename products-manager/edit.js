@@ -1,6 +1,7 @@
 import { showDialog } from "/dialog/index.js";
 import { loadNavbar } from "/navbar/navbar.js";
 import { fetchCategories, fetchBrands, getProduct, updateProduct, deleteProduct, updateVariant, deleteVariant } from "/products-manager/services.js";
+import { toggleLoading } from "../lib/loader.js";
 
 let currentProductId = null;
 let categories = [];
@@ -8,8 +9,7 @@ let brands = [];
 
 // Initialize
 async function init() {
-    console.log("edit.js: init() called");
-
+    toggleLoading(true);
     // Load Navbar
     await loadNavbar({ centerHTML: "" });
 
@@ -24,9 +24,13 @@ async function init() {
     const urlParams = new URLSearchParams(window.location.search);
     const productId = urlParams.get('id');
     if (productId) {
-        console.log("Auto-loading product from URL:", productId);
         await searchProduct(productId);
+    } else {
+        showDialog("error", "Không tìm thấy thông tin sản phẩm trên URL", () => {
+            window.location.href = "/products-manager/index.html";
+        });
     }
+    setTimeout(() => toggleLoading(false), 300);
 }
 
 // Load dropdown data
@@ -44,7 +48,6 @@ async function loadCategories() {
             sel.appendChild(opt);
         });
     } catch (e) {
-        console.error("Error loading categories", e);
     }
 }
 
@@ -62,7 +65,6 @@ async function loadBrands() {
             sel.appendChild(opt);
         });
     } catch (e) {
-        console.error("Error loading brands", e);
     }
 }
 
@@ -76,28 +78,7 @@ function getListData(res) {
 
 // Setup events
 function setupEvents() {
-    const btnSearch = document.getElementById("btnSearch");
-    const searchInput = document.getElementById("searchProductId");
     const btnSave = document.getElementById("btnSave");
-    const btnCancel = document.getElementById("btnCancel");
-
-    // Search
-    btnSearch.onclick = async () => {
-        const productId = searchInput.value.trim();
-        if (!productId) {
-            showDialog("error", "Vui lòng nhập Product ID");
-            return;
-        }
-        await searchProduct(productId);
-    };
-
-    // Enter to search
-    searchInput.addEventListener("keydown", (e) => {
-        if (e.key === "Enter") {
-            e.preventDefault();
-            btnSearch.click();
-        }
-    });
 
     // Save (Update)
     btnSave.onclick = async () => {
@@ -108,12 +89,6 @@ function setupEvents() {
         await updateProductHandler();
     };
 
-    // Cancel
-    btnCancel.onclick = () => {
-        if (confirm("Hủy bỏ và quay lại?")) {
-            window.location.href = "/products-manager/index.html";
-        }
-    };
 
     // Main image upload
     const mainImgArea = document.getElementById("mainImageArea");
@@ -121,7 +96,11 @@ function setupEvents() {
     const mainImgPrev = document.getElementById("mainImagePreview");
     const mainImgPlace = document.getElementById("mainImagePlaceholder");
 
-    mainImgArea.onclick = () => mainImgInput.click();
+    mainImgArea.onclick = (e) => {
+        if (e.target !== mainImgInput) {
+            mainImgInput.click();
+        }
+    };
 
     mainImgInput.onchange = (e) => {
         const file = e.target.files[0];
@@ -140,7 +119,6 @@ async function searchProduct(productId) {
 
         if (res.success && res.data) {
             currentProductId = productId;
-            showSearchResult(`Tìm thấy: ${res.data.productDetailDTO.productName}`, "success");
             loadProductData(res.data);
 
             // Show form and buttons
@@ -150,22 +128,15 @@ async function searchProduct(productId) {
             // Add delete button
             addDeleteButton();
         } else {
-            showSearchResult("Không tìm thấy sản phẩm", "error");
+            showDialog("error", "Không tìm thấy sản phẩm này", () => {
+                window.location.href = "/products-manager/index.html";
+            });
         }
     } catch (e) {
-        console.error("Search error:", e);
-        showSearchResult("Lỗi khi tìm kiếm sản phẩm", "error");
+        showDialog("error", "Lỗi khi tải thông tin sản phẩm", () => {
+            window.location.href = "/products-manager/index.html";
+        });
     }
-}
-
-function showSearchResult(text, type) {
-    const resultDiv = document.getElementById("searchResult");
-    const resultText = document.getElementById("searchResultText");
-
-    resultText.textContent = text;
-    resultDiv.style.display = "block";
-    resultDiv.style.background = type === "success" ? "#d1fae5" : "#fee2e2";
-    resultDiv.style.color = type === "success" ? "#065f46" : "#991b1b";
 }
 
 // Load product data into form
@@ -195,7 +166,6 @@ function loadProductData(productDTO) {
         loadVariants(productDTO);
     }
 
-    console.log("Product loaded:", productDTO);
 }
 
 // Load variants into table (editable)
@@ -206,63 +176,92 @@ function loadVariants(productDTO) {
     variantsSection.style.display = "block";
     variantsTableBody.innerHTML = "";
 
-    productDTO.variants.forEach((variant, index) => {
-        // Build variant name from variantValues
-        let variantName = `Biến thể ${index + 1}`;
+    let attributeValues = productDTO.attributes
+        .flatMap(attribute => attribute.attributeValues);
 
-        // Try to build name from attributes
-        if (productDTO.variantValues && productDTO.attributes) {
-            const variantAttrs = productDTO.variantValues
-                .filter(vv => vv.variantId === variant.variantId);
+    productDTO.variants.forEach((variant) => {
+        // 1. Lấy danh sách ID thuộc về variant này
+        let attributeValueIdsV = productDTO.variantValues
+            .filter(vv => vv.variantId === variant.variantId)
+            .map(vv => vv.attributeValueId);
 
-            if (variantAttrs.length > 0) {
-                const names = variantAttrs.map(vv => {
-                    // Find attribute name
-                    const attr = productDTO.attributes.find(a => {
-                        return a.attributeValues && a.attributeValues.some(av => av.attributeValueId === vv.attributeValueId);
-                    });
-
-                    if (attr) {
-                        const attrVal = attr.attributeValues.find(av => av.attributeValueId === vv.attributeValueId);
-                        return `${attr.attributeName}: ${attrVal ? attrVal.attributeValueName : ''}`;
-                    }
-                    return '';
-                }).filter(Boolean);
-
-                if (names.length > 0) {
-                    variantName = names.join(" - ");
-                }
-            }
-        }
+        // 2. Tìm tên và nối chuỗi
+        let variantName = attributeValueIdsV
+            .map(id => {
+                // Tìm object trong "kho" attributeValues
+                const match = attributeValues.find(av => av.attributeValueId === id);
+                // Trả về name nếu thấy, nếu không thấy trả về chuỗi rỗng để tránh crash
+                return match ? match.attributeValueName : null;
+            })
+            .filter(name => name !== null) // Loại bỏ các ID không tìm thấy tên
+            .join(" - ");
 
         const tr = document.createElement("tr");
         tr.dataset.variantId = variant.variantId;
 
-        // Image HTML với error handling
-        const imageHTML = variant.imageUrl
-            ? `<img src="${variant.imageUrl}" alt="Variant" style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px;"
-                    onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-               <div style="width: 50px; height: 50px; background: #f3f4f6; border-radius: 4px; display: none; align-items: center; justify-content: center;">
-                   <i class="fa-solid fa-image" style="color: #9ca3af;"></i>
-               </div>`
-            : '<div style="width: 50px; height: 50px; background: #f3f4f6; border-radius: 4px; display: flex; align-items: center; justify-content: center;"><i class="fa-solid fa-image" style="color: #9ca3af;"></i></div>';
+        // Image HTML với input file để upload ảnh mới
+        const imageHTML = `
+            <div style="position: relative; width: 50px; height: 50px;">
+                ${variant.imageUrl
+                ? `<img src="${variant.imageUrl}" class="variant-img-${variant.variantId}" alt="Variant" style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px;"
+                            onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                       <div style="width: 50px; height: 50px; background: #f3f4f6; border-radius: 4px; display: none; align-items: center; justify-content: center;">
+                           <i class="fa-solid fa-image" style="color: #9ca3af;"></i>
+                       </div>`
+                : `<div class="variant-img-${variant.variantId}" style="width: 50px; height: 50px; background: #f3f4f6; border-radius: 4px; display: flex; align-items: center; justify-content: center;"><i class="fa-solid fa-image" style="color: #9ca3af;"></i></div>`
+            }
+                <input type="file" class="variant-file-input" data-variant-id="${variant.variantId}" accept="image/*" 
+                       style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer;" 
+                       title="Click để thay đổi ảnh">
+            </div>
+        `;
 
         tr.innerHTML = `
-            <td>${imageHTML}</td>
-            <td>${variantName}</td>
-            <td><input type="number" class="pm-input" value="${variant.originalPrice || 0}" data-field="originalPrice" style="width: 110px; padding: 6px;"></td>
-            <td><input type="number" class="pm-input" value="${variant.price || 0}" data-field="price" style="width: 110px; padding: 6px;"></td>
-            <td><input type="number" class="pm-input" value="${variant.stock || 0}" data-field="stock" style="width: 90px; padding: 6px;"></td>
-            <td>${variant.sold || 0}</td>
-            <td style="display: flex; gap: 4px;">
-                <button type="button" class="pm-btn pm-btn-primary" style="padding: 6px 10px; font-size: 13px;" onclick="saveVariant('${variant.variantId}')">
-                    <i class="fa-solid fa-save"></i> Lưu
+            <td data-label="Ảnh">${imageHTML}</td>
+            <td data-label="Tên biến thể">${variantName}</td>
+            <td data-label="Giá gốc"><input type="number" class="pm-input" value="${variant.originalPrice || 0}" data-field="originalPrice" style="padding: 6px;"></td>
+            <td data-label="Giá bán"><input type="number" class="pm-input" value="${variant.price || 0}" data-field="price" style="padding: 6px;"></td>
+            <td data-label="Kho"><input type="number" class="pm-input" value="${variant.stock || 0}" data-field="stock" style="padding: 6px;"></td>
+            <td data-label="Đã bán">${variant.sold || 0}</td>
+            <td data-label="Thao tác" style="display: flex; gap: 4px;">
+                <button type="button" class="pm-btn pm-btn-primary" style="padding: 8px; width: 36px; display: block" onclick="saveVariant('${variant.variantId}')" title="Lưu">
+                    <i class="fa-solid fa-save"></i>
                 </button>
-                <button type="button" class="pm-btn" style="padding: 6px 10px; font-size: 13px; background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: white;" onclick="deleteVariantHandler('${variant.variantId}')">
-                    <i class="fa-solid fa-trash"></i> Xóa
+                <button type="button" class="pm-btn" style="padding: 8px; width: 36px; display: block; background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: white;" onclick="deleteVariantHandler('${variant.variantId}')" title="Xóa">
+                    <i class="fa-solid fa-trash"></i>
                 </button>
             </td>
         `;
+
+        // Event listener cho input file upload ảnh
+        const fileInput = tr.querySelector('.variant-file-input');
+        if (fileInput) {
+            fileInput.addEventListener('change', function (e) {
+                const file = e.target.files[0];
+                if (file) {
+                    const variantId = this.dataset.variantId;
+                    const imgElement = document.querySelector(`.variant-img-${variantId}`);
+
+                    // Preview ảnh mới
+                    const reader = new FileReader();
+                    reader.onload = function (event) {
+                        if (imgElement.tagName === 'IMG') {
+                            imgElement.src = event.target.result;
+                            imgElement.style.display = 'block';
+                        } else {
+                            // Thay div bằng img
+                            const newImg = document.createElement('img');
+                            newImg.className = `variant-img-${variantId}`;
+                            newImg.src = event.target.result;
+                            newImg.style.cssText = 'width: 50px; height: 50px; object-fit: cover; border-radius: 4px;';
+                            imgElement.replaceWith(newImg);
+                        }
+                    };
+                    reader.readAsDataURL(file);
+
+                }
+            });
+        }
 
         variantsTableBody.appendChild(tr);
     });
@@ -286,24 +285,32 @@ window.saveVariant = async function (variantId) {
     const tr = document.querySelector(`tr[data-variant-id="${variantId}"]`);
     if (!tr) return;
 
-    const originalPrice = parseFloat(tr.querySelector('[data-field="originalPrice"]').value) || 0;
-    const price = parseFloat(tr.querySelector('[data-field="price"]').value) || 0;
-    const stock = parseInt(tr.querySelector('[data-field="stock"]').value) || 0;
-
+    // Build variantDTO
     const variantDTO = {
         variantId: variantId,
-        originalPrice: originalPrice,
-        price: price,
-        stock: stock
+        originalPrice: parseFloat(tr.querySelector('[data-field="originalPrice"]').value) || 0,
+        price: parseFloat(tr.querySelector('[data-field="price"]').value) || 0,
+        stock: parseInt(tr.querySelector('[data-field="stock"]').value) || 0
     };
 
-    console.log("Updating Variant:", JSON.stringify(variantDTO, null, 2));
-
     const formData = new FormData();
+
+    // Lấy file ảnh nếu user đã chọn ảnh mới
+    const fileInput = tr.querySelector('.variant-file-input');
+    if (fileInput && fileInput.files && fileInput.files[0]) {
+        const imageFile = fileInput.files[0];
+
+        // Backend expects field name 'image'
+        formData.append("image", imageFile);
+
+    }
+
+    // Append variantDTO sau khi đã thêm imageName (nếu có)
     formData.append("variantDTO",
         new Blob([JSON.stringify(variantDTO)], { type: "application/json" }),
         "variant.json"
     );
+
 
     try {
         const res = await updateVariant(formData);
@@ -316,70 +323,24 @@ window.saveVariant = async function (variantId) {
                 const soldCell = tr.cells[5]; // Cell thứ 6 (index 5)
                 soldCell.textContent = res.data.sold;
             }
-
-            console.log("Variant updated successfully, UI refreshed");
         } else {
-            showDialog("error", res.message || "Lỗi khi cập nhật biến thể");
+            await showDialog("error", res.message || "Lỗi khi cập nhật biến thể");
         }
     } catch (e) {
-        console.error("Update variant error:", e);
-        showDialog("error", "Lỗi kết nối server");
+        await showDialog("error", "Lỗi kết nối server");
     }
 };
 
 // Delete variant (global function for onclick)
 window.deleteVariantHandler = async function (variantId) {
-    const confirmed = confirm(
-        "⚠️ XÓA BIẾN THỂ SẢN PHẨM\n\n" +
-        "Bạn có chắc chắn muốn xóa biến thể này?\n" +
-        "Hành động này không thể hoàn tác.\n\n" +
-        "LƯU Ý: Không thể xóa biến thể có trong đơn hàng."
-    );
-
-    if (!confirmed) return;
-
-    try {
-        const res = await deleteVariant(variantId);
-
-        if (res.success) {
-            showDialog("success", "Xóa biến thể thành công!");
-
-            // Reload product data to refresh variants
-            if (currentProductId) {
-                const productRes = await getProduct(currentProductId);
-                if (productRes.success && productRes.data) {
-                    loadProductData(productRes.data);
-                    console.log("Product data reloaded after variant deletion");
-                }
-            }
-        } else {
-            // User-friendly error message
-            let errorMsg = "Không thể xóa biến thể này";
-
-            // Check if it's a foreign key constraint error (variant in orders)
-            if (res.message && (
-                res.message.toLowerCase().includes("reference") ||
-                res.message.toLowerCase().includes("constraint") ||
-                res.message.toLowerCase().includes("foreign key") ||
-                res.message.toLowerCase().includes("order") ||
-                res.message.toLowerCase().includes("conflicted")
-            )) {
-                errorMsg = "❌ Không thể xóa biến thể\n\nBiến thể này đang có trong đơn hàng của khách, không thể xóa để đảm bảo tính toàn vẹn dữ liệu.";
-            } else if (res.message && res.message.toLowerCase().includes("xoá")) {
-                errorMsg = "❌ Không thể xóa biến thể\n\nBiến thể này đang có trong đơn hàng của khách.";
-            } else if (res.data && Array.isArray(res.data) && res.data[0]?.error) {
-                errorMsg += ": " + res.data[0].error;
-            } else if (res.message) {
-                errorMsg += ": " + res.message;
-            }
-
-            showDialog("error", errorMsg);
-            console.error("Delete variant failed:", res);
+    await showDialog("question", "⚠️ XÓA BIẾN THỂ SẢN PHẨM\n\nBạn có chắc chắn muốn xóa biến thể này?\nHành động này không thể hoàn tác.\n\nLƯU Ý: Không thể xóa biến thể có trong đơn hàng.", async () => {
+        try {
+            const res = await deleteVariant(variantId);
+            await showDialog(res.success ? "success" : "error", res.message);
+        } catch (e) {
+            showDialog("error", "Lỗi kết nối server. Vui lòng thử lại sau.");
         }
-    } catch (e) {
-        console.error("Delete variant error:", e);
-        showDialog("error", "Lỗi kết nối server. Vui lòng thử lại sau.");
-    }
+    });
 };
 
 // Add delete button
@@ -405,51 +366,41 @@ function addDeleteButton() {
             return;
         }
 
-        const confirmed = confirm(
-            "⚠️ XÓA TOÀN BỘ SẢN PHẨM\n\n" +
-            "Bạn có chắc chắn muốn xóa sản phẩm này?\n" +
-            "- Tất cả variants sẽ bị xóa\n" +
-            "- Hành động này không thể hoàn tác\n\n" +
-            "LƯU Ý: Không thể xóa sản phẩm đã có đơn hàng."
-        );
+        showDialog("question", "⚠️ XÓA TOÀN BỘ SẢN PHẨM\n\nBạn có chắc chắn muốn xóa sản phẩm này?\n- Tất cả variants sẽ bị xóa\n- Hành động này không thể hoàn tác\n\nLƯU Ý: Không thể xóa sản phẩm đã có đơn hàng.", async () => {
+            try {
+                const res = await deleteProduct(currentProductId);
 
-        if (!confirmed) return;
+                if (res.success) {
+                    showDialog("success", "Xóa sản phẩm thành công!");
+                    setTimeout(() => {
+                        window.location.href = "/products-manager/edit.html";
+                    }, 1500);
+                } else {
+                    // User-friendly error message
+                    let errorMsg = "Không thể xóa sản phẩm này";
 
-        try {
-            const res = await deleteProduct(currentProductId);
+                    // Check for foreign key constraint error (product has orders)
+                    if (res.message && (
+                        res.message.toLowerCase().includes("reference") ||
+                        res.message.toLowerCase().includes("constraint") ||
+                        res.message.toLowerCase().includes("foreign key") ||
+                        res.message.toLowerCase().includes("order") ||
+                        res.message.toLowerCase().includes("delete") ||
+                        res.message.toLowerCase().includes("conflicted")
+                    )) {
+                        errorMsg = "❌ Không thể xóa sản phẩm đã có đơn hàng\n\n" +
+                            "Sản phẩm này đã được bán, không thể xóa để đảm bảo tính toàn vẹn dữ liệu đơn hàng.\n\n" +
+                            "Gợi ý: Bạn có thể set stock = 0 để ẩn sản phẩm khỏi danh sách bán hàng.";
+                    } else if (res.message) {
+                        errorMsg += ": " + res.message;
+                    }
 
-            if (res.success) {
-                showDialog("success", "Xóa sản phẩm thành công!");
-                setTimeout(() => {
-                    window.location.href = "/products-manager/edit.html";
-                }, 1500);
-            } else {
-                // User-friendly error message
-                let errorMsg = "Không thể xóa sản phẩm này";
-
-                // Check for foreign key constraint error (product has orders)
-                if (res.message && (
-                    res.message.toLowerCase().includes("reference") ||
-                    res.message.toLowerCase().includes("constraint") ||
-                    res.message.toLowerCase().includes("foreign key") ||
-                    res.message.toLowerCase().includes("order") ||
-                    res.message.toLowerCase().includes("delete") ||
-                    res.message.toLowerCase().includes("conflicted")
-                )) {
-                    errorMsg = "❌ Không thể xóa sản phẩm đã có đơn hàng\n\n" +
-                        "Sản phẩm này đã được bán, không thể xóa để đảm bảo tính toàn vẹn dữ liệu đơn hàng.\n\n" +
-                        "Gợi ý: Bạn có thể set stock = 0 để ẩn sản phẩm khỏi danh sách bán hàng.";
-                } else if (res.message) {
-                    errorMsg += ": " + res.message;
+                    showDialog("error", errorMsg);
                 }
-
-                showDialog("error", errorMsg);
-                console.error("Delete product failed:", res);
+            } catch (e) {
+                showDialog("error", "Lỗi kết nối server. Vui lòng thử lại sau.");
             }
-        } catch (e) {
-            console.error("Delete product error:", e);
-            showDialog("error", "Lỗi kết nối server. Vui lòng thử lại sau.");
-        }
+        });
     };
 
     headerActions.insertBefore(deleteBtn, headerActions.firstChild);
@@ -472,7 +423,6 @@ async function updateProductHandler() {
             brandId: document.getElementById("brandId").value,
         };
 
-        console.log("Updating Product:", JSON.stringify(productDetailDTO, null, 2));
 
         formData.append("productDetailDTO",
             new Blob([JSON.stringify(productDetailDTO)], { type: "application/json" }),
@@ -482,19 +432,18 @@ async function updateProductHandler() {
         // Main image if changed
         const mainFile = document.getElementById("mainImageInput").files[0];
         if (mainFile) {
-            formData.append("productImage", mainFile);
+            // Backend expects field name 'image'
+            formData.append("image", mainFile);
         }
 
         const res = await updateProduct(formData);
 
         if (res.success) {
             showDialog("success", "Cập nhật sản phẩm thành công!");
-            setTimeout(() => window.location.reload(), 1500);
         } else {
-            showDialog("error", res.message || "Lỗi khi cập nhật sản phẩm");
+            showDialog("error", res.message);
         }
     } catch (e) {
-        console.error("Update error:", e);
         showDialog("error", "Lỗi kết nối server");
     }
 }
@@ -508,14 +457,12 @@ async function deleteProductHandler(productId) {
             showDialog("success", "Xóa sản phẩm thành công!");
             setTimeout(() => window.location.href = "/products-manager/index.html", 1500);
         } else {
-            showDialog("error", res.message || "Lỗi khi xóa sản phẩm");
+            showDialog("error", res.message);
         }
     } catch (e) {
-        console.error("Delete error:", e);
         showDialog("error", "Lỗi kết nối server");
     }
 }
 
 // Start
-console.log("edit.js: Loaded");
 init();

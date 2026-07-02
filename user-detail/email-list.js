@@ -5,7 +5,7 @@ import { callAPI } from "../lib/api.js";
 const emailStyles = `
 <style>
     .email-row {
-        display: flex; align-items: center; gap: 10px; margin-bottom: 10px;
+        display: flex; align-items: center; margin-bottom: 10px;
         padding: 8px 12px; border-radius: 8px; background: #f9fafb;
         border: 1px solid #f3f4f6; transition: 0.2s;
     }
@@ -75,6 +75,10 @@ export function initEmailList(userId, initialEmails = []) {
       icon.onclick = async () => {
         const idx = icon.dataset.index;
         const email = emails[idx];
+        if(!email.email){
+          await showDialog("error", "Vui lòng nhập đầy đủ địa chỉ email");
+          return;
+        }
         await showDialog(
           "question",
           `Gửi email xác thực đến ${email.email}?`,

@@ -9,6 +9,7 @@ let categories = [];
 let brands = [];
 let sourceAttributes = []; // Global source attributes to keep sync
 let selectedAttributeRows = []; // State for UI rows
+let productId = null;
 
 const variantsTableBody = document.getElementById("variantsTableBody");
 const attributesSection = document.getElementById("attributesSection");
@@ -100,7 +101,11 @@ function setupEvents() {
     const mainImgPrev = document.getElementById("mainImagePreview");
     const mainImgPlace = document.getElementById("mainImagePlaceholder");
 
-    mainImgArea.onclick = () => mainImgInput.click();
+    mainImgArea.onclick = (e) => {
+        if (e.target !== mainImgInput) {
+            mainImgInput.click();
+        }
+    };
 
     mainImgInput.onchange = (e) => {
         const file = e.target.files[0];
@@ -114,12 +119,14 @@ function setupEvents() {
     // Save
     document.getElementById("btnSave").onclick = saveProduct;
 
-    // Cancel
-    document.getElementById("btnCancel").onclick = () => {
-        if (confirm("Hủy bỏ và làm mới?")) {
-            window.location.reload();
+    document.getElementById("edit-product").onclick = async () => {
+        if (!productId) {
+            await showDialog("error", "Sản phẩm chưa được lưu");
         }
-    };
+        else {
+            window.location.replace(`/products-manager/edit.html?id=${productId}`);
+        }
+    }
 }
 
 // --- ATTRIBUTE LOGIC ---
@@ -248,18 +255,18 @@ function generateVariants() {
         tr.dataset.combo = JSON.stringify(combo);
 
         tr.innerHTML = `
-            <td>
+            <td data-label="Ảnh">
                 <img src="" class="pm-variant-img" style="display:none;">
                 <div class="pm-variant-img-placeholder" style="width:48px;height:48px;border:1px dashed #ccc;border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;">
                     <i class="fa-solid fa-camera" style="color:#ccc;"></i>
                 </div>
                 <input type="file" class="v-image-input" accept="image/*" style="display:none;">
             </td>
-            <td><strong style="color:#667eea;">${name}</strong></td>
-            <td><input type="number" class="pm-variant-input v-original" value="${baseOriginal}"></td>
-            <td><input type="number" class="pm-variant-input v-price" value="${basePrice}"></td>
-            <td><input type="number" class="pm-variant-input v-stock" value="0"></td>
-            <td>
+            <td data-label="Tên biến thể"><strong style="color:#667eea;">${name}</strong></td>
+            <td data-label="Giá gốc"><input type="number" class="pm-variant-input v-original" value="${baseOriginal}"></td>
+            <td data-label="Giá bán"><input type="number" class="pm-variant-input v-price" value="${basePrice}"></td>
+            <td data-label="Kho"><input type="number" class="pm-variant-input v-stock" value="0"></td>
+            <td data-label="Thao tác">
                 <button type="button" class="remove-v-btn" style="color:#ef4444; border:none; background:none; cursor:pointer; font-size:16px;">
                     <i class="fa-solid fa-trash-can"></i>
                 </button>
@@ -449,21 +456,14 @@ async function saveProduct() {
     // Revert key to 'productDTO' and add filename + content-type
     formData.append("productDTO", new Blob([JSON.stringify(productDTO)], { type: "application/json" }), "product.json");
 
-    try {
-        // FIX: Must pass `true` for isMultipart argument
+    await getLoader("btnSave", async () => {
         const res = await callAPI('/admin/products', 'POST', formData, true);
         if (res.success) {
-            showDialog("success", "Thêm sản phẩm thành công!");
-            setTimeout(() => window.location.reload(), 1500);
+            productId = res.data.productId;
+            await showDialog("success", "Thêm sản phẩm thành công!");
         } else {
             console.error("API Error Data:", res.data); // Log detailed validation errors
-            showDialog("error", res.message || "Lỗi khi lưu sản phẩm");
+            await showDialog("error", res.message);
         }
-    } catch (e) {
-        console.error("Exception:", e);
-        showDialog("error", "Lỗi kết nối server");
-    } finally {
-        isSubmitting = false;
-        hideLoader();
-    }
+    });
 }
