@@ -303,6 +303,7 @@ window.saveVariant = async function (variantId) {
         // Backend expects field name 'image'
         formData.append("image", imageFile);
 
+        console.log("✅ Uploading variant image:", imageFile.name);
     }
 
     // Append variantDTO sau khi đã thêm imageName (nếu có)
@@ -434,6 +435,7 @@ async function updateProductHandler() {
         if (mainFile) {
             // Backend expects field name 'image'
             formData.append("image", mainFile);
+            console.log("✅ Uploading main image:", mainFile.name);
         }
 
         const res = await updateProduct(formData);
