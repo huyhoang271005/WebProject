@@ -1,0 +1,19 @@
+name: CI/CD Docker Compose
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Build and Deploy with Docker Compose
+        run: docker compose up -d --build
+
+      - name: clear old docker image
+        run: docker image prune -f
