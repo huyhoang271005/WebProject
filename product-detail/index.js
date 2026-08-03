@@ -1,25 +1,24 @@
-import { callAPI } from "../lib/api.js";
-import { loadPage, noImage } from '../lib/public.js';
-import { loadNavbar } from "../navbar/navbar.js";
-import { toggleLoading } from "../lib/loader.js";
+import {callAPI} from "../lib/api.js";
+import {loadPage, noImage} from '../lib/public.js';
+import {loadNavbar} from "../navbar/navbar.js";
+import {toggleLoading} from "../lib/loader.js";
 
 const NOTIFICATION_DURATION = 3500;
 const NOTIFICATION_HIDE_DELAY = 400;
 const REDIRECT_DELAY = 2000;
 const INFO_NOTIFICATION_DELAY = 1000;
 const MAX_STARS = 5;
-const DEFAULT_AVATAR = noImage;
+const MIN_QUANTITY = 1;
+const DEFAULT_AVATAR = "https://cdn-icons-png.flaticon.com/512/847/847969.png";
 
 let productDetail = null;
 let variants = [];
 let selectedAttributes = {};
 let currentVariant = null;
-let lightbox = null;
-let galleryImages = [];
 
 function showNotification(message, type = 'success') {
     const noti = document.getElementById('notification');
-
+    
     const icons = {
         success: '<i class="fa-solid fa-check-circle"></i>',
         error: '<i class="fa-solid fa-circle-exclamation"></i>',
@@ -37,7 +36,7 @@ function showNotification(message, type = 'success') {
     }, NOTIFICATION_DURATION);
 }
 
-await loadPage(async () => {
+loadPage(async () => {
     const urlParams = new URLSearchParams(window.location.search);
     const productId = urlParams.get('id');
 
@@ -63,22 +62,16 @@ async function getProductDetail(id) {
 
             renderBasicInfo();
             renderAttributes(res.data.attributeDTOList);
-
-            // Extract all unique images
-            const allImages = [productDetail.imageUrl];
-            if (variants && variants.length > 0) {
-                variants.forEach(v => {
-                    if (v.imageUrl && !allImages.includes(v.imageUrl)) {
-                        allImages.push(v.imageUrl);
-                    }
-                });
-            }
-            renderGallery(allImages);
-
             setupEventListeners();
 
+            if (variants.length > 0) {
+                setTimeout(() => {
+                    showNotification("Vui lòng chọn phân loại sản phẩm trước khi mua", 'info');
+                }, INFO_NOTIFICATION_DELAY);
+            }
         } else {
             showNotification(res.message || "Lỗi tải dữ liệu sản phẩm", 'error');
+            setTimeout(() => window.history.back(), REDIRECT_DELAY);
         }
     } catch (error) {
         showNotification("Không thể kết nối đến server. Vui lòng thử lại!", 'error');
@@ -92,47 +85,47 @@ async function getFeedbacks(productId) {
 
         const container = document.getElementById('feedbackList');
         if (res.success && res.data && res.data.listData) {
-            const list = res.data.listData;
-            if (list.length === 0) {
-                container.innerHTML = `<p style="color: #888; text-align:center; padding: 20px;">Chưa có đánh giá nào.</p>`;
-                return;
-            }
+             const list = res.data.listData;
+             if (list.length === 0) {
+                 container.innerHTML = `<p style="color: #888; text-align:center; padding: 20px;">Chưa có đánh giá nào.</p>`;
+                 return;
+             }
 
-            // Check Admin Role
-            let isUser = false;
-            try {
-                const cached = sessionStorage.getItem("homeData");
-                if (cached) {
-                    const userData = JSON.parse(cached);
-                    isUser = userData.roleName === 'USER';
-                }
-            } catch (e) { }
+             // Check Admin Role
+             let isAdmin = false;
+             try {
+                 const cached = sessionStorage.getItem("homeData");
+                 if (cached) {
+                     const userData = JSON.parse(cached);
+                     isAdmin = userData.roleName === 'ADMIN';
+                 }
+             } catch (e) {}
 
-            container.innerHTML = list.map(item => renderFeedbackItem(item, isUser)).join('');
+             container.innerHTML = list.map(item => renderFeedbackItem(item, isAdmin)).join('');
 
-            // Attach events for reply buttons
-            if (!isUser) {
-                document.querySelectorAll('.btn-reply').forEach(btn => {
-                    btn.addEventListener('click', (e) => {
-                        const id = e.target.dataset.id;
-                        document.getElementById(`reply-box-${id}`).classList.toggle('show');
-                    });
-                });
-            }
+             // Attach events for reply buttons
+             if (isAdmin) {
+                 document.querySelectorAll('.btn-reply').forEach(btn => {
+                     btn.addEventListener('click', (e) => {
+                         const id = e.target.dataset.id;
+                         document.getElementById(`reply-box-${id}`).classList.toggle('show');
+                     });
+                 });
+             }
 
         } else {
-            container.innerHTML = `<p style="color: #888; text-align:center; padding: 20px;">Chưa có đánh giá nào.</p>`;
+             container.innerHTML = `<p style="color: #888; text-align:center; padding: 20px;">Chưa có đánh giá nào.</p>`;
         }
     } catch (error) {
         console.error("Error loading feedbacks:", error);
-        document.getElementById('feedbackList').innerHTML = `<p style="color: red; text-align:center;">Lỗi tải đánh giá.</p>`;
+         document.getElementById('feedbackList').innerHTML = `<p style="color: red; text-align:center;">Lỗi tải đánh giá.</p>`;
     }
 }
 
-function renderFeedbackItem(item, isUser) {
+function renderFeedbackItem(item, isAdmin) {
     const avatar = item.imageUrl || DEFAULT_AVATAR;
     const date = new Date(item.createdAt).toLocaleString('vi-VN');
-
+    
     const starsHtml = createStarRating(item.rating);
 
     let replyHtml = '';
@@ -145,7 +138,7 @@ function renderFeedbackItem(item, isUser) {
                     <div class="fb-user-info">
                         <img src="${adminAvatar}" class="fb-avatar">
                         <div class="fb-meta">
-                            <span class="fb-username">${item.reply.username} <span class="admin-badge">${item.reply.roleName}</span></span>
+                            <span class="fb-username">${item.reply.username} <span class="admin-badge">QTV</span></span>
                             <span class="fb-date">${replyDate}</span>
                         </div>
                     </div>
@@ -153,7 +146,7 @@ function renderFeedbackItem(item, isUser) {
                 <div style="margin-left: 52px; color: #444; font-size: 0.95rem;">${item.reply.message}</div>
             </div>
         `;
-    } else if (!isUser) {
+    } else if (isAdmin) {
         replyHtml = `
             <button class="btn-reply" data-id="${item.feedbackId}">Trả lời</button>
             <div class="reply-input-area" id="reply-box-${item.feedbackId}">
@@ -183,11 +176,9 @@ function renderFeedbackItem(item, isUser) {
 }
 
 // Function to reply to feedback - Admin only
-window.submitReply = async function (feedbackId) {
+window.submitReply = async function(feedbackId) {
     const input = document.getElementById(`input-${feedbackId}`);
-    const content = {
-        message: input.value.trim()
-    };
+    const content = input.value.trim();
 
     if (!content) {
         showNotification("Vui lòng nhập nội dung!", "warning");
@@ -199,18 +190,18 @@ window.submitReply = async function (feedbackId) {
     btn.disabled = true;
 
     try {
-        const res = await callAPI(`/feedbacks/reply/${feedbackId}`, "POST", content);
+        const res = await callAPI(`/feedbacks/reply/${feedbackId}`, "POST", content); 
         console.log("Reply Response:", res);
-
+        
         if (res.success) {
             showNotification("Đã trả lời đánh giá!", "success");
             // Reload feedbacks
             const urlParams = new URLSearchParams(window.location.search);
             getFeedbacks(urlParams.get('id'));
         } else {
-            showNotification(res.message || "Lỗi khi trả lời", "error");
-            btn.disabled = false;
-            btn.innerText = "Gửi";
+             showNotification(res.message || "Lỗi khi trả lời", "error");
+             btn.disabled = false;
+             btn.innerText = "Gửi";
         }
     } catch (error) {
         console.error("Error replying to feedback:", error);
@@ -243,7 +234,7 @@ function renderBasicInfo() {
         const cached = sessionStorage.getItem("homeData");
         if (cached) {
             const userData = JSON.parse(cached);
-            if (userData.roleName !== 'USER') {
+            if (userData.roleName === 'ADMIN') {
                 const titleEl = document.getElementById('productName');
                 // Avoid adding multiple buttons if re-render
                 if (!titleEl.querySelector('.edit-product-btn')) {
@@ -256,7 +247,7 @@ function renderBasicInfo() {
                     editBtn.style.marginLeft = '10px';
                     editBtn.style.textDecoration = 'none';
                     editBtn.title = 'Chỉnh sửa sản phẩm';
-
+                    
                     editBtn.onmouseover = () => editBtn.style.color = '#10B981';
                     editBtn.onmouseout = () => editBtn.style.color = '#6b7280';
 
@@ -323,72 +314,6 @@ function renderAttributes(attributeList) {
     });
 }
 
-// --- Gallery Functions ---
-function renderGallery(images) {
-    galleryImages = images;
-    const container = document.getElementById('imageGallery');
-
-    let hiddenGallery = document.getElementById('hidden-lightbox-gallery');
-    if (!hiddenGallery) {
-        hiddenGallery = document.createElement('div');
-        hiddenGallery.id = 'hidden-lightbox-gallery';
-        hiddenGallery.style.display = 'none';
-        document.body.appendChild(hiddenGallery);
-    }
-    hiddenGallery.innerHTML = images.map(img => `<a href="${img}" class="gallery" data-type="image"></a>`).join('');
-
-    // Initialize lightbox
-    if (lightbox) {
-        lightbox.destroy();
-    }
-
-    lightbox = GLightbox({
-        selector: '.gallery',
-        touchNavigation: true,
-        draggable: true,
-        loop: false,
-        zoomable: true
-    });
-
-    // Attach click event to main image to open lightbox
-    const mainImgBox = document.querySelector('.main-image-box');
-    // Remove existing listener if any (to avoid duplicates on re-render)
-    const newMainImgBox = mainImgBox.cloneNode(true);
-    mainImgBox.parentNode.replaceChild(newMainImgBox, mainImgBox);
-
-    newMainImgBox.addEventListener('click', () => {
-        const currentSrc = document.getElementById('mainImage').getAttribute('src');
-        const index = galleryImages.indexOf(currentSrc);
-        if (index !== -1) {
-            lightbox.openAt(index);
-        } else {
-            lightbox.open();
-        }
-    });
-
-    if (!images || images.length === 0) {
-        container.style.display = 'none';
-        return;
-    }
-
-    container.innerHTML = images.map((img, index) => `
-        <div class="gallery-item ${index === 0 ? 'active' : ''}" onclick="selectGalleryImage(this, '${img}')">
-            <img src="${img}" onerror="this.src='${noImage}'">
-            <div class="gallery-overlay"></div>
-        </div>
-    `).join('');
-}
-
-window.selectGalleryImage = function (element, src) {
-    // Update main image
-    const mainImg = document.getElementById('mainImage');
-    mainImg.src = src;
-
-    // Update active class
-    document.querySelectorAll('.gallery-item').forEach(item => item.classList.remove('active'));
-    element.classList.add('active');
-}
-
 function handleAttributeSelect(attrId, valId, btnElement, attrName) {
     const siblings = btnElement.parentElement.children;
     for (let sib of siblings) {
@@ -426,55 +351,22 @@ function findMatchingVariant() {
     } else {
         currentVariant = null;
         updateStockDisplay(0);
-
-        // Reset overlay if no variant matches (optional, or keep generic state)
-        const overlay = document.getElementById('soldOutOverlay');
-        const mainImg = document.getElementById('mainImage');
-        if (overlay) overlay.style.display = 'none';
-        if (mainImg) mainImg.style.opacity = '1';
     }
 }
 
 function updateUIForVariant(variant) {
     updatePriceDisplay(variant.price, variant.originalPrice);
 
-    const imgEl = document.getElementById('mainImage');
     if (variant.imageUrl) {
+        const imgEl = document.getElementById('mainImage');
         imgEl.src = variant.imageUrl;
         imgEl.onerror = () => {
-            imgEl.src = noImage;
+            imgEl.src = productDetail.imageUrl || noImage;
         };
-
-        // Highlight corresponding thumbnail
-        const galleryItems = document.querySelectorAll('.gallery-item img');
-        galleryItems.forEach(img => {
-            if (img.getAttribute('src') === variant.imageUrl) {
-                // Remove active from all
-                document.querySelectorAll('.gallery-item').forEach(item => item.classList.remove('active'));
-                // Add active to parent div
-                img.parentElement.classList.add('active');
-            }
-        });
-
-    } else {
-        // Fallback to noImage as requested
-        imgEl.src = noImage;
     }
 
     updateStockDisplay(variant.stock);
     document.getElementById('inputQuantity').value = 1;
-
-    // Handle Out of Stock Overlay
-    const overlay = document.getElementById('soldOutOverlay');
-    const mainImg = document.getElementById('mainImage');
-
-    if (variant.stock <= 0) {
-        if (overlay) overlay.style.display = 'block';
-        if (mainImg) mainImg.style.opacity = '0.5';
-    } else {
-        if (overlay) overlay.style.display = 'none';
-        if (mainImg) mainImg.style.opacity = '1';
-    }
 }
 
 function updatePriceDisplay(current, original) {
@@ -621,7 +513,7 @@ function setupEventListeners() {
 
         const selectedAttrNames = [];
         const selectedAttrValues = [];
-
+        
         document.querySelectorAll('.attribute-row').forEach(row => {
             const activeBtn = row.querySelector('.attr-item.active');
             if (activeBtn) {
@@ -642,9 +534,6 @@ function setupEventListeners() {
             attributeValues: selectedAttrValues
         };
 
-        // Clear checkoutItems to avoid conflict on checkout page
-        sessionStorage.removeItem('checkoutItems');
-        sessionStorage.removeItem('checkedCartIds');
         sessionStorage.setItem('buyNowData', JSON.stringify(buyNowData));
 
         window.location.href = '../checkout/index.html';

@@ -1,0 +1,183 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="d1291a6c-fe78-42e2-bb59-7c3b543d57c5" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="HTML File" />
+        <option value="JavaScript File" />
+        <option value="CSS File" />
+      </list>
+    </option>
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_BRANCH_BY_REPOSITORY">
+      <map>
+        <entry key="$PROJECT_DIR$" value="main" />
+      </map>
+    </option>
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="GitHubPullRequestSearchHistory">{
+  &quot;lastFilter&quot;: {
+    &quot;state&quot;: &quot;OPEN&quot;,
+    &quot;assignee&quot;: &quot;huydq2801&quot;
+  }
+}</component>
+  <component name="GitToolBoxStore">
+    <option name="recentBranches">
+      <RecentBranches>
+        <option name="branchesForRepo">
+          <list>
+            <RecentBranchesForRepo>
+              <option name="branches">
+                <list>
+                  <RecentBranch>
+                    <option name="branchName" value="huy" />
+                    <option name="lastUsedInstant" value="1765174166" />
+                  </RecentBranch>
+                  <RecentBranch>
+                    <option name="branchName" value="main" />
+                    <option name="lastUsedInstant" value="1765174098" />
+                  </RecentBranch>
+                </list>
+              </option>
+              <option name="repositoryRootUrl" value="file://$PROJECT_DIR$" />
+            </RecentBranchesForRepo>
+          </list>
+        </option>
+      </RecentBranches>
+    </option>
+  </component>
+  <component name="GithubPullRequestsUISettings">{
+  &quot;selectedUrlAndAccountId&quot;: {
+    &quot;url&quot;: &quot;https://github.com/huyhoang271005/WebProject.git&quot;,
+    &quot;accountId&quot;: &quot;f7f0f830-550a-4d13-a276-12bdab0ddf1e&quot;
+  }
+}</component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 5
+}</component>
+  <component name="ProjectId" id="36PrGxZ6rfHnw0JypUakr3P26d4" />
+  <component name="ProjectLevelVcsManager">
+    <ConfirmationsSetting value="2" id="Add" />
+  </component>
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;DefaultHtmlFileTemplate&quot;: &quot;HTML File&quot;,
+    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
+    &quot;Node.js.index.js.executor&quot;: &quot;Run&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;huy&quot;,
+    &quot;list.type.of.created.stylesheet&quot;: &quot;CSS&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.pluginManager&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  }
+}</component>
+  <component name="SharedIndexes">
+    <attachedChunks>
+      <set>
+        <option value="bundled-js-predefined-d6986cc7102b-a71380e98a7c-JavaScript-WS-252.28238.10" />
+      </set>
+    </attachedChunks>
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="d1291a6c-fe78-42e2-bb59-7c3b543d57c5" name="Changes" comment="" />
+      <created>1764918955277</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1764918955277</updated>
+      <workItem from="1764918956548" duration="560000" />
+      <workItem from="1764938582881" duration="4000" />
+      <workItem from="1765173884993" duration="641000" />
+      <workItem from="1765174719652" duration="481000" />
+      <workItem from="1765184161786" duration="47000" />
+      <workItem from="1765185012806" duration="288000" />
+      <workItem from="1765185318337" duration="76000" />
+      <workItem from="1765291306617" duration="914000" />
+      <workItem from="1765292700000" duration="1910000" />
+      <workItem from="1765335589644" duration="1136000" />
+      <workItem from="1765368864606" duration="2133000" />
+      <workItem from="1765411752280" duration="1520000" />
+      <workItem from="1765413742752" duration="3790000" />
+      <workItem from="1765520827154" duration="4462000" />
+      <workItem from="1765525571442" duration="36000" />
+      <workItem from="1765543443972" duration="4000" />
+      <workItem from="1765723566454" duration="3892000" />
+      <workItem from="1765767326219" duration="56000" />
+      <workItem from="1765769301569" duration="53000" />
+      <workItem from="1765770564305" duration="1539000" />
+      <workItem from="1765786929507" duration="692000" />
+      <workItem from="1765787780392" duration="827000" />
+      <workItem from="1766027322055" duration="2868000" />
+      <workItem from="1766124517166" duration="615000" />
+      <workItem from="1766125413102" duration="952000" />
+      <workItem from="1766134926608" duration="1981000" />
+      <workItem from="1766219167621" duration="1490000" />
+      <workItem from="1766543789686" duration="37000" />
+      <workItem from="1766651279792" duration="67000" />
+      <workItem from="1766654474893" duration="150000" />
+      <workItem from="1766765988933" duration="303000" />
+      <workItem from="1766974319884" duration="2955000" />
+      <workItem from="1767006200405" duration="3822000" />
+      <workItem from="1767456965549" duration="5628000" />
+      <workItem from="1767716722535" duration="416000" />
+      <workItem from="1767718621091" duration="7000" />
+      <workItem from="1768316954486" duration="6721000" />
+      <workItem from="1768387850878" duration="763000" />
+      <workItem from="1768489666509" duration="8051000" />
+      <workItem from="1768500055123" duration="57000" />
+      <workItem from="1768553636271" duration="19060000" />
+    </task>
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State>
+              <option name="FILTERS">
+                <map>
+                  <entry key="branch">
+                    <value>
+                      <list>
+                        <option value="main" />
+                      </list>
+                    </value>
+                  </entry>
+                </map>
+              </option>
+            </State>
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+</project>

@@ -1,7 +1,6 @@
 import { callAPI } from "../lib/api.js";
 import { loadNavbar } from "../navbar/navbar.js";
-import { loadPage } from "../lib/public.js";
-import {showDialog} from "/dialog/index.js";
+import { toggleLoading } from "../lib/loader.js";
 
 const PHONE_PATTERN = /^(0[3|5|7|8|9])+([0-9]{8})$/;
 const MIN_NAME_LENGTH = 2;
@@ -19,7 +18,12 @@ const addressCount = document.getElementById('addressCount');
 let currentAddresses = [];
 let isEditMode = false;
 
-loadPage(async () => {
+window.addEventListener('DOMContentLoaded', async () => {
+    const loadPageEl = document.getElementById('loadPage');
+    const infoEl = document.getElementById('info');
+
+    toggleLoading(true);
+
     try {
         await loadNavbar();
         await loadAddresses();
@@ -27,6 +31,10 @@ loadPage(async () => {
     } catch (error) {
         console.error(error);
         showNotification("Có lỗi khi tải trang", 'error');
+    } finally {
+        toggleLoading(false);
+        if (loadPageEl) loadPageEl.style.display = 'none';
+        if (infoEl) infoEl.style.display = 'block';
     }
 });
 
@@ -81,7 +89,7 @@ function validateForm(data) {
         showFieldError('address', 'Vui lòng nhập địa chỉ chi tiết');
         isValid = false;
     }
-
+    
     return isValid;
 }
 
@@ -140,7 +148,7 @@ function attachAddressListeners() {
     currentAddresses.forEach(address => {
         const item = addressListEl.querySelector(`[data-id="${address.contactId}"]`);
         if (!item) return;
-
+        
         item.querySelector('.edit-btn').addEventListener('click', () => editAddress(address.contactId));
         item.querySelector('.delete-btn').addEventListener('click', () => deleteAddress(address.contactId));
     });
@@ -218,23 +226,23 @@ async function updateAddress(id, data) {
 }
 
 async function deleteAddress(id) {
-    await showDialog("question", "Bạn có muốn xoá địa chỉ này?", async ()=> {
-        const result = await callAPI(`/contacts/${id}`, "DELETE");
+    if (!confirm("Bạn có chắc chắn muốn xóa địa chỉ này?")) return;
 
-        if (result.success) {
-            showNotification("Xóa địa chỉ thành công!");
+    const result = await callAPI(`/contacts/${id}`, "DELETE");
 
-            // If deleting the address being edited, reset form
-            if (contactIdInput.value === id) {
-                resetForm();
-            }
+    if (result.success) {
+        showNotification("Xóa địa chỉ thành công!");
 
-            currentAddresses = currentAddresses.filter(addr => addr.contactId !== id);
-            renderAddressList();
-        } else {
-            showNotification(`Lỗi xóa: ${result.message || 'Không rõ'}`, 'error');
+        // If deleting the address being edited, reset form
+        if (contactIdInput.value === id) {
+            resetForm();
         }
-    });
+
+        currentAddresses = currentAddresses.filter(addr => addr.contactId !== id);
+        renderAddressList();
+    } else {
+        showNotification(`Lỗi xóa: ${result.message || 'Không rõ'}`, 'error');
+    }
 }
 
 function editAddress(id) {
